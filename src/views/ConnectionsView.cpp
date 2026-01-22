@@ -102,23 +102,32 @@ void ConnectionsView::setProxyService(ProxyService *service)
                 [this](const QJsonObject &connections) {
             QJsonArray conns = connections["connections"].toArray();
             m_tableWidget->setRowCount(conns.count());
-            
+
+            auto setCell = [this](int row, int col, const QString &text) {
+                QTableWidgetItem *item = m_tableWidget->item(row, col);
+                if (!item) {
+                    item = new QTableWidgetItem();
+                    m_tableWidget->setItem(row, col, item);
+                }
+                item->setText(text);
+            };
+
             for (int i = 0; i < conns.count(); ++i) {
                 QJsonObject conn = conns[i].toObject();
                 QJsonObject metadata = conn["metadata"].toObject();
-                
-                m_tableWidget->setItem(i, 0, new QTableWidgetItem(metadata["sourceIP"].toString()));
-                m_tableWidget->setItem(i, 1, new QTableWidgetItem(
-                    metadata["host"].toString() + ":" + QString::number(metadata["destinationPort"].toInt())));
-                m_tableWidget->setItem(i, 2, new QTableWidgetItem(metadata["network"].toString()));
-                m_tableWidget->setItem(i, 3, new QTableWidgetItem(conn["rule"].toString()));
-                m_tableWidget->setItem(i, 4, new QTableWidgetItem(
-                    QString::number(conn["upload"].toVariant().toLongLong() / 1024) + " KB"));
-                m_tableWidget->setItem(i, 5, new QTableWidgetItem(
-                    QString::number(conn["download"].toVariant().toLongLong() / 1024) + " KB"));
-                
+
+                setCell(i, 0, metadata["sourceIP"].toString());
+                setCell(i, 1, metadata["host"].toString() + ":" + QString::number(metadata["destinationPort"].toInt()));
+                setCell(i, 2, metadata["network"].toString());
+                setCell(i, 3, conn["rule"].toString());
+                setCell(i, 4, QString::number(conn["upload"].toVariant().toLongLong() / 1024) + " KB");
+                setCell(i, 5, QString::number(conn["download"].toVariant().toLongLong() / 1024) + " KB");
+
                 // 保存连接 ID
-                m_tableWidget->item(i, 0)->setData(Qt::UserRole, conn["id"].toString());
+                QTableWidgetItem *idItem = m_tableWidget->item(i, 0);
+                if (idItem) {
+                    idItem->setData(Qt::UserRole, conn["id"].toString());
+                }
             }
         });
     }

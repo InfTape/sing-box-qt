@@ -43,9 +43,14 @@ private:
     void setupUI();
     void rebuildList();
     void updateStats();
+    void updateEmptyState();
     QWidget* createLogRow(const LogEntry &entry);
     QString detectLogType(const QString &message) const;
     QString logTypeLabel(const QString &type) const;
+    bool logMatchesFilter(const LogEntry &entry) const;
+    void appendLogRow(const LogEntry &entry);
+    void removeFirstLogRow();
+    void clearListWidgets();
 
     QLabel *m_titleLabel = nullptr;
     QLabel *m_subtitleLabel = nullptr;

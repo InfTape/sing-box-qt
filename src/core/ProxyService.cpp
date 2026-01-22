@@ -11,6 +11,15 @@ ProxyService::ProxyService(QObject *parent)
     , m_wsClient(new WebSocketClient(this))
     , m_apiPort(9090)
 {
+    connect(m_wsClient, &WebSocketClient::messageReceived, this, [this](const QString &message) {
+        QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
+        if (doc.isObject()) {
+            QJsonObject obj = doc.object();
+            qint64 up = obj["up"].toVariant().toLongLong();
+            qint64 down = obj["down"].toVariant().toLongLong();
+            emit trafficUpdated(up, down);
+        }
+    });
 }
 
 ProxyService::~ProxyService()
@@ -187,17 +196,6 @@ void ProxyService::startTrafficMonitor()
         m_wsClient->disconnect();
     }
     
-    // 连接信号
-    connect(m_wsClient, &WebSocketClient::messageReceived, this, [this](const QString &message) {
-        QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
-        if (doc.isObject()) {
-            QJsonObject obj = doc.object();
-            qint64 up = obj["up"].toVariant().toLongLong();
-            qint64 down = obj["down"].toVariant().toLongLong();
-            emit trafficUpdated(up, down);
-        }
-    });
-    
     m_wsClient->connect(url);
 }
 
@@ -205,4 +203,3 @@ void ProxyService::stopTrafficMonitor()
 {
     m_wsClient->disconnect();
 }
-

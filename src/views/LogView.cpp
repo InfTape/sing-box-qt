@@ -18,6 +18,10 @@
 #include <QVBoxLayout>
 #include <utility>
 
+namespace {
+constexpr int kMaxLogEntries = 20;
+}
+
 LogView::LogView(QWidget *parent)
     : QWidget(parent)
 {
@@ -171,11 +175,23 @@ void LogView::appendLog(const QString &message)
     entry.timestamp = QDateTime::currentDateTime();
 
     m_logs.push_back(entry);
-    if (m_logs.size() > 5000) {
+    if (m_logs.size() > kMaxLogEntries) {
+        const LogEntry removed = m_logs.first();
+        const bool removedMatches = logMatchesFilter(removed);
         m_logs.removeFirst();
+        if (removedMatches && !m_filtered.isEmpty()) {
+            m_filtered.removeFirst();
+            removeFirstLogRow();
+        }
     }
 
-    rebuildList();
+    if (logMatchesFilter(entry)) {
+        m_filtered.push_back(entry);
+        appendLogRow(entry);
+    }
+
+    updateStats();
+    updateEmptyState();
 
     if (m_autoScroll->isChecked()) {
         m_scrollArea->verticalScrollBar()->setValue(m_scrollArea->verticalScrollBar()->maximum());
@@ -185,7 +201,10 @@ void LogView::appendLog(const QString &message)
 void LogView::clear()
 {
     m_logs.clear();
-    rebuildList();
+    m_filtered.clear();
+    clearListWidgets();
+    updateStats();
+    updateEmptyState();
 }
 
 void LogView::onFilterChanged()
@@ -242,28 +261,14 @@ void LogView::rebuildList()
         }
     }
 
-    while (m_listLayout->count() > 1) {
-        QLayoutItem *item = m_listLayout->takeAt(0);
-        if (item->widget()) {
-            delete item->widget();
-        }
-        delete item;
-    }
+    clearListWidgets();
 
     for (const auto &log : std::as_const(m_filtered)) {
-        m_listLayout->insertWidget(m_listLayout->count() - 1, createLogRow(log));
+        appendLogRow(log);
     }
 
     updateStats();
-
-    if (m_filtered.isEmpty()) {
-        m_emptyState->show();
-        m_scrollArea->hide();
-        m_emptyTitle->setText(query.isEmpty() ? tr("暂无日志") : tr("没有匹配的日志"));
-    } else {
-        m_emptyState->hide();
-        m_scrollArea->show();
-    }
+    updateEmptyState();
 }
 
 void LogView::updateStats()
@@ -280,6 +285,61 @@ void LogView::updateStats()
     m_warningTag->setText(tr("警告: %1").arg(warningCount));
     m_errorTag->setVisible(errorCount > 0);
     m_warningTag->setVisible(warningCount > 0);
+}
+
+bool LogView::logMatchesFilter(const LogEntry &entry) const
+{
+    const QString query = m_searchEdit->text().trimmed();
+    const QString typeValue = m_typeFilter->currentData().toString();
+    const bool matchSearch = query.isEmpty()
+        || entry.payload.contains(query, Qt::CaseInsensitive);
+    const bool matchType = typeValue.isEmpty() || entry.type == typeValue;
+    return matchSearch && matchType;
+}
+
+void LogView::appendLogRow(const LogEntry &entry)
+{
+    m_listLayout->insertWidget(m_listLayout->count() - 1, createLogRow(entry));
+}
+
+void LogView::removeFirstLogRow()
+{
+    if (m_listLayout->count() <= 1) {
+        return;
+    }
+    QLayoutItem *item = m_listLayout->takeAt(0);
+    if (item) {
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
+}
+
+void LogView::clearListWidgets()
+{
+    while (m_listLayout->count() > 1) {
+        QLayoutItem *item = m_listLayout->takeAt(0);
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
+}
+
+void LogView::updateEmptyState()
+{
+    const QString query = m_searchEdit->text().trimmed();
+    const bool hasFilters = !query.isEmpty() || !m_typeFilter->currentData().toString().isEmpty();
+
+    if (m_filtered.isEmpty()) {
+        m_emptyState->show();
+        m_scrollArea->hide();
+        m_emptyTitle->setText(hasFilters ? tr("没有匹配的日志") : tr("暂无日志"));
+    } else {
+        m_emptyState->hide();
+        m_scrollArea->show();
+    }
 }
 
 QWidget* LogView::createLogRow(const LogEntry &entry)
