@@ -15,6 +15,7 @@ class ConnectionsView : public QWidget
 public:
     explicit ConnectionsView(QWidget *parent = nullptr);
     void setProxyService(ProxyService *service);
+    void setAutoRefreshEnabled(bool enabled);
 
 private slots:
     void onRefresh();
@@ -29,6 +30,7 @@ private:
     QPushButton *m_closeAllBtn;
     QTimer *m_refreshTimer;
     ProxyService *m_proxyService;
+    bool m_autoRefreshEnabled = false;
 };
 
 #endif // CONNECTIONSVIEW_H

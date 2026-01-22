@@ -9,6 +9,7 @@ ConnectionsView::ConnectionsView(QWidget *parent)
     : QWidget(parent)
     , m_proxyService(nullptr)
     , m_refreshTimer(new QTimer(this))
+    , m_autoRefreshEnabled(false)
 {
     setupUI();
     
@@ -120,14 +121,25 @@ void ConnectionsView::setProxyService(ProxyService *service)
                 m_tableWidget->item(i, 0)->setData(Qt::UserRole, conn["id"].toString());
             }
         });
-        
-        m_refreshTimer->start();
+    }
+}
+
+void ConnectionsView::setAutoRefreshEnabled(bool enabled)
+{
+    m_autoRefreshEnabled = enabled;
+    if (m_autoRefreshEnabled && m_proxyService) {
+        if (!m_refreshTimer->isActive()) {
+            m_refreshTimer->start();
+        }
+        onRefresh();
+    } else {
+        m_refreshTimer->stop();
     }
 }
 
 void ConnectionsView::onRefresh()
 {
-    if (m_proxyService) {
+    if (m_proxyService && m_autoRefreshEnabled) {
         m_proxyService->fetchConnections();
     }
 }

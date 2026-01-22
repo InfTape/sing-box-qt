@@ -12,6 +12,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSet>
+#include <QtMath>
 #include <QStringList>
 #include <QVBoxLayout>
 #include <utility>
@@ -270,14 +271,22 @@ void RulesView::rebuildGrid()
     }
 
     const int availableWidth = m_scrollArea->viewport()->width();
-    const int cardWidth = 320;
-    const int columns = qMax(1, availableWidth / cardWidth);
+    const int spacing = m_gridLayout->spacing();
+    const int minColumns = 2;
+    const int maxColumns = 4;
+    const int idealCardWidth = 320;
+    int columns = availableWidth / idealCardWidth;
+    columns = qMax(minColumns, qMin(columns, maxColumns));
     m_columnCount = columns;
+    const int totalSpacing = spacing * (columns - 1);
+    const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
+    const int cardHeight = qMax(150, qRound(cardWidth * 0.55));
 
     int row = 0;
     int col = 0;
     for (int i = 0; i < m_filteredRules.size(); ++i) {
         QWidget *card = createRuleCard(m_filteredRules[i], i + 1);
+        card->setFixedSize(cardWidth, cardHeight);
         m_gridLayout->addWidget(card, row, col);
         col++;
         if (col >= columns) {
@@ -285,7 +294,9 @@ void RulesView::rebuildGrid()
             row++;
         }
     }
-    m_gridLayout->setColumnStretch(columns, 1);
+    for (int i = 0; i < columns; ++i) {
+        m_gridLayout->setColumnStretch(i, 1);
+    }
 }
 
 void RulesView::updateEmptyState()
@@ -469,7 +480,7 @@ void RulesView::updateStyle()
             font-family: 'Consolas', 'Monaco', monospace;
         }
         #RuleProxyTag {
-            padding: 4px 8px;
+            padding: 6px 10px;
             border-radius: 10px;
             font-size: 11px;
             font-weight: 600;

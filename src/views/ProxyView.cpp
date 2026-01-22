@@ -179,13 +179,13 @@ void ProxyView::updateStyle()
     .arg(tm.getColorString("border"))
     .arg(tm.getColorString("bg-tertiary"))
     .arg(tm.getColorString("primary"))
-    .arg(tm.getColorString("primary") + "22"));
+    );
 
     m_treeWidget->setStyleSheet(QString(R"(
         QTreeWidget {
             background-color: transparent;
             border: none;
-            color: %3;
+            color: %1;
             outline: none;
         }
         QTreeView::branch {
@@ -202,19 +202,19 @@ void ProxyView::updateStyle()
             color: #ffffff;
         }
         QTreeWidget::item:selected {
-            background-color: %4;
-            color: %5;
+            background-color: %2;
+            color: %3;
         }
         QTreeWidget::item:hover:!selected {
-            background-color: %4;
-            color: %5;
+            background-color: %2;
+            color: %3;
         }
         QTreeWidget::header, QHeaderView {
             background: transparent;
         }
         QHeaderView::section {
             background-color: transparent;
-            color: %8;
+            color: %4;
             padding: 8px;
             border: none;
             font-weight: bold;
@@ -226,14 +226,10 @@ void ProxyView::updateStyle()
             border-top-right-radius: 10px;
         }
     )")
-    .arg(tm.getColorString("bg-secondary"))
-    .arg(tm.getColorString("border"))
     .arg(tm.getColorString("text-primary"))
-    .arg(tm.getColorString("primary") + "30") // selection bg opacity
-    .arg(tm.getColorString("primary"))        // selection text color
-    .arg(tm.getColorString("primary") + "22") // hover bg (light blue)
-    .arg(tm.getColorString("bg-secondary"))   // header bg
-    .arg(tm.getColorString("text-secondary")) // header text
+    .arg(tm.getColorString("primary") + "30")
+    .arg(tm.getColorString("primary"))
+    .arg(tm.getColorString("text-secondary"))
     );
 }
 
@@ -320,7 +316,7 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             QFrame *groupCard = new QFrame;
             groupCard->setObjectName("ProxyGroupCard");
             QHBoxLayout *cardLayout = new QHBoxLayout(groupCard);
-            cardLayout->setContentsMargins(14, 10, 14, 10);
+            cardLayout->setContentsMargins(14, 12, 14, 12);
             cardLayout->setSpacing(10);
 
             QLabel *titleLabel = new QLabel(it.key());
@@ -352,7 +348,7 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             toggleBtn->setAutoRaise(true);
             cardLayout->addWidget(toggleBtn);
 
-            groupItem->setSizeHint(0, QSize(0, 64));
+            groupItem->setSizeHint(0, QSize(0, 72));
             groupItem->setText(1, QString());
             groupItem->setText(2, QString());
             m_treeWidget->setItemWidget(groupItem, 0, groupCard);

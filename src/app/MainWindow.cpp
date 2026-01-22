@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
     loadSettings();
     updateStyle(); // 搴旂敤鍒濆鏍峰紡
     
-    Logger::info("涓荤獥鍙ｅ垵濮嬪寲瀹屾垚");
+    Logger::info(QStringLiteral(u"\u4e3b\u7a97\u53e3\u521d\u59cb\u5316\u5b8c\u6210"));
 }
 
 MainWindow::~MainWindow()
@@ -251,6 +251,7 @@ void MainWindow::setupConnections()
     });
 
     m_homeView->updateStatus(m_kernelService->isRunning());
+    m_connectionsView->setAutoRefreshEnabled(m_kernelService->isRunning());
 }
 
 void MainWindow::onNavigationItemClicked(QListWidgetItem *item)
@@ -262,6 +263,7 @@ void MainWindow::onNavigationItemClicked(QListWidgetItem *item)
 void MainWindow::onKernelStatusChanged(bool running)
 {
     ThemeManager &tm = ThemeManager::instance();
+    m_connectionsView->setAutoRefreshEnabled(running);
     
     if (running) {
         m_startStopBtn->setText(tr("\u505c\u6b62"));
