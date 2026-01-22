@@ -105,6 +105,10 @@ set(RESOURCES
     resources/resources.qrc
 )
 
+if(WIN32)
+    list(APPEND RESOURCES resources/app.rc)
+endif()
+
 # 可执行文件
 add_executable(${PROJECT_NAME} WIN32
     ${SOURCES}
