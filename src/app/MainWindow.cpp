@@ -24,6 +24,7 @@
 #include "utils/Logger.h"
 #include "utils/ThemeManager.h"
 #include "storage/DatabaseService.h"
+#include "storage/AppSettings.h"
 #include "storage/ConfigManager.h"
 #include "network/SubscriptionService.h"
 #include "system/SystemProxy.h"
@@ -36,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     setupConnections();
     loadSettings();
+    if (m_homeView) {
+        m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
+    }
     updateStyle(); // 搴旂敤鍒濆鏍峰紡
     
     Logger::info(QStringLiteral(u"\u4e3b\u7a97\u53e3\u521d\u59cb\u5316\u5b8c\u6210"));
@@ -244,6 +248,7 @@ void MainWindow::setupConnections()
         } else {
             SystemProxy::clearProxy();
         }
+        AppSettings::instance().setSystemProxyEnabled(enabled);
     });
 
     connect(m_homeView, &HomeView::restartClicked, this, [this]() {

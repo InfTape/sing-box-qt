@@ -294,7 +294,13 @@ void SettingsView::loadSettings()
     m_mixedPortSpin->setValue(config.value("mixedPort").toInt(7890));
     m_apiPortSpin->setValue(config.value("apiPort").toInt(9090));
     m_autoStartCheck->setChecked(config.value("autoStart").toBool(false));
-    m_systemProxyCheck->setChecked(config.value("systemProxy").toBool(true));
+    bool systemProxyEnabled = false;
+    if (config.contains("systemProxyEnabled")) {
+        systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
+    } else {
+        systemProxyEnabled = config.value("systemProxy").toBool(false);
+    }
+    m_systemProxyCheck->setChecked(systemProxyEnabled);
 
     QJsonObject theme = DatabaseService::instance().getThemeConfig();
     QString themeName = theme.value("theme").toString("dark");
@@ -324,7 +330,9 @@ void SettingsView::saveSettings()
     config["mixedPort"] = m_mixedPortSpin->value();
     config["apiPort"] = m_apiPortSpin->value();
     config["autoStart"] = m_autoStartCheck->isChecked();
-    config["systemProxy"] = m_systemProxyCheck->isChecked();
+    const bool systemProxyEnabled = m_systemProxyCheck->isChecked();
+    config["systemProxyEnabled"] = systemProxyEnabled;
+    config["systemProxy"] = systemProxyEnabled;
 
     DatabaseService::instance().saveAppConfig(config);
 

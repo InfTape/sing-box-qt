@@ -18,6 +18,7 @@ class HomeView : public QWidget
 public:
     explicit HomeView(QWidget *parent = nullptr);
     bool isSystemProxyEnabled() const;
+    void setSystemProxyEnabled(bool enabled);
 
     void updateStatus(bool running);
     void updateTraffic(qint64 upload, qint64 download);

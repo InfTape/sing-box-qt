@@ -7,6 +7,7 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QMouseEvent>
+#include <QSignalBlocker>
 #include <QStyle>
 #include <functional>
 
@@ -600,6 +601,14 @@ void HomeView::updateStyle()
 bool HomeView::isSystemProxyEnabled() const
 {
     return m_systemProxySwitch && m_systemProxySwitch->isChecked();
+}
+
+void HomeView::setSystemProxyEnabled(bool enabled)
+{
+    if (!m_systemProxySwitch) return;
+    QSignalBlocker blocker(m_systemProxySwitch);
+    m_systemProxySwitch->setChecked(enabled);
+    setCardActive(m_systemProxyCard, enabled);
 }
 
 void HomeView::updateStatus(bool running)

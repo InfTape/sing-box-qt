@@ -72,7 +72,11 @@ void AppSettings::load()
     m_enableAppGroups = config.value("enableAppGroups").toBool(true);
     m_preferIpv6 = config.value("preferIpv6").toBool(false);
     m_dnsHijack = config.value("dnsHijack").toBool(true);
-    m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
+    if (config.contains("systemProxyEnabled")) {
+        m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
+    } else {
+        m_systemProxyEnabled = config.value("systemProxy").toBool(false);
+    }
     
     // URL 测试
     m_urltestUrl = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
@@ -86,7 +90,7 @@ void AppSettings::load()
 
 void AppSettings::save()
 {
-    QJsonObject config;
+    QJsonObject config = DatabaseService::instance().getAppConfig();
     
     // 端口
     config["mixedPort"] = m_mixedPort;
@@ -113,6 +117,7 @@ void AppSettings::save()
     config["preferIpv6"] = m_preferIpv6;
     config["dnsHijack"] = m_dnsHijack;
     config["systemProxyEnabled"] = m_systemProxyEnabled;
+    config["systemProxy"] = m_systemProxyEnabled;
     
     // URL 测试
     config["urltestUrl"] = m_urltestUrl;
