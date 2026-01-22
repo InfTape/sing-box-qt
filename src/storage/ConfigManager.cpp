@@ -733,7 +733,7 @@ QJsonArray ConfigManager::buildOutboundGroups()
     autoOutbound["url"] = settings.urltestUrl();
     autoOutbound["interrupt_exist_connections"] = true;
     autoOutbound["idle_timeout"] = "10m";
-    autoOutbound["interval"] = "30m";
+    autoOutbound["interval"] = "10m";
     autoOutbound["tolerance"] = 50;
     outbounds.append(autoOutbound);
 
@@ -915,7 +915,7 @@ void ConfigManager::updateUrltestAndSelector(QJsonArray &outbounds, const QStrin
     autoOutbound["interrupt_exist_connections"] = true;
     autoOutbound["idle_timeout"] = "10m";
     autoOutbound["url"] = settings.urltestUrl();
-    autoOutbound["interval"] = "30m";
+    autoOutbound["interval"] = "10m";
     autoOutbound["tolerance"] = 50;
     outbounds[autoIdx] = autoOutbound;
 
