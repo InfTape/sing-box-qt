@@ -45,6 +45,7 @@ private:
     QString m_configPath;
     bool m_running;
     bool m_stopRequested = false;
+    bool m_restartPending = false;
 };
 
 #endif // KERNELSERVICE_H

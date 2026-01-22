@@ -351,6 +351,14 @@ void MainWindow::setupConnections()
             if (m_logView) {
                 m_logView->appendLog(QString("[INFO] %1").arg(msg));
             }
+            if (m_kernelService && m_kernelService->isRunning()) {
+                const QString restartMsg = QStringLiteral(u"\u4ee3\u7406\u6a21\u5f0f\u5207\u6362\u5b8c\u6210\uff0c\u6b63\u5728\u91cd\u542f\u5185\u6838");
+                Logger::info(restartMsg);
+                if (m_logView) {
+                    m_logView->appendLog(QString("[INFO] %1").arg(restartMsg));
+                }
+                m_kernelService->restartWithConfig(configPath);
+            }
         } else {
             const QString msg = QStringLiteral(u"\u5207\u6362\u4ee3\u7406\u6a21\u5f0f\u5931\u8d25: %1").arg(error);
             Logger::error(msg);

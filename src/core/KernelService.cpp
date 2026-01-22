@@ -115,16 +115,18 @@ void KernelService::stop()
 
 void KernelService::restart()
 {
-    stop();
-    QTimer::singleShot(1000, this, [this]() {
-        start();
-    });
+    restartWithConfig(m_configPath);
 }
 
 void KernelService::restartWithConfig(const QString &configPath)
 {
     setConfigPath(configPath);
-    restart();
+    if (m_process && m_process->state() != QProcess::NotRunning) {
+        m_restartPending = true;
+        stop();
+        return;
+    }
+    start(m_configPath);
 }
 
 void KernelService::setConfigPath(const QString &configPath)
@@ -185,6 +187,11 @@ void KernelService::onProcessFinished(int exitCode, QProcess::ExitStatus exitSta
     Q_UNUSED(exitStatus)
     m_running = false;
     emit statusChanged(false);
+
+    if (m_restartPending) {
+        m_restartPending = false;
+        start(m_configPath);
+    }
 }
 
 void KernelService::onProcessError(QProcess::ProcessError error)
