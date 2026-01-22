@@ -1,6 +1,7 @@
 ﻿#include "SettingsView.h"
 #include "storage/DatabaseService.h"
 #include "system/UpdateService.h"
+#include "system/AutoStart.h"
 #include "utils/Logger.h"
 #include "network/HttpClient.h"
 #include "core/ProcessManager.h"
@@ -218,22 +219,24 @@ void SettingsView::setupUI()
     mainLayout->setContentsMargins(30, 30, 30, 30);
     mainLayout->setSpacing(20);
 
-    QString groupBoxStyle = R"(
+    ThemeManager &tm = ThemeManager::instance();
+    QString groupBoxStyle = QString(R"(
         QGroupBox {
-            background-color: #16213e;
+            background-color: %1;
             border: none;
             border-radius: 10px;
             margin-top: 20px;
             padding: 20px;
+            padding-top: 34px;
             font-weight: bold;
             color: #eaeaea;
         }
         QGroupBox::title {
             subcontrol-origin: margin;
-            left: 20px;
-            padding: 0 10px;
+            left: 12px;
+            padding: 0;
         }
-    )";
+    )").arg(tm.getColorString("panel-bg"));
 
     QString inputStyle = R"(
         QSpinBox, QLineEdit {
@@ -244,17 +247,18 @@ void SettingsView::setupUI()
             color: #eaeaea;
             min-width: 150px;
         }
+        QSpinBox::up-button, QSpinBox::down-button {
+            width: 0px;
+            height: 0px;
+            border: none;
+            margin: 0px;
+            padding: 0px;
+        }
+        QSpinBox::up-arrow, QSpinBox::down-arrow {
+            image: none;
+        }
         QCheckBox {
             color: #eaeaea;
-        }
-        QCheckBox::indicator {
-            width: 18px;
-            height: 18px;
-            border-radius: 10px;
-            background-color: #0f3460;
-        }
-        QCheckBox::indicator:checked {
-            background-color: #e94560;
         }
     )";
 
@@ -423,7 +427,15 @@ void SettingsView::loadSettings()
 
     m_mixedPortSpin->setValue(config.value("mixedPort").toInt(7890));
     m_apiPortSpin->setValue(config.value("apiPort").toInt(9090));
-    m_autoStartCheck->setChecked(config.value("autoStart").toBool(false));
+    bool autoStartWanted = config.value("autoStart").toBool(false);
+    if (AutoStart::isSupported()) {
+        if (autoStartWanted != AutoStart::isEnabled()) {
+            AutoStart::setEnabled(autoStartWanted);
+        }
+        m_autoStartCheck->setChecked(AutoStart::isEnabled());
+    } else {
+        m_autoStartCheck->setChecked(autoStartWanted);
+    }
     bool systemProxyEnabled = false;
     if (config.contains("systemProxyEnabled")) {
         systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
@@ -459,7 +471,15 @@ void SettingsView::saveSettings()
     QJsonObject config;
     config["mixedPort"] = m_mixedPortSpin->value();
     config["apiPort"] = m_apiPortSpin->value();
-    config["autoStart"] = m_autoStartCheck->isChecked();
+    bool autoStartEnabled = m_autoStartCheck->isChecked();
+    if (AutoStart::isSupported()) {
+        if (!AutoStart::setEnabled(autoStartEnabled)) {
+            autoStartEnabled = AutoStart::isEnabled();
+            m_autoStartCheck->setChecked(autoStartEnabled);
+            QMessageBox::warning(this, tr("提示"), tr("设置开机自启动失败"));
+        }
+    }
+    config["autoStart"] = autoStartEnabled;
     const bool systemProxyEnabled = m_systemProxyCheck->isChecked();
     config["systemProxyEnabled"] = systemProxyEnabled;
     config["systemProxy"] = systemProxyEnabled;

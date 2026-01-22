@@ -39,9 +39,36 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     setupConnections();
     loadSettings();
+    auto applySettingsToActiveConfig = [this]() {
+        QString configPath;
+        if (m_subscriptionView && m_subscriptionView->getService()) {
+            configPath = m_subscriptionView->getService()->getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            configPath = ConfigManager::instance().getActiveConfigPath();
+        }
+        if (!configPath.isEmpty()) {
+            QJsonObject config = ConfigManager::instance().loadConfig(configPath);
+            if (!config.isEmpty()) {
+                ConfigManager::instance().applySettingsToConfig(config);
+                ConfigManager::instance().saveConfig(configPath, config);
+                if (m_kernelService && m_kernelService->isRunning()) {
+                    m_kernelService->restartWithConfig(configPath);
+                }
+            }
+        }
+    };
+
+    bool tunEnabled = AppSettings::instance().tunEnabled();
+    if (tunEnabled) {
+        AppSettings::instance().setTunEnabled(false);
+        tunEnabled = false;
+        applySettingsToActiveConfig();
+    }
+
     if (m_homeView) {
         m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
-        m_homeView->setTunModeEnabled(AppSettings::instance().tunEnabled());
+        m_homeView->setTunModeEnabled(tunEnabled);
     }
     updateStyle(); // 搴旂敤鍒濆鏍峰紡
     

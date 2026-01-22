@@ -212,6 +212,27 @@ QString ThemeManager::getInputStyle() const
             selection-background-color: %4;
             border: 1px solid %2;
         }
+        QCheckBox {
+            color: %3;
+            spacing: 8px;
+        }
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid %2;
+            background-color: %1;
+        }
+        QCheckBox::indicator:checked {
+            background-color: %4;
+            border-color: %4;
+            image: url(:/icons/check.svg);
+        }
+        QCheckBox::indicator:disabled {
+            border-color: %2;
+            background-color: %1;
+            image: none;
+        }
     )")
     .arg(m_colors["input-bg"])
     .arg(m_colors["border"])

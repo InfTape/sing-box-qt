@@ -3,6 +3,7 @@
     <qresource prefix="/">
         <file>icons/app.png</file>
         <file>icons/tray.png</file>
+        <file>icons/check.svg</file>
     </qresource>
     <qresource prefix="/translations">
         <!-- 翻译文件将在构建时生成 -->

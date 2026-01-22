@@ -274,6 +274,7 @@ void LogView::setupUI()
 
     m_emptyState = new QFrame;
     m_emptyState->setObjectName("EmptyState");
+    m_emptyState->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QVBoxLayout *emptyLayout = new QVBoxLayout(m_emptyState);
     emptyLayout->setContentsMargins(0, 0, 0, 0);
     emptyLayout->setSpacing(10);
@@ -546,6 +547,13 @@ void LogView::updateStyle()
             border: 1px solid %4;
             border-radius: 16px;
         }
+        #LogCard QScrollArea {
+            background: transparent;
+            border: none;
+        }
+        #LogCard QScrollArea > QWidget > QWidget {
+            background: transparent;
+        }
         #SearchInput, #FilterSelect {
             background-color: %5;
             border: 1px solid %4;
@@ -636,6 +644,9 @@ void LogView::updateStyle()
         }
         #EmptyIcon {
             font-size: 24px;
+        }
+        #EmptyState {
+            background: transparent;
         }
     )")
     .arg(tm.getColorString("text-primary"))

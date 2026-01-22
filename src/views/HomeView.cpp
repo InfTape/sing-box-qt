@@ -558,8 +558,9 @@ void HomeView::updateStyle()
             border-radius: 10px;
             background-color: %26;
             outline: none;
+            image: none;
         }
-        #ModeSwitch::indicator:checked { background-color: %21; }
+        #ModeSwitch::indicator:checked { background-color: %21; image: none; }
         #ModeRadio { spacing: 0; outline: none; }
         #ModeRadio:focus { outline: none; }
         #ModeRadio::indicator {
@@ -569,11 +570,13 @@ void HomeView::updateStyle()
             border: 2px solid %15;
             background: transparent;
             outline: none;
+            image: none;
         }
         #ModeRadio::indicator:focus { outline: none; }
         #ModeRadio::indicator:checked {
             border: 2px solid %21;
             background-color: %21;
+            image: none;
         }
     )")
         .arg(tm.getColorString("text-primary"))

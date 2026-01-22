@@ -54,6 +54,7 @@ set(SOURCES
     src/storage/ConfigManager.cpp
     src/storage/AppSettings.cpp
     src/system/SystemProxy.cpp
+    src/system/AutoStart.cpp
     src/system/UpdateService.cpp
     src/system/AdminHelper.cpp
     src/views/HomeView.cpp
@@ -83,6 +84,7 @@ set(HEADERS
     src/storage/ConfigManager.h
     src/storage/AppSettings.h
     src/system/SystemProxy.h
+    src/system/AutoStart.h
     src/system/UpdateService.h
     src/system/AdminHelper.h
     src/views/HomeView.h
