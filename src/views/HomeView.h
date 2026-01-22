@@ -4,7 +4,6 @@
 #include <QElapsedTimer>
 #include <QLabel>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -19,6 +18,8 @@ public:
     explicit HomeView(QWidget *parent = nullptr);
     bool isSystemProxyEnabled() const;
     void setSystemProxyEnabled(bool enabled);
+    bool isTunModeEnabled() const;
+    void setTunModeEnabled(bool enabled);
 
     void updateStatus(bool running);
     void updateTraffic(qint64 upload, qint64 download);
@@ -70,8 +71,8 @@ private:
 
     QCheckBox *m_systemProxySwitch = nullptr;
     QCheckBox *m_tunModeSwitch = nullptr;
-    QRadioButton *m_globalModeRadio = nullptr;
-    QRadioButton *m_ruleModeRadio = nullptr;
+    QCheckBox *m_globalModeSwitch = nullptr;
+    QCheckBox *m_ruleModeSwitch = nullptr;
 
     bool m_isRunning = false;
     qint64 m_totalUpload = 0;

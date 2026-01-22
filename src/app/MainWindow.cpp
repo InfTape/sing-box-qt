@@ -12,6 +12,7 @@
 #include <QJsonValue>
 #include <QTimer>
 #include <QFile>
+#include <QMessageBox>
 #include "views/HomeView.h"
 #include "views/ProxyView.h"
 #include "views/SubscriptionView.h"
@@ -27,6 +28,7 @@
 #include "storage/AppSettings.h"
 #include "storage/ConfigManager.h"
 #include "network/SubscriptionService.h"
+#include "system/AdminHelper.h"
 #include "system/SystemProxy.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -39,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     loadSettings();
     if (m_homeView) {
         m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
+        m_homeView->setTunModeEnabled(AppSettings::instance().tunEnabled());
     }
     updateStyle(); // 搴旂敤鍒濆鏍峰紡
     
@@ -249,6 +252,70 @@ void MainWindow::setupConnections()
             SystemProxy::clearProxy();
         }
         AppSettings::instance().setSystemProxyEnabled(enabled);
+        if (enabled) {
+            AppSettings::instance().setTunEnabled(false);
+            if (m_homeView) {
+                m_homeView->setTunModeEnabled(false);
+            }
+        }
+    });
+
+    connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled) {
+        if (enabled && !AdminHelper::isAdmin()) {
+            QMessageBox box(this);
+            box.setIcon(QMessageBox::Warning);
+            box.setWindowTitle(tr("需要管理员权限"));
+            box.setText(tr("切换到 TUN 模式需要以管理员权限重启应用，是否立即以管理员身份重启？"));
+            box.addButton(tr("取消"), QMessageBox::RejectRole);
+            auto *restartBtn = box.addButton(tr("以管理员身份重启"), QMessageBox::AcceptRole);
+            box.setDefaultButton(restartBtn);
+            box.exec();
+
+            if (box.clickedButton() == restartBtn) {
+                AppSettings::instance().setSystemProxyEnabled(false);
+                AppSettings::instance().setTunEnabled(true);
+                if (!AdminHelper::restartAsAdmin()) {
+                    AppSettings::instance().setTunEnabled(false);
+                    if (m_homeView) {
+                        m_homeView->setTunModeEnabled(false);
+                    }
+                }
+            } else {
+                if (m_homeView) {
+                    m_homeView->setTunModeEnabled(false);
+                }
+                AppSettings::instance().setTunEnabled(false);
+            }
+            return;
+        }
+
+        if (enabled) {
+            SystemProxy::clearProxy();
+            AppSettings::instance().setSystemProxyEnabled(false);
+            if (m_homeView) {
+                m_homeView->setSystemProxyEnabled(false);
+            }
+        }
+
+        AppSettings::instance().setTunEnabled(enabled);
+
+        QString configPath;
+        if (m_subscriptionView && m_subscriptionView->getService()) {
+            configPath = m_subscriptionView->getService()->getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            configPath = ConfigManager::instance().getActiveConfigPath();
+        }
+        if (!configPath.isEmpty()) {
+            QJsonObject config = ConfigManager::instance().loadConfig(configPath);
+            if (!config.isEmpty()) {
+                ConfigManager::instance().applySettingsToConfig(config);
+                ConfigManager::instance().saveConfig(configPath, config);
+                if (m_kernelService && m_kernelService->isRunning()) {
+                    m_kernelService->restartWithConfig(configPath);
+                }
+            }
+        }
     });
 
     connect(m_homeView, &HomeView::restartClicked, this, [this]() {

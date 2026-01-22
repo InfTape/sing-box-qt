@@ -186,12 +186,14 @@ void HomeView::setupUI()
     m_systemProxySwitch = new QCheckBox;
     m_systemProxySwitch->setObjectName("ModeSwitch");
     m_systemProxySwitch->setCursor(Qt::PointingHandCursor);
+    m_systemProxySwitch->setFocusPolicy(Qt::NoFocus);
     m_systemProxySwitch->setText(QString());
     m_systemProxySwitch->setFixedSize(40, 22);
 
     m_tunModeSwitch = new QCheckBox;
     m_tunModeSwitch->setObjectName("ModeSwitch");
     m_tunModeSwitch->setCursor(Qt::PointingHandCursor);
+    m_tunModeSwitch->setFocusPolicy(Qt::NoFocus);
     m_tunModeSwitch->setText(QString());
     m_tunModeSwitch->setFixedSize(40, 22);
 
@@ -219,31 +221,35 @@ void HomeView::setupUI()
     nodeTitle->setObjectName("SectionTitle");
     nodeLayout->addWidget(nodeTitle);
 
-    m_globalModeRadio = new QRadioButton;
-    m_globalModeRadio->setObjectName("ModeRadio");
-    m_globalModeRadio->setCursor(Qt::PointingHandCursor);
-    m_globalModeRadio->setText(QString());
-    m_globalModeRadio->setFixedSize(20, 20);
+    m_globalModeSwitch = new QCheckBox;
+    m_globalModeSwitch->setObjectName("ModeSwitch");
+    m_globalModeSwitch->setCursor(Qt::PointingHandCursor);
+    m_globalModeSwitch->setFocusPolicy(Qt::NoFocus);
+    m_globalModeSwitch->setText(QString());
+    m_globalModeSwitch->setFixedSize(40, 22);
+    m_globalModeSwitch->setProperty("exclusiveSwitch", true);
 
-    m_ruleModeRadio = new QRadioButton;
-    m_ruleModeRadio->setObjectName("ModeRadio");
-    m_ruleModeRadio->setCursor(Qt::PointingHandCursor);
-    m_ruleModeRadio->setText(QString());
-    m_ruleModeRadio->setFixedSize(20, 20);
+    m_ruleModeSwitch = new QCheckBox;
+    m_ruleModeSwitch->setObjectName("ModeSwitch");
+    m_ruleModeSwitch->setCursor(Qt::PointingHandCursor);
+    m_ruleModeSwitch->setFocusPolicy(Qt::NoFocus);
+    m_ruleModeSwitch->setText(QString());
+    m_ruleModeSwitch->setFixedSize(40, 22);
+    m_ruleModeSwitch->setProperty("exclusiveSwitch", true);
 
     QButtonGroup *modeGroup = new QButtonGroup(this);
     modeGroup->setExclusive(true);
-    modeGroup->addButton(m_globalModeRadio);
-    modeGroup->addButton(m_ruleModeRadio);
+    modeGroup->addButton(m_globalModeSwitch);
+    modeGroup->addButton(m_ruleModeSwitch);
 
     m_globalModeCard = createModeItem("GLB", "primary",
                                       tr("全局模式"),
                                       tr("全部流量走代理"),
-                                      m_globalModeRadio);
+                                      m_globalModeSwitch);
     m_ruleModeCard = createModeItem("RULE", "primary",
                                     tr("规则模式"),
                                     tr("根据规则智能分流"),
-                                    m_ruleModeRadio);
+                                    m_ruleModeSwitch);
 
     nodeLayout->addWidget(m_globalModeCard);
     nodeLayout->addWidget(m_ruleModeCard);
@@ -254,7 +260,7 @@ void HomeView::setupUI()
     mainLayout->addStretch();
 
     // Default state
-    m_ruleModeRadio->setChecked(true);
+    m_ruleModeSwitch->setChecked(true);
     setCardActive(m_ruleModeCard, true);
     setCardActive(m_globalModeCard, false);
     setCardActive(m_systemProxyCard, false);
@@ -264,11 +270,19 @@ void HomeView::setupUI()
     connect(m_restartBtn, &QPushButton::clicked, this, &HomeView::restartClicked);
     connect(m_systemProxySwitch, &QCheckBox::toggled, this, &HomeView::onSystemProxyToggled);
     connect(m_tunModeSwitch, &QCheckBox::toggled, this, &HomeView::onTunModeToggled);
-    connect(m_globalModeRadio, &QRadioButton::toggled, this, [this](bool checked) {
-        if (checked) onGlobalModeClicked();
+    connect(m_globalModeSwitch, &QCheckBox::toggled, this, [this](bool checked) {
+        if (checked) {
+            onGlobalModeClicked();
+        } else if (m_ruleModeSwitch && !m_ruleModeSwitch->isChecked()) {
+            m_globalModeSwitch->setChecked(true);
+        }
     });
-    connect(m_ruleModeRadio, &QRadioButton::toggled, this, [this](bool checked) {
-        if (checked) onRuleModeClicked();
+    connect(m_ruleModeSwitch, &QCheckBox::toggled, this, [this](bool checked) {
+        if (checked) {
+            onRuleModeClicked();
+        } else if (m_globalModeSwitch && !m_globalModeSwitch->isChecked()) {
+            m_ruleModeSwitch->setChecked(true);
+        }
     });
 }
 
@@ -369,13 +383,16 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
     }
 
     if (auto checkbox = qobject_cast<QCheckBox*>(control)) {
-        card->onClick = [checkbox]() {
-            checkbox->toggle();
-        };
-    } else if (auto radio = qobject_cast<QRadioButton*>(control)) {
-        card->onClick = [radio]() {
-            radio->setChecked(true);
-        };
+        const bool exclusive = checkbox->property("exclusiveSwitch").toBool();
+        if (exclusive) {
+            card->onClick = [checkbox]() {
+                checkbox->setChecked(true);
+            };
+        } else {
+            card->onClick = [checkbox]() {
+                checkbox->toggle();
+            };
+        }
     }
 
     return card;
@@ -533,22 +550,27 @@ void HomeView::updateStyle()
             font-size: 12px;
             color: %17;
         }
-        #ModeSwitch { spacing: 0; }
+        #ModeSwitch { spacing: 0; outline: none; }
+        #ModeSwitch:focus { outline: none; }
         #ModeSwitch::indicator {
             width: 36px;
             height: 20px;
             border-radius: 10px;
             background-color: %26;
+            outline: none;
         }
         #ModeSwitch::indicator:checked { background-color: %21; }
-        #ModeRadio { spacing: 0; }
+        #ModeRadio { spacing: 0; outline: none; }
+        #ModeRadio:focus { outline: none; }
         #ModeRadio::indicator {
             width: 18px;
             height: 18px;
             border-radius: 9px;
             border: 2px solid %15;
             background: transparent;
+            outline: none;
         }
+        #ModeRadio::indicator:focus { outline: none; }
         #ModeRadio::indicator:checked {
             border: 2px solid %21;
             background-color: %21;
@@ -609,6 +631,19 @@ void HomeView::setSystemProxyEnabled(bool enabled)
     QSignalBlocker blocker(m_systemProxySwitch);
     m_systemProxySwitch->setChecked(enabled);
     setCardActive(m_systemProxyCard, enabled);
+}
+
+bool HomeView::isTunModeEnabled() const
+{
+    return m_tunModeSwitch && m_tunModeSwitch->isChecked();
+}
+
+void HomeView::setTunModeEnabled(bool enabled)
+{
+    if (!m_tunModeSwitch) return;
+    QSignalBlocker blocker(m_tunModeSwitch);
+    m_tunModeSwitch->setChecked(enabled);
+    setCardActive(m_tunModeCard, enabled);
 }
 
 void HomeView::updateStatus(bool running)
