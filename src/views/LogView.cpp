@@ -16,10 +16,142 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QVBoxLayout>
+#include <QMenu>
+#include <QPainter>
+#include <QPainterPath>
 #include <utility>
 
 namespace {
 constexpr int kMaxLogEntries = 20;
+
+class RoundedMenu : public QMenu
+{
+public:
+    explicit RoundedMenu(QWidget *parent = nullptr)
+        : QMenu(parent)
+    {
+        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        setAttribute(Qt::WA_NoSystemBackground, true);
+    }
+
+    void setThemeColors(const QColor &bg, const QColor &border)
+    {
+        m_bgColor = bg;
+        m_borderColor = border;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
+        QPainterPath path;
+        path.addRoundedRect(rect, 10, 10);
+
+        painter.fillPath(path, m_bgColor);
+        painter.setPen(QPen(m_borderColor, 1));
+        painter.drawPath(path);
+
+        QMenu::paintEvent(event);
+    }
+
+private:
+    QColor m_bgColor = QColor(30, 41, 59);
+    QColor m_borderColor = QColor(90, 169, 255, 180);
+};
+
+class MenuComboBox : public QComboBox
+{
+public:
+    explicit MenuComboBox(QWidget *parent = nullptr)
+        : QComboBox(parent)
+    {
+        m_menu = new RoundedMenu(this);
+        m_menu->setObjectName("ComboMenu");
+        updateMenuStyle();
+
+        ThemeManager &tm = ThemeManager::instance();
+        connect(&tm, &ThemeManager::themeChanged, this, [this]() {
+            updateMenuStyle();
+        });
+    }
+
+protected:
+    void showPopup() override
+    {
+        if (!m_menu) return;
+        m_menu->clear();
+
+        for (int i = 0; i < count(); ++i) {
+            QAction *action = m_menu->addAction(itemText(i));
+            action->setCheckable(true);
+            action->setChecked(i == currentIndex());
+            connect(action, &QAction::triggered, this, [this, i]() {
+                setCurrentIndex(i);
+            });
+        }
+
+        const int menuWidth = qMax(width(), 180);
+        m_menu->setFixedWidth(menuWidth);
+        m_menu->popup(mapToGlobal(QPoint(0, height())));
+    }
+
+    void hidePopup() override
+    {
+        if (m_menu) {
+            m_menu->hide();
+        }
+    }
+
+private:
+    void updateMenuStyle()
+    {
+        if (!m_menu) return;
+        ThemeManager &tm = ThemeManager::instance();
+        m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+        m_menu->setStyleSheet(QString(R"(
+            #ComboMenu {
+                background: transparent;
+                border: none;
+                padding: 6px;
+            }
+            #ComboMenu::panel {
+                background: transparent;
+                border: none;
+            }
+            #ComboMenu::item {
+                color: %1;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+            #ComboMenu::item:selected {
+                background-color: %2;
+                color: white;
+            }
+            #ComboMenu::item:checked {
+                color: %4;
+            }
+            #ComboMenu::item:checked:selected {
+                color: %4;
+            }
+            #ComboMenu::separator {
+                height: 1px;
+                background-color: %3;
+                margin: 6px 4px;
+            }
+        )")
+        .arg(tm.getColorString("text-primary"))
+        .arg(tm.getColorString("bg-tertiary"))
+        .arg(tm.getColorString("border"))
+        .arg(tm.getColorString("primary")));
+    }
+
+    RoundedMenu *m_menu = nullptr;
+};
 }
 
 LogView::LogView(QWidget *parent)
@@ -79,11 +211,11 @@ void LogView::setupUI()
     m_exportBtn->setObjectName("ActionBtn");
     m_exportBtn->setCursor(Qt::PointingHandCursor);
 
+    controlsLayout->addWidget(m_autoScroll);
+    controlsLayout->addSpacing(10);
     controlsLayout->addWidget(m_totalTag);
     controlsLayout->addWidget(m_errorTag);
     controlsLayout->addWidget(m_warningTag);
-    controlsLayout->addSpacing(6);
-    controlsLayout->addWidget(m_autoScroll);
     controlsLayout->addSpacing(6);
     controlsLayout->addWidget(m_clearBtn);
     controlsLayout->addWidget(m_copyBtn);
@@ -107,7 +239,7 @@ void LogView::setupUI()
     m_searchEdit->setPlaceholderText(tr("搜索日志内容..."));
     m_searchEdit->setClearButtonEnabled(true);
 
-    m_typeFilter = new QComboBox;
+    m_typeFilter = new MenuComboBox;
     m_typeFilter->setObjectName("FilterSelect");
     m_typeFilter->addItem(tr("类型"), QString());
     m_typeFilter->addItem("DEBUG", "debug");
@@ -425,9 +557,9 @@ void LogView::updateStyle()
             border-color: %6;
         }
         #TagInfo, #TagError, #TagWarning {
-            padding: 4px 8px;
+            padding: 6px 20px;
             border-radius: 10px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
         }
         #TagInfo { color: %1; background: %5; }

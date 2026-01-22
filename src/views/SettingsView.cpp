@@ -24,10 +24,143 @@
 #include <QSysInfo>
 #include <QJsonObject>
 #include <QOperatingSystemVersion>
+#include <QMenu>
+#include <QPainter>
+#include <QPainterPath>
 #include <functional>
 #include "utils/AppPaths.h"
+#include "utils/ThemeManager.h"
 
 namespace {
+class RoundedMenu : public QMenu
+{
+public:
+    explicit RoundedMenu(QWidget *parent = nullptr)
+        : QMenu(parent)
+    {
+        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        setAttribute(Qt::WA_NoSystemBackground, true);
+    }
+
+    void setThemeColors(const QColor &bg, const QColor &border)
+    {
+        m_bgColor = bg;
+        m_borderColor = border;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
+        QPainterPath path;
+        path.addRoundedRect(rect, 10, 10);
+
+        painter.fillPath(path, m_bgColor);
+        painter.setPen(QPen(m_borderColor, 1));
+        painter.drawPath(path);
+
+        QMenu::paintEvent(event);
+    }
+
+private:
+    QColor m_bgColor = QColor(30, 41, 59);
+    QColor m_borderColor = QColor(90, 169, 255, 180);
+};
+
+class MenuComboBox : public QComboBox
+{
+public:
+    explicit MenuComboBox(QWidget *parent = nullptr)
+        : QComboBox(parent)
+    {
+        m_menu = new RoundedMenu(this);
+        m_menu->setObjectName("ComboMenu");
+        updateMenuStyle();
+
+        ThemeManager &tm = ThemeManager::instance();
+        connect(&tm, &ThemeManager::themeChanged, this, [this]() {
+            updateMenuStyle();
+        });
+    }
+
+protected:
+    void showPopup() override
+    {
+        if (!m_menu) return;
+        m_menu->clear();
+
+        for (int i = 0; i < count(); ++i) {
+            QAction *action = m_menu->addAction(itemText(i));
+            action->setCheckable(true);
+            action->setChecked(i == currentIndex());
+            connect(action, &QAction::triggered, this, [this, i]() {
+                setCurrentIndex(i);
+            });
+        }
+
+        const int menuWidth = qMax(width(), 180);
+        m_menu->setFixedWidth(menuWidth);
+        m_menu->popup(mapToGlobal(QPoint(0, height())));
+    }
+
+    void hidePopup() override
+    {
+        if (m_menu) {
+            m_menu->hide();
+        }
+    }
+
+private:
+    void updateMenuStyle()
+    {
+        if (!m_menu) return;
+        ThemeManager &tm = ThemeManager::instance();
+        m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+        m_menu->setStyleSheet(QString(R"(
+            #ComboMenu {
+                background: transparent;
+                border: none;
+                padding: 6px;
+            }
+            #ComboMenu::panel {
+                background: transparent;
+                border: none;
+            }
+            #ComboMenu::item {
+                color: %1;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+            #ComboMenu::item:selected {
+                background-color: %2;
+                color: white;
+            }
+            #ComboMenu::item:checked {
+                color: %4;
+            }
+            #ComboMenu::item:checked:selected {
+                color: %4;
+            }
+            #ComboMenu::separator {
+                height: 1px;
+                background-color: %3;
+                margin: 6px 4px;
+            }
+        )")
+        .arg(tm.getColorString("text-primary"))
+        .arg(tm.getColorString("bg-tertiary"))
+        .arg(tm.getColorString("border"))
+        .arg(tm.getColorString("primary")));
+    }
+
+    RoundedMenu *m_menu = nullptr;
+};
+
 QString normalizeVersionTag(const QString &raw)
 {
     QString ver = raw.trimmed();
@@ -103,7 +236,7 @@ void SettingsView::setupUI()
     )";
 
     QString inputStyle = R"(
-        QSpinBox, QLineEdit, QComboBox {
+        QSpinBox, QLineEdit {
             background-color: #0f3460;
             border: none;
             border-radius: 10px;
@@ -158,13 +291,11 @@ void SettingsView::setupUI()
     QFormLayout *appearanceLayout = new QFormLayout(appearanceGroup);
     appearanceLayout->setSpacing(15);
 
-    m_themeCombo = new QComboBox;
+    m_themeCombo = new MenuComboBox;
     m_themeCombo->addItems({tr("深色"), tr("浅色"), tr("跟随系统")});
-    m_themeCombo->setStyleSheet(inputStyle);
 
-    m_languageCombo = new QComboBox;
+    m_languageCombo = new MenuComboBox;
     m_languageCombo->addItems({tr("简体中文"), "English", tr("日本語"), tr("Русский")});
-    m_languageCombo->setStyleSheet(inputStyle);
 
     appearanceLayout->addRow(tr("主题:"), m_themeCombo);
     appearanceLayout->addRow(tr("语言:"), m_languageCombo);
@@ -178,9 +309,8 @@ void SettingsView::setupUI()
     m_kernelVersionLabel = new QLabel(tr("未安装"));
     m_kernelVersionLabel->setStyleSheet("color: #e94560; font-weight: bold;");
 
-    m_kernelVersionCombo = new QComboBox;
+    m_kernelVersionCombo = new MenuComboBox;
     m_kernelVersionCombo->addItem(tr("最新版本"));
-    m_kernelVersionCombo->setStyleSheet(inputStyle);
 
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
