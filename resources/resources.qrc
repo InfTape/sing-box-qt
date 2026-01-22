@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>icons/app.png</file>
+        <file>icons/tray.png</file>
+    </qresource>
+    <qresource prefix="/translations">
+        <!-- 翻译文件将在构建时生成 -->
+    </qresource>
+</RCC>

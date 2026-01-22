@@ -1,0 +1,833 @@
+﻿
+#include "SubscriptionView.h"
+#include "network/SubscriptionService.h"
+#include "utils/ThemeManager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QMessageBox>
+#include <QMenu>
+#include <QClipboard>
+#include <QApplication>
+#include <QDialog>
+#include <QTabWidget>
+#include <QTextEdit>
+#include <QFormLayout>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QDateTime>
+#include <QJsonDocument>
+#include <QJsonParseError>
+#include <QPainter>
+#include <QPainterPath>
+
+class RoundedMenu : public QMenu
+{
+public:
+    explicit RoundedMenu(QWidget *parent = nullptr)
+        : QMenu(parent)
+    {
+        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        setAttribute(Qt::WA_NoSystemBackground, true);
+    }
+
+    void setThemeColors(const QColor &bg, const QColor &border)
+    {
+        m_bgColor = bg;
+        m_borderColor = border;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
+        QPainterPath path;
+        path.addRoundedRect(rect, 10, 10);
+
+        painter.fillPath(path, m_bgColor);
+        painter.setPen(QPen(m_borderColor, 1));
+        painter.drawPath(path);
+
+        QMenu::paintEvent(event);
+    }
+
+private:
+    QColor m_bgColor = QColor(30, 41, 59);
+    QColor m_borderColor = QColor(255, 255, 255, 26);
+};
+
+namespace {
+QString formatBytes(qint64 bytes)
+{
+    if (bytes <= 0) return "0 B";
+    static const char *units[] = {"B", "KB", "MB", "GB", "TB"};
+    double value = static_cast<double>(bytes);
+    int index = 0;
+    while (value >= 1024.0 && index < 4) {
+        value /= 1024.0;
+        index++;
+    }
+    return QString::number(value, 'f', 2) + " " + units[index];
+}
+
+QString formatTimestamp(qint64 ms)
+{
+    if (ms <= 0) return QObject::tr("从未更新");
+    return QDateTime::fromMSecsSinceEpoch(ms).toString("yyyy-MM-dd HH:mm:ss");
+}
+
+QString formatExpireTime(qint64 seconds)
+{
+    if (seconds <= 0) return QString();
+    return QObject::tr("到期: %1").arg(QDateTime::fromSecsSinceEpoch(seconds).toString("yyyy-MM-dd HH:mm"));
+}
+
+bool isJsonText(const QString &text)
+{
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(text.toUtf8(), &err);
+    return err.error == QJsonParseError::NoError && doc.isObject();
+}
+} // namespace
+
+class SubscriptionFormDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit SubscriptionFormDialog(QWidget *parent = nullptr)
+        : QDialog(parent)
+        , m_nameEdit(new QLineEdit)
+        , m_tabs(new QTabWidget)
+        , m_urlEdit(new QTextEdit)
+        , m_manualEdit(new QTextEdit)
+        , m_uriEdit(new QTextEdit)
+        , m_useOriginalCheck(new QCheckBox(tr("使用原始配置")))
+        , m_autoUpdateCombo(new QComboBox)
+        , m_hintLabel(new QLabel)
+    {
+        setWindowTitle(tr("订阅管理"));
+        setModal(true);
+        setMinimumWidth(520);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+
+        QFormLayout *formLayout = new QFormLayout;
+        formLayout->addRow(tr("名称"), m_nameEdit);
+
+        m_tabs->addTab(createTextTab(m_urlEdit, tr("订阅链接")), tr("链接"));
+        m_tabs->addTab(createTextTab(m_manualEdit, tr("JSON 配置")), tr("手动配置"));
+        m_tabs->addTab(createTextTab(m_uriEdit, tr("URI 列表")), tr("URI 列表"));
+
+        m_autoUpdateCombo->addItem(tr("关闭"), 0);
+        m_autoUpdateCombo->addItem(tr("6 小时"), 360);
+        m_autoUpdateCombo->addItem(tr("12 小时"), 720);
+        m_autoUpdateCombo->addItem(tr("1 天"), 1440);
+
+        m_hintLabel->setWordWrap(true);
+        m_hintLabel->setStyleSheet("color: #f59e0b; font-size: 12px;");
+        m_hintLabel->setText(tr("使用原始配置时，高级订阅模板不会生效"));
+        m_hintLabel->setVisible(false);
+
+        layout->addLayout(formLayout);
+        layout->addWidget(m_tabs);
+        layout->addWidget(m_useOriginalCheck);
+        layout->addWidget(m_hintLabel);
+        QLabel *autoUpdateLabel = new QLabel(tr("自动更新"));
+        layout->addWidget(autoUpdateLabel);
+        layout->addWidget(m_autoUpdateCombo);
+
+        QHBoxLayout *actions = new QHBoxLayout;
+        QPushButton *cancelBtn = new QPushButton(tr("取消"));
+        QPushButton *okBtn = new QPushButton(tr("确认"));
+        actions->addStretch();
+        actions->addWidget(cancelBtn);
+        actions->addWidget(okBtn);
+        layout->addLayout(actions);
+
+        connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+        connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
+        connect(m_tabs, &QTabWidget::currentChanged, this, &SubscriptionFormDialog::updateState);
+        connect(m_useOriginalCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
+
+        updateState();
+    }
+
+    void setEditData(const SubscriptionInfo &info)
+    {
+        m_nameEdit->setText(info.name);
+        if (info.isManual) {
+            if (isJsonText(info.manualContent)) {
+                m_tabs->setCurrentIndex(1);
+                m_manualEdit->setPlainText(info.manualContent);
+            } else {
+                m_tabs->setCurrentIndex(2);
+                m_uriEdit->setPlainText(info.manualContent);
+            }
+        } else {
+            m_tabs->setCurrentIndex(0);
+            m_urlEdit->setPlainText(info.url);
+        }
+        m_useOriginalCheck->setChecked(info.useOriginalConfig);
+        m_autoUpdateCombo->setCurrentIndex(indexForInterval(info.autoUpdateIntervalMinutes));
+        updateState();
+    }
+
+    QString name() const { return m_nameEdit->text().trimmed(); }
+    QString url() const { return m_urlEdit->toPlainText().trimmed(); }
+    QString manualContent() const { return m_manualEdit->toPlainText().trimmed(); }
+    QString uriContent() const { return m_uriEdit->toPlainText().trimmed(); }
+    bool isManual() const { return m_tabs->currentIndex() != 0; }
+    bool isUriList() const { return m_tabs->currentIndex() == 2; }
+    bool useOriginalConfig() const { return m_useOriginalCheck->isChecked(); }
+    int autoUpdateIntervalMinutes() const { return m_autoUpdateCombo->currentData().toInt(); }
+
+    bool validateInput(QString *error) const
+    {
+        if (name().isEmpty()) {
+            if (error) *error = tr("请输入订阅名称");
+            return false;
+        }
+
+        if (m_tabs->currentIndex() == 0 && url().isEmpty()) {
+            if (error) *error = tr("请输入订阅链接");
+            return false;
+        }
+        if (m_tabs->currentIndex() == 1 && manualContent().isEmpty()) {
+            if (error) *error = tr("请输入订阅内容");
+            return false;
+        }
+        if (m_tabs->currentIndex() == 2 && uriContent().isEmpty()) {
+            if (error) *error = tr("请输入 URI 内容");
+            return false;
+        }
+
+        if (useOriginalConfig() && m_tabs->currentIndex() != 0) {
+            QString content = m_tabs->currentIndex() == 1 ? manualContent() : uriContent();
+            if (!isJsonText(content)) {
+                if (error) *error = tr("原始订阅仅支持 sing-box JSON 配置内容");
+                return false;
+            }
+        }
+        return true;
+    }
+
+private:
+    QWidget* createTextTab(QTextEdit *edit, const QString &placeholder)
+    {
+        QWidget *widget = new QWidget;
+        QVBoxLayout *layout = new QVBoxLayout(widget);
+        edit->setPlaceholderText(placeholder + "...");
+        edit->setMinimumHeight(110);
+        layout->addWidget(edit);
+        return widget;
+    }
+
+    int indexForInterval(int minutes) const
+    {
+        for (int i = 0; i < m_autoUpdateCombo->count(); ++i) {
+            if (m_autoUpdateCombo->itemData(i).toInt() == minutes) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    void updateState()
+    {
+        bool urlTab = m_tabs->currentIndex() == 0;
+        m_autoUpdateCombo->setEnabled(urlTab);
+        if (!urlTab) {
+            m_autoUpdateCombo->setCurrentIndex(0);
+        }
+        bool showHint = m_useOriginalCheck->isChecked();
+        m_hintLabel->setVisible(showHint);
+    }
+
+    QLineEdit *m_nameEdit;
+    QTabWidget *m_tabs;
+    QTextEdit *m_urlEdit;
+    QTextEdit *m_manualEdit;
+    QTextEdit *m_uriEdit;
+    QCheckBox *m_useOriginalCheck;
+    QComboBox *m_autoUpdateCombo;
+    QLabel *m_hintLabel;
+};
+
+class ConfigEditDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit ConfigEditDialog(QWidget *parent = nullptr)
+        : QDialog(parent)
+        , m_editor(new QTextEdit)
+    {
+        setWindowTitle(tr("编辑当前配置"));
+        setModal(true);
+        setMinimumWidth(720);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        m_editor->setMinimumHeight(300);
+        layout->addWidget(m_editor);
+
+        QHBoxLayout *actions = new QHBoxLayout;
+        QPushButton *cancelBtn = new QPushButton(tr("取消"));
+        QPushButton *okBtn = new QPushButton(tr("保存并应用"));
+        actions->addStretch();
+        actions->addWidget(cancelBtn);
+        actions->addWidget(okBtn);
+        layout->addLayout(actions);
+
+        connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+        connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
+    }
+
+    void setContent(const QString &content) { m_editor->setPlainText(content); }
+    QString content() const { return m_editor->toPlainText(); }
+
+private:
+    QTextEdit *m_editor;
+};
+
+// ==================== SubscriptionCard ====================
+
+SubscriptionCard::SubscriptionCard(const SubscriptionInfo &info, bool active, QWidget *parent)
+    : QFrame(parent)
+    , m_subId(info.id)
+{
+    setupUI(info, active);
+    updateStyle(active);
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
+            this, [this, active]() { updateStyle(active); });
+}
+
+void SubscriptionCard::setupUI(const SubscriptionInfo &info, bool active)
+{
+    setObjectName("SubscriptionCard");
+    setFrameShape(QFrame::NoFrame);
+    setFixedHeight(190);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(16, 12, 16, 12);
+    mainLayout->setSpacing(8);
+
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    headerLayout->setSpacing(10);
+
+    QLabel *iconLabel = new QLabel(QString::fromUtf8("🔗"));
+    iconLabel->setObjectName("CardIcon");
+    iconLabel->setFixedSize(32, 32);
+    iconLabel->setAlignment(Qt::AlignCenter);
+
+    QLabel *nameLabel = new QLabel(info.name);
+    nameLabel->setObjectName("CardName");
+
+    QLabel *typeTag = new QLabel(info.isManual ? tr("手动配置") : tr("订阅链接"));
+    typeTag->setObjectName("CardTag");
+
+    QLabel *statusTag = new QLabel(active ? tr("使用中") : tr("未启用"));
+    statusTag->setObjectName(active ? "CardTagActive" : "CardTag");
+
+    QLabel *scheduleTag = new QLabel(tr("每 %1 分钟").arg(info.autoUpdateIntervalMinutes));
+    scheduleTag->setObjectName("CardTagSchedule");
+    scheduleTag->setVisible(!info.isManual && info.autoUpdateIntervalMinutes > 0);
+
+    QPushButton *menuBtn = new QPushButton("...");
+    menuBtn->setObjectName("CardMenuBtn");
+    menuBtn->setFixedSize(32, 28);
+    menuBtn->setCursor(Qt::PointingHandCursor);
+
+    RoundedMenu *menu = new RoundedMenu(this);
+    menu->setObjectName("SubscriptionMenu");
+    ThemeManager &tm = ThemeManager::instance();
+    menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    connect(&tm, &ThemeManager::themeChanged, menu, [menu, &tm]() {
+        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    });
+    QAction *copyAction = menu->addAction(tr("复制链接"));
+    QAction *editAction = menu->addAction(tr("编辑订阅"));
+    QAction *editConfigAction = menu->addAction(tr("编辑当前配置"));
+    editConfigAction->setVisible(active);
+    QAction *refreshAction = menu->addAction(tr("立即刷新配置"));
+    QAction *refreshApplyAction = menu->addAction(tr("刷新并应用"));
+    QAction *rollbackAction = menu->addAction(tr("回滚配置"));
+    menu->addSeparator();
+    QAction *deleteAction = menu->addAction(tr("删除订阅"));
+    deleteAction->setObjectName("DeleteAction");
+
+    connect(menuBtn, &QPushButton::clicked, [menuBtn, menu]() {
+        menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
+    });
+
+    connect(copyAction, &QAction::triggered, [this]() { emit copyLinkClicked(m_subId); });
+    connect(editAction, &QAction::triggered, [this]() { emit editClicked(m_subId); });
+    connect(editConfigAction, &QAction::triggered, [this]() { emit editConfigClicked(m_subId); });
+    connect(refreshAction, &QAction::triggered, [this]() { emit refreshClicked(m_subId, false); });
+    connect(refreshApplyAction, &QAction::triggered, [this]() { emit refreshClicked(m_subId, true); });
+    connect(rollbackAction, &QAction::triggered, [this]() { emit rollbackClicked(m_subId); });
+    connect(deleteAction, &QAction::triggered, [this]() { emit deleteClicked(m_subId); });
+
+    headerLayout->addWidget(iconLabel);
+    headerLayout->addWidget(nameLabel);
+    headerLayout->addWidget(typeTag);
+    headerLayout->addWidget(statusTag);
+    headerLayout->addWidget(scheduleTag);
+    headerLayout->addStretch();
+    headerLayout->addWidget(menuBtn);
+
+    QHBoxLayout *infoLayout = new QHBoxLayout;
+    infoLayout->setSpacing(16);
+
+    QString urlText = info.isManual ? tr("手动配置内容") : info.url;
+    if (urlText.length() > 45) {
+        urlText = urlText.left(45) + "...";
+    }
+    QLabel *urlLabel = new QLabel(QString::fromUtf8("🌐 ") + urlText);
+    urlLabel->setObjectName("CardInfoText");
+
+    QLabel *timeLabel = new QLabel(QString::fromUtf8("🕒 ") + formatTimestamp(info.lastUpdate));
+    timeLabel->setObjectName("CardInfoText");
+
+    infoLayout->addWidget(urlLabel, 1);
+    infoLayout->addWidget(timeLabel);
+
+    QVBoxLayout *metaLayout = new QVBoxLayout;
+    if (info.subscriptionUpload >= 0 || info.subscriptionDownload >= 0) {
+        qint64 used = qMax<qint64>(0, info.subscriptionUpload) + qMax<qint64>(0, info.subscriptionDownload);
+        QString trafficText;
+        if (info.subscriptionTotal > 0) {
+            qint64 remain = qMax<qint64>(0, info.subscriptionTotal - used);
+            trafficText = tr("已用 %1 / 总量 %2 / 剩余 %3")
+                .arg(formatBytes(used))
+                .arg(formatBytes(info.subscriptionTotal))
+                .arg(formatBytes(remain));
+        } else {
+            trafficText = tr("已用 %1").arg(formatBytes(used));
+        }
+        QLabel *trafficLabel = new QLabel(QString::fromUtf8("📊 ") + trafficText);
+        trafficLabel->setObjectName("CardInfoText");
+        metaLayout->addWidget(trafficLabel);
+    }
+
+    if (info.subscriptionExpire > 0) {
+        QLabel *expireLabel = new QLabel(QString::fromUtf8("📅 ") + formatExpireTime(info.subscriptionExpire));
+        expireLabel->setObjectName("CardInfoText");
+        metaLayout->addWidget(expireLabel);
+    }
+
+    QPushButton *useBtn = new QPushButton(active ? tr("重新使用") : tr("使用"));
+    useBtn->setObjectName("CardActionBtn");
+    useBtn->setCursor(Qt::PointingHandCursor);
+    useBtn->setFixedHeight(36);
+    connect(useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
+
+    mainLayout->addLayout(headerLayout);
+    mainLayout->addLayout(infoLayout);
+    if (metaLayout->count() > 0) {
+        mainLayout->addLayout(metaLayout);
+    }
+    mainLayout->addStretch();
+    mainLayout->addWidget(useBtn);
+}
+
+void SubscriptionCard::updateStyle(bool active)
+{
+    ThemeManager &tm = ThemeManager::instance();
+
+    setStyleSheet(QString(R"(
+        #SubscriptionCard {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 10px;
+        }
+        #CardIcon {
+            background-color: %3;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        #CardName {
+            font-size: 14px;
+            font-weight: bold;
+            color: %4;
+        }
+        #CardTag {
+            background-color: %5;
+            color: %6;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        #CardTagActive {
+            background-color: %3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        #CardTagSchedule {
+            background-color: transparent;
+            color: %6;
+            padding: 2px 8px;
+            border: 1px solid %2;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        #CardMenuBtn {
+            background-color: %5;
+            color: %4;
+            border: 1px solid %2;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 0 8px;
+            border-radius: 10px;
+        }
+        #CardMenuBtn:hover {
+            background-color: %3;
+            color: white;
+        }
+        #CardInfoText {
+            color: %6;
+            font-size: 12px;
+        }
+        #CardActionBtn {
+            background-color: %3;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        #CardActionBtn:hover {
+            background-color: %7;
+        }
+        #SubscriptionMenu {
+            background: transparent;
+            border: none;
+            padding: 6px;
+        }
+        #SubscriptionMenu::panel {
+            background: transparent;
+            border: none;
+        }
+        #SubscriptionMenu::item {
+            color: %4;
+            padding: 8px 14px;
+            border-radius: 10px;
+        }
+        #SubscriptionMenu::item:selected {
+            background-color: %5;
+            color: %4;
+        }
+        #SubscriptionMenu::separator {
+            height: 1px;
+            background-color: %2;
+            margin: 6px 4px;
+        }
+    )")
+    .arg(active ? tm.getColorString("bg-tertiary") : tm.getColorString("bg-secondary"))
+    .arg(active ? tm.getColorString("primary") : tm.getColorString("border"))
+    .arg(tm.getColorString("primary"))
+    .arg(tm.getColorString("text-primary"))
+    .arg(tm.getColorString("bg-tertiary"))
+    .arg(tm.getColorString("text-secondary"))
+    .arg(tm.getColorString("primary") + "cc")
+    );
+}
+// ==================== SubscriptionView ====================
+
+SubscriptionView::SubscriptionView(QWidget *parent)
+    : QWidget(parent)
+    , m_subscriptionService(new SubscriptionService(this))
+    , m_autoUpdateTimer(new QTimer(this))
+{
+    setupUI();
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
+            this, &SubscriptionView::updateStyle);
+    updateStyle();
+
+    m_autoUpdateTimer->setInterval(30 * 60 * 1000);
+    connect(m_autoUpdateTimer, &QTimer::timeout, this, &SubscriptionView::onAutoUpdateTimer);
+    m_autoUpdateTimer->start();
+}
+
+SubscriptionService* SubscriptionView::getService() const
+{
+    return m_subscriptionService;
+}
+
+void SubscriptionView::setupUI()
+{
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(24, 24, 24, 24);
+    mainLayout->setSpacing(16);
+
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    QVBoxLayout *titleLayout = new QVBoxLayout;
+
+    QLabel *titleLabel = new QLabel(tr("订阅管理"));
+    titleLabel->setObjectName("PageTitle");
+
+    QLabel *subtitleLabel = new QLabel(tr("管理您的订阅配置和代理节点"));
+    subtitleLabel->setObjectName("PageSubtitle");
+
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subtitleLabel);
+    titleLayout->setSpacing(6);
+
+    m_addBtn = new QPushButton(tr("+ 添加订阅"));
+    m_addBtn->setObjectName("PrimaryActionBtn");
+    m_addBtn->setCursor(Qt::PointingHandCursor);
+    m_addBtn->setMinimumSize(110, 36);
+
+    headerLayout->addLayout(titleLayout);
+    headerLayout->addStretch();
+    headerLayout->addWidget(m_addBtn);
+
+    mainLayout->addLayout(headerLayout);
+
+    QHBoxLayout *toolbarLayout = new QHBoxLayout;
+
+    m_updateAllBtn = new QPushButton(tr("更新全部"));
+    m_updateAllBtn->setCursor(Qt::PointingHandCursor);
+    m_updateAllBtn->setMinimumHeight(32);
+
+    toolbarLayout->addWidget(m_updateAllBtn);
+    toolbarLayout->addStretch();
+
+    mainLayout->addLayout(toolbarLayout);
+
+    m_scrollArea = new QScrollArea;
+    m_scrollArea->setWidgetResizable(true);
+    m_scrollArea->setFrameShape(QFrame::NoFrame);
+    m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    m_cardsContainer = new QWidget;
+    m_cardsLayout = new QVBoxLayout(m_cardsContainer);
+    m_cardsLayout->setContentsMargins(0, 0, 0, 0);
+    m_cardsLayout->setSpacing(12);
+    m_cardsLayout->addStretch();
+
+    m_scrollArea->setWidget(m_cardsContainer);
+
+    mainLayout->addWidget(m_scrollArea, 1);
+
+    connect(m_addBtn, &QPushButton::clicked, this, &SubscriptionView::onAddClicked);
+    connect(m_updateAllBtn, &QPushButton::clicked, this, &SubscriptionView::onUpdateAllClicked);
+
+    connect(m_subscriptionService, &SubscriptionService::subscriptionAdded,
+            this, &SubscriptionView::refreshList);
+    connect(m_subscriptionService, &SubscriptionService::subscriptionRemoved,
+            this, &SubscriptionView::refreshList);
+    connect(m_subscriptionService, &SubscriptionService::subscriptionUpdated,
+            this, &SubscriptionView::refreshList);
+    connect(m_subscriptionService, &SubscriptionService::activeSubscriptionChanged,
+            this, &SubscriptionView::refreshList);
+
+    refreshList();
+}
+
+void SubscriptionView::updateStyle()
+{
+    ThemeManager &tm = ThemeManager::instance();
+
+    setStyleSheet(QString(R"(
+        #PageTitle {
+            font-size: 22px;
+            font-weight: bold;
+            color: %1;
+        }
+        #PageSubtitle {
+            font-size: 13px;
+            color: %2;
+        }
+    )")
+    .arg(tm.getColorString("text-primary"))
+    .arg(tm.getColorString("text-secondary")));
+
+    m_addBtn->setStyleSheet(QString(
+        "QPushButton { background-color: %1; color: white; border-radius: 10px; padding: 8px 18px; border: none; }"
+        "QPushButton:hover { background-color: %2; }"
+    ).arg(tm.getColorString("primary")).arg(tm.getColorString("primary") + "cc"));
+
+    m_updateAllBtn->setStyleSheet(QString(
+        "QPushButton { background-color: %1; color: %2; border-radius: 10px; padding: 6px 14px; border: none; }"
+        "QPushButton:hover { background-color: %3; }"
+    ).arg(tm.getColorString("bg-tertiary"))
+     .arg(tm.getColorString("text-primary"))
+     .arg(tm.getColorString("primary") + "40"));
+
+    m_scrollArea->setStyleSheet("QScrollArea { background: transparent; border: none; }");
+    m_cardsContainer->setStyleSheet("background: transparent;");
+}
+
+void SubscriptionView::onAddClicked()
+{
+    SubscriptionFormDialog dialog(this);
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    QString error;
+    if (!dialog.validateInput(&error)) {
+        QMessageBox::warning(this, tr("提示"), error);
+        return;
+    }
+
+    const bool isManual = dialog.isManual();
+    const bool useOriginal = dialog.useOriginalConfig();
+    const int interval = dialog.autoUpdateIntervalMinutes();
+
+    if (isManual) {
+        const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
+        m_subscriptionService->addManualSubscription(content, dialog.name(), useOriginal, dialog.isUriList(), true);
+    } else {
+        m_subscriptionService->addUrlSubscription(dialog.url(), dialog.name(), useOriginal, interval, true);
+    }
+}
+
+void SubscriptionView::onUpdateAllClicked()
+{
+    m_subscriptionService->updateAllSubscriptions(false);
+}
+
+void SubscriptionView::onAutoUpdateTimer()
+{
+    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+    const int activeIndex = m_subscriptionService->getActiveIndex();
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    for (int i = 0; i < subs.count(); ++i) {
+        const SubscriptionInfo &item = subs[i];
+        if (item.isManual) continue;
+        const int interval = item.autoUpdateIntervalMinutes;
+        if (interval <= 0) continue;
+        if (item.lastUpdate <= 0) continue;
+        if (now - item.lastUpdate >= static_cast<qint64>(interval) * 60 * 1000) {
+            m_subscriptionService->refreshSubscription(item.id, i == activeIndex);
+        }
+    }
+}
+
+SubscriptionCard* SubscriptionView::createSubscriptionCard(const SubscriptionInfo &info, bool active)
+{
+    SubscriptionCard *card = new SubscriptionCard(info, active, this);
+
+    connect(card, &SubscriptionCard::useClicked, [this](const QString &id) {
+        m_subscriptionService->setActiveSubscription(id, true);
+    });
+
+    connect(card, &SubscriptionCard::editClicked, [this](const QString &id) {
+        const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+        SubscriptionInfo target;
+        bool found = false;
+        for (const auto &sub : subs) {
+            if (sub.id == id) {
+                target = sub;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return;
+
+        SubscriptionFormDialog dialog(this);
+        dialog.setEditData(target);
+        if (dialog.exec() != QDialog::Accepted) return;
+
+        QString error;
+        if (!dialog.validateInput(&error)) {
+            QMessageBox::warning(this, tr("提示"), error);
+            return;
+        }
+
+        bool isManual = dialog.isManual();
+        QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
+        m_subscriptionService->updateSubscriptionMeta(
+            id,
+            dialog.name(),
+            dialog.url(),
+            isManual,
+            content,
+            dialog.useOriginalConfig(),
+            dialog.autoUpdateIntervalMinutes()
+        );
+    });
+
+    connect(card, &SubscriptionCard::editConfigClicked, [this](const QString &id) {
+        Q_UNUSED(id)
+        const QString current = m_subscriptionService->getCurrentConfig();
+        if (current.isEmpty()) {
+            QMessageBox::warning(this, tr("提示"), tr("未找到当前配置"));
+            return;
+        }
+        ConfigEditDialog dialog(this);
+        dialog.setContent(current);
+        if (dialog.exec() == QDialog::Accepted) {
+            if (!m_subscriptionService->saveCurrentConfig(dialog.content(), true)) {
+                QMessageBox::warning(this, tr("提示"), tr("保存配置失败"));
+            }
+        }
+    });
+
+    connect(card, &SubscriptionCard::refreshClicked, [this](const QString &id, bool applyRuntime) {
+        m_subscriptionService->refreshSubscription(id, applyRuntime);
+    });
+
+    connect(card, &SubscriptionCard::rollbackClicked, [this](const QString &id) {
+        const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+        for (const auto &sub : subs) {
+            if (sub.id == id) {
+                if (!m_subscriptionService->rollbackSubscriptionConfig(sub.configPath)) {
+                    QMessageBox::warning(this, tr("提示"), tr("没有找到可回滚的配置"));
+                    return;
+                }
+                if (m_subscriptionService->getActiveIndex() >= 0) {
+                    m_subscriptionService->setActiveSubscription(id, true);
+                }
+                return;
+            }
+        }
+    });
+
+    connect(card, &SubscriptionCard::deleteClicked, [this](const QString &id) {
+        if (QMessageBox::question(this, tr("确认"), tr("确定要删除此订阅吗?")) == QMessageBox::Yes) {
+            m_subscriptionService->removeSubscription(id);
+        }
+    });
+
+    connect(card, &SubscriptionCard::copyLinkClicked, [this](const QString &id) {
+        const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+        for (const auto &sub : subs) {
+            if (sub.id == id) {
+                QApplication::clipboard()->setText(sub.url);
+                break;
+            }
+        }
+    });
+
+    return card;
+}
+
+void SubscriptionView::refreshList()
+{
+    while (m_cardsLayout->count() > 1) {
+        QLayoutItem *item = m_cardsLayout->takeAt(0);
+        if (item->widget()) {
+            delete item->widget();
+        }
+        delete item;
+    }
+
+    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+    const int activeIndex = m_subscriptionService->getActiveIndex();
+    for (int i = 0; i < subs.count(); ++i) {
+        SubscriptionCard *card = createSubscriptionCard(subs[i], i == activeIndex);
+        m_cardsLayout->insertWidget(m_cardsLayout->count() - 1, card);
+    }
+}
+
+#include "SubscriptionView.moc"
