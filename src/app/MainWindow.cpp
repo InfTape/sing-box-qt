@@ -42,6 +42,16 @@ MainWindow::MainWindow(QWidget *parent)
     if (m_homeView) {
         m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
         m_homeView->setTunModeEnabled(false);
+        QString configPath;
+        if (m_subscriptionView && m_subscriptionView->getService()) {
+            configPath = m_subscriptionView->getService()->getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            configPath = ConfigManager::instance().getActiveConfigPath();
+        }
+        if (!configPath.isEmpty()) {
+            m_homeView->setProxyMode(ConfigManager::instance().readClashDefaultMode(configPath));
+        }
     }
     updateStyle(); // 搴旂敤鍒濆鏍峰紡
     
@@ -314,6 +324,38 @@ void MainWindow::setupConnections()
                 if (m_kernelService && m_kernelService->isRunning()) {
                     m_kernelService->restartWithConfig(configPath);
                 }
+            }
+        }
+    });
+
+    connect(m_homeView, &HomeView::proxyModeChanged, this, [this](const QString &mode) {
+        QString configPath;
+        if (m_subscriptionView && m_subscriptionView->getService()) {
+            configPath = m_subscriptionView->getService()->getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            configPath = ConfigManager::instance().getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            Logger::warn(QStringLiteral(u"\u65e0\u6cd5\u83b7\u53d6\u914d\u7f6e\u6587\u4ef6\u8def\u5f84\uff0c\u4ee3\u7406\u6a21\u5f0f\u5207\u6362\u5931\u8d25"));
+            if (m_logView) {
+                m_logView->appendLog(QStringLiteral(u"[WARN] \u65e0\u6cd5\u83b7\u53d6\u914d\u7f6e\u6587\u4ef6\u8def\u5f84\uff0c\u4ee3\u7406\u6a21\u5f0f\u5207\u6362\u5931\u8d25"));
+            }
+            return;
+        }
+
+        QString error;
+        if (ConfigManager::instance().updateClashDefaultMode(configPath, mode, &error)) {
+            const QString msg = QStringLiteral(u"\u4ee3\u7406\u6a21\u5f0f\u5df2\u5207\u6362\u4e3a: %1").arg(mode);
+            Logger::info(msg);
+            if (m_logView) {
+                m_logView->appendLog(QString("[INFO] %1").arg(msg));
+            }
+        } else {
+            const QString msg = QStringLiteral(u"\u5207\u6362\u4ee3\u7406\u6a21\u5f0f\u5931\u8d25: %1").arg(error);
+            Logger::error(msg);
+            if (m_logView) {
+                m_logView->appendLog(QString("[ERROR] %1").arg(msg));
             }
         }
     });

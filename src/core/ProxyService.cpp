@@ -160,6 +160,26 @@ void ProxyService::testGroupDelay(const QString &group)
     });
 }
 
+void ProxyService::setProxyMode(const QString &mode)
+{
+    const QString normalized = mode.trimmed().toLower();
+    if (normalized.isEmpty()) {
+        return;
+    }
+
+    QString url = buildApiUrl("/configs");
+    QJsonObject body;
+    body["mode"] = normalized;
+
+    m_httpClient->put(url, QJsonDocument(body).toJson(), [this, normalized](bool success, const QByteArray &) {
+        if (success) {
+            Logger::info(QString("已切换代理模式: %1").arg(normalized));
+        } else {
+            emit errorOccurred(tr("切换代理模式失败"));
+        }
+    });
+}
+
 void ProxyService::closeConnection(const QString &id)
 {
     QString url = buildApiUrl(QString("/connections/%1").arg(id));

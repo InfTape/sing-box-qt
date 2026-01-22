@@ -649,6 +649,24 @@ void HomeView::setTunModeEnabled(bool enabled)
     setCardActive(m_tunModeCard, enabled);
 }
 
+void HomeView::setProxyMode(const QString &mode)
+{
+    const QString normalized = mode.trimmed().toLower();
+    const bool useGlobal = (normalized == "global");
+
+    if (m_globalModeSwitch) {
+        QSignalBlocker blocker(m_globalModeSwitch);
+        m_globalModeSwitch->setChecked(useGlobal);
+    }
+    if (m_ruleModeSwitch) {
+        QSignalBlocker blocker(m_ruleModeSwitch);
+        m_ruleModeSwitch->setChecked(!useGlobal);
+    }
+
+    setCardActive(m_globalModeCard, useGlobal);
+    setCardActive(m_ruleModeCard, !useGlobal);
+}
+
 void HomeView::updateStatus(bool running)
 {
     m_isRunning = running;

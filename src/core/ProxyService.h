@@ -31,6 +31,7 @@ public:
     void selectProxy(const QString &group, const QString &proxy);
     void testDelay(const QString &proxy, const QString &url = QString(), int timeout = 5000);
     void testGroupDelay(const QString &group);
+    void setProxyMode(const QString &mode);
     
     // 连接操作
     void closeConnection(const QString &id);

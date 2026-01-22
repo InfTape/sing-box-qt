@@ -20,6 +20,7 @@ public:
     void setSystemProxyEnabled(bool enabled);
     bool isTunModeEnabled() const;
     void setTunModeEnabled(bool enabled);
+    void setProxyMode(const QString &mode);
 
     void updateStatus(bool running);
     void updateTraffic(qint64 upload, qint64 download);

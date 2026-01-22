@@ -126,6 +126,65 @@ bool ConfigManager::saveConfig(const QString &path, const QJsonObject &config)
     return true;
 }
 
+bool ConfigManager::updateClashDefaultMode(const QString &configPath, const QString &mode, QString *error)
+{
+    const QString normalized = mode.trimmed().toLower();
+    if (normalized != "global" && normalized != "rule") {
+        if (error) *error = QString("无效的代理模式: %1").arg(mode);
+        return false;
+    }
+
+    QJsonObject config = loadConfig(configPath);
+    if (config.isEmpty()) {
+        if (error) *error = QString("无法加载配置文件: %1").arg(configPath);
+        return false;
+    }
+
+    QJsonObject experimental = config.value("experimental").toObject();
+    QJsonObject clashApi = experimental.value("clash_api").toObject();
+    clashApi["default_mode"] = normalized;
+    if (!clashApi.contains("external_ui")) {
+        clashApi["external_ui"] = "metacubexd";
+    }
+    experimental["clash_api"] = clashApi;
+
+    QJsonObject cacheFile = experimental.value("cache_file").toObject();
+    cacheFile["enabled"] = cacheFile.value("enabled").toBool(true);
+    experimental["cache_file"] = cacheFile;
+
+    config["experimental"] = experimental;
+
+    if (!saveConfig(configPath, config)) {
+        if (error) *error = QString("无法保存配置文件: %1").arg(configPath);
+        return false;
+    }
+
+    return true;
+}
+
+QString ConfigManager::readClashDefaultMode(const QString &configPath) const
+{
+    QFile file(configPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return "rule";
+    }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    const QJsonObject config = doc.object();
+    if (config.isEmpty()) {
+        return "rule";
+    }
+
+    const QJsonObject experimental = config.value("experimental").toObject();
+    const QJsonObject clashApi = experimental.value("clash_api").toObject();
+    const QString mode = clashApi.value("default_mode").toString().trimmed().toLower();
+    if (mode == "global") {
+        return "global";
+    }
+    return "rule";
+}
+
+
 QJsonObject ConfigManager::generateBaseConfig()
 {
     QJsonObject config;

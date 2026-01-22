@@ -75,6 +75,8 @@ public:
     int getApiPort() const;
     void setMixedPort(int port);
     void setApiPort(int port);
+    bool updateClashDefaultMode(const QString &configPath, const QString &mode, QString *error = nullptr);
+    QString readClashDefaultMode(const QString &configPath) const;
 
 private:
     explicit ConfigManager(QObject *parent = nullptr);
