@@ -271,6 +271,7 @@ void SettingsView::setupUI()
             color: #eaeaea;
         }
     )";
+    const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-secondary"));
 
     // 代理设置
     QGroupBox *proxyGroup = new QGroupBox(tr("代理设置"));
@@ -282,19 +283,19 @@ void SettingsView::setupUI()
     m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_mixedPortSpin->setRange(1, 65535);
     m_mixedPortSpin->setValue(7890);
-    m_mixedPortSpin->setStyleSheet(inputStyle);
+    m_mixedPortSpin->setStyleSheet(inputStyleApplied);
 
     m_apiPortSpin = new QSpinBox;
     m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_apiPortSpin->setRange(1, 65535);
     m_apiPortSpin->setValue(9090);
-    m_apiPortSpin->setStyleSheet(inputStyle);
+    m_apiPortSpin->setStyleSheet(inputStyleApplied);
 
     m_autoStartCheck = new QCheckBox(tr("开机自动启动"));
-    m_autoStartCheck->setStyleSheet(inputStyle);
+    m_autoStartCheck->setStyleSheet(inputStyleApplied);
 
     m_systemProxyCheck = new QCheckBox(tr("自动设置系统代理"));
-    m_systemProxyCheck->setStyleSheet(inputStyle);
+    m_systemProxyCheck->setStyleSheet(inputStyleApplied);
 
     proxyLayout->addRow(tr("混合代理端口:"), m_mixedPortSpin);
     proxyLayout->addRow(tr("API 端口:"), m_apiPortSpin);
@@ -331,7 +332,7 @@ void SettingsView::setupUI()
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
     m_kernelPathEdit->setPlaceholderText(tr("内核路径"));
-    m_kernelPathEdit->setStyleSheet(inputStyle);
+    m_kernelPathEdit->setStyleSheet(inputStyleApplied);
 
     m_kernelDownloadProgress = new QProgressBar;
     m_kernelDownloadProgress->setRange(0, 100);
