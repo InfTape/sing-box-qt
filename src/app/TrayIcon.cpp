@@ -87,6 +87,16 @@ void TrayIcon::setupMenu()
                 padding: 8px 14px;
                 border-radius: 10px;
             }
+            #TrayMenu::indicator {
+                width: 14px;
+                height: 14px;
+            }
+            #TrayMenu::indicator:checked {
+                image: url(:/icons/check.svg);
+            }
+            #TrayMenu::indicator:unchecked {
+                image: none;
+            }
             #TrayMenu::item:selected {
                 background-color: %2;
                 color: %1;
@@ -116,6 +126,16 @@ void TrayIcon::setupMenu()
             color: %1;
             padding: 8px 14px;
             border-radius: 10px;
+        }
+        #TrayMenu::indicator {
+            width: 14px;
+            height: 14px;
+        }
+        #TrayMenu::indicator:checked {
+            image: url(:/icons/check.svg);
+        }
+        #TrayMenu::indicator:unchecked {
+            image: none;
         }
         #TrayMenu::item:selected {
             background-color: %2;

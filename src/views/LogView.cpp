@@ -128,6 +128,16 @@ private:
                 padding: 8px 14px;
                 border-radius: 10px;
             }
+            #ComboMenu::indicator {
+                width: 14px;
+                height: 14px;
+            }
+            #ComboMenu::indicator:checked {
+                image: url(:/icons/check.svg);
+            }
+            #ComboMenu::indicator:unchecked {
+                image: none;
+            }
             #ComboMenu::item:selected {
                 background-color: %2;
                 color: white;

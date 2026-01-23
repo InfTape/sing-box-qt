@@ -33,6 +33,7 @@ private slots:
     void onFilterChanged();
     void onRefreshClicked();
     void onEmptyActionClicked();
+    void onAddRuleClicked();
 
 private:
     struct RuleItem {
@@ -57,6 +58,7 @@ private:
     QLabel *m_titleLabel = nullptr;
     QLabel *m_subtitleLabel = nullptr;
     QPushButton *m_refreshBtn = nullptr;
+    QPushButton *m_addBtn = nullptr;
     QLineEdit *m_searchEdit = nullptr;
     QComboBox *m_typeFilter = nullptr;
     QComboBox *m_proxyFilter = nullptr;

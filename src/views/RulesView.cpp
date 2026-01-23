@@ -1,21 +1,174 @@
 #include "RulesView.h"
 #include "core/ProxyService.h"
 #include "utils/ThemeManager.h"
+#include "storage/ConfigManager.h"
 #include <QComboBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFile>
 #include <QFrame>
+#include <QFormLayout>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
+#include <QMenu>
+#include <QPainter>
+#include <QPainterPath>
+#include <QPlainTextEdit>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QSet>
 #include <QtMath>
 #include <QStringList>
 #include <QVBoxLayout>
 #include <utility>
+
+namespace {
+class RoundedMenu : public QMenu
+{
+public:
+    explicit RoundedMenu(QWidget *parent = nullptr)
+        : QMenu(parent)
+    {
+        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+        setAttribute(Qt::WA_TranslucentBackground, true);
+        setAttribute(Qt::WA_NoSystemBackground, true);
+    }
+
+    void setThemeColors(const QColor &bg, const QColor &border)
+    {
+        m_bgColor = bg;
+        m_borderColor = border;
+        update();
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
+        QPainterPath path;
+        path.addRoundedRect(rect, 10, 10);
+
+        painter.fillPath(path, m_bgColor);
+        painter.setPen(QPen(m_borderColor, 1));
+        painter.drawPath(path);
+
+        QMenu::paintEvent(event);
+    }
+
+private:
+    QColor m_bgColor = QColor(30, 41, 59);
+    QColor m_borderColor = QColor(90, 169, 255, 180);
+};
+
+class MenuComboBox : public QComboBox
+{
+public:
+    explicit MenuComboBox(QWidget *parent = nullptr)
+        : QComboBox(parent)
+    {
+        m_menu = new RoundedMenu(this);
+        m_menu->setObjectName("ComboMenu");
+        updateMenuStyle();
+
+        ThemeManager &tm = ThemeManager::instance();
+        connect(&tm, &ThemeManager::themeChanged, this, [this]() {
+            updateMenuStyle();
+        });
+    }
+
+protected:
+    void showPopup() override
+    {
+        if (!m_menu) return;
+        m_menu->clear();
+
+        for (int i = 0; i < count(); ++i) {
+            QAction *action = m_menu->addAction(itemText(i));
+            action->setCheckable(true);
+            action->setChecked(i == currentIndex());
+            connect(action, &QAction::triggered, this, [this, i]() {
+                setCurrentIndex(i);
+            });
+        }
+
+        const int menuWidth = qMax(width(), 180);
+        m_menu->setFixedWidth(menuWidth);
+        m_menu->popup(mapToGlobal(QPoint(0, height())));
+    }
+
+    void hidePopup() override
+    {
+        if (m_menu) {
+            m_menu->hide();
+        }
+    }
+
+private:
+    void updateMenuStyle()
+    {
+        if (!m_menu) return;
+        ThemeManager &tm = ThemeManager::instance();
+        m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+        m_menu->setStyleSheet(QString(R"(
+            #ComboMenu {
+                background: transparent;
+                border: none;
+                padding: 6px;
+            }
+            #ComboMenu::panel {
+                background: transparent;
+                border: none;
+            }
+            #ComboMenu::item {
+                color: %1;
+                padding: 8px 14px;
+                border-radius: 10px;
+            }
+            #ComboMenu::indicator {
+                width: 14px;
+                height: 14px;
+            }
+            #ComboMenu::indicator:checked {
+                image: url(:/icons/check.svg);
+            }
+            #ComboMenu::indicator:unchecked {
+                image: none;
+            }
+            #ComboMenu::item:selected {
+                background-color: %2;
+                color: white;
+            }
+            #ComboMenu::item:checked {
+                color: %4;
+            }
+            #ComboMenu::item:checked:selected {
+                color: %4;
+            }
+            #ComboMenu::separator {
+                height: 1px;
+                background-color: %3;
+                margin: 6px 4px;
+            }
+        )")
+        .arg(tm.getColorString("text-primary"))
+        .arg(tm.getColorString("bg-tertiary"))
+        .arg(tm.getColorString("border"))
+        .arg(tm.getColorString("primary")));
+    }
+
+    RoundedMenu *m_menu = nullptr;
+};
+} // namespace
 
 RulesView::RulesView(QWidget *parent)
     : QWidget(parent)
@@ -51,8 +204,14 @@ void RulesView::setupUI()
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setMinimumSize(110, 36);
 
+    m_addBtn = new QPushButton(tr("添加规则"));
+    m_addBtn->setObjectName("PrimaryActionBtn");
+    m_addBtn->setCursor(Qt::PointingHandCursor);
+    m_addBtn->setMinimumSize(110, 36);
+
     headerLayout->addLayout(titleLayout);
     headerLayout->addStretch();
+    headerLayout->addWidget(m_addBtn);
     headerLayout->addWidget(m_refreshBtn);
 
     mainLayout->addLayout(headerLayout);
@@ -69,10 +228,10 @@ void RulesView::setupUI()
     m_searchEdit->setPlaceholderText(tr("搜索规则内容或代理..."));
     m_searchEdit->setClearButtonEnabled(true);
 
-    m_typeFilter = new QComboBox;
+    m_typeFilter = new MenuComboBox;
     m_typeFilter->setObjectName("FilterSelect");
 
-    m_proxyFilter = new QComboBox;
+    m_proxyFilter = new MenuComboBox;
     m_proxyFilter->setObjectName("FilterSelect");
 
     filterLayout->addWidget(m_searchEdit, 2);
@@ -123,6 +282,7 @@ void RulesView::setupUI()
     mainLayout->addWidget(m_emptyState, 1);
 
     connect(m_refreshBtn, &QPushButton::clicked, this, &RulesView::onRefreshClicked);
+    connect(m_addBtn, &QPushButton::clicked, this, &RulesView::onAddRuleClicked);
     connect(m_emptyAction, &QPushButton::clicked, this, &RulesView::onEmptyActionClicked);
     connect(m_searchEdit, &QLineEdit::textChanged, this, &RulesView::onSearchChanged);
     connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);
@@ -180,6 +340,236 @@ void RulesView::onEmptyActionClicked()
     } else {
         refresh();
     }
+}
+
+void RulesView::onAddRuleClicked()
+{
+    struct RuleFieldInfo {
+        QString label;
+        QString key;
+        QString placeholder;
+        bool numeric = false;
+    };
+    const QList<RuleFieldInfo> fields = {
+        {tr("域名"), "domain", tr("示例: example.com")},
+        {tr("域名后缀"), "domain_suffix", tr("示例: example.com")},
+        {tr("域名关键字"), "domain_keyword", tr("示例: google")},
+        {tr("域名正则"), "domain_regex", tr("示例: ^.*\\\\.example\\\\.com$")},
+        {tr("IP CIDR"), "ip_cidr", tr("示例: 192.168.0.0/16")},
+        {tr("源 IP CIDR"), "source_ip_cidr", tr("示例: 10.0.0.0/8")},
+        {tr("端口"), "port", tr("示例: 80,443"), true},
+        {tr("源端口"), "source_port", tr("示例: 12345"), true},
+        {tr("端口范围"), "port_range", tr("示例: 10000:20000")},
+        {tr("源端口范围"), "source_port_range", tr("示例: 10000:20000")},
+        {tr("进程名"), "process_name", tr("示例: chrome.exe")},
+        {tr("进程路径"), "process_path", tr("示例: C:\\\\Program Files\\\\App\\\\app.exe")},
+        {tr("进程路径正则"), "process_path_regex", tr("示例: ^C:\\\\\\\\Program Files\\\\\\\\.+")},
+        {tr("包名"), "package_name", tr("示例: com.example.app")},
+    };
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("添加规则"));
+    dialog.setModal(true);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+    QFormLayout *form = new QFormLayout;
+    form->setLabelAlignment(Qt::AlignRight);
+    form->setFormAlignment(Qt::AlignLeft);
+    form->setHorizontalSpacing(12);
+    form->setVerticalSpacing(10);
+
+    MenuComboBox *typeCombo = new MenuComboBox(&dialog);
+    for (const auto &field : fields) {
+        typeCombo->addItem(field.label, field.key);
+    }
+
+    QPlainTextEdit *valueEdit = new QPlainTextEdit(&dialog);
+    valueEdit->setPlaceholderText(fields.first().placeholder + tr("（可用逗号或换行分隔）"));
+    valueEdit->setFixedHeight(80);
+
+    MenuComboBox *outboundCombo = new MenuComboBox(&dialog);
+    QSet<QString> outboundTags;
+    const QString configPath = ConfigManager::instance().getActiveConfigPath();
+    const QJsonObject config = ConfigManager::instance().loadConfig(configPath);
+    if (!config.isEmpty() && config.value("outbounds").isArray()) {
+        const QJsonArray outbounds = config.value("outbounds").toArray();
+        for (const auto &item : outbounds) {
+            if (!item.isObject()) continue;
+            const QString tag = item.toObject().value("tag").toString().trimmed();
+            if (!tag.isEmpty()) outboundTags.insert(tag);
+        }
+    }
+    if (outboundTags.isEmpty()) {
+        outboundTags.insert("direct");
+    }
+    QStringList outboundList = outboundTags.values();
+    outboundList.sort();
+    outboundCombo->addItems(outboundList);
+
+    form->addRow(tr("匹配类型:"), typeCombo);
+    form->addRow(tr("匹配内容:"), valueEdit);
+    form->addRow(tr("出口(outbound):"), outboundCombo);
+
+    QLabel *hintLabel = new QLabel(tr("说明：规则将写入本地 rule-set 文件，并自动引用。文件修改后会自动重载。"), &dialog);
+    hintLabel->setWordWrap(true);
+    hintLabel->setStyleSheet("color: #94a3b8; font-size: 12px;");
+
+    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    buttons->button(QDialogButtonBox::Ok)->setText(tr("确定"));
+    buttons->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
+
+    layout->addLayout(form);
+    layout->addWidget(hintLabel);
+    layout->addWidget(buttons);
+
+    QObject::connect(typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), &dialog, [=](int index) {
+        if (index >= 0 && index < fields.size()) {
+            valueEdit->setPlaceholderText(fields[index].placeholder + tr("（可用逗号或换行分隔）"));
+        }
+    });
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    const int fieldIndex = typeCombo->currentIndex();
+    if (fieldIndex < 0 || fieldIndex >= fields.size()) return;
+    const RuleFieldInfo field = fields[fieldIndex];
+
+    const QString rawText = valueEdit->toPlainText().trimmed();
+    if (rawText.isEmpty()) {
+        QMessageBox::warning(this, tr("添加规则"), tr("匹配内容不能为空。"));
+        return;
+    }
+
+    QStringList values = rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
+    for (QString &v : values) v = v.trimmed();
+    values.removeAll(QString());
+    if (values.isEmpty()) {
+        QMessageBox::warning(this, tr("添加规则"), tr("匹配内容不能为空。"));
+        return;
+    }
+
+    QJsonArray payload;
+    if (field.numeric) {
+        for (const auto &v : values) {
+            bool ok = false;
+            int num = v.toInt(&ok);
+            if (!ok) {
+                QMessageBox::warning(this, tr("添加规则"), tr("端口必须为数字：%1").arg(v));
+                return;
+            }
+            payload.append(num);
+        }
+    } else {
+        for (const auto &v : values) {
+            payload.append(v);
+        }
+    }
+
+    QJsonObject headlessRule;
+    headlessRule.insert(field.key, payload);
+
+    const QString outboundTag = outboundCombo->currentText().trimmed();
+    if (outboundTag.isEmpty()) {
+        QMessageBox::warning(this, tr("添加规则"), tr("出口(outbound)不能为空。"));
+        return;
+    }
+    QString ruleSetTag = outboundTag;
+    ruleSetTag.replace(QRegularExpression("[^A-Za-z0-9_.-]"), "_");
+    if (ruleSetTag.isEmpty()) {
+        ruleSetTag = "default";
+    }
+    ruleSetTag = QString("user-%1").arg(ruleSetTag);
+
+    const QString ruleSetFile = ConfigManager::instance().getConfigDir()
+        + QString("/rule_set_%1.json").arg(ruleSetTag);
+
+    QJsonObject ruleSetJson;
+    QJsonArray ruleSetRules;
+    QFile rsFile(ruleSetFile);
+    if (rsFile.exists()) {
+        if (rsFile.open(QIODevice::ReadOnly)) {
+            QJsonDocument rsDoc = QJsonDocument::fromJson(rsFile.readAll());
+            rsFile.close();
+            if (rsDoc.isObject()) {
+                ruleSetJson = rsDoc.object();
+                if (ruleSetJson.value("rules").isArray()) {
+                    ruleSetRules = ruleSetJson.value("rules").toArray();
+                }
+            }
+        }
+    }
+    ruleSetRules.append(headlessRule);
+    if (!ruleSetJson.contains("version")) {
+        ruleSetJson["version"] = 2;
+    }
+    ruleSetJson["rules"] = ruleSetRules;
+
+    if (!rsFile.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, tr("添加规则"), tr("无法写入规则集文件：%1").arg(ruleSetFile));
+        return;
+    }
+    rsFile.write(QJsonDocument(ruleSetJson).toJson(QJsonDocument::Indented));
+    rsFile.close();
+
+    QJsonObject newConfig = ConfigManager::instance().loadConfig(configPath);
+    if (newConfig.isEmpty()) {
+        QMessageBox::warning(this, tr("添加规则"), tr("无法读取配置文件：%1").arg(configPath));
+        return;
+    }
+
+    QJsonObject route = newConfig.value("route").toObject();
+
+    QJsonArray ruleSets = route.value("rule_set").toArray();
+    bool hasRuleSet = false;
+    for (const auto &rsVal : ruleSets) {
+        if (!rsVal.isObject()) continue;
+        const QJsonObject rs = rsVal.toObject();
+        if (rs.value("tag").toString() == ruleSetTag) {
+            hasRuleSet = true;
+            break;
+        }
+    }
+    if (!hasRuleSet) {
+        QJsonObject rs;
+        rs["type"] = "local";
+        rs["tag"] = ruleSetTag;
+        rs["format"] = "source";
+        rs["path"] = ruleSetFile;
+        ruleSets.append(rs);
+        route["rule_set"] = ruleSets;
+    }
+
+    QJsonArray rules = route.value("rules").toArray();
+    bool hasRouteRule = false;
+    for (const auto &ruleVal : rules) {
+        if (!ruleVal.isObject()) continue;
+        const QJsonObject ruleObj = ruleVal.toObject();
+        if (ruleObj.value("rule_set").toString() == ruleSetTag
+            && ruleObj.value("outbound").toString() == outboundTag) {
+            hasRouteRule = true;
+            break;
+        }
+    }
+    if (!hasRouteRule) {
+        QJsonObject routeRule;
+        routeRule["rule_set"] = ruleSetTag;
+        routeRule["action"] = "route";
+        routeRule["outbound"] = outboundTag;
+        rules.append(routeRule);
+        route["rules"] = rules;
+    }
+
+    newConfig["route"] = route;
+
+    if (!ConfigManager::instance().saveConfig(configPath, newConfig)) {
+        QMessageBox::warning(this, tr("添加规则"), tr("保存配置失败：%1").arg(configPath));
+        return;
+    }
+
+    QMessageBox::information(this, tr("添加规则"),
+                             tr("规则已写入本地 rule-set 文件并自动引用。\n文件修改后会自动重载。"));
 }
 
 void RulesView::onSearchChanged()

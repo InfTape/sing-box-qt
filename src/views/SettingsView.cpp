@@ -137,6 +137,16 @@ private:
                 padding: 8px 14px;
                 border-radius: 10px;
             }
+            #ComboMenu::indicator {
+                width: 14px;
+                height: 14px;
+            }
+            #ComboMenu::indicator:checked {
+                image: url(:/icons/check.svg);
+            }
+            #ComboMenu::indicator:unchecked {
+                image: none;
+            }
             #ComboMenu::item:selected {
                 background-color: %2;
                 color: white;
@@ -240,7 +250,7 @@ void SettingsView::setupUI()
 
     QString inputStyle = R"(
         QSpinBox, QLineEdit {
-            background-color: #0f3460;
+            background-color: %1;
             border: none;
             border-radius: 10px;
             padding: 8px 12px;
@@ -269,11 +279,13 @@ void SettingsView::setupUI()
     proxyLayout->setSpacing(15);
 
     m_mixedPortSpin = new QSpinBox;
+    m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_mixedPortSpin->setRange(1, 65535);
     m_mixedPortSpin->setValue(7890);
     m_mixedPortSpin->setStyleSheet(inputStyle);
 
     m_apiPortSpin = new QSpinBox;
+    m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_apiPortSpin->setRange(1, 65535);
     m_apiPortSpin->setValue(9090);
     m_apiPortSpin->setStyleSheet(inputStyle);
@@ -396,24 +408,25 @@ void SettingsView::setupUI()
     kernelLayout->addRow(kernelBtnLayout);
 
     m_saveBtn = new QPushButton(tr("保存设置"));
-    m_saveBtn->setFixedHeight(45);
+    m_saveBtn->setFixedHeight(36);
+    m_saveBtn->setFixedWidth(110);
     m_saveBtn->setStyleSheet(R"(
         QPushButton {
-            background-color: #4ecca3;
+            background-color: #6ee7b7;
             color: white;
             border: none;
             border-radius: 10px;
             font-size: 16px;
             font-weight: bold;
         }
-        QPushButton:hover { background-color: #6ee7b7; }
+        QPushButton:hover { background-color: #6ee7b7ae; }
     )");
 
     mainLayout->addWidget(proxyGroup);
     mainLayout->addWidget(appearanceGroup);
     mainLayout->addWidget(kernelGroup);
     mainLayout->addStretch();
-    mainLayout->addWidget(m_saveBtn);
+    mainLayout->addWidget(m_saveBtn, 0, Qt::AlignHCenter);
 
     connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);

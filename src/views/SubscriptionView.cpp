@@ -423,6 +423,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info, bool active)
     useBtn->setObjectName("CardActionBtn");
     useBtn->setCursor(Qt::PointingHandCursor);
     useBtn->setFixedHeight(36);
+    useBtn->setFixedWidth(110);
     connect(useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
 
     mainLayout->addLayout(headerLayout);
@@ -517,6 +518,16 @@ void SubscriptionCard::updateStyle(bool active)
             color: %4;
             padding: 8px 14px;
             border-radius: 10px;
+        }
+        #SubscriptionMenu::indicator {
+            width: 14px;
+            height: 14px;
+        }
+        #SubscriptionMenu::indicator:checked {
+            image: url(:/icons/check.svg);
+        }
+        #SubscriptionMenu::indicator:unchecked {
+            image: none;
         }
         #SubscriptionMenu::item:selected {
             background-color: %5;
