@@ -147,7 +147,7 @@ void ProxyView::updateStyle()
         #ProxyGroupBadge {
             padding: 4px 8px;
             border-radius: 10px;
-            background-color: %5;
+            background-color: %4;
             color: %1;
             font-size: 11px;
             font-weight: 600;
@@ -156,27 +156,26 @@ void ProxyView::updateStyle()
             width: 28px;
             height: 28px;
             border-radius: 6px;
-            background-color: %5;
+            background-color: %4;
             color: %1;
             border: none;
         }
         #ProxyGroupToggle:hover {
-            background-color: %5; /* keep same as normal or transparent? User said remove green hover. */
+            background-color: %4;
             opacity: 0.8;
         }
         #ProxyProgress {
-            background-color: %5;
+            background-color: %4;
             border-radius: 6px;
         }
         #ProxyProgress::chunk {
-            background-color: %6;
+            background-color: %5;
             border-radius: 6px;
         }
     )")
     .arg(tm.getColorString("text-primary"))
     .arg(tm.getColorString("text-secondary"))
     .arg(tm.getColorString("bg-secondary"))
-    .arg(tm.getColorString("border"))
     .arg(tm.getColorString("bg-tertiary"))
     .arg(tm.getColorString("primary"))
     );

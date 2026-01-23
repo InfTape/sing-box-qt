@@ -18,15 +18,19 @@ private slots:
     void onActivated(QSystemTrayIcon::ActivationReason reason);
     void onShowWindow();
     void onToggleProxy();
+    void onSelectGlobal();
+    void onSelectRule();
     void onQuit();
 
 private:
     void setupMenu();
-    void updateProxyStatus(bool enabled);
+    void updateProxyStatus();
 
     MainWindow *m_mainWindow;
     QMenu *m_menu;
     QAction *m_toggleAction;
+    QAction *m_globalAction;
+    QAction *m_ruleAction;
     QAction *m_showAction;
     QAction *m_quitAction;
 };

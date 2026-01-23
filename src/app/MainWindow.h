@@ -26,6 +26,11 @@ public:
     ~MainWindow();
 
     void showAndActivate();
+    bool isKernelRunning() const;
+    QString currentProxyMode() const;
+    QString activeConfigPath() const;
+    KernelService* kernelService() const { return m_kernelService; }
+    void setProxyModeUI(const QString &mode);
 
 protected:
     void closeEvent(QCloseEvent *event) override;

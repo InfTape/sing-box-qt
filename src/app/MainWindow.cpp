@@ -400,6 +400,37 @@ void MainWindow::onNavigationItemClicked(QListWidgetItem *item)
     m_stackedWidget->setCurrentIndex(index);
 }
 
+bool MainWindow::isKernelRunning() const
+{
+    return m_kernelService && m_kernelService->isRunning();
+}
+
+QString MainWindow::activeConfigPath() const
+{
+    QString configPath;
+    if (m_subscriptionView && m_subscriptionView->getService()) {
+        configPath = m_subscriptionView->getService()->getActiveConfigPath();
+    }
+    if (configPath.isEmpty()) {
+        configPath = ConfigManager::instance().getActiveConfigPath();
+    }
+    return configPath;
+}
+
+QString MainWindow::currentProxyMode() const
+{
+    const QString path = activeConfigPath();
+    if (path.isEmpty()) return "rule";
+    return ConfigManager::instance().readClashDefaultMode(path);
+}
+
+void MainWindow::setProxyModeUI(const QString &mode)
+{
+    if (m_homeView) {
+        m_homeView->setProxyMode(mode);
+    }
+}
+
 void MainWindow::onKernelStatusChanged(bool running)
 {
     ThemeManager &tm = ThemeManager::instance();

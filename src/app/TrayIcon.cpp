@@ -1,6 +1,9 @@
 #include "TrayIcon.h"
 #include "MainWindow.h"
+#include "core/KernelService.h"
 #include "utils/ThemeManager.h"
+#include "storage/ConfigManager.h"
+#include <QMessageBox>
 #include <QApplication>
 #include <QPainter>
 #include <QPainterPath>
@@ -57,6 +60,11 @@ TrayIcon::TrayIcon(MainWindow *mainWindow, QObject *parent)
     
     connect(this, &QSystemTrayIcon::activated,
             this, &TrayIcon::onActivated);
+
+    if (m_mainWindow && m_mainWindow->kernelService()) {
+        connect(m_mainWindow->kernelService(), &KernelService::statusChanged,
+                this, [this](bool){ updateProxyStatus(); });
+    }
 }
 
 TrayIcon::~TrayIcon()
@@ -159,13 +167,24 @@ void TrayIcon::setupMenu()
     m_menu->addSeparator();
     
     m_toggleAction = m_menu->addAction(tr("启动代理"));
+    m_toggleAction->setCheckable(true);
     connect(m_toggleAction, &QAction::triggered, this, &TrayIcon::onToggleProxy);
-    
+
+    m_menu->addSeparator();
+
+    m_globalAction = m_menu->addAction(tr("全局模式"));
+    m_ruleAction = m_menu->addAction(tr("规则模式"));
+    m_globalAction->setCheckable(true);
+    m_ruleAction->setCheckable(true);
+    connect(m_globalAction, &QAction::triggered, this, &TrayIcon::onSelectGlobal);
+    connect(m_ruleAction, &QAction::triggered, this, &TrayIcon::onSelectRule);
+
     m_menu->addSeparator();
     
     m_quitAction = m_menu->addAction(tr("退出"));
     connect(m_quitAction, &QAction::triggered, this, &TrayIcon::onQuit);
-    
+
+    connect(m_menu, &QMenu::aboutToShow, this, &TrayIcon::updateProxyStatus);
     setContextMenu(m_menu);
 }
 
@@ -188,7 +207,55 @@ void TrayIcon::onShowWindow()
 
 void TrayIcon::onToggleProxy()
 {
-    // TODO: 实现代理切换
+    const bool running = m_mainWindow->isKernelRunning();
+    auto *kernel = m_mainWindow->kernelService();
+    if (!kernel) return;
+
+    if (running) {
+        kernel->stop();
+    } else {
+        QString configPath = m_mainWindow->activeConfigPath();
+        if (configPath.isEmpty()) {
+            QMessageBox::warning(nullptr, tr("启动代理"), tr("未找到配置文件，无法启动内核。"));
+            return;
+        }
+        kernel->start(configPath);
+    }
+    updateProxyStatus();
+}
+
+void TrayIcon::onSelectGlobal()
+{
+    const QString mode = "global";
+    const QString configPath = m_mainWindow->activeConfigPath();
+    if (configPath.isEmpty()) return;
+    QString error;
+    if (ConfigManager::instance().updateClashDefaultMode(configPath, mode, &error)) {
+        if (m_mainWindow->isKernelRunning()) {
+            m_mainWindow->kernelService()->restartWithConfig(configPath);
+        }
+    } else {
+        QMessageBox::warning(nullptr, tr("切换模式失败"), error);
+    }
+    m_mainWindow->setProxyModeUI(mode);
+    updateProxyStatus();
+}
+
+void TrayIcon::onSelectRule()
+{
+    const QString mode = "rule";
+    const QString configPath = m_mainWindow->activeConfigPath();
+    if (configPath.isEmpty()) return;
+    QString error;
+    if (ConfigManager::instance().updateClashDefaultMode(configPath, mode, &error)) {
+        if (m_mainWindow->isKernelRunning()) {
+            m_mainWindow->kernelService()->restartWithConfig(configPath);
+        }
+    } else {
+        QMessageBox::warning(nullptr, tr("切换模式失败"), error);
+    }
+    m_mainWindow->setProxyModeUI(mode);
+    updateProxyStatus();
 }
 
 void TrayIcon::onQuit()
@@ -197,13 +264,15 @@ void TrayIcon::onQuit()
     QApplication::quit();
 }
 
-void TrayIcon::updateProxyStatus(bool enabled)
+void TrayIcon::updateProxyStatus()
 {
-    if (enabled) {
-        setToolTip(tr("Sing-Box - 运行中"));
-        m_toggleAction->setText(tr("停止代理"));
-    } else {
-        setToolTip(tr("Sing-Box - 已停止"));
-        m_toggleAction->setText(tr("启动代理"));
-    }
+    const bool running = m_mainWindow->isKernelRunning();
+    m_toggleAction->setChecked(running);
+    m_toggleAction->setText(running ? tr("关闭代理") : tr("启动代理"));
+    setToolTip(running ? tr("Sing-Box - 运行中") : tr("Sing-Box - 已停止"));
+
+    const QString mode = m_mainWindow->currentProxyMode();
+    m_globalAction->setChecked(mode == "global");
+    m_ruleAction->setChecked(mode != "global");
+    m_mainWindow->setProxyModeUI(mode);
 }

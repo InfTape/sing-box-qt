@@ -535,6 +535,22 @@ void SettingsView::onCheckKernelClicked()
 {
     refreshKernelInfo();
     fetchKernelVersions();
+
+    const QString kernelPath = detectKernelPath();
+    if (kernelPath.isEmpty()) {
+        QMessageBox::warning(this, tr("检查安装"), tr("未找到 sing-box 内核，请先下载或手动指定路径。"));
+        return;
+    }
+
+    const QString version = queryKernelVersion(kernelPath);
+    if (version.isEmpty()) {
+        QMessageBox::warning(this, tr("检查安装"),
+                             tr("找到内核但无法读取版本：\n%1").arg(kernelPath));
+        return;
+    }
+
+    QMessageBox::information(this, tr("检查安装"),
+                             tr("内核已安装。\n路径：%1\n版本：%2").arg(kernelPath, version));
 }
 
 void SettingsView::onCheckUpdateClicked()
