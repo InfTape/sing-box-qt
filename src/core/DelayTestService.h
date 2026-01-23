@@ -10,21 +10,21 @@
 
 class HttpClient;
 
-// 延迟测试配置选项
+// Delay test options.
 struct DelayTestOptions {
-    int timeoutMs = 8000;                                              // 超时时间（毫秒）
-    QString url = "https://connectivitycheck.gstatic.com/generate_204"; // 测试 URL
-    int samples = 2;                                                    // 采样次数
-    int concurrency = 6;                                                // 并发数
+    int timeoutMs = 8000;                                              // Timeout in ms.
+    QString url = "https://connectivitycheck.gstatic.com/generate_204"; // Test URL.
+    int samples = 2;                                                    // Sample count.
+    int concurrency = 6;                                                // Concurrency.
 };
 
-// 延迟测试结果
+// Delay test result.
 struct ProxyDelayTestResult {
-    QString proxy;         // 节点名称
-    int delay = 0;         // 延迟（ms），失败时为0
-    bool ok = false;       // 是否成功
-    QString error;         // 错误信息
-    int successSamples = 0; // 成功采样数
+    QString proxy;          // Proxy name.
+    int delay = 0;          // Delay in ms, 0 on failure.
+    bool ok = false;        // Success flag.
+    QString error;          // Error message.
+    int successSamples = 0; // Successful samples.
 };
 
 class DelayTestService : public QObject
@@ -35,55 +35,55 @@ public:
     explicit DelayTestService(QObject *parent = nullptr);
     ~DelayTestService();
 
-    // 设置 API 端口
+    // Set API port.
     void setApiPort(int port);
-    
-    // 测试单个节点延迟（多采样取中位数）
+
+    // Test single proxy delay (median of samples).
     void testNodeDelay(const QString &proxy, const DelayTestOptions &options = DelayTestOptions());
-    
-    // 测试多个节点延迟（并发控制）
+
+    // Test multiple proxies (with concurrency control).
     void testNodesDelay(const QStringList &proxies, const DelayTestOptions &options = DelayTestOptions());
-    
-    // 测试代理组延迟
+
+    // Test a proxy group.
     void testGroupDelay(const QString &group, const QJsonArray &nodes, const DelayTestOptions &options = DelayTestOptions());
-    
-    // 停止所有测试
+
+    // Stop all tests.
     void stopAllTests();
-    
-    // 是否正在测试
+
+    // Check if testing is running.
     bool isTesting() const;
 
 signals:
-    // 单个节点测试完成
+    // Single proxy test done.
     void nodeDelayResult(const ProxyDelayTestResult &result);
-    
-    // 批量测试进度
+
+    // Batch progress.
     void testProgress(int current, int total);
-    
-    // 批量测试完成
+
+    // Batch completed.
     void testCompleted();
-    
-    // 发生错误
+
+    // Error happened.
     void errorOccurred(const QString &error);
 
 private:
-    // 执行单次延迟测试（内部使用）
+    // Run a single delay test (internal).
     int fetchSingleDelay(const QString &proxy, int timeoutMs, const QString &testUrl);
-    
-    // 计算中位数
+
+    // Compute median.
     int medianValue(QVector<int> &values);
-    
-    // 测量节点延迟（多采样）
+
+    // Measure proxy delay with samples.
     ProxyDelayTestResult measureProxyDelay(const QString &proxy, const DelayTestOptions &options);
-    
-    // 构建 Clash API URL
+
+    // Build Clash API URL.
     QString buildClashDelayUrl(const QString &proxy, int timeoutMs, const QString &testUrl) const;
 
     HttpClient *m_httpClient;
     int m_apiPort;
     bool m_stopping;
     mutable QMutex m_mutex;
-    QSemaphore *m_semaphore;  // 并发控制信号量
+    QSemaphore *m_semaphore;  // Concurrency control.
 };
 
 #endif // DELAYTESTSERVICE_H

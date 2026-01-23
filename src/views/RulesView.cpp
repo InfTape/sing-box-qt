@@ -1,8 +1,9 @@
-#include "RulesView.h"
+﻿#include "RulesView.h"
 #include "core/ProxyService.h"
 #include "utils/ThemeManager.h"
 #include "storage/ConfigManager.h"
 #include "storage/DatabaseService.h"
+#include "widgets/RoundedMenu.h"
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -34,46 +35,6 @@
 class RulesView;
 
 namespace {
-class RoundedMenu : public QMenu
-{
-public:
-    explicit RoundedMenu(QWidget *parent = nullptr)
-        : QMenu(parent)
-    {
-        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
-        setAttribute(Qt::WA_TranslucentBackground, true);
-        setAttribute(Qt::WA_NoSystemBackground, true);
-    }
-
-    void setThemeColors(const QColor &bg, const QColor &border)
-    {
-        m_bgColor = bg;
-        m_borderColor = border;
-        update();
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override
-    {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
-        QPainterPath path;
-        path.addRoundedRect(rect, 10, 10);
-
-        painter.fillPath(path, m_bgColor);
-        painter.setPen(QPen(m_borderColor, 1));
-        painter.drawPath(path);
-
-        QMenu::paintEvent(event);
-    }
-
-private:
-    QColor m_bgColor = QColor(30, 41, 59);
-    QColor m_borderColor = QColor(90, 169, 255, 180);
-};
-
 class MenuComboBox : public QComboBox
 {
 public:
@@ -183,21 +144,21 @@ struct RuleFieldInfo {
 inline QList<RuleFieldInfo> ruleFieldInfos()
 {
     return {
-        {QObject::tr("域名"), "domain", QObject::tr("示例: example.com")},
-        {QObject::tr("域名后缀"), "domain_suffix", QObject::tr("示例: example.com")},
-        {QObject::tr("域名关键字"), "domain_keyword", QObject::tr("示例: google")},
-        {QObject::tr("域名正则"), "domain_regex", QObject::tr("示例: ^.*\\\\.example\\\\.com$")},
-        {QObject::tr("IP CIDR"), "ip_cidr", QObject::tr("示例: 192.168.0.0/16")},
-        {QObject::tr("私有 IP"), "ip_is_private", QObject::tr("示例: true / false")},
-        {QObject::tr("源 IP CIDR"), "source_ip_cidr", QObject::tr("示例: 10.0.0.0/8")},
-        {QObject::tr("端口"), "port", QObject::tr("示例: 80,443"), true},
-        {QObject::tr("源端口"), "source_port", QObject::tr("示例: 80,443"), true},
-        {QObject::tr("端口范围"), "port_range", QObject::tr("示例: 10000:20000")},
-        {QObject::tr("源端口范围"), "source_port_range", QObject::tr("示例: 10000:20000")},
-        {QObject::tr("进程名"), "process_name", QObject::tr("示例: chrome.exe")},
-        {QObject::tr("进程路径"), "process_path", QObject::tr("示例: C:\\\\Program Files\\\\App\\\\app.exe")},
-        {QObject::tr("进程路径正则"), "process_path_regex", QObject::tr("示例: ^C:\\\\\\\\Program Files\\\\\\\\.+")},
-        {QObject::tr("包名"), "package_name", QObject::tr("示例: com.example.app")},
+        {QObject::tr("Domain"), "domain", QObject::tr("Example: example.com")},
+        {QObject::tr("Domain Suffix"), "domain_suffix", QObject::tr("Example: example.com")},
+        {QObject::tr("Domain Keyword"), "domain_keyword", QObject::tr("Example: google")},
+        {QObject::tr("Domain Regex"), "domain_regex", QObject::tr("Example: ^.*\\\\.example\\\\.com$")},
+        {QObject::tr("IP CIDR"), "ip_cidr", QObject::tr("Example: 192.168.0.0/16")},
+        {QObject::tr("Private IP"), "ip_is_private", QObject::tr("Example: true / false")},
+        {QObject::tr("Source IP CIDR"), "source_ip_cidr", QObject::tr("Example: 10.0.0.0/8")},
+        {QObject::tr("Port"), "port", QObject::tr("Example: 80,443"), true},
+        {QObject::tr("Source Port"), "source_port", QObject::tr("Example: 80,443"), true},
+        {QObject::tr("Port Range"), "port_range", QObject::tr("Example: 10000:20000")},
+        {QObject::tr("Source Port Range"), "source_port_range", QObject::tr("Example: 10000:20000")},
+        {QObject::tr("Process Name"), "process_name", QObject::tr("Example: chrome.exe")},
+        {QObject::tr("Process Path"), "process_path", QObject::tr("Example: C:\\\\Program Files\\\\App\\\\app.exe")},
+        {QObject::tr("Process Path Regex"), "process_path_regex", QObject::tr("Example: ^C:\\\\\\\\Program Files\\\\\\\\.+")},
+        {QObject::tr("Package Name"), "package_name", QObject::tr("Example: com.example.app")},
     };
 }
 
@@ -224,20 +185,20 @@ void RulesView::setupUI()
     QVBoxLayout *titleLayout = new QVBoxLayout;
     titleLayout->setSpacing(4);
 
-    m_titleLabel = new QLabel(tr("规则"));
+    m_titleLabel = new QLabel(tr("Rules"));
     m_titleLabel->setObjectName("PageTitle");
-    m_subtitleLabel = new QLabel(tr("查看并筛选当前规则列表"));
+    m_subtitleLabel = new QLabel(tr("View and filter the current rule list"));
     m_subtitleLabel->setObjectName("PageSubtitle");
 
     titleLayout->addWidget(m_titleLabel);
     titleLayout->addWidget(m_subtitleLabel);
 
-    m_refreshBtn = new QPushButton(tr("获取规则"));
+    m_refreshBtn = new QPushButton(tr("Fetch Rules"));
     m_refreshBtn->setObjectName("PrimaryActionBtn");
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setMinimumSize(110, 36);
 
-    m_addBtn = new QPushButton(tr("添加规则"));
+    m_addBtn = new QPushButton(tr("Add Rule"));
     m_addBtn->setObjectName("PrimaryActionBtn");
     m_addBtn->setCursor(Qt::PointingHandCursor);
     m_addBtn->setMinimumSize(110, 36);
@@ -258,7 +219,7 @@ void RulesView::setupUI()
 
     m_searchEdit = new QLineEdit;
     m_searchEdit->setObjectName("SearchInput");
-    m_searchEdit->setPlaceholderText(tr("搜索规则内容或代理..."));
+    m_searchEdit->setPlaceholderText(tr("Search rules or proxies..."));
     m_searchEdit->setClearButtonEnabled(true);
 
     m_typeFilter = new MenuComboBox;
@@ -294,15 +255,15 @@ void RulesView::setupUI()
     emptyLayout->setSpacing(10);
     emptyLayout->setAlignment(Qt::AlignCenter);
 
-    QLabel *emptyIcon = new QLabel(tr("🔍"));
+    QLabel *emptyIcon = new QLabel(tr("Search"));
     emptyIcon->setObjectName("EmptyIcon");
     emptyIcon->setAlignment(Qt::AlignCenter);
 
-    m_emptyTitle = new QLabel(tr("暂无规则数据"));
+    m_emptyTitle = new QLabel(tr("No rules yet"));
     m_emptyTitle->setObjectName("EmptyTitle");
     m_emptyTitle->setAlignment(Qt::AlignCenter);
 
-    m_emptyAction = new QPushButton(tr("获取规则"));
+    m_emptyAction = new QPushButton(tr("Fetch Rules"));
     m_emptyAction->setObjectName("PrimaryActionBtn");
     m_emptyAction->setCursor(Qt::PointingHandCursor);
     m_emptyAction->setMinimumSize(110, 36);
@@ -352,7 +313,7 @@ void RulesView::setProxyService(ProxyService *service)
 
         m_loading = false;
         m_refreshBtn->setEnabled(true);
-        m_refreshBtn->setText(tr("获取规则"));
+        m_refreshBtn->setText(tr("Fetch Rules"));
         updateFilterOptions();
         applyFilters();
     });
@@ -363,7 +324,7 @@ void RulesView::refresh()
     if (!m_proxyService) return;
     m_loading = true;
     m_refreshBtn->setEnabled(false);
-    m_refreshBtn->setText(tr("加载中..."));
+    m_refreshBtn->setText(tr("Loading..."));
     m_proxyService->fetchRules();
 }
 
@@ -391,7 +352,7 @@ void RulesView::onAddRuleClicked()
     const QList<RuleFieldInfo> fields = ruleFieldInfos();
 
     QDialog dialog(this);
-    dialog.setWindowTitle(tr("添加规则"));
+    dialog.setWindowTitle(tr("Add Rule"));
     dialog.setModal(true);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -407,7 +368,7 @@ void RulesView::onAddRuleClicked()
     }
 
     QPlainTextEdit *valueEdit = new QPlainTextEdit(&dialog);
-    valueEdit->setPlaceholderText(fields.first().placeholder + tr("（可用逗号或换行分隔）"));
+    valueEdit->setPlaceholderText(fields.first().placeholder + tr(" (separate by commas or new lines)"));
     valueEdit->setFixedHeight(80);
 
     MenuComboBox *outboundCombo = new MenuComboBox(&dialog);
@@ -429,17 +390,17 @@ void RulesView::onAddRuleClicked()
     outboundList.sort();
     outboundCombo->addItems(outboundList);
 
-    form->addRow(tr("匹配类型:"), typeCombo);
-    form->addRow(tr("匹配内容:"), valueEdit);
-    form->addRow(tr("出口(outbound):"), outboundCombo);
+    form->addRow(tr("Match Type:"), typeCombo);
+    form->addRow(tr("Match Value:"), valueEdit);
+    form->addRow(tr("Outbound:"), outboundCombo);
 
-    QLabel *hintLabel = new QLabel(tr("说明：规则将写入 route.rules（1.11+ 格式）。修改后需重启内核生效。"), &dialog);
+    QLabel *hintLabel = new QLabel(tr("Note: rules are written to route.rules (1.11+ format). Restart kernel or app to apply."), &dialog);
     hintLabel->setWordWrap(true);
     hintLabel->setStyleSheet("color: #94a3b8; font-size: 12px;");
 
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    buttons->button(QDialogButtonBox::Ok)->setText(tr("确定"));
-    buttons->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
+    buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
+    buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
 
     layout->addLayout(form);
     layout->addWidget(hintLabel);
@@ -447,7 +408,7 @@ void RulesView::onAddRuleClicked()
 
     QObject::connect(typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), &dialog, [=](int index) {
         if (index >= 0 && index < fields.size()) {
-            valueEdit->setPlaceholderText(fields[index].placeholder + tr("（可用逗号或换行分隔）"));
+            valueEdit->setPlaceholderText(fields[index].placeholder + tr(" (separate by commas or new lines)"));
         }
     });
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -461,7 +422,7 @@ void RulesView::onAddRuleClicked()
 
     const QString rawText = valueEdit->toPlainText().trimmed();
     if (rawText.isEmpty()) {
-        QMessageBox::warning(this, tr("添加规则"), tr("匹配内容不能为空。"));
+        QMessageBox::warning(this, tr("Add Rule"), tr("Match value cannot be empty."));
         return;
     }
 
@@ -469,7 +430,7 @@ void RulesView::onAddRuleClicked()
     for (QString &v : values) v = v.trimmed();
     values.removeAll(QString());
     if (values.isEmpty()) {
-        QMessageBox::warning(this, tr("添加规则"), tr("匹配内容不能为空。"));
+        QMessageBox::warning(this, tr("Add Rule"), tr("Match value cannot be empty."));
         return;
     }
 
@@ -479,7 +440,7 @@ void RulesView::onAddRuleClicked()
             bool ok = false;
             int num = v.toInt(&ok);
             if (!ok) {
-                QMessageBox::warning(this, tr("添加规则"), tr("端口必须为数字：%1").arg(v));
+                QMessageBox::warning(this, tr("Add Rule"), tr("Port must be numeric: %1").arg(v));
                 return;
             }
             payload.append(num);
@@ -492,13 +453,13 @@ void RulesView::onAddRuleClicked()
 
     const QString outboundTag = outboundCombo->currentText().trimmed();
     if (outboundTag.isEmpty()) {
-        QMessageBox::warning(this, tr("添加规则"), tr("出口(outbound)不能为空。"));
+        QMessageBox::warning(this, tr("Add Rule"), tr("Outbound cannot be empty."));
         return;
     }
 
     QJsonObject newConfig = ConfigManager::instance().loadConfig(configPath);
     if (newConfig.isEmpty()) {
-        QMessageBox::warning(this, tr("添加规则"), tr("无法读取配置文件：%1").arg(configPath));
+        QMessageBox::warning(this, tr("Add Rule"), tr("Failed to read config file: %1").arg(configPath));
         return;
     }
 
@@ -507,12 +468,12 @@ void RulesView::onAddRuleClicked()
     QJsonObject routeRule;
     if (field.key == "ip_is_private") {
         if (payload.size() != 1) {
-            QMessageBox::warning(this, tr("添加规则"), tr("ip_is_private 只能设置一个值（true/false）。"));
+            QMessageBox::warning(this, tr("Add Rule"), tr("ip_is_private allows only one value (true/false)."));
             return;
         }
         const QString raw = payload.first().toString().toLower();
         if (raw != "true" && raw != "false") {
-            QMessageBox::warning(this, tr("添加规则"), tr("ip_is_private 只能为 true 或 false。"));
+            QMessageBox::warning(this, tr("Add Rule"), tr("ip_is_private must be true or false."));
             return;
         }
         routeRule.insert(field.key, raw == "true");
@@ -583,12 +544,12 @@ void RulesView::onAddRuleClicked()
     newConfig["route"] = route;
 
     if (!ConfigManager::instance().saveConfig(configPath, newConfig)) {
-        QMessageBox::warning(this, tr("添加规则"), tr("保存配置失败：%1").arg(configPath));
+        QMessageBox::warning(this, tr("Add Rule"), tr("Failed to save config: %1").arg(configPath));
         return;
     }
 
-    QMessageBox::information(this, tr("添加规则"),
-                             tr("规则已写入 route.rules。\n请重启内核或应用以生效。"));
+    QMessageBox::information(this, tr("Add Rule"),
+                             tr("Rules written to route.rules.\nRestart kernel or app to apply."));
 }
 
 void RulesView::onSearchChanged()
@@ -648,9 +609,9 @@ void RulesView::updateFilterOptions()
 
     m_typeFilter->blockSignals(true);
     m_typeFilter->clear();
-    m_typeFilter->addItem(tr("类型"), QString());
+    m_typeFilter->addItem(tr("Type"), QString());
     if (hasCustom) {
-        m_typeFilter->addItem(tr("自定义"), "custom");
+        m_typeFilter->addItem(tr("Custom"), "custom");
     }
     QStringList typeList = types.values();
     typeList.sort();
@@ -663,12 +624,12 @@ void RulesView::updateFilterOptions()
 
     m_proxyFilter->blockSignals(true);
     m_proxyFilter->clear();
-    m_proxyFilter->addItem(tr("目标代理"), QString());
+    m_proxyFilter->addItem(tr("Target Proxy"), QString());
     if (proxies.contains("direct")) {
-        m_proxyFilter->addItem(tr("直连"), "direct");
+        m_proxyFilter->addItem(tr("Direct"), "direct");
     }
     if (proxies.contains("reject")) {
-        m_proxyFilter->addItem(tr("拦截"), "reject");
+        m_proxyFilter->addItem(tr("Reject"), "reject");
     }
     QStringList proxyList = proxies.values();
     proxyList.sort();
@@ -729,8 +690,8 @@ void RulesView::updateEmptyState()
     if (m_filteredRules.isEmpty()) {
         m_emptyState->show();
         m_scrollArea->hide();
-        m_emptyTitle->setText(hasFilters ? tr("没有匹配的规则") : tr("暂无规则数据"));
-        m_emptyAction->setText(hasFilters ? tr("清空筛选") : tr("获取规则"));
+        m_emptyTitle->setText(hasFilters ? tr("No matching rules") : tr("No rules yet"));
+        m_emptyAction->setText(hasFilters ? tr("Clear Filters") : tr("Fetch Rules"));
     } else {
         m_emptyState->hide();
         m_scrollArea->show();
@@ -749,7 +710,7 @@ QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
     QHBoxLayout *headerLayout = new QHBoxLayout;
     headerLayout->setSpacing(6);
 
-    QLabel *typeTag = new QLabel(rule.isCustom ? tr("自定义规则") : rule.type);
+    QLabel *typeTag = new QLabel(rule.isCustom ? tr("Custom Rule") : rule.type);
     typeTag->setObjectName("RuleTag");
     typeTag->setProperty("tagType", ruleTagType(rule));
 
@@ -773,8 +734,8 @@ QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
             menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
         });
 
-        QAction *editTypeAct = menu->addAction(tr("修改匹配类型"));
-        QAction *removeAct = menu->addAction(tr("删除规则"));
+        QAction *editTypeAct = menu->addAction(tr("Edit Match Type"));
+        QAction *removeAct = menu->addAction(tr("Delete Rule"));
         removeAct->setObjectName("DeleteAction");
 
         connect(menuBtn, &QPushButton::clicked, [menuBtn, menu]() {
@@ -785,10 +746,10 @@ QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
         });
         connect(removeAct, &QAction::triggered, card, [this, rule]() {
             const QMessageBox::StandardButton btn = QMessageBox::question(
-                this, tr("删除规则"), tr("确定删除该自定义规则吗？"));
+                this, tr("Delete Rule"), tr("Delete this custom rule?"));
             if (btn != QMessageBox::Yes) return;
             if (!removeRuleFromConfig(rule)) {
-                QMessageBox::warning(this, tr("删除规则"), tr("删除失败，未找到匹配规则。"));
+                QMessageBox::warning(this, tr("Delete Rule"), tr("Delete failed, rule not found."));
                 return;
             }
             auto it = std::remove_if(m_rules.begin(), m_rules.end(), [&rule](const RuleItem &r) {
@@ -841,8 +802,8 @@ QString RulesView::normalizeProxyValue(const QString &proxy) const
 QString RulesView::displayProxyLabel(const QString &proxy) const
 {
     const QString value = normalizeProxyValue(proxy);
-    if (value == "direct") return tr("直连");
-    if (value == "reject") return tr("拦截");
+    if (value == "direct") return tr("Direct");
+    if (value == "reject") return tr("Reject");
     return value;
 }
 
@@ -954,18 +915,18 @@ bool RulesView::changeRuleType(const RuleItem &rule)
 {
     const QList<RuleFieldInfo> fields = ruleFieldInfos();
 
-    // 拆分当前 payload
+
     const QString payload = rule.payload.trimmed();
     const int eq = payload.indexOf('=');
     if (eq <= 0) {
-        QMessageBox::warning(this, tr("修改类型"), tr("无法解析当前规则内容。"));
+        QMessageBox::warning(this, tr("Edit Match Type"), tr("Failed to parse current rule content."));
         return false;
     }
     const QString currentKey = payload.left(eq).trimmed();
     const QString currentValue = payload.mid(eq + 1).trimmed();
 
     QDialog dialog(this);
-    dialog.setWindowTitle(tr("修改匹配类型"));
+    dialog.setWindowTitle(tr("Edit Match Type"));
     dialog.setModal(true);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
@@ -986,7 +947,7 @@ bool RulesView::changeRuleType(const RuleItem &rule)
     valueEdit->setPlainText(currentValue);
     valueEdit->setFixedHeight(80);
 
-    // 出口选择
+
     MenuComboBox *outboundCombo = new MenuComboBox(&dialog);
     QSet<QString> outboundTags;
     const QString configPath = activeConfigPath();
@@ -1010,13 +971,13 @@ bool RulesView::changeRuleType(const RuleItem &rule)
     int outboundIndex = outboundCombo->findText(currentOutbound);
     if (outboundIndex >= 0) outboundCombo->setCurrentIndex(outboundIndex);
 
-    form->addRow(tr("匹配类型:"), typeCombo);
-    form->addRow(tr("匹配内容:"), valueEdit);
-    form->addRow(tr("出口(outbound):"), outboundCombo);
+    form->addRow(tr("Match Type:"), typeCombo);
+    form->addRow(tr("Match Value:"), valueEdit);
+    form->addRow(tr("Outbound:"), outboundCombo);
 
     QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    buttons->button(QDialogButtonBox::Ok)->setText(tr("确定"));
-    buttons->button(QDialogButtonBox::Cancel)->setText(tr("取消"));
+    buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
+    buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
 
     layout->addLayout(form);
     layout->addWidget(buttons);
@@ -1032,7 +993,7 @@ bool RulesView::changeRuleType(const RuleItem &rule)
 
     QString rawText = valueEdit->toPlainText().trimmed();
     if (rawText.isEmpty()) {
-        QMessageBox::warning(this, tr("修改类型"), tr("匹配内容不能为空。"));
+        QMessageBox::warning(this, tr("Edit Match Type"), tr("Match value cannot be empty."));
         return false;
     }
 
@@ -1040,7 +1001,7 @@ bool RulesView::changeRuleType(const RuleItem &rule)
     for (QString &v : values) v = v.trimmed();
     values.removeAll(QString());
     if (values.isEmpty()) {
-        QMessageBox::warning(this, tr("修改类型"), tr("匹配内容不能为空。"));
+        QMessageBox::warning(this, tr("Edit Match Type"), tr("Match value cannot be empty."));
         return false;
     }
 
@@ -1051,7 +1012,7 @@ bool RulesView::changeRuleType(const RuleItem &rule)
             bool ok = false;
             int num = v.toInt(&ok);
             if (!ok) {
-                QMessageBox::warning(this, tr("修改类型"), tr("端口必须为数字：%1").arg(v));
+                QMessageBox::warning(this, tr("Edit Match Type"), tr("Port must be numeric: %1").arg(v));
                 return false;
             }
             arr.append(num);
@@ -1063,12 +1024,12 @@ bool RulesView::changeRuleType(const RuleItem &rule)
         }
     } else if (field.key == "ip_is_private") {
         if (values.size() != 1) {
-            QMessageBox::warning(this, tr("修改类型"), tr("ip_is_private 只能设置一个值（true/false）。"));
+            QMessageBox::warning(this, tr("Edit Match Type"), tr("ip_is_private allows only one value (true/false)."));
             return false;
         }
         const QString raw = values.first().toLower();
         if (raw != "true" && raw != "false") {
-            QMessageBox::warning(this, tr("修改类型"), tr("ip_is_private 只能为 true 或 false。"));
+            QMessageBox::warning(this, tr("Edit Match Type"), tr("ip_is_private must be true or false."));
             return false;
         }
         routeRule.insert(field.key, raw == "true");
@@ -1084,9 +1045,9 @@ bool RulesView::changeRuleType(const RuleItem &rule)
     routeRule["action"] = "route";
     routeRule["outbound"] = normalizeProxyValue(outboundCombo->currentText());
 
-    // 先删除旧规则
+
     if (!removeRuleFromConfig(rule)) {
-        QMessageBox::warning(this, tr("修改类型"), tr("未找到需替换的旧规则。"));
+        QMessageBox::warning(this, tr("Edit Match Type"), tr("Old rule to replace not found."));
         return false;
     }
 
@@ -1117,11 +1078,11 @@ bool RulesView::changeRuleType(const RuleItem &rule)
     configObj["route"] = route;
 
     if (!ConfigManager::instance().saveConfig(path, configObj)) {
-        QMessageBox::warning(this, tr("修改类型"), tr("保存配置失败"));
+        QMessageBox::warning(this, tr("Edit Match Type"), tr("Failed to save config"));
         return false;
     }
 
-    // 更新内存列表
+
     for (auto &r : m_rules) {
         if (r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type) {
             r.type = field.key;
@@ -1299,3 +1260,4 @@ void RulesView::resizeEvent(QResizeEvent *event)
         rebuildGrid();
     }
 }
+

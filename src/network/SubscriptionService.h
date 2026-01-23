@@ -35,7 +35,7 @@ public:
     explicit SubscriptionService(QObject *parent = nullptr);
     ~SubscriptionService();
 
-    // 订阅管理
+    // Subscription management.
     void addUrlSubscription(const QString &url,
                             const QString &name,
                             bool useOriginalConfig,
@@ -64,12 +64,12 @@ public:
     bool rollbackSubscriptionConfig(const QString &configPath);
     bool deleteSubscriptionConfig(const QString &configPath);
 
-    // 获取订阅列表
+    // Get subscription list.
     QList<SubscriptionInfo> getSubscriptions() const;
     int getActiveIndex() const;
     QString getActiveConfigPath() const;
-    
-    // 解析订阅内容
+
+    // Parse subscription content.
     QJsonArray parseSubscriptionContent(const QByteArray &content) const;
 
 signals:
@@ -94,20 +94,20 @@ private:
     void updateSubscriptionUserinfo(SubscriptionInfo &info, const QJsonObject &headers);
     void updateSubscriptionUserinfoFromHeader(SubscriptionInfo &info, const QByteArray &header);
 
-    // 解析不同格式
+    // Parse different formats.
     QJsonArray parseSingBoxConfig(const QByteArray &content) const;
     QJsonArray parseClashConfig(const QByteArray &content) const;
     QJsonArray parseURIList(const QByteArray &content) const;
-    
-    // URI 解析
+
+    // URI parsing.
     QJsonObject parseVmessURI(const QString &uri) const;
     QJsonObject parseVlessURI(const QString &uri) const;
     QJsonObject parseTrojanURI(const QString &uri) const;
     QJsonObject parseShadowsocksURI(const QString &uri) const;
     QJsonObject parseHysteria2URI(const QString &uri) const;
-    
+
     QString generateId() const;
-    
+
     HttpClient *m_httpClient;
     QList<SubscriptionInfo> m_subscriptions;
     int m_activeIndex;

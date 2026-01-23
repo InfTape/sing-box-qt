@@ -1,4 +1,4 @@
-#ifndef CONFIGCONSTANTS_H
+﻿#ifndef CONFIGCONSTANTS_H
 #define CONFIGCONSTANTS_H
 
 #include <QString>
@@ -6,26 +6,26 @@
 
 namespace ConfigConstants {
 
-// ==================== 出站标签 ====================
-// 代理组/出站标签（暴露在 Clash API，保持稳定）
-const QString TAG_AUTO = "自动选择";
-const QString TAG_MANUAL = "手动切换";
+// ==================== Outbound tags ====================
+// Proxy group/outbound tags exposed in Clash API (keep stable)
+const QString TAG_AUTO = "auto";
+const QString TAG_MANUAL = "manual";
 const QString TAG_DIRECT = "direct";
 const QString TAG_BLOCK = "block";
 
-// ==================== 业务分流组 ====================
+// ==================== App routing groups ====================
 const QString TAG_TELEGRAM = "Telegram";
 const QString TAG_YOUTUBE = "YouTube";
 const QString TAG_NETFLIX = "Netflix";
 const QString TAG_OPENAI = "OpenAI";
 
-// ==================== DNS 服务器标签 ====================
+// ==================== DNS server tags ====================
 const QString DNS_PROXY = "dns_proxy";
 const QString DNS_CN = "dns_cn";
 const QString DNS_RESOLVER = "dns_resolver";
 const QString DNS_BLOCK = "dns_block";
 
-// ==================== 规则集标签 ====================
+// ==================== Rule set tags ====================
 const QString RS_GEOSITE_CN = "geosite-cn";
 const QString RS_GEOSITE_GEOLOCATION_NOT_CN = "geosite-geolocation-!cn";
 const QString RS_GEOSITE_PRIVATE = "geosite-private";
@@ -36,8 +36,7 @@ const QString RS_GEOSITE_NETFLIX = "geosite-netflix";
 const QString RS_GEOSITE_OPENAI = "geosite-openai";
 const QString RS_GEOIP_CN = "geoip-cn";
 
-// ==================== 规则集 URL ====================
-// 使用 gh-proxy 加速 GitHub 访问
+// ==================== Rule set URLs ====================
 const QString RULE_SET_BASE = "https://raw.githubusercontent.com";
 
 inline QString ruleSetUrl(const QString &tag) {
@@ -63,7 +62,7 @@ inline QString ruleSetUrl(const QString &tag) {
     return QString();
 }
 
-// ==================== 私网 IP 段 ====================
+// ==================== Private IP ranges ====================
 inline QStringList privateIpCidrs() {
     return {
         "10.0.0.0/8",
@@ -78,7 +77,7 @@ inline QStringList privateIpCidrs() {
     };
 }
 
-// ==================== TUN 排除路由 ====================
+// ==================== TUN route excludes ====================
 inline QStringList tunRouteExcludes() {
     return {
         "127.0.0.0/8",
@@ -90,7 +89,7 @@ inline QStringList tunRouteExcludes() {
     };
 }
 
-// ==================== 默认配置 ====================
+// ==================== Default configuration ====================
 const int DEFAULT_MIXED_PORT = 7890;
 const int DEFAULT_API_PORT = 9090;
 const QString DEFAULT_DNS_PROXY = "1.1.1.1";

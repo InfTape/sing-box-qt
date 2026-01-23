@@ -254,7 +254,7 @@ void SubscriptionService::addUrlSubscription(const QString &url,
 {
     const QString trimmedUrl = url.trimmed();
     if (trimmedUrl.isEmpty()) {
-        emit errorOccurred(tr("请输入订阅链接"));
+        emit errorOccurred(tr("Please enter a subscription URL"));
         return;
     }
 
@@ -263,7 +263,7 @@ void SubscriptionService::addUrlSubscription(const QString &url,
     const QString configName = generateConfigFileName(subName);
     const QString configPath = ConfigManager::instance().getConfigDir() + "/" + configName;
 
-    Logger::info(QString("添加订阅: %1 (%2)").arg(subName, trimmedUrl));
+    Logger::info(QString("Add subscription: %1 (%2)").arg(subName, trimmedUrl));
 
     QNetworkRequest request{QUrl(trimmedUrl)};
     request.setTransferTimeout(30000);
@@ -274,7 +274,7 @@ void SubscriptionService::addUrlSubscription(const QString &url,
         reply->deleteLater();
         manager->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
-            emit errorOccurred(tr("获取订阅失败"));
+            emit errorOccurred(tr("Failed to fetch subscription"));
             return;
         }
 
@@ -296,14 +296,14 @@ void SubscriptionService::addUrlSubscription(const QString &url,
         bool saved = false;
         if (useOriginalConfig) {
             if (!isJsonContent(QString::fromUtf8(data))) {
-                emit errorOccurred(tr("原始订阅仅支持 sing-box JSON 配置内容"));
+                emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
                 return;
             }
             saved = saveOriginalConfig(QString::fromUtf8(data), configPath);
         } else {
             QJsonArray nodes = extractNodesWithFallback(QString::fromUtf8(data));
             if (nodes.isEmpty()) {
-                emit errorOccurred(tr("无法从订阅内容提取节点，请检查订阅格式"));
+                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                 return;
             }
             info.nodeCount = nodes.count();
@@ -312,7 +312,7 @@ void SubscriptionService::addUrlSubscription(const QString &url,
         }
 
         if (!saved) {
-            emit errorOccurred(tr("保存订阅配置失败"));
+            emit errorOccurred(tr("Failed to save subscription config"));
             return;
         }
 
@@ -342,16 +342,16 @@ void SubscriptionService::addManualSubscription(const QString &content,
 
     const QString trimmed = content.trimmed();
     if (trimmed.isEmpty()) {
-        emit errorOccurred(tr("请输入订阅内容"));
+        emit errorOccurred(tr("Please enter subscription content"));
         return;
     }
 
     if (useOriginalConfig && !isJsonContent(trimmed)) {
-        emit errorOccurred(tr("原始订阅仅支持 sing-box JSON 配置内容"));
+        emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
         return;
     }
 
-    QString subName = name.trimmed().isEmpty() ? tr("手动订阅") : name.trimmed();
+    QString subName = name.trimmed().isEmpty() ? tr("Manual subscription") : name.trimmed();
     QString id = generateId();
     const QString configName = generateConfigFileName(subName);
     const QString configPath = ConfigManager::instance().getConfigDir() + "/" + configName;
@@ -374,7 +374,7 @@ void SubscriptionService::addManualSubscription(const QString &content,
     } else {
         QJsonArray nodes = extractNodesWithFallback(trimmed);
         if (nodes.isEmpty()) {
-            emit errorOccurred(tr("无法从订阅内容提取节点，请检查格式"));
+            emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
             return;
         }
         info.nodeCount = nodes.count();
@@ -383,7 +383,7 @@ void SubscriptionService::addManualSubscription(const QString &content,
     }
 
     if (!saved) {
-        emit errorOccurred(tr("保存订阅配置失败"));
+        emit errorOccurred(tr("Failed to save subscription config"));
         return;
     }
 
@@ -431,17 +431,17 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
 {
     SubscriptionInfo *sub = findSubscription(id);
     if (!sub) {
-        emit errorOccurred(tr("订阅不存在"));
+        emit errorOccurred(tr("Subscription not found"));
         return;
     }
 
     if (sub->isManual) {
         if (sub->manualContent.trimmed().isEmpty()) {
-            emit errorOccurred(tr("手动订阅内容为空"));
+            emit errorOccurred(tr("Manual subscription content is empty"));
             return;
         }
         if (sub->useOriginalConfig && !isJsonContent(sub->manualContent)) {
-            emit errorOccurred(tr("原始订阅仅支持 sing-box JSON 配置内容"));
+            emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
             return;
         }
 
@@ -451,7 +451,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
         } else {
             QJsonArray nodes = extractNodesWithFallback(sub->manualContent);
             if (nodes.isEmpty()) {
-                emit errorOccurred(tr("无法从订阅内容提取节点，请检查格式"));
+                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                 return;
             }
             sub->nodeCount = nodes.count();
@@ -459,7 +459,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
             DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
         }
         if (!saved) {
-            emit errorOccurred(tr("刷新订阅失败"));
+            emit errorOccurred(tr("Failed to refresh subscription"));
             return;
         }
         sub->lastUpdate = QDateTime::currentMSecsSinceEpoch();
@@ -477,7 +477,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
 
     const QString url = sub->url.trimmed();
     if (url.isEmpty()) {
-        emit errorOccurred(tr("订阅链接为空"));
+        emit errorOccurred(tr("Subscription URL is empty"));
         return;
     }
 
@@ -489,7 +489,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
         reply->deleteLater();
         manager->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
-            emit errorOccurred(tr("更新订阅失败"));
+            emit errorOccurred(tr("Failed to update subscription"));
             return;
         }
 
@@ -498,14 +498,14 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
         bool saved = false;
         if (sub->useOriginalConfig) {
             if (!isJsonContent(QString::fromUtf8(data))) {
-                emit errorOccurred(tr("原始订阅仅支持 sing-box JSON 配置内容"));
+                emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
                 return;
             }
             saved = saveOriginalConfig(QString::fromUtf8(data), sub->configPath);
         } else {
             QJsonArray nodes = extractNodesWithFallback(QString::fromUtf8(data));
             if (nodes.isEmpty()) {
-                emit errorOccurred(tr("无法从订阅内容提取节点，请检查订阅格式"));
+                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                 return;
             }
             sub->nodeCount = nodes.count();
@@ -514,7 +514,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
         }
 
         if (!saved) {
-            emit errorOccurred(tr("保存订阅配置失败"));
+            emit errorOccurred(tr("Failed to save subscription config"));
             return;
         }
 
@@ -547,7 +547,7 @@ void SubscriptionService::updateSubscriptionMeta(const QString &id,
 {
     SubscriptionInfo *sub = findSubscription(id);
     if (!sub) {
-        emit errorOccurred(tr("订阅不存在"));
+        emit errorOccurred(tr("Subscription not found"));
         return;
     }
 
@@ -575,7 +575,7 @@ void SubscriptionService::setActiveSubscription(const QString &id, bool applyRun
             return;
         }
     }
-    emit errorOccurred(tr("订阅不存在"));
+    emit errorOccurred(tr("Subscription not found"));
 }
 
 void SubscriptionService::clearActiveSubscription()
@@ -729,7 +729,7 @@ QJsonArray SubscriptionService::parseClashConfig(const QByteArray &content) cons
             }
         }
     } catch (const std::exception &e) {
-        Logger::error(QString("YAML 解析错误: %1").arg(e.what()));
+        Logger::error(QString("YAML parse error: %1").arg(e.what()));
     }
 
     return nodes;

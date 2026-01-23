@@ -45,52 +45,52 @@ void DelayTestService::stopAllTests()
 
 QString DelayTestService::buildClashDelayUrl(const QString &proxy, int timeoutMs, const QString &testUrl) const
 {
-    // 构建 Clash API 延迟测试 URL
+    // Build Clash API delay URL.
     // /proxies/{name}/delay?timeout=xxx&url=xxx
-    
-    // 正确编码节点名称（保持 UTF-8）
+
+    // Percent-encode proxy name (keep UTF-8).
     QString encodedProxy = QString::fromUtf8(QUrl::toPercentEncoding(proxy));
-    
+
     QUrl url;
     url.setScheme("http");
     url.setHost("127.0.0.1");
     url.setPort(m_apiPort);
     url.setPath(QString("/proxies/%1/delay").arg(encodedProxy));
-    
+
     QUrlQuery query;
     query.addQueryItem("timeout", QString::number(timeoutMs));
     query.addQueryItem("url", testUrl);
     url.setQuery(query);
-    
+
     return url.toString();
 }
 
 int DelayTestService::fetchSingleDelay(const QString &proxy, int timeoutMs, const QString &testUrl)
 {
     QString url = buildClashDelayUrl(proxy, timeoutMs, testUrl);
-    
-    // 在当前线程创建独立的 QNetworkAccessManager，避免跨线程问题
+
+    // Create a local QNetworkAccessManager to avoid cross-thread issues.
     QNetworkAccessManager manager;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setTransferTimeout(timeoutMs + 2000);
-    
+
     QNetworkReply *reply = manager.get(request);
-    
-    // 使用事件循环等待请求完成
+
+    // Wait for request to finish.
     QEventLoop loop;
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    
-    // 设置超时
+
+    // Set timeout.
     QTimer timer;
     timer.setSingleShot(true);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     timer.start(timeoutMs + 3000);
-    
+
     loop.exec();
-    
+
     int result = -1;
-    
+
     if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
         QByteArray data = reply->readAll();
         QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -101,9 +101,8 @@ int DelayTestService::fetchSingleDelay(const QString &proxy, int timeoutMs, cons
             }
         }
     }
-    
-    // 直接删除 reply，因为 manager 是局部变量，函数返回后会被销毁
-    // 不能使用 deleteLater()，否则会在 manager 销毁后尝试删除
+
+    // Delete reply directly since manager is local.
     delete reply;
     return result;
 }
@@ -121,36 +120,36 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
 {
     ProxyDelayTestResult result;
     result.proxy = proxy;
-    
+
     QVector<int> okValues;
     QString lastError;
-    
+
     int samples = qMax(1, options.samples);
-    
+
     for (int i = 0; i < samples; ++i) {
-        // 检查是否停止
+        // Check stop flag.
         {
             QMutexLocker locker(&m_mutex);
             if (m_stopping) {
-                result.error = tr("测试已取消");
+                result.error = tr("Test canceled");
                 return result;
             }
         }
-        
+
         int delay = fetchSingleDelay(proxy, options.timeoutMs, options.url);
-        
+
         if (delay > 0) {
             okValues.append(delay);
         } else {
-            lastError = tr("请求失败");
+            lastError = tr("Request failed");
         }
-        
-        // 采样间隔，避免对同一节点瞬时并发过高
+
+        // Sample interval to avoid spikes on the same proxy.
         if (i < samples - 1) {
             QThread::msleep(80);
         }
     }
-    
+
     if (!okValues.isEmpty()) {
         result.delay = medianValue(okValues);
         result.ok = true;
@@ -158,20 +157,20 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
     } else {
         result.delay = 0;
         result.ok = false;
-        result.error = lastError.isEmpty() ? tr("无可用结果") : lastError;
+        result.error = lastError.isEmpty() ? tr("No valid result") : lastError;
         result.successSamples = 0;
     }
-    
+
     return result;
 }
 
 void DelayTestService::testNodeDelay(const QString &proxy, const DelayTestOptions &options)
 {
-    // 在后台线程执行测试
+    // Run in background thread.
     QtConcurrent::run([this, proxy, options]() {
         ProxyDelayTestResult result = measureProxyDelay(proxy, options);
-        
-        // 在主线程发射信号
+
+        // Emit on the main thread.
         QMetaObject::invokeMethod(this, [this, result]() {
             emit nodeDelayResult(result);
         }, Qt::QueuedConnection);
@@ -184,59 +183,59 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
         emit testCompleted();
         return;
     }
-    
-    // 重置停止标志
+
+    // Reset stop flag.
     {
         QMutexLocker locker(&m_mutex);
         m_stopping = false;
     }
-    
-    // 创建信号量控制并发
+
+    // Create semaphore for concurrency control.
     delete m_semaphore;
     m_semaphore = new QSemaphore(qMax(1, options.concurrency));
-    
+
     int total = proxies.size();
-    
+
     QtConcurrent::run([this, proxies, options, total]() {
         QAtomicInt completed(0);
         QList<QFuture<void>> futures;
-        
+
         for (const QString &proxy : proxies) {
-            // 检查是否停止
+            // Check stop flag.
             {
                 QMutexLocker locker(&m_mutex);
                 if (m_stopping) {
                     break;
                 }
             }
-            
-            // 获取信号量（控制并发）
+
+            // Acquire semaphore (limit concurrency).
             m_semaphore->acquire();
-            
+
             auto future = QtConcurrent::run([this, proxy, options, total, &completed]() {
                 ProxyDelayTestResult result = measureProxyDelay(proxy, options);
-                
-                // 释放信号量
+
+                // Release semaphore.
                 m_semaphore->release();
-                
+
                 int current = completed.fetchAndAddRelaxed(1) + 1;
-                
-                // 在主线程发射信号
+
+                // Emit on the main thread.
                 QMetaObject::invokeMethod(this, [this, result, current, total]() {
                     emit nodeDelayResult(result);
                     emit testProgress(current, total);
                 }, Qt::QueuedConnection);
             });
-            
+
             futures.append(future);
         }
-        
-        // 等待所有任务完成
+
+        // Wait for all tasks to finish.
         for (auto &future : futures) {
             future.waitForFinished();
         }
-        
-        // 发射完成信号
+
+        // Emit completion.
         QMetaObject::invokeMethod(this, [this]() {
             emit testCompleted();
         }, Qt::QueuedConnection);
@@ -246,11 +245,11 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
 void DelayTestService::testGroupDelay(const QString &group, const QJsonArray &nodes, const DelayTestOptions &options)
 {
     Q_UNUSED(group)
-    
+
     QStringList proxies;
     for (const auto &node : nodes) {
         proxies.append(node.toString());
     }
-    
+
     testNodesDelay(proxies, options);
 }

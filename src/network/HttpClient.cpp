@@ -32,11 +32,11 @@ QNetworkRequest HttpClient::createRequest(const QString &url)
     request.setTransferTimeout(m_timeout);
     request.setRawHeader("User-Agent", "sing-box-qt");
     request.setRawHeader("Accept", "application/vnd.github+json");
-    
+
     if (!m_authToken.isEmpty()) {
         request.setRawHeader("Authorization", QString("Bearer %1").arg(m_authToken).toUtf8());
     }
-    
+
     return request;
 }
 
@@ -45,11 +45,11 @@ void HttpClient::handleReply(QNetworkReply *reply, Callback callback)
     connect(reply, &QNetworkReply::finished, this, [reply, callback]() {
         bool success = (reply->error() == QNetworkReply::NoError);
         QByteArray data = reply->readAll();
-        
+
         if (!success) {
-            Logger::warn(QString("HTTP 请求失败: %1").arg(reply->errorString()));
+            Logger::warn(QString("HTTP request failed: %1").arg(reply->errorString()));
         }
-        
+
         callback(success, data);
         reply->deleteLater();
     });
@@ -88,35 +88,35 @@ void HttpClient::download(const QString &url, const QString &savePath,
                           Callback callback)
 {
     QNetworkRequest request = createRequest(url);
-    
+
     QNetworkReply *reply = m_manager->get(request);
-    
+
     if (progressCallback) {
-        connect(reply, &QNetworkReply::downloadProgress, this, 
+        connect(reply, &QNetworkReply::downloadProgress, this,
                 [progressCallback](qint64 received, qint64 total) {
             progressCallback(received, total);
         });
     }
-    
+
     connect(reply, &QNetworkReply::finished, this, [reply, savePath, callback]() {
         if (reply->error() != QNetworkReply::NoError) {
-            Logger::error(QString("下载失败: %1").arg(reply->errorString()));
+            Logger::error(QString("Download failed: %1").arg(reply->errorString()));
             callback(false, QByteArray());
             reply->deleteLater();
             return;
         }
-        
+
         QFile file(savePath);
         if (file.open(QIODevice::WriteOnly)) {
             file.write(reply->readAll());
             file.close();
-            Logger::info(QString("下载完成: %1").arg(savePath));
+            Logger::info(QString("Download completed: %1").arg(savePath));
             callback(true, QByteArray());
         } else {
-            Logger::error(QString("无法写入文件: %1").arg(savePath));
+            Logger::error(QString("Failed to write file: %1").arg(savePath));
             callback(false, QByteArray());
         }
-        
+
         reply->deleteLater();
     });
 }

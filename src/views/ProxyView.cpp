@@ -28,15 +28,15 @@ void ProxyView::setupUI()
     mainLayout->setContentsMargins(24, 24, 24, 24);
     mainLayout->setSpacing(16);
 
-    // 标题区
-    QLabel *titleLabel = new QLabel(tr("代理"));
+
+    QLabel *titleLabel = new QLabel(tr("Proxy"));
     titleLabel->setObjectName("PageTitle");
-    QLabel *subtitleLabel = new QLabel(tr("选择代理节点并进行延迟测试"));
+    QLabel *subtitleLabel = new QLabel(tr("Select proxy nodes and run latency tests"));
     subtitleLabel->setObjectName("PageSubtitle");
     mainLayout->addWidget(titleLabel);
     mainLayout->addWidget(subtitleLabel);
     
-    // 工具栏卡片
+
     QFrame *toolbarCard = new QFrame;
     toolbarCard->setObjectName("ToolbarCard");
     QVBoxLayout *toolbarCardLayout = new QVBoxLayout(toolbarCard);
@@ -46,14 +46,14 @@ void ProxyView::setupUI()
     QHBoxLayout *toolbarLayout = new QHBoxLayout;
     
     m_searchEdit = new QLineEdit;
-    m_searchEdit->setPlaceholderText(tr("搜索节点..."));
+    m_searchEdit->setPlaceholderText(tr("Search nodes..."));
     m_searchEdit->setObjectName("SearchInput");
     
-    m_testAllBtn = new QPushButton(tr("测试全部"));
+    m_testAllBtn = new QPushButton(tr("Test All"));
     m_testAllBtn->setCursor(Qt::PointingHandCursor);
     m_testAllBtn->setObjectName("ActionBtn");
     
-    m_refreshBtn = new QPushButton(tr("刷新"));
+    m_refreshBtn = new QPushButton(tr("Refresh"));
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setObjectName("ActionBtn");
     
@@ -61,7 +61,7 @@ void ProxyView::setupUI()
     toolbarLayout->addWidget(m_testAllBtn);
     toolbarLayout->addWidget(m_refreshBtn);
     
-    // 进度条
+
     m_progressBar = new QProgressBar;
     m_progressBar->setRange(0, 100);
     m_progressBar->setValue(0);
@@ -74,7 +74,7 @@ void ProxyView::setupUI()
     toolbarCardLayout->addWidget(m_progressBar);
     mainLayout->addWidget(toolbarCard);
 
-    // 节点树卡片
+
     QFrame *treeCard = new QFrame;
     treeCard->setObjectName("TreeCard");
     QVBoxLayout *treeLayout = new QVBoxLayout(treeCard);
@@ -100,7 +100,7 @@ void ProxyView::setupUI()
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
     
-    // 信号连接
+
     connect(m_searchEdit, &QLineEdit::textChanged, this, &ProxyView::onSearchTextChanged);
     connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyView::onTestAllClicked);
     connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyView::refresh);
@@ -237,7 +237,7 @@ void ProxyView::setProxyService(ProxyService *service)
     m_proxyService = service;
     
     if (m_proxyService) {
-        // 初始化延迟测试服务
+
         if (!m_delayTestService) {
             m_delayTestService = new DelayTestService(this);
             connect(m_delayTestService, &DelayTestService::nodeDelayResult,
@@ -264,7 +264,7 @@ void ProxyView::refresh()
 
 void ProxyView::onProxiesReceived(const QJsonObject &proxies)
 {
-    // 保存选中状态
+
     QSet<QString> expandedGroups;
     QString selectedNode;
     
@@ -288,7 +288,7 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
         QJsonObject proxy = it.value().toObject();
         QString type = proxy["type"].toString();
         
-        // 只显示代理组
+
         if (type == "Selector" || type == "URLTest" || type == "Fallback") {
             QTreeWidgetItem *groupItem = new QTreeWidgetItem(m_treeWidget);
             groupItem->setText(0, QString()); // Fix ghosting: clear text, use widget only
@@ -303,12 +303,12 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             font.setBold(true);
             groupItem->setFont(0, font);
             
-            // 恢复展开状态
+
             if (expandedGroups.contains(it.key())) {
                 groupItem->setExpanded(true);
             }
             
-            // 添加子节点
+
             QJsonArray all = proxy["all"].toArray();
             QString now = proxy["now"].toString();
 
@@ -324,10 +324,10 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             QLabel *typeLabel = new QLabel(type);
             typeLabel->setObjectName("ProxyGroupBadge");
 
-            QLabel *countLabel = new QLabel(tr("%1 节点").arg(all.size()));
+            QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()));
             countLabel->setObjectName("ProxyGroupMeta");
 
-            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("当前: %1").arg(now));
+            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("Current: %1").arg(now));
             currentLabel->setObjectName("ProxyGroupMeta");
 
             cardLayout->addWidget(titleLabel);
@@ -361,29 +361,29 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
                 QString name = nodeName.toString();
                 QTreeWidgetItem *nodeItem = new QTreeWidgetItem(groupItem);
                 
-                // 标记当前选中的节点
+
                 if (name == now) {
-                    nodeItem->setText(0, "✓ " + name);
+                    nodeItem->setText(0, "* " + name);
                     nodeItem->setForeground(0, tm.getColor("success"));
                 } else {
                     nodeItem->setText(0, name);
                 }
                 
                 nodeItem->setData(0, Qt::UserRole, "node");
-                nodeItem->setData(0, Qt::UserRole + 1, it.key()); // 组名
+                nodeItem->setData(0, Qt::UserRole + 1, it.key());
                 
-                // 恢复选中状态
+
                 if (name == selectedNode) {
                     nodeItem->setSelected(true);
                 }
                 
-                // 获取节点详情
+
                 if (m_cachedProxies.contains(name)) {
                     QJsonObject nodeProxy = m_cachedProxies[name].toObject();
                     nodeItem->setText(1, nodeProxy["type"].toString());
                     nodeItem->setForeground(1, tm.getColor("text-tertiary"));
                     
-                    // 显示历史延迟
+
                     if (nodeProxy.contains("history")) {
                         QJsonArray history = nodeProxy["history"].toArray();
                         if (!history.isEmpty()) {
@@ -410,14 +410,14 @@ void ProxyView::onItemDoubleClicked(QTreeWidgetItem *item, int column)
         QString group = item->data(0, Qt::UserRole + 1).toString();
         QString nodeName = item->text(0);
         
-        // 移除选中标记
-        if (nodeName.startsWith("✓ ")) {
+
+        if (nodeName.startsWith("* ")) {
             nodeName = nodeName.mid(2);
         }
         
         m_proxyService->selectProxy(group, nodeName);
         
-        // 刷新列表
+
         QTimer::singleShot(200, this, &ProxyView::refresh);
     }
 }
@@ -428,25 +428,25 @@ void ProxyView::onTestAllClicked()
     
     if (m_delayTestService->isTesting()) {
         m_delayTestService->stopAllTests();
-        m_testAllBtn->setText(tr("测试全部"));
+        m_testAllBtn->setText(tr("Test All"));
         return;
     }
     
-    // 收集所有需要测试的节点
+
     QStringList nodesToTest;
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
         if ((*it)->data(0, Qt::UserRole).toString() == "node") {
             QString name = (*it)->text(0);
-            if (name.startsWith("✓ ")) {
+            if (name.startsWith("* ")) {
                 name = name.mid(2);
             }
-            // 排除 DIRECT 和 REJECT 等特殊节点
+
             if (name != "DIRECT" && name != "REJECT" && name != "COMPATIBLE") {
                 nodesToTest.append(name);
             }
             
-            // 设置状态为等待中
+
             (*it)->setText(2, "...");
             (*it)->setForeground(2, QColor("#888888"));
         }
@@ -455,7 +455,7 @@ void ProxyView::onTestAllClicked()
     
     if (nodesToTest.isEmpty()) return;
     
-    // 去重
+
     nodesToTest.removeDuplicates();
     
     m_testingNodes.clear();
@@ -463,12 +463,12 @@ void ProxyView::onTestAllClicked()
         m_testingNodes.insert(node);
     } 
     
-    // 更新 UI 状态
-    m_testAllBtn->setText(tr("停止测试"));
+
+    m_testAllBtn->setText(tr("Stop Tests"));
     m_progressBar->show();
     m_progressBar->setValue(0);
     
-    // 开始测试
+
     DelayTestOptions options;
     options.timeoutMs = 5000;
     options.concurrency = 6;
@@ -486,7 +486,7 @@ void ProxyView::onSearchTextChanged(const QString &text)
         }
         ++it;
     }
-    // 自动展开包含匹配项的组
+
     if (!text.isEmpty()) {
         it = QTreeWidgetItemIterator(m_treeWidget);
         while (*it) {
@@ -515,15 +515,15 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
         displayText = formatDelay(result.delay);
         color = getDelayColor(result.delay);
     } else {
-        displayText = tr("超时"); // 或 result.error
+        displayText = tr("Timeout");
         color = ThemeManager::instance().getColor("error");
     }
     
-    // 更新所有对应的节点项
+
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
         QString name = (*it)->text(0);
-        if (name.startsWith("✓ ")) {
+        if (name.startsWith("* ")) {
             name = name.mid(2);
         }
         
@@ -547,14 +547,14 @@ void ProxyView::onTestProgress(int current, int total)
 
 void ProxyView::onTestCompleted()
 {
-    m_testAllBtn->setText(tr("测试全部"));
+    m_testAllBtn->setText(tr("Test All"));
     m_progressBar->hide();
     m_testingNodes.clear();
 }
 
 QString ProxyView::formatDelay(int delay) const
 {
-    if (delay <= 0) return tr("超时");
+    if (delay <= 0) return tr("Timeout");
     return QString::number(delay) + " ms";
 }
 

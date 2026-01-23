@@ -20,7 +20,7 @@ class ProxyView : public QWidget
 
 public:
     explicit ProxyView(QWidget *parent = nullptr);
-    
+
     void setProxyService(ProxyService *service);
     void refresh();
 
@@ -40,7 +40,7 @@ private:
     QString formatDelay(int delay) const;
     QColor getDelayColor(int delay) const;
     void testSingleNode(const QString &proxy);
-    
+
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;
     QPushButton *m_testAllBtn;
@@ -48,8 +48,8 @@ private:
     QProgressBar *m_progressBar;
     ProxyService *m_proxyService;
     DelayTestService *m_delayTestService;
-    QSet<QString> m_testingNodes;  // 正在测试的节点
-    QJsonObject m_cachedProxies;   // 缓存的代理数据
+    QSet<QString> m_testingNodes;  // Nodes under test.
+    QJsonObject m_cachedProxies;   // Cached proxy data.
 };
 
 #endif // PROXYVIEW_H

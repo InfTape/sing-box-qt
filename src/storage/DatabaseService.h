@@ -12,47 +12,47 @@ class DatabaseService : public QObject
 
 public:
     static DatabaseService& instance();
-    
+
     bool init();
     void close();
-    
-    // 应用配置
+
+    // Application config.
     QJsonObject getAppConfig();
     bool saveAppConfig(const QJsonObject &config);
-    
-    // 主题配置
+
+    // Theme config.
     QJsonObject getThemeConfig();
     bool saveThemeConfig(const QJsonObject &config);
-    
-    // 语言配置
+
+    // Locale config.
     QString getLocale();
     bool saveLocale(const QString &locale);
-    
-    // 订阅数据
+
+    // Subscription data.
     QJsonArray getSubscriptions();
     bool saveSubscriptions(const QJsonArray &subscriptions);
-    
-    // 活动订阅索引
+
+    // Active subscription index.
     int getActiveSubscriptionIndex();
     bool saveActiveSubscriptionIndex(int index);
     QString getActiveConfigPath();
     bool saveActiveConfigPath(const QString &path);
 
-    // 订阅节点存储
+    // Subscription nodes storage.
     QJsonArray getSubscriptionNodes(const QString &id);
     bool saveSubscriptionNodes(const QString &id, const QJsonArray &nodes);
-    
-    // 通用键值存储
+
+    // Generic key/value store.
     QString getValue(const QString &key, const QString &defaultValue = QString());
     bool setValue(const QString &key, const QString &value);
 
 private:
     explicit DatabaseService(QObject *parent = nullptr);
     ~DatabaseService();
-    
+
     bool createTables();
     QString getDatabasePath() const;
-    
+
     QSqlDatabase m_db;
     bool m_initialized;
 };

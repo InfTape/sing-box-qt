@@ -260,7 +260,7 @@ void TrafficChart::drawLegend(QPainter &painter)
     
     painter.setPen(m_textColor);
     painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight), 
-                    Qt::AlignVCenter, tr("上传速度"));
+                    Qt::AlignVCenter, tr("Upload Speed"));
     
     // Download legend
     itemX += 80;
@@ -270,7 +270,7 @@ void TrafficChart::drawLegend(QPainter &painter)
     
     painter.setPen(m_textColor);
     painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight), 
-                    Qt::AlignVCenter, tr("下载速度"));
+                    Qt::AlignVCenter, tr("Download Speed"));
 }
 
 QString TrafficChart::formatSpeed(double bytesPerSecond) const

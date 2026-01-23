@@ -7,20 +7,20 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-# Qt6 配置
-find_package(Qt6 REQUIRED COMPONENTS 
-    Core 
-    Widgets 
-    Network 
-    WebSockets 
+# Qt6 configuration.
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Widgets
+    Network
+    WebSockets
     Sql
     Concurrent
 )
 
-# 第三方库
+# Third-party libraries.
 include(FetchContent)
 
-# nlohmann/json - JSON 解析
+# nlohmann/json - JSON parsing.
 FetchContent_Declare(
     nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json.git
@@ -28,7 +28,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-# yaml-cpp - YAML 解析
+# yaml-cpp - YAML parsing.
 FetchContent_Declare(
     yaml-cpp
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -38,7 +38,7 @@ set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
-# 源文件
+# Source files.
 set(SOURCES
     src/main.cpp
     src/app/MainWindow.cpp
@@ -46,6 +46,7 @@ set(SOURCES
     src/core/KernelService.cpp
     src/core/ProcessManager.cpp
     src/core/ProxyService.cpp
+    src/core/ProxyController.cpp
     src/core/DelayTestService.cpp
     src/network/HttpClient.cpp
     src/network/WebSocketClient.cpp
@@ -66,6 +67,7 @@ set(SOURCES
     src/views/LogView.cpp
     src/views/SettingsView.cpp
     src/widgets/ToggleSwitch.cpp
+    src/widgets/RoundedMenu.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
     src/utils/ThemeManager.cpp
@@ -77,6 +79,7 @@ set(HEADERS
     src/core/KernelService.h
     src/core/ProcessManager.h
     src/core/ProxyService.h
+    src/core/ProxyController.h
     src/core/DelayTestService.h
     src/network/HttpClient.h
     src/network/WebSocketClient.h
@@ -97,12 +100,13 @@ set(HEADERS
     src/views/LogView.h
     src/views/SettingsView.h
     src/widgets/ToggleSwitch.h
+    src/widgets/RoundedMenu.h
     src/utils/Logger.h
     src/utils/Crypto.h
     src/utils/ThemeManager.h
 )
 
-# 资源文件
+# Resource files.
 set(RESOURCES
     resources/resources.qrc
 )
@@ -111,14 +115,14 @@ if(WIN32)
     list(APPEND RESOURCES resources/app.rc)
 endif()
 
-# 可执行文件
+# Executable.
 add_executable(${PROJECT_NAME} WIN32
     ${SOURCES}
     ${HEADERS}
     ${RESOURCES}
 )
 
-# 链接库
+# Link libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Widgets
@@ -130,7 +134,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     yaml-cpp::yaml-cpp
 )
 
-# Windows 特定配置
+# Windows-specific configuration.
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         ws2_32
@@ -139,18 +143,18 @@ if(WIN32)
     if(MSVC)
         target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
     endif()
-    # 设置 Windows 应用程序图标
+    # Set Windows application icon.
     set_target_properties(${PROJECT_NAME} PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
 endif()
 
-# 包含目录
+# Include directories.
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# 安装配置
+# Install configuration.
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
 )

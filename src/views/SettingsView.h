@@ -1,4 +1,4 @@
-﻿#ifndef SETTINGSVIEW_H
+#ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
 
 #include <QWidget>
@@ -43,17 +43,17 @@ private:
     bool extractZipArchive(const QString &zipPath, const QString &destDir, QString *errorMessage) const;
     void setDownloadUi(bool downloading, const QString &message = QString());
 
-    // 代理设置
+    // Proxy settings.
     QSpinBox *m_mixedPortSpin;
     QSpinBox *m_apiPortSpin;
     QCheckBox *m_autoStartCheck;
     QCheckBox *m_systemProxyCheck;
 
-    // 外观设置
+    // Appearance settings.
     QComboBox *m_themeCombo;
     QComboBox *m_languageCombo;
 
-    // 内核设置
+    // Kernel settings.
     QLabel *m_kernelVersionLabel;
     QComboBox *m_kernelVersionCombo;
     QProgressBar *m_kernelDownloadProgress;

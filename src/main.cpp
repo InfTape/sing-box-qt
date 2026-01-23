@@ -1,4 +1,4 @@
-#include <QApplication>
+﻿#include <QApplication>
 #include <QTranslator>
 #include <QLocale>
 #include <QStyleFactory>
@@ -13,27 +13,27 @@
 
 int main(int argc, char *argv[])
 {
-    // 启用高 DPI 支持
+    // Enable high DPI support
     QApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
     QApplication app(argc, argv);
-    
-    // 应用信息
+
+    // Application metadata
     app.setApplicationName("Sing-Box");
     app.setApplicationVersion("1.0.0");
     app.setOrganizationName("XingGao");
     app.setOrganizationDomain("github.com/xinggaoya");
     app.setWindowIcon(QIcon(":/icons/app.png"));
-    
-    // 设置应用样式
+
+    // Set application style
     app.setStyle(QStyleFactory::create("Fusion"));
-    
-    // 初始化日志系统
+
+    // Initialize logging
     Logger::instance().init();
-    Logger::info("应用启动中...");
-    
-    // 设置默认字体为微软雅黑
+    Logger::info("Application is starting...");
+
+    // Set default font family
     QStringList families;
     families << "Microsoft YaHei"
              << "Microsoft YaHei UI"
@@ -48,18 +48,18 @@ int main(int argc, char *argv[])
 
     app.setProperty("appFontFamily", "Microsoft YaHei");
     app.setProperty("appFontFamilyList", families.join("','"));
-    Logger::info("已设置默认字体: Microsoft YaHei");
-    
-    // 初始化数据库
+    Logger::info("Default font set: Microsoft YaHei");
+
+    // Initialize database
     if (!DatabaseService::instance().init()) {
-        Logger::error("数据库初始化失败");
+        Logger::error("Database initialization failed");
         return -1;
     }
 
-    // 初始化主题管理器
+    // Initialize theme manager
     ThemeManager::instance().init();
-    
-    // 加载翻译
+
+    // Load translations
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
@@ -69,24 +69,24 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    
-    // 检查启动参数
+
+    // Check startup arguments
     bool startHidden = app.arguments().contains("--hide");
-    
-    // 创建主窗口
+
+    // Create main window
     MainWindow mainWindow;
     mainWindow.setWindowIcon(QIcon(":/icons/app.png"));
-    
-    // 创建系统托盘
+
+    // Create system tray icon
     TrayIcon trayIcon(&mainWindow);
     trayIcon.show();
-    
-    // 根据参数决定是否显示窗口
+
+    // Show window unless started hidden
     if (!startHidden) {
         mainWindow.show();
     }
-    
-    Logger::info("应用启动完成");
-    
+
+    Logger::info("Application started");
+
     return app.exec();
 }

@@ -12,7 +12,7 @@ ConnectionsView::ConnectionsView(QWidget *parent)
     , m_autoRefreshEnabled(false)
 {
     setupUI();
-    
+
     m_refreshTimer->setInterval(1000);
     connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
 }
@@ -22,13 +22,13 @@ void ConnectionsView::setupUI()
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
-    
-    // 工具栏
+
+    // Toolbar.
     QHBoxLayout *toolbarLayout = new QHBoxLayout;
-    
-    m_closeSelectedBtn = new QPushButton(tr("关闭选中"));
-    m_closeAllBtn = new QPushButton(tr("关闭全部"));
-    
+
+    m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
+    m_closeAllBtn = new QPushButton(tr("Close All"));
+
     QString buttonStyle = R"(
         QPushButton {
             background-color: #0f3460;
@@ -41,16 +41,16 @@ void ConnectionsView::setupUI()
     )";
     m_closeSelectedBtn->setStyleSheet(buttonStyle);
     m_closeAllBtn->setStyleSheet(buttonStyle.replace("#0f3460", "#ff6b6b").replace("#1f4068", "#ff8585"));
-    
+
     toolbarLayout->addStretch();
     toolbarLayout->addWidget(m_closeSelectedBtn);
     toolbarLayout->addWidget(m_closeAllBtn);
-    
-    // 连接表格
+
+    // Connections table.
     m_tableWidget = new QTableWidget;
     m_tableWidget->setColumnCount(6);
     m_tableWidget->setHorizontalHeaderLabels({
-        tr("主机"), tr("目标"), tr("网络"), tr("规则"), tr("上传"), tr("下载")
+        tr("Source"), tr("Destination"), tr("Network"), tr("Rule"), tr("Upload"), tr("Download")
     });
     m_tableWidget->horizontalHeader()->setStretchLastSection(true);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -85,10 +85,10 @@ void ConnectionsView::setupUI()
             border-top-right-radius: 10px;
         }
     )");
-    
+
     mainLayout->addLayout(toolbarLayout);
     mainLayout->addWidget(m_tableWidget, 1);
-    
+
     connect(m_closeSelectedBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseSelected);
     connect(m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
 }
@@ -96,7 +96,7 @@ void ConnectionsView::setupUI()
 void ConnectionsView::setProxyService(ProxyService *service)
 {
     m_proxyService = service;
-    
+
     if (m_proxyService) {
         connect(m_proxyService, &ProxyService::connectionsReceived, this,
                 [this](const QJsonObject &connections) {
@@ -123,7 +123,7 @@ void ConnectionsView::setProxyService(ProxyService *service)
                 setCell(i, 4, QString::number(conn["upload"].toVariant().toLongLong() / 1024) + " KB");
                 setCell(i, 5, QString::number(conn["download"].toVariant().toLongLong() / 1024) + " KB");
 
-                // 保存连接 ID
+                // Store connection ID.
                 QTableWidgetItem *idItem = m_tableWidget->item(i, 0);
                 if (idItem) {
                     idItem->setData(Qt::UserRole, conn["id"].toString());
@@ -156,13 +156,13 @@ void ConnectionsView::onRefresh()
 void ConnectionsView::onCloseSelected()
 {
     if (!m_proxyService) return;
-    
+
     QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
     QSet<int> rows;
     for (auto item : selected) {
         rows.insert(item->row());
     }
-    
+
     for (int row : rows) {
         QString id = m_tableWidget->item(row, 0)->data(Qt::UserRole).toString();
         m_proxyService->closeConnection(id);

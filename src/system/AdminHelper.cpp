@@ -17,7 +17,7 @@ bool AdminHelper::isAdmin()
 #ifdef Q_OS_WIN
     BOOL isAdmin = FALSE;
     PSID adminGroup = nullptr;
-    
+
     SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
     if (AllocateAndInitializeSid(&ntAuthority, 2,
             SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS,
@@ -25,10 +25,10 @@ bool AdminHelper::isAdmin()
         CheckTokenMembership(nullptr, adminGroup, &isAdmin);
         FreeSid(adminGroup);
     }
-    
+
     return isAdmin;
 #else
-    // Unix: 检查是否为 root
+    // Unix: check if running as root.
     return getuid() == 0;
 #endif
 }
@@ -37,14 +37,14 @@ bool AdminHelper::restartAsAdmin()
 {
     QString program = QCoreApplication::applicationFilePath();
     QStringList args = QCoreApplication::arguments();
-    args.removeFirst(); // 移除程序路径
-    
+    args.removeFirst(); // Remove program path.
+
     if (runAsAdmin(program, args)) {
-        // 退出当前实例
+        // Exit current instance.
         QCoreApplication::quit();
         return true;
     }
-    
+
     return false;
 }
 
@@ -52,7 +52,7 @@ bool AdminHelper::runAsAdmin(const QString &program, const QStringList &argument
 {
 #ifdef Q_OS_WIN
     QString args = arguments.join(' ');
-    
+
     SHELLEXECUTEINFOW sei = {};
     sei.cbSize = sizeof(sei);
     sei.lpVerb = L"runas";
@@ -60,21 +60,21 @@ bool AdminHelper::runAsAdmin(const QString &program, const QStringList &argument
     sei.lpParameters = reinterpret_cast<LPCWSTR>(args.utf16());
     sei.nShow = SW_SHOWNORMAL;
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    
+
     if (ShellExecuteExW(&sei)) {
-        Logger::info("已请求管理员权限");
+        Logger::info("Admin elevation requested");
         return true;
     } else {
         DWORD error = GetLastError();
         if (error == ERROR_CANCELLED) {
-            Logger::warn("用户取消了 UAC 请求");
+            Logger::warn("User canceled UAC request");
         } else {
-            Logger::error(QString("请求管理员权限失败，错误码: %1").arg(error));
+            Logger::error(QString("Admin elevation failed, error code: %1").arg(error));
         }
         return false;
     }
 #else
-    // TODO: Linux/macOS 使用 pkexec 或类似工具
+    // TODO: use pkexec or similar on Linux/macOS.
     Q_UNUSED(program)
     Q_UNUSED(arguments)
     return false;

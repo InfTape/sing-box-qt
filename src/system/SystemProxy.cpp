@@ -16,23 +16,23 @@ bool SystemProxy::setProxy(const QString &host, int port)
 {
 #ifdef Q_OS_WIN
     QString proxyServer = QString("%1:%2").arg(host).arg(port);
-    
+
     QSettings settings(
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     settings.setValue("ProxyEnable", 1);
     settings.setValue("ProxyServer", proxyServer);
     settings.setValue("ProxyOverride", "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*;<local>");
     settings.sync();
-    
+
     refreshSettings();
-    
-    Logger::info(QString("系统代理已设置: %1").arg(proxyServer));
+
+    Logger::info(QString("System proxy set: %1").arg(proxyServer));
     return true;
 #else
-    // TODO: macOS/Linux 实现
+    // TODO: implement for macOS/Linux.
     Q_UNUSED(host)
     Q_UNUSED(port)
     return false;
@@ -46,13 +46,13 @@ bool SystemProxy::clearProxy()
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     settings.setValue("ProxyEnable", 0);
     settings.sync();
-    
+
     refreshSettings();
-    
-    Logger::info("系统代理已清除");
+
+    Logger::info("System proxy cleared");
     return true;
 #else
     return false;
@@ -66,7 +66,7 @@ bool SystemProxy::isProxyEnabled()
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     return settings.value("ProxyEnable", 0).toInt() == 1;
 #else
     return false;
@@ -80,7 +80,7 @@ QString SystemProxy::getProxyHost()
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     QString proxyServer = settings.value("ProxyServer").toString();
     int colonIndex = proxyServer.lastIndexOf(':');
     if (colonIndex != -1) {
@@ -99,7 +99,7 @@ int SystemProxy::getProxyPort()
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     QString proxyServer = settings.value("ProxyServer").toString();
     int colonIndex = proxyServer.lastIndexOf(':');
     if (colonIndex != -1) {
@@ -118,13 +118,13 @@ bool SystemProxy::setPacProxy(const QString &pacUrl)
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
         QSettings::NativeFormat
     );
-    
+
     settings.setValue("AutoConfigURL", pacUrl);
     settings.sync();
-    
+
     refreshSettings();
-    
-    Logger::info(QString("PAC 代理已设置: %1").arg(pacUrl));
+
+    Logger::info(QString("PAC proxy set: %1").arg(pacUrl));
     return true;
 #else
     Q_UNUSED(pacUrl)
@@ -135,7 +135,7 @@ bool SystemProxy::setPacProxy(const QString &pacUrl)
 void SystemProxy::refreshSettings()
 {
 #ifdef Q_OS_WIN
-    // 通知系统代理设置已更改
+    // Notify the system that proxy settings changed.
     InternetSetOptionW(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
     InternetSetOptionW(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
 #endif

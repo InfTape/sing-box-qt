@@ -55,7 +55,7 @@ QString ConfigManager::getConfigDir() const
     if (!dir.exists()) {
         dir.mkpath(".");
     }
-    // 迁移旧配置到新目录
+    // Migrate old config to the new directory.
     const QString newConfig = QDir(dataDir).filePath("config.json");
     const QString oldConfig1 = QDir(baseDir).filePath("sing-box-qt/config.json");
     const QString oldConfig2 = QDir(baseDir).filePath("config.json");
@@ -100,7 +100,7 @@ QJsonObject ConfigManager::loadConfig(const QString &path)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        Logger::warn(QString("无法打开配置文件: %1").arg(path));
+        Logger::warn(QString("Failed to open config file: %1").arg(path));
         return QJsonObject();
     }
 
@@ -114,7 +114,7 @@ bool ConfigManager::saveConfig(const QString &path, const QJsonObject &config)
 {
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        Logger::error(QString("无法写入配置文件: %1").arg(path));
+        Logger::error(QString("Failed to write config file: %1").arg(path));
         return false;
     }
 
@@ -122,7 +122,7 @@ bool ConfigManager::saveConfig(const QString &path, const QJsonObject &config)
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
 
-    Logger::info(QString("配置已保存: %1").arg(path));
+    Logger::info(QString("Config saved: %1").arg(path));
     return true;
 }
 
@@ -130,13 +130,13 @@ bool ConfigManager::updateClashDefaultMode(const QString &configPath, const QStr
 {
     const QString normalized = mode.trimmed().toLower();
     if (normalized != "global" && normalized != "rule") {
-        if (error) *error = QString("无效的代理模式: %1").arg(mode);
+        if (error) *error = QString("Invalid proxy mode: %1").arg(mode);
         return false;
     }
 
     QJsonObject config = loadConfig(configPath);
     if (config.isEmpty()) {
-        if (error) *error = QString("无法加载配置文件: %1").arg(configPath);
+        if (error) *error = QString("Failed to load config file: %1").arg(configPath);
         return false;
     }
 
@@ -155,7 +155,7 @@ bool ConfigManager::updateClashDefaultMode(const QString &configPath, const QStr
     config["experimental"] = experimental;
 
     if (!saveConfig(configPath, config)) {
-        if (error) *error = QString("无法保存配置文件: %1").arg(configPath);
+        if (error) *error = QString("Failed to save config file: %1").arg(configPath);
         return false;
     }
 
@@ -237,30 +237,30 @@ bool ConfigManager::injectNodes(QJsonObject &config, const QJsonArray &nodes)
 
     for (int i = 0; i < nodes.size(); ++i) {
         if (!nodes[i].isObject()) {
-            Logger::error(QString("节点不是对象: index=%1").arg(i));
+            Logger::error(QString("Node is not an object: index=%1").arg(i));
             return false;
         }
         QJsonObject node = nodes[i].toObject();
 
         const QString rawTag = node.value("tag").toString().trimmed();
         if (rawTag.isEmpty()) {
-            Logger::error(QString("节点缺少 tag: index=%1").arg(i));
+            Logger::error(QString("Node missing tag: index=%1").arg(i));
             return false;
         }
         if (node.value("type").toString().trimmed().isEmpty()) {
-            Logger::error(QString("节点缺少 type: tag=%1, index=%2").arg(rawTag).arg(i));
+            Logger::error(QString("Node missing type: tag=%1, index=%2").arg(rawTag).arg(i));
             return false;
         }
 
         QString tag = rawTag;
         if (existingTags.contains(tag)) {
-            QString candidate = QString("节点-%1-%2").arg(rawTag).arg(i);
+            QString candidate = QString("node-%1-%2").arg(rawTag).arg(i);
             if (!existingTags.contains(candidate)) {
                 tag = candidate;
             } else {
                 int counter = 1;
                 while (true) {
-                    candidate = QString("节点-%1-%2").arg(rawTag).arg(counter);
+                    candidate = QString("node-%1-%2").arg(rawTag).arg(counter);
                     if (!existingTags.contains(candidate)) {
                         tag = candidate;
                         break;

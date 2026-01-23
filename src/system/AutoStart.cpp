@@ -53,7 +53,7 @@ bool AutoStart::setEnabled(bool enabled, const QString &appName)
         settings.setValue(name, value);
         settings.sync();
         if (settings.status() != QSettings::NoError) {
-            Logger::error("开机自启动写入注册表失败");
+            Logger::error("Failed to write auto-start registry entry");
             return false;
         }
         return true;
@@ -63,7 +63,7 @@ bool AutoStart::setEnabled(bool enabled, const QString &appName)
         settings.remove(name);
         settings.sync();
         if (settings.status() != QSettings::NoError) {
-            Logger::error("开机自启动清理注册表失败");
+            Logger::error("Failed to remove auto-start registry entry");
             return false;
         }
     }

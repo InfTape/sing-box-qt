@@ -30,29 +30,29 @@ bool DatabaseService::init()
     if (m_initialized) {
         return true;
     }
-    
+
     QString dbPath = getDatabasePath();
-    
-    // 确保目录存在
+
+    // Ensure the directory exists.
     QDir dir(QFileInfo(dbPath).absolutePath());
     if (!dir.exists()) {
         dir.mkpath(".");
     }
-    
+
     m_db = QSqlDatabase::addDatabase("QSQLITE");
     m_db.setDatabaseName(dbPath);
-    
+
     if (!m_db.open()) {
-        Logger::error(QString("数据库打开失败: %1").arg(m_db.lastError().text()));
+        Logger::error(QString("Failed to open database: %1").arg(m_db.lastError().text()));
         return false;
     }
-    
+
     if (!createTables()) {
         return false;
     }
-    
+
     m_initialized = true;
-    Logger::info(QString("数据库初始化成功: %1").arg(dbPath));
+    Logger::info(QString("Database initialized: %1").arg(dbPath));
     return true;
 }
 
@@ -67,8 +67,8 @@ void DatabaseService::close()
 bool DatabaseService::createTables()
 {
     QSqlQuery query(m_db);
-    
-    // 键值存储表
+
+    // Key-value store table.
     QString sql = R"(
         CREATE TABLE IF NOT EXISTS kv_store (
             key TEXT PRIMARY KEY,
@@ -76,12 +76,12 @@ bool DatabaseService::createTables()
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     )";
-    
+
     if (!query.exec(sql)) {
-        Logger::error(QString("创建表失败: %1").arg(query.lastError().text()));
+        Logger::error(QString("Failed to create table: %1").arg(query.lastError().text()));
         return false;
     }
-    
+
     return true;
 }
 
@@ -109,11 +109,11 @@ QString DatabaseService::getValue(const QString &key, const QString &defaultValu
     QSqlQuery query(m_db);
     query.prepare("SELECT value FROM kv_store WHERE key = ?");
     query.addBindValue(key);
-    
+
     if (query.exec() && query.next()) {
         return query.value(0).toString();
     }
-    
+
     return defaultValue;
 }
 
@@ -121,17 +121,17 @@ bool DatabaseService::setValue(const QString &key, const QString &value)
 {
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT OR REPLACE INTO kv_store (key, value, updated_at) 
+        INSERT OR REPLACE INTO kv_store (key, value, updated_at)
         VALUES (?, ?, CURRENT_TIMESTAMP)
     )");
     query.addBindValue(key);
     query.addBindValue(value);
-    
+
     if (!query.exec()) {
-        Logger::error(QString("保存数据失败: %1").arg(query.lastError().text()));
+        Logger::error(QString("Failed to save data: %1").arg(query.lastError().text()));
         return false;
     }
-    
+
     return true;
 }
 

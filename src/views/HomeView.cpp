@@ -76,7 +76,7 @@ void HomeView::setupUI()
     headerLayout->setContentsMargins(0, 0, 0, 0);
     headerLayout->setSpacing(12);
 
-    QLabel *titleLabel = new QLabel(tr("首页"));
+    QLabel *titleLabel = new QLabel(tr("Home"));
     titleLabel->setObjectName("PageTitle");
 
     m_statusBadge = new QWidget;
@@ -90,7 +90,7 @@ void HomeView::setupUI()
     m_statusDot->setObjectName("StatusDot");
     m_statusDot->setFixedSize(8, 8);
 
-    m_statusText = new QLabel(tr("已停止"));
+    m_statusText = new QLabel(tr("Stopped"));
     m_statusText->setObjectName("StatusText");
 
     badgeLayout->addWidget(m_statusDot);
@@ -100,7 +100,7 @@ void HomeView::setupUI()
     headerLayout->addWidget(m_statusBadge);
     headerLayout->addStretch();
 
-    m_restartBtn = new QPushButton(tr("重启"));
+    m_restartBtn = new QPushButton(tr("Restart"));
     m_restartBtn->setObjectName("RestartButton");
     m_restartBtn->setCursor(Qt::PointingHandCursor);
     m_restartBtn->setFixedHeight(40);
@@ -123,16 +123,16 @@ void HomeView::setupUI()
     statsRow->setHorizontalSpacing(24);
     statsRow->setVerticalSpacing(24);
 
-    QWidget *uploadCard = createStatCard("UP", "success", tr("上传"), &m_uploadValue, &m_uploadTotal);
-    QWidget *downloadCard = createStatCard("DOWN", "primary", tr("下载"), &m_downloadValue, &m_downloadTotal);
-    QWidget *connectionsCard = createStatCard("CONN", "warning", tr("连接"), &m_connectionsValue, &m_memoryLabel);
+    QWidget *uploadCard = createStatCard("UP", "success", tr("Upload"), &m_uploadValue, &m_uploadTotal);
+    QWidget *downloadCard = createStatCard("DOWN", "primary", tr("Download"), &m_downloadValue, &m_downloadTotal);
+    QWidget *connectionsCard = createStatCard("CONN", "warning", tr("Connections"), &m_connectionsValue, &m_memoryLabel);
 
     m_uploadValue->setText(tr("0 B/s"));
     m_downloadValue->setText(tr("0 B/s"));
     m_connectionsValue->setText("0");
-    m_uploadTotal->setText(tr("总计: 0 B"));
-    m_downloadTotal->setText(tr("总计: 0 B"));
-    m_memoryLabel->setText(tr("内存占用: 0 B"));
+    m_uploadTotal->setText(tr("Total: 0 B"));
+    m_downloadTotal->setText(tr("Total: 0 B"));
+    m_memoryLabel->setText(tr("Memory usage: 0 B"));
 
     statsRow->addWidget(uploadCard, 0, 0);
     statsRow->addWidget(downloadCard, 0, 1);
@@ -161,7 +161,7 @@ void HomeView::setupUI()
     flowLayout->setContentsMargins(0, 0, 0, 0);
     flowLayout->setSpacing(12);
 
-    QLabel *flowTitle = new QLabel(tr("流量代理模式"));
+    QLabel *flowTitle = new QLabel(tr("Traffic Proxy Mode"));
     flowTitle->setObjectName("SectionTitle");
     flowLayout->addWidget(flowTitle);
 
@@ -176,12 +176,12 @@ void HomeView::setupUI()
     m_tunModeSwitch->setFixedSize(m_tunModeSwitch->sizeHint());
 
     m_systemProxyCard = createModeItem("SYS", "primary",
-                                       tr("系统代理"),
-                                       tr("自动设置系统代理"),
+                                       tr("System Proxy"),
+                                       tr("Auto-set system proxy"),
                                        m_systemProxySwitch);
     m_tunModeCard = createModeItem("TUN", "primary",
-                                   tr("TUN 模式"),
-                                   tr("使用 TUN 进行系统全局代理"),
+                                   tr("TUN Mode"),
+                                   tr("Use TUN for system-wide proxy"),
                                    m_tunModeSwitch);
 
     flowLayout->addWidget(m_systemProxyCard);
@@ -195,7 +195,7 @@ void HomeView::setupUI()
     nodeLayout->setContentsMargins(0, 0, 0, 0);
     nodeLayout->setSpacing(12);
 
-    QLabel *nodeTitle = new QLabel(tr("节点代理模式"));
+    QLabel *nodeTitle = new QLabel(tr("Node Proxy Mode"));
     nodeTitle->setObjectName("SectionTitle");
     nodeLayout->addWidget(nodeTitle);
 
@@ -212,12 +212,12 @@ void HomeView::setupUI()
     m_ruleModeSwitch->setFixedSize(m_ruleModeSwitch->sizeHint());
 
     m_globalModeCard = createModeItem("GLB", "primary",
-                                      tr("全局模式"),
-                                      tr("全部流量走代理"),
+                                      tr("Global Mode"),
+                                      tr("All traffic via proxy"),
                                       m_globalModeSwitch);
     m_ruleModeCard = createModeItem("RULE", "primary",
-                                    tr("规则模式"),
-                                    tr("根据规则智能分流"),
+                                    tr("Rule Mode"),
+                                    tr("Smart routing by rules"),
                                     m_ruleModeSwitch);
 
     nodeLayout->addWidget(m_globalModeCard);
@@ -633,7 +633,7 @@ void HomeView::setProxyMode(const QString &mode)
 void HomeView::updateStatus(bool running)
 {
     m_isRunning = running;
-    m_statusText->setText(running ? tr("运行中") : tr("已停止"));
+    m_statusText->setText(running ? tr("Running") : tr("Stopped"));
     m_statusBadge->setProperty("status", running ? "running" : "stopped");
     m_restartBtn->setProperty("danger", running);
     if (m_statusDot) {
@@ -652,8 +652,8 @@ void HomeView::updateStatus(bool running)
         if (m_trafficChart) m_trafficChart->clear();
         if (m_uploadValue) m_uploadValue->setText(tr("0 B/s"));
         if (m_downloadValue) m_downloadValue->setText(tr("0 B/s"));
-        if (m_uploadTotal) m_uploadTotal->setText(tr("总计: 0 B"));
-        if (m_downloadTotal) m_downloadTotal->setText(tr("总计: 0 B"));
+        if (m_uploadTotal) m_uploadTotal->setText(tr("Total: 0 B"));
+        if (m_downloadTotal) m_downloadTotal->setText(tr("Total: 0 B"));
     }
 }
 
@@ -674,8 +674,8 @@ void HomeView::updateTraffic(qint64 upload, qint64 download)
         }
     }
 
-    if (m_uploadTotal) m_uploadTotal->setText(tr("总计: %1").arg(formatBytes(m_totalUpload)));
-    if (m_downloadTotal) m_downloadTotal->setText(tr("总计: %1").arg(formatBytes(m_totalDownload)));
+    if (m_uploadTotal) m_uploadTotal->setText(tr("Total: %1").arg(formatBytes(m_totalUpload)));
+    if (m_downloadTotal) m_downloadTotal->setText(tr("Total: %1").arg(formatBytes(m_totalDownload)));
 }
 
 void HomeView::updateUptime(int seconds)
@@ -685,13 +685,13 @@ void HomeView::updateUptime(int seconds)
         m_statusBadge->setToolTip(QString());
         return;
     }
-    m_statusBadge->setToolTip(tr("运行时间: %1").arg(formatDuration(seconds)));
+    m_statusBadge->setToolTip(tr("Uptime: %1").arg(formatDuration(seconds)));
 }
 
 void HomeView::updateConnections(int count, qint64 memoryUsage)
 {
     if (m_connectionsValue) m_connectionsValue->setText(QString::number(count));
-    if (m_memoryLabel) m_memoryLabel->setText(tr("内存占用: %1").arg(formatBytes(memoryUsage)));
+    if (m_memoryLabel) m_memoryLabel->setText(tr("Memory usage: %1").arg(formatBytes(memoryUsage)));
 }
 
 void HomeView::onSystemProxyToggled(bool checked)

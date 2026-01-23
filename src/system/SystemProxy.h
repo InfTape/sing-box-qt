@@ -10,20 +10,20 @@ class SystemProxy : public QObject
 
 public:
     explicit SystemProxy(QObject *parent = nullptr);
-    
-    // 设置系统代理
+
+    // Set system proxy.
     static bool setProxy(const QString &host, int port);
     static bool clearProxy();
-    
-    // 获取当前代理状态
+
+    // Get current proxy status.
     static bool isProxyEnabled();
     static QString getProxyHost();
     static int getProxyPort();
-    
-    // PAC 代理
+
+    // PAC proxy.
     static bool setPacProxy(const QString &pacUrl);
-    
-    // 刷新系统代理设置
+
+    // Refresh system proxy settings.
     static void refreshSettings();
 };
 

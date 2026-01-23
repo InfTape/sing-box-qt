@@ -64,7 +64,7 @@ try {
     Copy-Item $exePath $desktopExePath -Force
     Write-Host "Copied to desktop: $desktopExePath" -ForegroundColor Cyan
 } catch {
-    Write-Warning "复制到桌面失败：$($_.Exception.Message)"
+    Write-Warning "Failed to copy to desktop: $($_.Exception.Message)"
 }
 
 # Zip
@@ -78,5 +78,5 @@ try {
     Copy-Item $zipName $desktopZipPath -Force
     Write-Host "Copied zip to desktop: $desktopZipPath" -ForegroundColor Cyan
 } catch {
-    Write-Warning "复制 zip 到桌面失败：$($_.Exception.Message)"
+    Write-Warning "Failed to copy zip to desktop: $($_.Exception.Message)"
 }

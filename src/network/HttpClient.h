@@ -12,20 +12,20 @@ class HttpClient : public QObject
 
 public:
     using Callback = std::function<void(bool success, const QByteArray &data)>;
-    
+
     explicit HttpClient(QObject *parent = nullptr);
     ~HttpClient();
 
     void setAuthToken(const QString &token);
     void setTimeout(int msecs);
-    
+
     void get(const QString &url, Callback callback);
     void post(const QString &url, const QByteArray &data, Callback callback);
     void put(const QString &url, const QByteArray &data, Callback callback);
     void del(const QString &url, Callback callback);
-    
-    // 下载文件
-    void download(const QString &url, const QString &savePath, 
+
+    // Download file.
+    void download(const QString &url, const QString &savePath,
                   std::function<void(qint64, qint64)> progressCallback,
                   Callback callback);
 

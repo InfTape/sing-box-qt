@@ -43,7 +43,7 @@ QByteArray Crypto::base64UrlDecode(const QString &base64)
     data.replace('-', '+');
     data.replace('_', '/');
     
-    // 补齐 padding
+    // Fix padding.
     int padding = (4 - data.length() % 4) % 4;
     data.append(QString(padding, '='));
     

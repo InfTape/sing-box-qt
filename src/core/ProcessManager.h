@@ -17,17 +17,17 @@ class ProcessManager : public QObject
 
 public:
     explicit ProcessManager(QObject *parent = nullptr);
-    
-    // 查找进程
+
+    // Find processes.
     static QList<ProcessInfo> findProcessesByName(const QString &name);
     static bool isProcessRunning(const QString &name);
     static bool isProcessRunning(qint64 pid);
-    
-    // 终止进程
+
+    // Terminate processes.
     static bool killProcess(qint64 pid);
     static bool killProcessByName(const QString &name);
-    
-    // 清理残留的内核进程
+
+    // Cleanup leftover kernel processes.
     static void cleanupKernelProcesses();
 };
 

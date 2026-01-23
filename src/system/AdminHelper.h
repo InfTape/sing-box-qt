@@ -10,14 +10,14 @@ class AdminHelper : public QObject
 
 public:
     explicit AdminHelper(QObject *parent = nullptr);
-    
-    // 检查管理员权限
+
+    // Check admin privileges.
     static bool isAdmin();
-    
-    // 以管理员身份重启应用
+
+    // Restart the app as admin.
     static bool restartAsAdmin();
-    
-    // 请求 UAC 提权运行命令
+
+    // Request UAC elevation to run a command.
     static bool runAsAdmin(const QString &program, const QStringList &arguments = QStringList());
 };
 

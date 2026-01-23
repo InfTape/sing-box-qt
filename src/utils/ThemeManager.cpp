@@ -15,7 +15,7 @@ ThemeManager& ThemeManager::instance()
 
 ThemeManager::ThemeManager(QObject *parent)
     : QObject(parent)
-    , m_currentMode(Dark) // 默认为深色
+    , m_currentMode(Dark) // Default to dark.
 {
 }
 
@@ -25,7 +25,7 @@ ThemeManager::~ThemeManager()
 
 void ThemeManager::init()
 {
-    // 从数据库加载主题设置
+    // Load theme settings from database.
     QJsonObject themeConfig = DatabaseService::instance().getThemeConfig();
     QString themeEntry = themeConfig.value("theme").toString("dark");
     
@@ -33,7 +33,7 @@ void ThemeManager::init()
         m_currentMode = Light;
     } else if (themeEntry == "auto") {
         m_currentMode = Auto;
-        // TODO: 检测系统主题
+        // TODO: detect system theme.
     } else {
         m_currentMode = Dark;
     }
@@ -50,7 +50,7 @@ void ThemeManager::setThemeMode(ThemeMode mode)
     loadThemeColors();
     updateApplicationStyle();
     
-    // 保存设置
+    // Save settings.
     QJsonObject config = DatabaseService::instance().getThemeConfig();
     config["theme"] = (mode == Light ? "light" : (mode == Auto ? "auto" : "dark"));
     DatabaseService::instance().saveThemeConfig(config);
@@ -67,7 +67,7 @@ void ThemeManager::loadThemeColors()
 {
     m_colors.clear();
     
-    // 基础调色板 (Tailwind CSS 风格)
+    // Base palette (Tailwind CSS style).
     m_colors["primary"] = "#5aa9ff";       // Light Blue
     m_colors["primary-hover"] = "#7bbcff"; // Light Blue Hover
     m_colors["primary-active"] = "#3f8ff2"; // Light Blue Active
@@ -77,7 +77,7 @@ void ThemeManager::loadThemeColors()
     m_colors["error"] = "#ef4444";         // Red 500
     
     if (m_currentMode == Light) {
-        // 浅色主题变量
+        // Light theme variables.
         m_colors["bg-primary"] = "#f8fafc";   // Slate 50
         m_colors["bg-secondary"] = "#ffffff"; // White
         m_colors["bg-tertiary"] = "#f1f5f9";  // Slate 100
@@ -92,7 +92,7 @@ void ThemeManager::loadThemeColors()
         m_colors["panel-bg"] = "#ffffff";
         m_colors["input-bg"] = "#f1f5f9";
     } else {
-        // 深色主题变量
+        // Dark theme variables.
         m_colors["bg-primary"] = "#0f172a";   // Slate 900
         m_colors["bg-secondary"] = "#1e293b"; // Slate 800
         m_colors["bg-tertiary"] = "#334155";  // Slate 700
@@ -282,7 +282,7 @@ void ThemeManager::updateApplicationStyle()
                        getInputStyle() + 
                        getScrollBarStyle());
                        
-    // 设置 Qt Palette 以兼容一些未完全覆盖的组件
+    // Set Qt palette for widgets not fully covered by styles.
     QPalette palette;
     palette.setColor(QPalette::Window, getColor("bg-primary"));
     palette.setColor(QPalette::WindowText, getColor("text-primary"));

@@ -26,52 +26,12 @@
 #include <QJsonObject>
 #include <QOperatingSystemVersion>
 #include <QMenu>
-#include <QPainter>
-#include <QPainterPath>
 #include <functional>
 #include "utils/AppPaths.h"
 #include "utils/ThemeManager.h"
+#include "widgets/RoundedMenu.h"
 
 namespace {
-class RoundedMenu : public QMenu
-{
-public:
-    explicit RoundedMenu(QWidget *parent = nullptr)
-        : QMenu(parent)
-    {
-        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
-        setAttribute(Qt::WA_TranslucentBackground, true);
-        setAttribute(Qt::WA_NoSystemBackground, true);
-    }
-
-    void setThemeColors(const QColor &bg, const QColor &border)
-    {
-        m_bgColor = bg;
-        m_borderColor = border;
-        update();
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override
-    {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
-        QPainterPath path;
-        path.addRoundedRect(rect, 10, 10);
-
-        painter.fillPath(path, m_bgColor);
-        painter.setPen(QPen(m_borderColor, 1));
-        painter.drawPath(path);
-
-        QMenu::paintEvent(event);
-    }
-
-private:
-    QColor m_bgColor = QColor(30, 41, 59);
-    QColor m_borderColor = QColor(90, 169, 255, 180);
-};
 
 class MenuComboBox : public QComboBox
 {
@@ -273,8 +233,8 @@ void SettingsView::setupUI()
     )";
     const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-secondary"));
 
-    // 代理设置
-    QGroupBox *proxyGroup = new QGroupBox(tr("代理设置"));
+
+    QGroupBox *proxyGroup = new QGroupBox(tr("Proxy Settings"));
     proxyGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *proxyLayout = new QFormLayout(proxyGroup);
     proxyLayout->setSpacing(15);
@@ -291,47 +251,47 @@ void SettingsView::setupUI()
     m_apiPortSpin->setValue(9090);
     m_apiPortSpin->setStyleSheet(inputStyleApplied);
 
-    m_autoStartCheck = new QCheckBox(tr("开机自动启动"));
+    m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
     m_autoStartCheck->setStyleSheet(inputStyleApplied);
 
-    m_systemProxyCheck = new QCheckBox(tr("自动设置系统代理"));
+    m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
     m_systemProxyCheck->setStyleSheet(inputStyleApplied);
 
-    proxyLayout->addRow(tr("混合代理端口:"), m_mixedPortSpin);
-    proxyLayout->addRow(tr("API 端口:"), m_apiPortSpin);
+    proxyLayout->addRow(tr("Mixed port:"), m_mixedPortSpin);
+    proxyLayout->addRow(tr("API port:"), m_apiPortSpin);
     proxyLayout->addRow(m_autoStartCheck);
     proxyLayout->addRow(m_systemProxyCheck);
 
-    // 外观设置
-    QGroupBox *appearanceGroup = new QGroupBox(tr("外观设置"));
+
+    QGroupBox *appearanceGroup = new QGroupBox(tr("Appearance"));
     appearanceGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *appearanceLayout = new QFormLayout(appearanceGroup);
     appearanceLayout->setSpacing(15);
 
     m_themeCombo = new MenuComboBox;
-    m_themeCombo->addItems({tr("深色"), tr("浅色"), tr("跟随系统")});
+    m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
 
     m_languageCombo = new MenuComboBox;
-    m_languageCombo->addItems({tr("简体中文"), "English", tr("日本語"), tr("Русский")});
+    m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
 
-    appearanceLayout->addRow(tr("主题:"), m_themeCombo);
-    appearanceLayout->addRow(tr("语言:"), m_languageCombo);
+    appearanceLayout->addRow(tr("Theme:"), m_themeCombo);
+    appearanceLayout->addRow(tr("Language:"), m_languageCombo);
 
-    // 内核设置
-    QGroupBox *kernelGroup = new QGroupBox(tr("内核设置"));
+
+    QGroupBox *kernelGroup = new QGroupBox(tr("Kernel Settings"));
     kernelGroup->setStyleSheet(groupBoxStyle);
     QFormLayout *kernelLayout = new QFormLayout(kernelGroup);
     kernelLayout->setSpacing(15);
 
-    m_kernelVersionLabel = new QLabel(tr("未安装"));
+    m_kernelVersionLabel = new QLabel(tr("Not installed"));
     m_kernelVersionLabel->setStyleSheet("color: #e94560; font-weight: bold;");
 
     m_kernelVersionCombo = new MenuComboBox;
-    m_kernelVersionCombo->addItem(tr("最新版本"));
+    m_kernelVersionCombo->addItem(tr("Latest version"));
 
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
-    m_kernelPathEdit->setPlaceholderText(tr("内核路径"));
+    m_kernelPathEdit->setPlaceholderText(tr("Kernel path"));
     m_kernelPathEdit->setStyleSheet(inputStyleApplied);
 
     m_kernelDownloadProgress = new QProgressBar;
@@ -359,7 +319,7 @@ void SettingsView::setupUI()
 
     QHBoxLayout *kernelBtnLayout = new QHBoxLayout;
 
-    m_downloadKernelBtn = new QPushButton(tr("下载内核"));
+    m_downloadKernelBtn = new QPushButton(tr("Download Kernel"));
     m_downloadKernelBtn->setStyleSheet(R"(
         QPushButton {
             background-color: #e94560;
@@ -372,7 +332,7 @@ void SettingsView::setupUI()
         QPushButton:hover { background-color: #ff6b6b; }
     )");
 
-    m_checkKernelBtn = new QPushButton(tr("检查安装"));
+    m_checkKernelBtn = new QPushButton(tr("Check Installation"));
     m_checkKernelBtn->setStyleSheet(R"(
         QPushButton {
             background-color: #0f3460;
@@ -384,7 +344,7 @@ void SettingsView::setupUI()
         QPushButton:hover { background-color: #1f4068; }
     )");
 
-    m_checkUpdateBtn = new QPushButton(tr("检查更新"));
+    m_checkUpdateBtn = new QPushButton(tr("Check Updates"));
     m_checkUpdateBtn->setStyleSheet(R"(
         QPushButton {
             background-color: #0f3460;
@@ -401,14 +361,14 @@ void SettingsView::setupUI()
     kernelBtnLayout->addWidget(m_checkUpdateBtn);
     kernelBtnLayout->addStretch();
 
-    kernelLayout->addRow(tr("已安装版本:"), m_kernelVersionLabel);
-    kernelLayout->addRow(tr("选择版本:"), m_kernelVersionCombo);
-    kernelLayout->addRow(tr("内核路径:"), m_kernelPathEdit);
+    kernelLayout->addRow(tr("Installed version:"), m_kernelVersionLabel);
+    kernelLayout->addRow(tr("Select version:"), m_kernelVersionCombo);
+    kernelLayout->addRow(tr("Kernel path:"), m_kernelPathEdit);
     kernelLayout->addRow(m_kernelDownloadProgress);
     kernelLayout->addRow(m_kernelDownloadStatus);
     kernelLayout->addRow(kernelBtnLayout);
 
-    m_saveBtn = new QPushButton(tr("保存设置"));
+    m_saveBtn = new QPushButton(tr("Save Settings"));
     m_saveBtn->setFixedHeight(36);
     m_saveBtn->setFixedWidth(110);
     m_saveBtn->setStyleSheet(R"(
@@ -490,7 +450,7 @@ void SettingsView::saveSettings()
         if (!AutoStart::setEnabled(autoStartEnabled)) {
             autoStartEnabled = AutoStart::isEnabled();
             m_autoStartCheck->setChecked(autoStartEnabled);
-            QMessageBox::warning(this, tr("提示"), tr("设置开机自启动失败"));
+            QMessageBox::warning(this, tr("Notice"), tr("Failed to set auto-start"));
         }
     }
     config["autoStart"] = autoStartEnabled;
@@ -511,13 +471,13 @@ void SettingsView::saveSettings()
     QString locales[] = {"zh_CN", "en", "ja", "ru"};
     DatabaseService::instance().saveLocale(locales[m_languageCombo->currentIndex()]);
 
-    Logger::info(tr("设置已保存"));
+    Logger::info(tr("Settings saved"));
 }
 
 void SettingsView::onSaveClicked()
 {
     saveSettings();
-    QMessageBox::information(this, tr("提示"), tr("设置已保存"));
+    QMessageBox::information(this, tr("Notice"), tr("Settings saved"));
 }
 
 void SettingsView::onDownloadKernelClicked()
@@ -539,19 +499,19 @@ void SettingsView::onCheckKernelClicked()
 
     const QString kernelPath = detectKernelPath();
     if (kernelPath.isEmpty()) {
-        QMessageBox::warning(this, tr("检查安装"), tr("未找到 sing-box 内核，请先下载或手动指定路径。"));
+        QMessageBox::warning(this, tr("Check Installation"), tr("sing-box kernel not found. Download it or set the path manually."));
         return;
     }
 
     const QString version = queryKernelVersion(kernelPath);
     if (version.isEmpty()) {
-        QMessageBox::warning(this, tr("检查安装"),
-                             tr("找到内核但无法读取版本：\n%1").arg(kernelPath));
+        QMessageBox::warning(this, tr("Check Installation"),
+                             tr("Found kernel but failed to read version:\n%1").arg(kernelPath));
         return;
     }
 
-    QMessageBox::information(this, tr("检查安装"),
-                             tr("内核已安装。\n路径：%1\n版本：%2").arg(kernelPath, version));
+    QMessageBox::information(this, tr("Check Installation"),
+                             tr("Kernel installed.\nPath: %1\nVersion: %2").arg(kernelPath, version));
 }
 
 void SettingsView::onCheckUpdateClicked()
@@ -567,7 +527,7 @@ void SettingsView::onCheckUpdateClicked()
     auto tryFetch = std::make_shared<std::function<void(int)>>();
     *tryFetch = [this, apiUrls, installedVersion, tryFetch](int index) {
         if (index >= apiUrls.size()) {
-            QMessageBox::warning(this, tr("检查更新"), tr("获取内核版本失败，请稍后重试"));
+            QMessageBox::warning(this, tr("Check Updates"), tr("Failed to fetch kernel versions. Please try again."));
             return;
         }
 
@@ -594,18 +554,18 @@ void SettingsView::onCheckUpdateClicked()
             }
 
             if (installed.isEmpty()) {
-                QMessageBox::information(this, tr("检查更新"),
-                    tr("当前未安装内核，最新版本为 %1").arg(latest));
+                QMessageBox::information(this, tr("Check Updates"),
+                    tr("Kernel not installed. Latest version is %1").arg(latest));
                 return;
             }
 
             if (installed == latest) {
-                QMessageBox::information(this, tr("检查更新"), tr("当前已是最新版本"));
+                QMessageBox::information(this, tr("Check Updates"), tr("Already on the latest version"));
                 return;
             }
 
-            QMessageBox::information(this, tr("检查更新"),
-                tr("发现内核新版本 %1，当前版本 %2").arg(latest, installed));
+            QMessageBox::information(this, tr("Check Updates"),
+                tr("New kernel version %1 available, current %2").arg(latest, installed));
         });
     };
 
@@ -619,7 +579,7 @@ void SettingsView::refreshKernelInfo()
 
     const QString version = queryKernelVersion(kernelPath);
     if (version.isEmpty()) {
-        m_kernelVersionLabel->setText(tr("未安装"));
+        m_kernelVersionLabel->setText(tr("Not installed"));
         m_kernelVersionLabel->setStyleSheet("color: #e94560; font-weight: bold;");
     } else {
         m_kernelVersionLabel->setText(version);
@@ -637,7 +597,7 @@ void SettingsView::fetchKernelVersions()
     auto tryFetch = std::make_shared<std::function<void(int)>>();
     *tryFetch = [this, apiUrls, tryFetch](int index) {
         if (index >= apiUrls.size()) {
-            Logger::warn(tr("获取内核版本列表失败"));
+            Logger::warn(tr("Failed to fetch kernel version list"));
             return;
         }
 
@@ -676,7 +636,7 @@ void SettingsView::fetchKernelVersions()
 
             m_latestKernelVersion = versions.first();
             m_kernelVersionCombo->clear();
-            m_kernelVersionCombo->addItem(tr("最新版本"));
+            m_kernelVersionCombo->addItem(tr("Latest version"));
             for (const QString &ver : versions) {
                 m_kernelVersionCombo->addItem(ver);
             }
@@ -694,15 +654,15 @@ void SettingsView::startKernelDownload(const QString &version)
     }
 
     if (targetVersion.isEmpty()) {
-        QMessageBox::warning(this, tr("提示"), tr("请先检查内核版本列表"));
+        QMessageBox::warning(this, tr("Notice"), tr("Please check the kernel version list first"));
         return;
     }
 
-    setDownloadUi(true, tr("准备下载内核..."));
+    setDownloadUi(true, tr("Preparing to download kernel..."));
 
     const QString filename = buildKernelFilename(targetVersion);
     if (filename.isEmpty()) {
-        setDownloadUi(false, tr("无法识别系统架构"));
+        setDownloadUi(false, tr("Unsupported system architecture"));
         return;
     }
 
@@ -714,7 +674,7 @@ void SettingsView::startKernelDownload(const QString &version)
 
     const QStringList urls = buildDownloadUrls(targetVersion, filename);
     if (urls.isEmpty()) {
-        setDownloadUi(false, tr("下载地址为空"));
+        setDownloadUi(false, tr("Download URL is empty"));
         return;
     }
 
@@ -725,13 +685,13 @@ void SettingsView::tryDownloadUrl(int index, const QStringList &urls, const QStr
                                   const QString &extractDir, const QString &version)
 {
     if (index >= urls.size()) {
-        setDownloadUi(false, tr("下载失败，请稍后重试"));
-        QMessageBox::warning(this, tr("下载失败"), tr("无法从镜像下载内核"));
+        setDownloadUi(false, tr("Download failed, please try again"));
+        QMessageBox::warning(this, tr("Download Failed"), tr("Failed to download kernel from mirror"));
         return;
     }
 
     const QString url = urls.at(index);
-    m_kernelDownloadStatus->setText(tr("正在下载：%1").arg(url));
+    m_kernelDownloadStatus->setText(tr("Downloading: %1").arg(url));
 
     m_httpClient->download(url, savePath,
         [this](qint64 received, qint64 total) {
@@ -748,16 +708,16 @@ void SettingsView::tryDownloadUrl(int index, const QStringList &urls, const QStr
 
             QString errorMessage;
             if (!extractZipArchive(savePath, extractDir, &errorMessage)) {
-                setDownloadUi(false, tr("解压失败：%1").arg(errorMessage));
-                QMessageBox::warning(this, tr("解压失败"), errorMessage);
+                setDownloadUi(false, tr("Extract failed: %1").arg(errorMessage));
+                QMessageBox::warning(this, tr("Extract Failed"), errorMessage);
                 return;
             }
 
             QString exeName = QSysInfo::productType() == "windows" ? "sing-box.exe" : "sing-box";
             const QString foundExe = findExecutableInDir(extractDir, exeName);
             if (foundExe.isEmpty()) {
-                setDownloadUi(false, tr("未找到内核文件"));
-                QMessageBox::warning(this, tr("安装失败"), tr("未在压缩包中找到 sing-box 可执行文件"));
+                setDownloadUi(false, tr("Kernel file not found"));
+                QMessageBox::warning(this, tr("Install Failed"), tr("sing-box executable not found in archive"));
                 return;
             }
 
@@ -774,13 +734,13 @@ void SettingsView::tryDownloadUrl(int index, const QStringList &urls, const QStr
             }
 
             if (!QFile::copy(foundExe, destPath)) {
-                setDownloadUi(false, tr("安装失败，无法写入内核文件"));
-                QMessageBox::warning(this, tr("安装失败"), tr("无法写入内核文件"));
+                setDownloadUi(false, tr("Install failed: cannot write kernel file"));
+                QMessageBox::warning(this, tr("Install Failed"), tr("Failed to write kernel file"));
                 return;
             }
 
-            setDownloadUi(false, tr("下载完成"));
-            QMessageBox::information(this, tr("完成"), tr("内核下载并安装成功"));
+            setDownloadUi(false, tr("Download complete"));
+            QMessageBox::information(this, tr("Done"), tr("Kernel downloaded and installed successfully"));
             refreshKernelInfo();
         }
     );
@@ -910,7 +870,7 @@ bool SettingsView::extractZipArchive(const QString &zipPath, const QString &dest
     proc.start("powershell", {"-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command});
     if (!proc.waitForFinished(300000)) {
         if (errorMessage) {
-            *errorMessage = tr("解压超时");
+            *errorMessage = tr("Extraction timed out");
         }
         proc.kill();
         return false;
@@ -920,7 +880,7 @@ bool SettingsView::extractZipArchive(const QString &zipPath, const QString &dest
         if (errorMessage) {
             *errorMessage = QString::fromUtf8(proc.readAllStandardError()).trimmed();
             if (errorMessage->isEmpty()) {
-                *errorMessage = tr("解压失败");
+                *errorMessage = tr("Extraction failed");
             }
         }
         return false;
@@ -931,7 +891,7 @@ bool SettingsView::extractZipArchive(const QString &zipPath, const QString &dest
     Q_UNUSED(zipPath)
     Q_UNUSED(destDir)
     if (errorMessage) {
-        *errorMessage = tr("当前平台不支持解压");
+        *errorMessage = tr("Extraction not supported on this platform");
     }
     return false;
 #endif

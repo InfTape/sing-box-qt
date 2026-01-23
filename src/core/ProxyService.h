@@ -17,26 +17,26 @@ public:
     explicit ProxyService(QObject *parent = nullptr);
     ~ProxyService();
 
-    // API 端口配置
+    // API port config.
     void setApiPort(int port);
     int getApiPort() const;
     void setApiToken(const QString &token);
 
-    // 获取代理信息
+    // Fetch proxy data.
     void fetchProxies();
     void fetchRules();
     void fetchConnections();
-    
-    // 代理操作
+
+    // Proxy operations.
     void selectProxy(const QString &group, const QString &proxy);
     void testDelay(const QString &proxy, const QString &url = QString(), int timeout = 5000);
     void testGroupDelay(const QString &group);
     void setProxyMode(const QString &mode);
-    
-    // 连接操作
+
+    // Connection operations.
     void closeConnection(const QString &id);
     void closeAllConnections();
-    
+
     void startTrafficMonitor();
     void stopTrafficMonitor();
 
@@ -50,7 +50,7 @@ signals:
 
 private:
     QString buildApiUrl(const QString &path) const;
-    
+
     HttpClient *m_httpClient;
     WebSocketClient *m_wsClient;
     int m_apiPort;

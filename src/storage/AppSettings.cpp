@@ -13,10 +13,10 @@ AppSettings& AppSettings::instance()
 
 AppSettings::AppSettings(QObject *parent)
     : QObject(parent)
-    // 端口默认值
+    // Port defaults.
     , m_mixedPort(ConfigConstants::DEFAULT_MIXED_PORT)
     , m_apiPort(ConfigConstants::DEFAULT_API_PORT)
-    // TUN 默认值
+    // TUN defaults.
     , m_tunEnabled(false)
     , m_tunAutoRoute(true)
     , m_tunStrictRoute(true)
@@ -25,19 +25,19 @@ AppSettings::AppSettings(QObject *parent)
     , m_tunIpv4(ConfigConstants::DEFAULT_TUN_IPV4)
     , m_tunIpv6(ConfigConstants::DEFAULT_TUN_IPV6)
     , m_tunEnableIpv6(false)
-    // DNS 默认值
+    // DNS defaults.
     , m_dnsProxy(ConfigConstants::DEFAULT_DNS_PROXY)
     , m_dnsCn(ConfigConstants::DEFAULT_DNS_CN)
     , m_dnsResolver(ConfigConstants::DEFAULT_DNS_RESOLVER)
-    // 功能开关默认值
+    // Feature flags defaults.
     , m_blockAds(false)
     , m_enableAppGroups(true)
     , m_preferIpv6(false)
     , m_dnsHijack(true)
     , m_systemProxyEnabled(false)
-    // URL 测试
+    // URL test.
     , m_urltestUrl(ConfigConstants::DEFAULT_URLTEST_URL)
-    // 出站选择
+    // Outbound selection.
     , m_defaultOutbound("manual")
     , m_downloadDetour("direct")
 {
@@ -47,12 +47,12 @@ AppSettings::AppSettings(QObject *parent)
 void AppSettings::load()
 {
     QJsonObject config = DatabaseService::instance().getAppConfig();
-    
-    // 端口
+
+    // Ports.
     m_mixedPort = config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
     m_apiPort = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
-    
-    // TUN
+
+    // TUN.
     m_tunEnabled = config.value("tunEnabled").toBool(false);
     m_tunAutoRoute = config.value("tunAutoRoute").toBool(true);
     m_tunStrictRoute = config.value("tunStrictRoute").toBool(true);
@@ -61,13 +61,13 @@ void AppSettings::load()
     m_tunIpv4 = config.value("tunIpv4").toString(ConfigConstants::DEFAULT_TUN_IPV4);
     m_tunIpv6 = config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
     m_tunEnableIpv6 = config.value("tunEnableIpv6").toBool(false);
-    
-    // DNS
+
+    // DNS.
     m_dnsProxy = config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
     m_dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
     m_dnsResolver = config.value("dnsResolver").toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
-    
-    // 功能开关
+
+    // Feature flags.
     m_blockAds = config.value("blockAds").toBool(false);
     m_enableAppGroups = config.value("enableAppGroups").toBool(true);
     m_preferIpv6 = config.value("preferIpv6").toBool(false);
@@ -77,26 +77,26 @@ void AppSettings::load()
     } else {
         m_systemProxyEnabled = config.value("systemProxy").toBool(false);
     }
-    
-    // URL 测试
+
+    // URL test.
     m_urltestUrl = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
-    
-    // 出站选择
+
+    // Outbound selection.
     m_defaultOutbound = config.value("defaultOutbound").toString("manual");
     m_downloadDetour = config.value("downloadDetour").toString("direct");
-    
-    Logger::info("应用设置已加载");
+
+    Logger::info("App settings loaded");
 }
 
 void AppSettings::save()
 {
     QJsonObject config = DatabaseService::instance().getAppConfig();
-    
-    // 端口
+
+    // Ports.
     config["mixedPort"] = m_mixedPort;
     config["apiPort"] = m_apiPort;
-    
-    // TUN
+
+    // TUN.
     config["tunEnabled"] = m_tunEnabled;
     config["tunAutoRoute"] = m_tunAutoRoute;
     config["tunStrictRoute"] = m_tunStrictRoute;
@@ -105,32 +105,32 @@ void AppSettings::save()
     config["tunIpv4"] = m_tunIpv4;
     config["tunIpv6"] = m_tunIpv6;
     config["tunEnableIpv6"] = m_tunEnableIpv6;
-    
-    // DNS
+
+    // DNS.
     config["dnsProxy"] = m_dnsProxy;
     config["dnsCn"] = m_dnsCn;
     config["dnsResolver"] = m_dnsResolver;
-    
-    // 功能开关
+
+    // Feature flags.
     config["blockAds"] = m_blockAds;
     config["enableAppGroups"] = m_enableAppGroups;
     config["preferIpv6"] = m_preferIpv6;
     config["dnsHijack"] = m_dnsHijack;
     config["systemProxyEnabled"] = m_systemProxyEnabled;
     config["systemProxy"] = m_systemProxyEnabled;
-    
-    // URL 测试
+
+    // URL test.
     config["urltestUrl"] = m_urltestUrl;
-    
-    // 出站选择
+
+    // Outbound selection.
     config["defaultOutbound"] = m_defaultOutbound;
     config["downloadDetour"] = m_downloadDetour;
-    
+
     DatabaseService::instance().saveAppConfig(config);
-    Logger::info("应用设置已保存");
+    Logger::info("App settings saved");
 }
 
-// ==================== Setter 实现 ====================
+// ==================== Setter implementations ====================
 
 void AppSettings::setMixedPort(int port)
 {
@@ -321,7 +321,7 @@ void AppSettings::setDownloadDetour(const QString &detour)
     }
 }
 
-// ==================== 辅助方法 ====================
+// ==================== Helper methods ====================
 
 QString AppSettings::normalizedDefaultOutbound() const
 {

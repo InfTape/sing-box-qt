@@ -16,6 +16,7 @@ class LogView;
 class SettingsView;
 class KernelService;
 class ProxyService;
+class ProxyController;
 
 class MainWindow : public QMainWindow
 {
@@ -30,6 +31,7 @@ public:
     QString currentProxyMode() const;
     QString activeConfigPath() const;
     KernelService* kernelService() const { return m_kernelService; }
+    ProxyController* proxyController() const { return m_proxyController; }
     void setProxyModeUI(const QString &mode);
 
 protected:
@@ -49,15 +51,15 @@ private:
     void saveSettings();
     void updateStyle();
 
-    // UI 组件
+    // UI components.
     QWidget *m_centralWidget;
     QListWidget *m_navList;
     QStackedWidget *m_stackedWidget;
-    
-    // 状态栏组件
+
+    // Status bar components.
     QPushButton *m_startStopBtn;
 
-    // 视图
+    // Views.
     HomeView *m_homeView;
     ProxyView *m_proxyView;
     SubscriptionView *m_subscriptionView;
@@ -66,9 +68,10 @@ private:
     LogView *m_logView;
     SettingsView *m_settingsView;
 
-    // 服务
+    // Services.
     KernelService *m_kernelService;
     ProxyService *m_proxyService;
+    ProxyController *m_proxyController;
 };
 
 #endif // MAINWINDOW_H

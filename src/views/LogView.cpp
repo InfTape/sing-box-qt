@@ -1,5 +1,6 @@
-#include "LogView.h"
+﻿#include "LogView.h"
 #include "utils/ThemeManager.h"
+#include "widgets/RoundedMenu.h"
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
@@ -17,52 +18,11 @@
 #include <QTextStream>
 #include <QVBoxLayout>
 #include <QMenu>
-#include <QPainter>
-#include <QPainterPath>
 #include <utility>
+
 
 namespace {
 constexpr int kMaxLogEntries = 20;
-
-class RoundedMenu : public QMenu
-{
-public:
-    explicit RoundedMenu(QWidget *parent = nullptr)
-        : QMenu(parent)
-    {
-        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
-        setAttribute(Qt::WA_TranslucentBackground, true);
-        setAttribute(Qt::WA_NoSystemBackground, true);
-    }
-
-    void setThemeColors(const QColor &bg, const QColor &border)
-    {
-        m_bgColor = bg;
-        m_borderColor = border;
-        update();
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override
-    {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
-        QPainterPath path;
-        path.addRoundedRect(rect, 10, 10);
-
-        painter.fillPath(path, m_bgColor);
-        painter.setPen(QPen(m_borderColor, 1));
-        painter.drawPath(path);
-
-        QMenu::paintEvent(event);
-    }
-
-private:
-    QColor m_bgColor = QColor(30, 41, 59);
-    QColor m_borderColor = QColor(90, 169, 255, 180);
-};
 
 class MenuComboBox : public QComboBox
 {
@@ -162,7 +122,7 @@ private:
 
     RoundedMenu *m_menu = nullptr;
 };
-}
+} // namespace
 
 LogView::LogView(QWidget *parent)
     : QWidget(parent)
@@ -185,9 +145,9 @@ void LogView::setupUI()
     QVBoxLayout *titleLayout = new QVBoxLayout;
     titleLayout->setSpacing(4);
 
-    m_titleLabel = new QLabel(tr("日志"));
+    m_titleLabel = new QLabel(tr("Logs"));
     m_titleLabel->setObjectName("PageTitle");
-    m_subtitleLabel = new QLabel(tr("查看内核运行日志与错误信息"));
+    m_subtitleLabel = new QLabel(tr("View kernel logs and errors"));
     m_subtitleLabel->setObjectName("PageSubtitle");
 
     titleLayout->addWidget(m_titleLabel);
@@ -198,26 +158,26 @@ void LogView::setupUI()
     controlsLayout->setContentsMargins(0, 0, 0, 0);
     controlsLayout->setSpacing(8);
 
-    m_totalTag = new QLabel(tr("0 条"));
+    m_totalTag = new QLabel(tr("0 entries"));
     m_totalTag->setObjectName("TagInfo");
-    m_errorTag = new QLabel(tr("错误: 0"));
+    m_errorTag = new QLabel(tr("Errors: 0"));
     m_errorTag->setObjectName("TagError");
-    m_warningTag = new QLabel(tr("警告: 0"));
+    m_warningTag = new QLabel(tr("Warnings: 0"));
     m_warningTag->setObjectName("TagWarning");
 
-    m_autoScroll = new QCheckBox(tr("自动滚动"));
+    m_autoScroll = new QCheckBox(tr("Auto scroll"));
     m_autoScroll->setObjectName("AutoScroll");
     m_autoScroll->setChecked(false);
 
-    m_clearBtn = new QPushButton(tr("清空"));
+    m_clearBtn = new QPushButton(tr("Clear"));
     m_clearBtn->setObjectName("ActionDangerBtn");
     m_clearBtn->setCursor(Qt::PointingHandCursor);
 
-    m_copyBtn = new QPushButton(tr("复制"));
+    m_copyBtn = new QPushButton(tr("Copy"));
     m_copyBtn->setObjectName("ActionBtn");
     m_copyBtn->setCursor(Qt::PointingHandCursor);
 
-    m_exportBtn = new QPushButton(tr("导出"));
+    m_exportBtn = new QPushButton(tr("Export"));
     m_exportBtn->setObjectName("ActionBtn");
     m_exportBtn->setCursor(Qt::PointingHandCursor);
 
@@ -246,12 +206,12 @@ void LogView::setupUI()
 
     m_searchEdit = new QLineEdit;
     m_searchEdit->setObjectName("SearchInput");
-    m_searchEdit->setPlaceholderText(tr("搜索日志内容..."));
+    m_searchEdit->setPlaceholderText(tr("Search logs..."));
     m_searchEdit->setClearButtonEnabled(true);
 
     m_typeFilter = new MenuComboBox;
     m_typeFilter->setObjectName("FilterSelect");
-    m_typeFilter->addItem(tr("类型"), QString());
+    m_typeFilter->addItem(tr("Type"), QString());
     m_typeFilter->addItem("DEBUG", "debug");
     m_typeFilter->addItem("INFO", "info");
     m_typeFilter->addItem("WARN", "warning");
@@ -289,10 +249,10 @@ void LogView::setupUI()
     emptyLayout->setContentsMargins(0, 0, 0, 0);
     emptyLayout->setSpacing(10);
     emptyLayout->setAlignment(Qt::AlignCenter);
-    QLabel *emptyIcon = new QLabel(tr("📝"));
+    QLabel *emptyIcon = new QLabel(tr("!"));
     emptyIcon->setObjectName("EmptyIcon");
     emptyIcon->setAlignment(Qt::AlignCenter);
-    m_emptyTitle = new QLabel(tr("暂无日志"));
+    m_emptyTitle = new QLabel(tr("No logs yet"));
     m_emptyTitle->setObjectName("EmptyTitle");
     m_emptyTitle->setAlignment(Qt::AlignCenter);
     emptyLayout->addWidget(emptyIcon);
@@ -374,7 +334,7 @@ void LogView::onCopyClicked()
 
 void LogView::onExportClicked()
 {
-    const QString path = QFileDialog::getSaveFileName(this, tr("导出日志"), "logs.txt", tr("文本文件 (*.txt)"));
+    const QString path = QFileDialog::getSaveFileName(this, tr("Export Logs"), "logs.txt", tr("Text Files (*.txt)"));
     if (path.isEmpty()) return;
 
     QFile file(path);
@@ -423,9 +383,9 @@ void LogView::updateStats()
         if (log.type == "warning") warningCount++;
     }
 
-    m_totalTag->setText(tr("%1 条").arg(m_filtered.size()));
-    m_errorTag->setText(tr("错误: %1").arg(errorCount));
-    m_warningTag->setText(tr("警告: %1").arg(warningCount));
+    m_totalTag->setText(tr("%1 entries").arg(m_filtered.size()));
+    m_errorTag->setText(tr("Errors: %1").arg(errorCount));
+    m_warningTag->setText(tr("Warnings: %1").arg(warningCount));
     m_errorTag->setVisible(errorCount > 0);
     m_warningTag->setVisible(warningCount > 0);
 }
@@ -478,7 +438,7 @@ void LogView::updateEmptyState()
     if (m_filtered.isEmpty()) {
         m_emptyState->show();
         m_scrollArea->hide();
-        m_emptyTitle->setText(hasFilters ? tr("没有匹配的日志") : tr("暂无日志"));
+        m_emptyTitle->setText(hasFilters ? tr("No matching logs") : tr("No logs yet"));
     } else {
         m_emptyState->hide();
         m_scrollArea->show();
@@ -532,10 +492,10 @@ QString LogView::detectLogType(const QString &message) const
 
 QString LogView::logTypeLabel(const QString &type) const
 {
-    if (type == "error") return tr("错误");
-    if (type == "warning") return tr("警告");
+    if (type == "error") return tr("Error");
+    if (type == "warning") return tr("Warning");
     if (type == "debug") return "DEBUG";
-    return tr("信息");
+    return tr("Info");
 }
 
 void LogView::updateStyle()

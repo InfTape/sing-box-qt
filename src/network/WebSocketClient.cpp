@@ -14,7 +14,7 @@ WebSocketClient::WebSocketClient(QObject *parent)
     QObject::connect(m_socket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived);
     QObject::connect(m_socket, &QWebSocket::binaryMessageReceived, this, &WebSocketClient::onBinaryMessageReceived);
     QObject::connect(m_socket, &QWebSocket::errorOccurred, this, &WebSocketClient::onError);
-    
+
     m_reconnectTimer->setSingleShot(true);
     QObject::connect(m_reconnectTimer, &QTimer::timeout, this, &WebSocketClient::attemptReconnect);
 }
@@ -30,7 +30,7 @@ void WebSocketClient::connect(const QString &url)
     m_url = url;
     m_intentionalDisconnect = false;
     m_socket->open(QUrl(url));
-    Logger::info(QString("WebSocket 连接: %1").arg(url));
+    Logger::info(QString("WebSocket connect: %1").arg(url));
 }
 
 void WebSocketClient::disconnect()
@@ -57,15 +57,15 @@ void WebSocketClient::setReconnectInterval(int msecs)
 
 void WebSocketClient::onConnected()
 {
-    Logger::info("WebSocket 已连接");
+    Logger::info("WebSocket connected");
     emit connected();
 }
 
 void WebSocketClient::onDisconnected()
 {
-    Logger::info("WebSocket 已断开");
+    Logger::info("WebSocket disconnected");
     emit disconnected();
-    
+
     if (m_autoReconnect && !m_intentionalDisconnect) {
         m_reconnectTimer->start(m_reconnectInterval);
     }
@@ -85,14 +85,14 @@ void WebSocketClient::onError(QAbstractSocket::SocketError error)
 {
     Q_UNUSED(error)
     QString errorMsg = m_socket->errorString();
-    Logger::warn(QString("WebSocket 错误: %1").arg(errorMsg));
+    Logger::warn(QString("WebSocket error: %1").arg(errorMsg));
     emit errorOccurred(errorMsg);
 }
 
 void WebSocketClient::attemptReconnect()
 {
     if (!m_intentionalDisconnect && !m_url.isEmpty()) {
-        Logger::info("WebSocket 尝试重连...");
+        Logger::info("WebSocket reconnecting...");
         m_socket->open(QUrl(m_url));
     }
 }

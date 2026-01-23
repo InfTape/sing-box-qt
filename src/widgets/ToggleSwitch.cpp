@@ -1,4 +1,4 @@
-#include "ToggleSwitch.h"
+﻿#include "ToggleSwitch.h"
 
 #include <QPainter>
 #include <QMouseEvent>
@@ -36,7 +36,7 @@ void ToggleSwitch::setOffset(qreal v) {
 }
 
 QRectF ToggleSwitch::trackRect() const {
-    QRectF r = rect().adjusted(2, 2, -2, -2); // 留出防剪裁边距
+    QRectF r = rect().adjusted(2, 2, -2, -2); // Leave padding to avoid clipping
     const qreal h = r.height() * 0.70;
     const qreal w = qMax(h * 1.8, r.width() * 0.90);
     const qreal x = r.center().x() - w / 2.0;
@@ -161,3 +161,4 @@ void ToggleSwitch::keyPressEvent(QKeyEvent* e) {
     }
     QWidget::keyPressEvent(e);
 }
+

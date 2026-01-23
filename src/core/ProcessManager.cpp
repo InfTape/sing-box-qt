@@ -15,16 +15,16 @@ ProcessManager::ProcessManager(QObject *parent)
 QList<ProcessInfo> ProcessManager::findProcessesByName(const QString &name)
 {
     QList<ProcessInfo> processes;
-    
+
 #ifdef Q_OS_WIN
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
         return processes;
     }
-    
+
     PROCESSENTRY32W pe32;
     pe32.dwSize = sizeof(pe32);
-    
+
     if (Process32FirstW(hSnapshot, &pe32)) {
         do {
             QString processName = QString::fromWCharArray(pe32.szExeFile);
@@ -36,10 +36,10 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString &name)
             }
         } while (Process32NextW(hSnapshot, &pe32));
     }
-    
+
     CloseHandle(hSnapshot);
 #endif
-    
+
     return processes;
 }
 
@@ -62,7 +62,7 @@ bool ProcessManager::isProcessRunning(qint64 pid)
     }
     return false;
 #else
-    // TODO: Unix 实现
+    // TODO: implement for Unix.
     return false;
 #endif
 }
@@ -75,14 +75,14 @@ bool ProcessManager::killProcess(qint64 pid)
         BOOL result = TerminateProcess(hProcess, 0);
         CloseHandle(hProcess);
         if (result) {
-            Logger::info(QString("已终止进程 PID: %1").arg(pid));
+            Logger::info(QString("Process terminated: PID=%1").arg(pid));
             return true;
         }
     }
-    Logger::warn(QString("无法终止进程 PID: %1").arg(pid));
+    Logger::warn(QString("Failed to terminate process: PID=%1").arg(pid));
     return false;
 #else
-    // TODO: Unix 实现
+    // TODO: implement for Unix.
     return false;
 #endif
 }
@@ -91,35 +91,35 @@ bool ProcessManager::killProcessByName(const QString &name)
 {
     QList<ProcessInfo> processes = findProcessesByName(name);
     bool allKilled = true;
-    
+
     for (const ProcessInfo &proc : processes) {
         if (!killProcess(proc.pid)) {
             allKilled = false;
         }
     }
-    
+
     return allKilled;
 }
 
 void ProcessManager::cleanupKernelProcesses()
 {
-    Logger::info("清理残留的内核进程...");
-    
+    Logger::info("Cleaning up leftover kernel processes...");
+
 #ifdef Q_OS_WIN
     QString kernelName = "sing-box.exe";
 #else
     QString kernelName = "sing-box";
 #endif
-    
+
     QList<ProcessInfo> processes = findProcessesByName(kernelName);
-    
+
     if (processes.isEmpty()) {
-        Logger::info("未发现残留的内核进程");
+        Logger::info("No leftover kernel processes found");
         return;
     }
-    
+
     for (const ProcessInfo &proc : processes) {
-        Logger::info(QString("发现残留进程: %1 (PID: %2)").arg(proc.name).arg(proc.pid));
+        Logger::info(QString("Leftover process found: %1 (PID: %2)").arg(proc.name).arg(proc.pid));
         killProcess(proc.pid);
     }
 }

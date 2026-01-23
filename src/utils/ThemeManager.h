@@ -18,19 +18,19 @@ public:
     };
 
     static ThemeManager& instance();
-    
+
     void init();
     void setThemeMode(ThemeMode mode);
     ThemeMode getThemeMode() const;
-    
-    // 获取颜色
+
+    // Get colors.
     QColor getColor(const QString &key) const;
     QString getColorString(const QString &key) const;
-    
-    // 获取全局样式表
+
+    // Get global stylesheet.
     QString getGlobalStyleSheet() const;
-    
-    // 获取特定组件样式
+
+    // Get component styles.
     QString getButtonStyle() const;
     QString getCardStyle() const;
     QString getInputStyle() const;
@@ -42,10 +42,10 @@ signals:
 private:
     ThemeManager(QObject *parent = nullptr);
     ~ThemeManager();
-    
+
     void loadThemeColors();
     void updateApplicationStyle();
-    
+
     ThemeMode m_currentMode;
     QMap<QString, QString> m_colors;
 };

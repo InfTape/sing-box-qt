@@ -27,19 +27,19 @@ void Logger::init()
     if (m_initialized) {
         return;
     }
-    
+
     QString logPath = getLogFilePath();
-    
-    // 确保日志目录存在
+
+    // Ensure log directory exists.
     QDir dir(QFileInfo(logPath).absolutePath());
     if (!dir.exists()) {
         dir.mkpath(".");
     }
-    
+
     m_logFile.setFileName(logPath);
     if (m_logFile.open(QIODevice::Append | QIODevice::Text)) {
         m_initialized = true;
-        info("日志系统初始化完成");
+        info("Logger initialized.");
     }
 }
 
@@ -62,11 +62,11 @@ void Logger::log(const QString &level, const QString &message)
 {
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QString logLine = QString("[%1] [%2] %3").arg(timestamp, level, message);
-    
-    // 输出到控制台
+
+    // Output to console.
     qDebug().noquote() << logLine;
-    
-    // 输出到文件
+
+    // Output to file.
     if (m_initialized) {
         QMutexLocker locker(&m_mutex);
         QTextStream stream(&m_logFile);

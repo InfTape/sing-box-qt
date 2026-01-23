@@ -1,60 +1,21 @@
-#include "TrayIcon.h"
+﻿#include "TrayIcon.h"
 #include "MainWindow.h"
 #include "core/KernelService.h"
+#include "core/ProxyController.h"
 #include "utils/ThemeManager.h"
 #include "storage/ConfigManager.h"
+#include "widgets/RoundedMenu.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <QPainter>
 #include <QPainterPath>
 
-class RoundedMenu : public QMenu
-{
-public:
-    explicit RoundedMenu(QWidget *parent = nullptr)
-        : QMenu(parent)
-    {
-        setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
-        setAttribute(Qt::WA_TranslucentBackground, true);
-        setAttribute(Qt::WA_NoSystemBackground, true);
-    }
-
-    void setThemeColors(const QColor &bg, const QColor &border)
-    {
-        m_bgColor = bg;
-        m_borderColor = border;
-        update();
-    }
-
-protected:
-    void paintEvent(QPaintEvent *event) override
-    {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        QRectF rect = this->rect().adjusted(1, 1, -1, -1);
-        QPainterPath path;
-        path.addRoundedRect(rect, 10, 10);
-
-        painter.fillPath(path, m_bgColor);
-        painter.setPen(QPen(m_borderColor, 1));
-        painter.drawPath(path);
-
-        QMenu::paintEvent(event);
-    }
-
-private:
-    QColor m_bgColor = QColor(30, 41, 59);
-    QColor m_borderColor = QColor(255, 255, 255, 26);
-};
-
 TrayIcon::TrayIcon(MainWindow *mainWindow, QObject *parent)
     : QSystemTrayIcon(parent)
     , m_mainWindow(mainWindow)
 {
-    // 设置图标
     setIcon(QIcon(":/icons/app.png"));
-    setToolTip(tr("Sing-Box - 已停止"));
+    setToolTip(tr("Sing-Box - Stopped"));
     
     setupMenu();
     
@@ -161,19 +122,19 @@ void TrayIcon::setupMenu()
 
     m_menu = menu;
     
-    m_showAction = m_menu->addAction(tr("显示主窗口"));
+    m_showAction = m_menu->addAction(tr("Show Window"));
     connect(m_showAction, &QAction::triggered, this, &TrayIcon::onShowWindow);
     
     m_menu->addSeparator();
     
-    m_toggleAction = m_menu->addAction(tr("启动代理"));
+    m_toggleAction = m_menu->addAction(tr("Start/Stop Proxy"));
     m_toggleAction->setCheckable(true);
     connect(m_toggleAction, &QAction::triggered, this, &TrayIcon::onToggleProxy);
 
     m_menu->addSeparator();
 
-    m_globalAction = m_menu->addAction(tr("全局模式"));
-    m_ruleAction = m_menu->addAction(tr("规则模式"));
+    m_globalAction = m_menu->addAction(tr("Global Mode"));
+    m_ruleAction = m_menu->addAction(tr("Rule Mode"));
     m_globalAction->setCheckable(true);
     m_ruleAction->setCheckable(true);
     connect(m_globalAction, &QAction::triggered, this, &TrayIcon::onSelectGlobal);
@@ -181,7 +142,7 @@ void TrayIcon::setupMenu()
 
     m_menu->addSeparator();
     
-    m_quitAction = m_menu->addAction(tr("退出"));
+    m_quitAction = m_menu->addAction(tr("Quit"));
     connect(m_quitAction, &QAction::triggered, this, &TrayIcon::onQuit);
 
     connect(m_menu, &QMenu::aboutToShow, this, &TrayIcon::updateProxyStatus);
@@ -207,71 +168,64 @@ void TrayIcon::onShowWindow()
 
 void TrayIcon::onToggleProxy()
 {
-    const bool running = m_mainWindow->isKernelRunning();
-    auto *kernel = m_mainWindow->kernelService();
-    if (!kernel) return;
+    if (!m_mainWindow) return;
+    auto *controller = m_mainWindow->proxyController();
+    if (!controller) return;
 
-    if (running) {
-        kernel->stop();
-    } else {
-        QString configPath = m_mainWindow->activeConfigPath();
-        if (configPath.isEmpty()) {
-            QMessageBox::warning(nullptr, tr("启动代理"), tr("未找到配置文件，无法启动内核。"));
-            return;
-        }
-        kernel->start(configPath);
+    if (!controller->toggleKernel()) {
+        QMessageBox::warning(nullptr, tr("Start Proxy"), tr("Configuration file not found. Unable to start kernel."));
     }
     updateProxyStatus();
 }
 
 void TrayIcon::onSelectGlobal()
 {
-    const QString mode = "global";
-    const QString configPath = m_mainWindow->activeConfigPath();
-    if (configPath.isEmpty()) return;
+    auto *controller = m_mainWindow ? m_mainWindow->proxyController() : nullptr;
+    if (!controller) return;
+
     QString error;
-    if (ConfigManager::instance().updateClashDefaultMode(configPath, mode, &error)) {
-        if (m_mainWindow->isKernelRunning()) {
-            m_mainWindow->kernelService()->restartWithConfig(configPath);
-        }
-    } else {
-        QMessageBox::warning(nullptr, tr("切换模式失败"), error);
+    if (!controller->setProxyMode("global", m_mainWindow->isKernelRunning(), &error)) {
+        QMessageBox::warning(nullptr, tr("Switch Mode Failed"), error);
+        return;
     }
-    m_mainWindow->setProxyModeUI(mode);
+    m_mainWindow->setProxyModeUI("global");
     updateProxyStatus();
 }
 
 void TrayIcon::onSelectRule()
 {
-    const QString mode = "rule";
-    const QString configPath = m_mainWindow->activeConfigPath();
-    if (configPath.isEmpty()) return;
+    auto *controller = m_mainWindow ? m_mainWindow->proxyController() : nullptr;
+    if (!controller) return;
+
     QString error;
-    if (ConfigManager::instance().updateClashDefaultMode(configPath, mode, &error)) {
-        if (m_mainWindow->isKernelRunning()) {
-            m_mainWindow->kernelService()->restartWithConfig(configPath);
-        }
-    } else {
-        QMessageBox::warning(nullptr, tr("切换模式失败"), error);
+    if (!controller->setProxyMode("rule", m_mainWindow->isKernelRunning(), &error)) {
+        QMessageBox::warning(nullptr, tr("Switch Mode Failed"), error);
+        return;
     }
-    m_mainWindow->setProxyModeUI(mode);
+    m_mainWindow->setProxyModeUI("rule");
     updateProxyStatus();
 }
 
 void TrayIcon::onQuit()
 {
-    // TODO: 停止内核进程
+    // TODO: stop the kernel process
     QApplication::quit();
 }
 
 void TrayIcon::updateProxyStatus()
 {
+    if (!m_mainWindow) return;
     const bool running = m_mainWindow->isKernelRunning();
     m_toggleAction->setChecked(running);
-    m_toggleAction->setText(running ? tr("关闭代理") : tr("启动代理"));
-    setToolTip(running ? tr("Sing-Box - 运行中") : tr("Sing-Box - 已停止"));
+    m_toggleAction->setText(running ? tr("Stop Proxy") : tr("Start Proxy"));
+    setToolTip(running ? tr("Sing-Box - Running") : tr("Sing-Box - Stopped"));
 
-    const QString mode = m_mainWindow->currentProxyMode();
+    QString mode = "rule";
+    if (auto *controller = m_mainWindow->proxyController()) {
+        mode = controller->currentProxyMode();
+    } else {
+        mode = m_mainWindow->currentProxyMode();
+    }
     m_globalAction->setChecked(mode == "global");
     m_ruleAction->setChecked(mode != "global");
     m_mainWindow->setProxyModeUI(mode);

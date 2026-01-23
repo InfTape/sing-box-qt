@@ -6,6 +6,6 @@
         <file>icons/check.svg</file>
     </qresource>
     <qresource prefix="/translations">
-        <!-- 翻译文件将在构建时生成 -->
+        <!-- Translation files are generated at build time. -->
     </qresource>
 </RCC>

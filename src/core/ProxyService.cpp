@@ -50,7 +50,7 @@ QString ProxyService::buildApiUrl(const QString &path) const
 void ProxyService::fetchProxies()
 {
     QString url = buildApiUrl("/proxies");
-    
+
     m_httpClient->get(url, [this](bool success, const QByteArray &data) {
         if (success) {
             QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -58,7 +58,7 @@ void ProxyService::fetchProxies()
                 emit proxiesReceived(doc.object());
             }
         } else {
-            emit errorOccurred(tr("获取代理列表失败"));
+            emit errorOccurred(tr("Failed to fetch proxies"));
         }
     });
 }
@@ -66,7 +66,7 @@ void ProxyService::fetchProxies()
 void ProxyService::fetchRules()
 {
     QString url = buildApiUrl("/rules");
-    
+
     m_httpClient->get(url, [this](bool success, const QByteArray &data) {
         if (success) {
             QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -74,7 +74,7 @@ void ProxyService::fetchRules()
                 emit rulesReceived(doc.object()["rules"].toArray());
             }
         } else {
-            emit errorOccurred(tr("获取规则列表失败"));
+            emit errorOccurred(tr("Failed to fetch rules"));
         }
     });
 }
@@ -82,7 +82,7 @@ void ProxyService::fetchRules()
 void ProxyService::fetchConnections()
 {
     QString url = buildApiUrl("/connections");
-    
+
     m_httpClient->get(url, [this](bool success, const QByteArray &data) {
         if (success) {
             QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -90,7 +90,7 @@ void ProxyService::fetchConnections()
                 emit connectionsReceived(doc.object());
             }
         } else {
-            emit errorOccurred(tr("获取连接列表失败"));
+            emit errorOccurred(tr("Failed to fetch connections"));
         }
     });
 }
@@ -98,32 +98,32 @@ void ProxyService::fetchConnections()
 void ProxyService::selectProxy(const QString &group, const QString &proxy)
 {
     QString url = buildApiUrl(QString("/proxies/%1").arg(group));
-    
+
     QJsonObject body;
     body["name"] = proxy;
-    
+
     m_httpClient->put(url, QJsonDocument(body).toJson(), [this, proxy](bool success, const QByteArray &) {
         if (success) {
-            Logger::info(QString("已切换代理到: %1").arg(proxy));
+            Logger::info(QString("Proxy switched to: %1").arg(proxy));
         } else {
-            emit errorOccurred(tr("切换代理失败"));
+            emit errorOccurred(tr("Failed to switch proxy"));
         }
     });
 }
 
 void ProxyService::testDelay(const QString &proxy, const QString &url, int timeout)
 {
-    QString testUrl = url.isEmpty() 
-        ? "http://www.gstatic.com/generate_204" 
+    QString testUrl = url.isEmpty()
+        ? "http://www.gstatic.com/generate_204"
         : url;
-    
+
     QUrlQuery query;
     query.addQueryItem("url", testUrl);
     query.addQueryItem("timeout", QString::number(timeout));
-    
+
     QString apiUrl = buildApiUrl(QString("/proxies/%1/delay?%2")
         .arg(proxy, query.toString()));
-    
+
     m_httpClient->get(apiUrl, [this, proxy](bool success, const QByteArray &data) {
         if (success) {
             QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -140,11 +140,11 @@ void ProxyService::testDelay(const QString &proxy, const QString &url, int timeo
 void ProxyService::testGroupDelay(const QString &group)
 {
     QString url = buildApiUrl(QString("/group/%1/delay").arg(group));
-    
+
     QUrlQuery query;
     query.addQueryItem("url", "http://www.gstatic.com/generate_204");
     query.addQueryItem("timeout", "5000");
-    
+
     m_httpClient->get(url + "?" + query.toString(), [this](bool success, const QByteArray &data) {
         if (success) {
             QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -155,7 +155,7 @@ void ProxyService::testGroupDelay(const QString &group)
                 }
             }
         } else {
-            emit errorOccurred(tr("测试组延迟失败"));
+            emit errorOccurred(tr("Failed to test group delay"));
         }
     });
 }
@@ -173,9 +173,9 @@ void ProxyService::setProxyMode(const QString &mode)
 
     m_httpClient->put(url, QJsonDocument(body).toJson(), [this, normalized](bool success, const QByteArray &) {
         if (success) {
-            Logger::info(QString("已切换代理模式: %1").arg(normalized));
+            Logger::info(QString("Proxy mode switched: %1").arg(normalized));
         } else {
-            emit errorOccurred(tr("切换代理模式失败"));
+            emit errorOccurred(tr("Failed to switch proxy mode"));
         }
     });
 }
@@ -183,10 +183,10 @@ void ProxyService::setProxyMode(const QString &mode)
 void ProxyService::closeConnection(const QString &id)
 {
     QString url = buildApiUrl(QString("/connections/%1").arg(id));
-    
+
     m_httpClient->del(url, [this](bool success, const QByteArray &) {
         if (!success) {
-            emit errorOccurred(tr("关闭连接失败"));
+            emit errorOccurred(tr("Failed to close connection"));
         }
     });
 }
@@ -194,12 +194,12 @@ void ProxyService::closeConnection(const QString &id)
 void ProxyService::closeAllConnections()
 {
     QString url = buildApiUrl("/connections");
-    
+
     m_httpClient->del(url, [this](bool success, const QByteArray &) {
         if (success) {
-            Logger::info("已关闭所有连接");
+            Logger::info("Closed all connections");
         } else {
-            emit errorOccurred(tr("关闭所有连接失败"));
+            emit errorOccurred(tr("Failed to close all connections"));
         }
     });
 }
@@ -210,12 +210,12 @@ void ProxyService::startTrafficMonitor()
     if (!m_apiToken.isEmpty()) {
         url += QString("?token=%1").arg(m_apiToken);
     }
-    
-    // 断开旧连接（如果有）
+
+    // Disconnect old connection if any.
     if (m_wsClient->isConnected()) {
         m_wsClient->disconnect();
     }
-    
+
     m_wsClient->connect(url);
 }
 

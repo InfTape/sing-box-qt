@@ -1,4 +1,4 @@
-﻿#include "KernelService.h"
+#include "KernelService.h"
 #include "utils/Logger.h"
 #include "core/ProcessManager.h"
 #include <QStandardPaths>
@@ -29,14 +29,14 @@ KernelService::~KernelService()
 bool KernelService::start(const QString &configPath)
 {
     if (m_process && m_process->state() != QProcess::NotRunning) {
-        Logger::warn(tr("内核已在运行"));
+        Logger::warn(tr("Kernel is already running"));
         return false;
     }
 
     m_kernelPath = findKernelPath();
     if (m_kernelPath.isEmpty()) {
-        Logger::error(tr("未找到 sing-box 内核"));
-        emit errorOccurred(tr("未找到 sing-box 内核"));
+        Logger::error(tr("sing-box kernel not found"));
+        emit errorOccurred(tr("sing-box kernel not found"));
         return false;
     }
 
@@ -48,8 +48,8 @@ bool KernelService::start(const QString &configPath)
     }
 
     if (!QFile::exists(m_configPath)) {
-        Logger::error(tr("未找到配置文件"));
-        emit errorOccurred(tr("未找到配置文件"));
+        Logger::error(tr("Config file not found"));
+        emit errorOccurred(tr("Config file not found"));
         return false;
     }
 
@@ -73,12 +73,12 @@ bool KernelService::start(const QString &configPath)
     env.insert("ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS", "true");
     m_process->setProcessEnvironment(env);
 
-    Logger::info(tr("启动内核: %1").arg(m_kernelPath));
+    Logger::info(tr("Starting kernel: %1").arg(m_kernelPath));
     m_process->start(m_kernelPath, args);
 
     if (!m_process->waitForStarted(5000)) {
-        Logger::error(tr("内核启动失败"));
-        emit errorOccurred(tr("内核启动失败"));
+        Logger::error(tr("Kernel failed to start"));
+        emit errorOccurred(tr("Kernel failed to start"));
         return false;
     }
 
@@ -88,12 +88,12 @@ bool KernelService::start(const QString &configPath)
 void KernelService::stop()
 {
     if (!m_process || m_process->state() == QProcess::NotRunning) {
-        Logger::warn(tr("内核未运行"));
+        Logger::warn(tr("Kernel is not running"));
         return;
     }
 
     m_stopRequested = true;
-    Logger::info(tr("停止内核..."));
+    Logger::info(tr("Stopping kernel..."));
 
     m_process->terminate();
 
@@ -199,20 +199,20 @@ void KernelService::onProcessError(QProcess::ProcessError error)
     QString errorMsg;
     switch (error) {
     case QProcess::FailedToStart:
-        errorMsg = tr("内核启动失败");
+        errorMsg = tr("Kernel failed to start");
         break;
     case QProcess::Crashed:
         if (m_stopRequested) {
-            Logger::info(tr("内核已停止"));
+            Logger::info(tr("Kernel stopped"));
             return;
         }
-        errorMsg = tr("内核崩溃");
+        errorMsg = tr("Kernel crashed");
         break;
     case QProcess::Timedout:
-        errorMsg = tr("内核响应超时");
+        errorMsg = tr("Kernel response timed out");
         break;
     default:
-        errorMsg = tr("内核发生未知错误");
+        errorMsg = tr("Unknown kernel error");
         break;
     }
 
@@ -243,16 +243,16 @@ QString KernelService::findKernelPath() const
 #endif
 
     const QString dataDir = appDataDir();
-    Logger::info(QString("正在查找内核，数据目录: %1").arg(dataDir));
+    Logger::info(QString("Searching for kernel, data dir: %1").arg(dataDir));
 
     const QString path = QDir(dataDir).filePath(kernelName);
-    Logger::info(QString("尝试路径: %1").arg(path));
+    Logger::info(QString("Trying path: %1").arg(path));
     if (QFile::exists(path)) {
-        Logger::info(QString("找到内核: %1").arg(path));
+        Logger::info(QString("Kernel found: %1").arg(path));
         return path;
     }
 
-    Logger::warn("未找到 sing-box 内核");
+    Logger::warn("sing-box kernel not found");
     return QString();
 }
 
