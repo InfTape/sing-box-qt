@@ -40,6 +40,7 @@ private:
         QString type;
         QString payload;
         QString proxy;
+        bool isCustom = false;
     };
 
     void setupUI();
@@ -50,8 +51,12 @@ private:
     QWidget* createRuleCard(const RuleItem &rule, int index);
     QString normalizeProxyValue(const QString &proxy) const;
     QString displayProxyLabel(const QString &proxy) const;
-    QString ruleTagType(const QString &type) const;
+    QString ruleTagType(const RuleItem &rule) const;
     QString proxyTagType(const QString &proxy) const;
+    bool isCustomPayload(const QString &payload) const;
+    QString activeConfigPath() const;
+    bool removeRuleFromConfig(const RuleItem &rule);
+    bool changeRuleType(const RuleItem &rule);
 
     ProxyService *m_proxyService = nullptr;
 
