@@ -59,7 +59,7 @@
 
 ## 截图预览
 
-![主页](https://github.com/user-attachments/assets/70f063cc-f259-48c9-b2d0-778488b18db8)
+![主页](https://github.com/user-attachments/assets/64c001c0-8a59-4396-ad28-92bae917b8b4)
 
 ![代理](https://github.com/user-attachments/assets/4d7079aa-6d47-4513-80a8-57d75b5cee5d)
 
