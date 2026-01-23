@@ -22,6 +22,8 @@ $distDir = "dist"
 $exeName = "sing-box-qt.exe"
 $exePath = Join-Path $buildDir "Release\$exeName"
 $zipName = "sing-box-qt-portable.zip"
+$desktopPath = [Environment]::GetFolderPath('Desktop')
+$desktopExePath = Join-Path $desktopPath $exeName
 
 if (!(Test-Path $windeployqt)) {
     throw "windeployqt not found: $windeployqt. Set QT_ROOT or update script path."
@@ -55,6 +57,14 @@ Write-Host "Deploying Qt runtime..." -ForegroundColor Cyan
 
 # Optional: bundle kernel if you want (currently app downloads kernel itself)
 # Copy-Item "C:\path\to\sing-box.exe" $distDir
+
+# Copy exe to desktop for convenience
+try {
+    Copy-Item $exePath $desktopExePath -Force
+    Write-Host "Copied to desktop: $desktopExePath" -ForegroundColor Cyan
+} catch {
+    Write-Warning "复制到桌面失败：$($_.Exception.Message)"
+}
 
 # Zip
 if (Test-Path $zipName) { Remove-Item $zipName -Force }

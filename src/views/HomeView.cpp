@@ -14,26 +14,7 @@
 
 namespace {
 
-class ClickableFrame : public QFrame
-{
-public:
-    explicit ClickableFrame(QWidget *parent = nullptr)
-        : QFrame(parent)
-    {
-        setCursor(Qt::PointingHandCursor);
-    }
 
-    std::function<void()> onClick;
-
-protected:
-    void mouseReleaseEvent(QMouseEvent *event) override
-    {
-        if (event->button() == Qt::LeftButton && onClick) {
-            onClick();
-        }
-        QFrame::mouseReleaseEvent(event);
-    }
-};
 
 QString rgba(const QColor &color, double alpha)
 {
@@ -328,7 +309,7 @@ QWidget* HomeView::createStatCard(const QString &iconText, const QString &accent
 QWidget* HomeView::createModeItem(const QString &iconText, const QString &accentKey,
                                  const QString &title, const QString &desc, QWidget *control)
 {
-    auto *card = new ClickableFrame;
+    auto *card = new QFrame;
     card->setObjectName("ModeCard");
     card->setProperty("active", false);
     card->setProperty("accent", accentKey);
@@ -371,12 +352,6 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
     }
 
     if (auto toggle = qobject_cast<ToggleSwitch*>(control)) {
-        const bool exclusive = toggle->property("exclusiveSwitch").toBool();
-        if (exclusive) {
-            card->onClick = [toggle]() { toggle->setChecked(true); };
-        } else {
-            card->onClick = [toggle]() { toggle->setChecked(!toggle->isChecked()); };
-        }
         connect(toggle, &ToggleSwitch::toggled, card, [card](bool checked) {
             setCardActive(card, checked);
         });
@@ -721,27 +696,51 @@ void HomeView::updateConnections(int count, qint64 memoryUsage)
 
 void HomeView::onSystemProxyToggled(bool checked)
 {
+    if (checked && m_tunModeSwitch && m_tunModeSwitch->isChecked()) {
+        QSignalBlocker blocker(m_tunModeSwitch);
+        m_tunModeSwitch->setChecked(false);
+        setCardActive(m_tunModeCard, false);
+        emit tunModeChanged(false);
+    }
+
     setCardActive(m_systemProxyCard, checked);
     emit systemProxyChanged(checked);
 }
 
 void HomeView::onTunModeToggled(bool checked)
 {
+    if (checked && m_systemProxySwitch && m_systemProxySwitch->isChecked()) {
+        QSignalBlocker blocker(m_systemProxySwitch);
+        m_systemProxySwitch->setChecked(false);
+        setCardActive(m_systemProxyCard, false);
+        emit systemProxyChanged(false);
+    }
+
     setCardActive(m_tunModeCard, checked);
     emit tunModeChanged(checked);
 }
 
 void HomeView::onGlobalModeClicked()
 {
+    if (m_ruleModeSwitch && m_ruleModeSwitch->isChecked()) {
+        QSignalBlocker blocker(m_ruleModeSwitch);
+        m_ruleModeSwitch->setChecked(false);
+        setCardActive(m_ruleModeCard, false);
+    }
+
     setCardActive(m_globalModeCard, true);
-    setCardActive(m_ruleModeCard, false);
     emit proxyModeChanged("global");
 }
 
 void HomeView::onRuleModeClicked()
 {
+    if (m_globalModeSwitch && m_globalModeSwitch->isChecked()) {
+        QSignalBlocker blocker(m_globalModeSwitch);
+        m_globalModeSwitch->setChecked(false);
+        setCardActive(m_globalModeCard, false);
+    }
+
     setCardActive(m_ruleModeCard, true);
-    setCardActive(m_globalModeCard, false);
     emit proxyModeChanged("rule");
 }
 
