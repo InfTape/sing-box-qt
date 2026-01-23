@@ -24,6 +24,7 @@ $exePath = Join-Path $buildDir "Release\$exeName"
 $zipName = "sing-box-qt-portable.zip"
 $desktopPath = [Environment]::GetFolderPath('Desktop')
 $desktopExePath = Join-Path $desktopPath $exeName
+$desktopZipPath = Join-Path $desktopPath $zipName
 
 if (!(Test-Path $windeployqt)) {
     throw "windeployqt not found: $windeployqt. Set QT_ROOT or update script path."
@@ -71,3 +72,11 @@ if (Test-Path $zipName) { Remove-Item $zipName -Force }
 Compress-Archive -Path "$distDir\*" -DestinationPath $zipName -Force
 
 Write-Host "Portable zip created: $zipName" -ForegroundColor Green
+
+# Copy zip to desktop
+try {
+    Copy-Item $zipName $desktopZipPath -Force
+    Write-Host "Copied zip to desktop: $desktopZipPath" -ForegroundColor Cyan
+} catch {
+    Write-Warning "复制 zip 到桌面失败：$($_.Exception.Message)"
+}
