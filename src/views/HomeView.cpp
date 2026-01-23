@@ -1,6 +1,7 @@
 #include "HomeView.h"
 #include "utils/ThemeManager.h"
 #include "views/components/TrafficChart.h"
+#include "widgets/ToggleSwitch.h"
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QFrame>
@@ -183,19 +184,15 @@ void HomeView::setupUI()
     flowTitle->setObjectName("SectionTitle");
     flowLayout->addWidget(flowTitle);
 
-    m_systemProxySwitch = new QCheckBox;
+    m_systemProxySwitch = new ToggleSwitch;
     m_systemProxySwitch->setObjectName("ModeSwitch");
     m_systemProxySwitch->setCursor(Qt::PointingHandCursor);
-    m_systemProxySwitch->setFocusPolicy(Qt::NoFocus);
-    m_systemProxySwitch->setText(QString());
-    m_systemProxySwitch->setFixedSize(40, 22);
+    m_systemProxySwitch->setFixedSize(m_systemProxySwitch->sizeHint());
 
-    m_tunModeSwitch = new QCheckBox;
+    m_tunModeSwitch = new ToggleSwitch;
     m_tunModeSwitch->setObjectName("ModeSwitch");
     m_tunModeSwitch->setCursor(Qt::PointingHandCursor);
-    m_tunModeSwitch->setFocusPolicy(Qt::NoFocus);
-    m_tunModeSwitch->setText(QString());
-    m_tunModeSwitch->setFixedSize(40, 22);
+    m_tunModeSwitch->setFixedSize(m_tunModeSwitch->sizeHint());
 
     m_systemProxyCard = createModeItem("SYS", "primary",
                                        tr("系统代理"),
@@ -221,26 +218,17 @@ void HomeView::setupUI()
     nodeTitle->setObjectName("SectionTitle");
     nodeLayout->addWidget(nodeTitle);
 
-    m_globalModeSwitch = new QCheckBox;
+    m_globalModeSwitch = new ToggleSwitch;
     m_globalModeSwitch->setObjectName("ModeSwitch");
     m_globalModeSwitch->setCursor(Qt::PointingHandCursor);
-    m_globalModeSwitch->setFocusPolicy(Qt::NoFocus);
-    m_globalModeSwitch->setText(QString());
-    m_globalModeSwitch->setFixedSize(40, 22);
     m_globalModeSwitch->setProperty("exclusiveSwitch", true);
+    m_globalModeSwitch->setFixedSize(m_globalModeSwitch->sizeHint());
 
-    m_ruleModeSwitch = new QCheckBox;
+    m_ruleModeSwitch = new ToggleSwitch;
     m_ruleModeSwitch->setObjectName("ModeSwitch");
     m_ruleModeSwitch->setCursor(Qt::PointingHandCursor);
-    m_ruleModeSwitch->setFocusPolicy(Qt::NoFocus);
-    m_ruleModeSwitch->setText(QString());
-    m_ruleModeSwitch->setFixedSize(40, 22);
     m_ruleModeSwitch->setProperty("exclusiveSwitch", true);
-
-    QButtonGroup *modeGroup = new QButtonGroup(this);
-    modeGroup->setExclusive(true);
-    modeGroup->addButton(m_globalModeSwitch);
-    modeGroup->addButton(m_ruleModeSwitch);
+    m_ruleModeSwitch->setFixedSize(m_ruleModeSwitch->sizeHint());
 
     m_globalModeCard = createModeItem("GLB", "primary",
                                       tr("全局模式"),
@@ -268,16 +256,16 @@ void HomeView::setupUI()
 
     // Signals
     connect(m_restartBtn, &QPushButton::clicked, this, &HomeView::restartClicked);
-    connect(m_systemProxySwitch, &QCheckBox::toggled, this, &HomeView::onSystemProxyToggled);
-    connect(m_tunModeSwitch, &QCheckBox::toggled, this, &HomeView::onTunModeToggled);
-    connect(m_globalModeSwitch, &QCheckBox::toggled, this, [this](bool checked) {
+    connect(m_systemProxySwitch, &ToggleSwitch::toggled, this, &HomeView::onSystemProxyToggled);
+    connect(m_tunModeSwitch, &ToggleSwitch::toggled, this, &HomeView::onTunModeToggled);
+    connect(m_globalModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
         if (checked) {
             onGlobalModeClicked();
         } else if (m_ruleModeSwitch && !m_ruleModeSwitch->isChecked()) {
             m_globalModeSwitch->setChecked(true);
         }
     });
-    connect(m_ruleModeSwitch, &QCheckBox::toggled, this, [this](bool checked) {
+    connect(m_ruleModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
         if (checked) {
             onRuleModeClicked();
         } else if (m_globalModeSwitch && !m_globalModeSwitch->isChecked()) {
@@ -382,17 +370,16 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
         layout->addWidget(control);
     }
 
-    if (auto checkbox = qobject_cast<QCheckBox*>(control)) {
-        const bool exclusive = checkbox->property("exclusiveSwitch").toBool();
+    if (auto toggle = qobject_cast<ToggleSwitch*>(control)) {
+        const bool exclusive = toggle->property("exclusiveSwitch").toBool();
         if (exclusive) {
-            card->onClick = [checkbox]() {
-                checkbox->setChecked(true);
-            };
+            card->onClick = [toggle]() { toggle->setChecked(true); };
         } else {
-            card->onClick = [checkbox]() {
-                checkbox->toggle();
-            };
+            card->onClick = [toggle]() { toggle->setChecked(!toggle->isChecked()); };
         }
+        connect(toggle, &ToggleSwitch::toggled, card, [card](bool checked) {
+            setCardActive(card, checked);
+        });
     }
 
     return card;

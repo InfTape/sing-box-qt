@@ -9,6 +9,7 @@
 
 class QCheckBox;
 class TrafficChart;
+class ToggleSwitch;
 
 class HomeView : public QWidget
 {
@@ -70,10 +71,10 @@ private:
     QWidget *m_globalModeCard = nullptr;
     QWidget *m_ruleModeCard = nullptr;
 
-    QCheckBox *m_systemProxySwitch = nullptr;
-    QCheckBox *m_tunModeSwitch = nullptr;
-    QCheckBox *m_globalModeSwitch = nullptr;
-    QCheckBox *m_ruleModeSwitch = nullptr;
+    ToggleSwitch *m_systemProxySwitch = nullptr;
+    ToggleSwitch *m_tunModeSwitch = nullptr;
+    ToggleSwitch *m_globalModeSwitch = nullptr;
+    ToggleSwitch *m_ruleModeSwitch = nullptr;
 
     bool m_isRunning = false;
     qint64 m_totalUpload = 0;

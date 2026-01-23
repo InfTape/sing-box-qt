@@ -65,6 +65,7 @@ set(SOURCES
     src/views/RulesView.cpp
     src/views/LogView.cpp
     src/views/SettingsView.cpp
+    src/widgets/ToggleSwitch.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
     src/utils/ThemeManager.cpp
@@ -95,6 +96,7 @@ set(HEADERS
     src/views/RulesView.h
     src/views/LogView.h
     src/views/SettingsView.h
+    src/widgets/ToggleSwitch.h
     src/utils/Logger.h
     src/utils/Crypto.h
     src/utils/ThemeManager.h
