@@ -67,7 +67,7 @@
 
 ![连接](https://github.com/user-attachments/assets/7abd2eb3-f775-4d45-bc79-f0893b27c04c)
 
-![规则](https://github.com/user-attachments/assets/ee4b6f27-742c-4cfe-8234-bfff77224037)
+![规则](<img width="2559" height="1673" alt="image" src="https://github.com/user-attachments/assets/e0c1e528-d68d-4d6c-85d1-4b5fa6d08b89" />)
 
 ![日志](https://github.com/user-attachments/assets/80709fb2-729b-453b-8e70-decd899d7107)
 
