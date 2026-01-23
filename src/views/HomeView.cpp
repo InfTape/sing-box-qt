@@ -461,7 +461,7 @@ void HomeView::updateStyle()
 
         #StatCard {
             background-color: %14;
-            border: 1px solid %15;
+            border: 1px solid #353b43;
             border-radius: 16px;
         }
         #StatCard:hover { border-color: %16; }
@@ -507,7 +507,7 @@ void HomeView::updateStyle()
 
         #ChartCard {
             background-color: %14;
-            border: 1px solid %15;
+            border: 1px solid #353b43;
             border-radius: 16px;
         }
         #SectionTitle {
@@ -518,7 +518,7 @@ void HomeView::updateStyle()
         }
         #ModeCard {
             background-color: %14;
-            border: 1px solid %15;
+            border: 1px solid #353b43;
             border-radius: 16px;
         }
         #ModeCard:hover { border-color: %16; }
@@ -557,6 +557,7 @@ void HomeView::updateStyle()
             height: 20px;
             border-radius: 10px;
             background-color: %26;
+            border: 1px solid #353b43;
             outline: none;
             image: none;
         }

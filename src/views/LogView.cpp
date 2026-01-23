@@ -556,13 +556,13 @@ void LogView::updateStyle()
         }
         #SearchInput, #FilterSelect {
             background-color: %5;
-            border: 1px solid %4;
+            border: 1px solid #353b43;
             border-radius: 12px;
             padding: 8px 12px;
             color: %1;
         }
         #SearchInput:focus, #FilterSelect:focus {
-            border-color: %6;
+            border-color: #353b43;
         }
         #TagInfo, #TagError, #TagWarning {
             padding: 6px 20px;
@@ -579,7 +579,7 @@ void LogView::updateStyle()
         #ActionBtn {
             background-color: %5;
             color: %1;
-            border: 1px solid %4;
+            border: 1px solid #353b43;
             border-radius: 10px;
             padding: 6px 14px;
         }
@@ -651,7 +651,7 @@ void LogView::updateStyle()
     )")
     .arg(tm.getColorString("text-primary"))
     .arg(tm.getColorString("text-secondary"))
-    .arg(tm.getColorString("bg-tertiary"))
+    .arg(tm.getColorString("bg-secondary"))
     .arg(tm.getColorString("border"))
     .arg(tm.getColorString("panel-bg"))
     .arg(tm.getColorString("primary"))

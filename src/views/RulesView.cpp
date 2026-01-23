@@ -432,26 +432,26 @@ void RulesView::updateStyle()
         }
         #FilterCard {
             background-color: %5;
-            border: 1px solid %6;
+            border: 1px solid #353b43;
             border-radius: 16px;
         }
         #SearchInput, #FilterSelect {
             background-color: %7;
-            border: 1px solid %6;
+            border: 1px solid #353b43;
             border-radius: 12px;
             padding: 8px 12px;
             color: %1;
         }
         #SearchInput:focus, #FilterSelect:focus {
-            border-color: %3;
+            border-color: #353b43;
         }
         #RuleCard {
             background-color: %7;
-            border: 1px solid %6;
+            border: 1px solid #353b43;
             border-radius: 16px;
         }
         #RuleCard:hover {
-            border-color: %3;
+            border-color: #353b43;
         }
         #RuleTag {
             padding: 4px 8px;

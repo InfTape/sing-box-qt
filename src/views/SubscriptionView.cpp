@@ -441,7 +441,7 @@ void SubscriptionCard::updateStyle(bool active)
     setStyleSheet(QString(R"(
         #SubscriptionCard {
             background-color: %1;
-            border: 1px solid %2;
+            border: 1px solid #353b43;
             border-radius: 10px;
         }
         #CardIcon {

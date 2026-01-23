@@ -127,12 +127,12 @@ void ProxyView::updateStyle()
         }
         #ToolbarCard, #TreeCard {
             background-color: %3;
-            border: 1px solid %4;
+            border: 1px solid #353b43;
             border-radius: 12px;
         }
         #ProxyGroupCard {
             background-color: %3;
-            border: 1px solid %4;
+            border: 1px solid #353b43;
             border-radius: 12px;
         }
         #ProxyGroupTitle {

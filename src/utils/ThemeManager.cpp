@@ -181,7 +181,7 @@ QString ThemeManager::getCardStyle() const
     return QString(R"(
         QFrame, QWidget#Card {
             background-color: %1;
-            border: 1px solid %2;
+            border: 1px solid #353b43;
             border-radius: 10px;
         }
     )")
@@ -194,14 +194,14 @@ QString ThemeManager::getInputStyle() const
     return QString(R"(
         QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {
             background-color: %1;
-            border: 1px solid %2;
+            border: 1px solid #353b43;
             border-radius: 10px;
             padding: 8px 12px;
             color: %3;
             selection-background-color: %4;
         }
         QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {
-            border: 1px solid %4;
+            border: 1px solid #353b43;
         }
         QComboBox::drop-down {
             border: none;
@@ -210,7 +210,7 @@ QString ThemeManager::getInputStyle() const
             background-color: %1;
             color: %3;
             selection-background-color: %4;
-            border: 1px solid %2;
+            border: 1px solid #353b43;
         }
         QCheckBox {
             color: %3;
@@ -220,7 +220,7 @@ QString ThemeManager::getInputStyle() const
             width: 16px;
             height: 16px;
             border-radius: 4px;
-            border: 1px solid %2;
+            border: 1px solid #353b43;
             background-color: %1;
         }
         QCheckBox::indicator:checked {
