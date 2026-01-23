@@ -268,6 +268,24 @@ void MainWindow::setupConnections()
                 m_homeView->setTunModeEnabled(false);
             }
         }
+
+        QString configPath;
+        if (m_subscriptionView && m_subscriptionView->getService()) {
+            configPath = m_subscriptionView->getService()->getActiveConfigPath();
+        }
+        if (configPath.isEmpty()) {
+            configPath = ConfigManager::instance().getActiveConfigPath();
+        }
+        if (!configPath.isEmpty()) {
+            QJsonObject config = ConfigManager::instance().loadConfig(configPath);
+            if (!config.isEmpty()) {
+                ConfigManager::instance().applySettingsToConfig(config);
+                ConfigManager::instance().saveConfig(configPath, config);
+                if (m_kernelService && m_kernelService->isRunning()) {
+                    m_kernelService->restartWithConfig(configPath);
+                }
+            }
+        }
     });
 
     connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled) {
