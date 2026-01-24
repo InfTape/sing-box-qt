@@ -37,6 +37,7 @@ private:
     struct LogEntry {
         QString type;
         QString payload;
+        QString direction;
         QDateTime timestamp;
     };
 

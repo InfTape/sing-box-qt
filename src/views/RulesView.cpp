@@ -14,6 +14,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
+#include <QFontMetrics>
 #include <QObject>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -767,6 +768,14 @@ QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
     QLabel *typeTag = new QLabel(rule.isCustom ? tr("Custom Rule") : displayRuleTypeLabel(rule.type));
     typeTag->setObjectName("RuleTag");
     typeTag->setProperty("tagType", ruleTagType(rule));
+    typeTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    typeTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    const int tagPaddingX = 6;
+    const int tagPaddingY = 2;
+    const QFontMetrics fm(typeTag->font());
+    const QSize textSize = fm.size(Qt::TextSingleLine, typeTag->text());
+    typeTag->setFixedSize(textSize.width() + tagPaddingX * 2,
+                          textSize.height() + tagPaddingY * 2);
 
     QLabel *indexLabel = new QLabel(QString("#%1").arg(index));
     indexLabel->setObjectName("RuleIndex");
@@ -1214,11 +1223,10 @@ void RulesView::updateStyle()
             color: white;
         }
         #RuleTag {
-            padding: 3px 8px;
-            border-radius: 8px;
+            padding: 2px 6px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: 600;
-            min-width: 0;
         }
         #RuleTag[tagType="info"] { color: #3b82f6; background: rgba(59,130,246,0.12); }
         #RuleTag[tagType="success"] { color: #10b981; background: rgba(16,185,129,0.12); }

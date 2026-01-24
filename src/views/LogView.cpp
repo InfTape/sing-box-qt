@@ -9,9 +9,11 @@
 #include <QFileDialog>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QFontMetrics>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QStringList>
@@ -23,6 +25,69 @@
 
 namespace {
 constexpr int kMaxLogEntries = 20;
+
+QString stripAnsiSequences(const QString &text)
+{
+    static const QRegularExpression kAnsiPattern("\x1B\\[[0-?]*[ -/]*[@-~]");
+    QString cleaned = text;
+    cleaned.remove(kAnsiPattern);
+    return cleaned;
+}
+
+QString normalizeHostToken(const QString &token)
+{
+    if (token.isEmpty()) return token;
+    if (token.startsWith('[')) {
+        return token;
+    }
+    return token;
+}
+
+struct LogKind {
+    QString direction;
+    QString host;
+    QString nodeName;
+    QString protocol;
+    bool isConnection = false;
+    bool isDns = false;
+};
+
+LogKind parseLogKind(const QString &message)
+{
+    LogKind info;
+    static const QRegularExpression kDnsPattern("\\bdns\\s*:");
+    static const QRegularExpression kOutboundNode(R"(outbound/([^\[]+)\[([^\]]+)\])");
+    if (message.contains(kDnsPattern)) {
+        info.direction = "dns";
+        info.isDns = true;
+        return info;
+    }
+
+    if (message.contains("inbound connection")) {
+        info.direction = "inbound";
+    } else if (message.contains("outbound connection")) {
+        info.direction = "outbound";
+    } else {
+        return info;
+    }
+
+    static const QRegularExpression kConnHost(R"(connection (?:from|to) ([^\s]+))");
+    const QRegularExpressionMatch match = kConnHost.match(message);
+    if (match.hasMatch()) {
+        info.host = normalizeHostToken(match.captured(1));
+    }
+
+    if (info.direction == "outbound") {
+        const QRegularExpressionMatch nodeMatch = kOutboundNode.match(message);
+        if (nodeMatch.hasMatch()) {
+            info.protocol = nodeMatch.captured(1).trimmed();
+            info.nodeName = nodeMatch.captured(2).trimmed();
+        }
+    }
+
+    info.isConnection = true;
+    return info;
+}
 
 class MenuComboBox : public QComboBox
 {
@@ -212,10 +277,13 @@ void LogView::setupUI()
     m_typeFilter = new MenuComboBox;
     m_typeFilter->setObjectName("FilterSelect");
     m_typeFilter->addItem(tr("Type"), QString());
+    m_typeFilter->addItem("TRACE", "trace");
     m_typeFilter->addItem("DEBUG", "debug");
     m_typeFilter->addItem("INFO", "info");
     m_typeFilter->addItem("WARN", "warning");
     m_typeFilter->addItem("ERROR", "error");
+    m_typeFilter->addItem("FATAL", "fatal");
+    m_typeFilter->addItem("PANIC", "panic");
 
     filterLayout->addWidget(m_searchEdit, 2);
     filterLayout->addWidget(m_typeFilter, 1);
@@ -272,9 +340,46 @@ void LogView::setupUI()
 
 void LogView::appendLog(const QString &message)
 {
+    const QString cleaned = stripAnsiSequences(message).trimmed();
+    if (cleaned.isEmpty()) return;
+    if (cleaned.contains('\n') || cleaned.contains('\r')) {
+        const QStringList lines = cleaned.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts);
+        for (const auto &line : lines) {
+            appendLog(line);
+        }
+        return;
+    }
+    const LogKind kind = parseLogKind(cleaned);
+
     LogEntry entry;
-    entry.type = detectLogType(message);
-    entry.payload = message;
+    entry.type = detectLogType(cleaned);
+    if (kind.isConnection && entry.type == "info") {
+        if (kind.direction == "outbound") {
+            QString label;
+            if (!kind.protocol.isEmpty() && !kind.nodeName.isEmpty()) {
+                label = QString("%1[%2]").arg(kind.protocol, kind.nodeName);
+            } else if (!kind.protocol.isEmpty()) {
+                label = kind.protocol;
+            } else if (!kind.nodeName.isEmpty()) {
+                label = QString("[%1]").arg(kind.nodeName);
+            }
+
+            if (!kind.host.isEmpty()) {
+                entry.payload = label.isEmpty() ? kind.host : QString("%1 -> %2").arg(label, kind.host);
+            } else {
+                entry.payload = label.isEmpty() ? cleaned : label;
+            }
+        } else {
+            entry.payload = kind.host.isEmpty() ? cleaned : kind.host;
+        }
+        entry.direction = kind.direction;
+    } else if (kind.isDns) {
+        entry.payload = cleaned;
+        entry.direction = kind.direction;
+    } else {
+        entry.payload = cleaned;
+        entry.direction.clear();
+    }
     entry.timestamp = QDateTime::currentDateTime();
 
     m_logs.push_back(entry);
@@ -379,7 +484,7 @@ void LogView::updateStats()
     int errorCount = 0;
     int warningCount = 0;
     for (const auto &log : std::as_const(m_filtered)) {
-        if (log.type == "error") errorCount++;
+        if (log.type == "error" || log.type == "fatal" || log.type == "panic") errorCount++;
         if (log.type == "warning") warningCount++;
     }
 
@@ -455,26 +560,61 @@ QWidget* LogView::createLogRow(const LogEntry &entry)
     layout->setContentsMargins(10, 6, 10, 6);
     layout->setSpacing(10);
 
-    QWidget *meta = new QWidget;
-    QVBoxLayout *metaLayout = new QVBoxLayout(meta);
-    metaLayout->setContentsMargins(0, 0, 0, 0);
-    metaLayout->setSpacing(2);
-
     QLabel *timeLabel = new QLabel(entry.timestamp.toString("HH:mm:ss"));
     timeLabel->setObjectName("LogTime");
+
+    const int badgePaddingX = 6;
+    const int badgePaddingY = 2;
 
     QLabel *typeLabel = new QLabel(logTypeLabel(entry.type));
     typeLabel->setObjectName("LogBadge");
     typeLabel->setProperty("logType", entry.type);
+    typeLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    typeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    const QFontMetrics typeMetrics(typeLabel->font());
+    const QSize typeSize = typeMetrics.size(Qt::TextSingleLine, typeLabel->text());
+    typeLabel->setFixedSize(typeSize.width() + badgePaddingX * 2,
+                            typeSize.height() + badgePaddingY * 2);
 
-    metaLayout->addWidget(timeLabel);
-    metaLayout->addWidget(typeLabel);
+    QHBoxLayout *badgeLayout = new QHBoxLayout;
+    badgeLayout->setContentsMargins(0, 0, 0, 0);
+    badgeLayout->setSpacing(6);
+    badgeLayout->addWidget(typeLabel);
+
+    if (!entry.direction.isEmpty()) {
+        QString directionLabel;
+        if (entry.direction == "outbound") {
+            directionLabel = tr("Outbound");
+        } else if (entry.direction == "inbound") {
+            directionLabel = tr("Inbound");
+        } else if (entry.direction == "dns") {
+            directionLabel = tr("DNS");
+        } else {
+            directionLabel = entry.direction.toUpper();
+        }
+        QLabel *directionTag = new QLabel(directionLabel);
+        directionTag->setObjectName("LogBadge");
+        directionTag->setProperty("logType", "info");
+        directionTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        directionTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        const QFontMetrics dirMetrics(directionTag->font());
+        const QSize dirSize = dirMetrics.size(Qt::TextSingleLine, directionTag->text());
+        directionTag->setFixedSize(dirSize.width() + badgePaddingX * 2,
+                                   dirSize.height() + badgePaddingY * 2);
+        badgeLayout->addWidget(directionTag);
+    }
+
+    QWidget *badgeRow = new QWidget;
+    badgeRow->setLayout(badgeLayout);
 
     QLabel *content = new QLabel(entry.payload);
     content->setObjectName("LogContent");
     content->setWordWrap(true);
+    content->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
-    layout->addWidget(meta);
+    layout->addWidget(timeLabel, 0, Qt::AlignTop);
+    layout->addWidget(badgeRow, 0, Qt::AlignTop);
     layout->addWidget(content, 1);
 
     return row;
@@ -483,19 +623,35 @@ QWidget* LogView::createLogRow(const LogEntry &entry)
 QString LogView::detectLogType(const QString &message) const
 {
     const QString upper = message.toUpper();
-    if (upper.contains("[ERROR]") || upper.contains(" ERROR ")) return "error";
-    if (upper.contains("[WARN]") || upper.contains(" WARNING ")) return "warning";
-    if (upper.contains("[DEBUG]") || upper.contains(" DEBUG ")) return "debug";
-    if (upper.contains("[INFO]") || upper.contains(" INFO ")) return "info";
+    static const QRegularExpression kPanicRe("\\bPANIC\\b");
+    static const QRegularExpression kFatalRe("\\bFATAL\\b");
+    static const QRegularExpression kErrorRe("\\bERROR\\b");
+    static const QRegularExpression kWarnRe("\\bWARN\\b");
+    static const QRegularExpression kWarningRe("\\bWARNING\\b");
+    static const QRegularExpression kDebugRe("\\bDEBUG\\b");
+    static const QRegularExpression kTraceRe("\\bTRACE\\b");
+    static const QRegularExpression kInfoRe("\\bINFO\\b");
+
+    if (upper.contains(kPanicRe)) return "panic";
+    if (upper.contains(kFatalRe)) return "fatal";
+    if (upper.contains(kErrorRe)) return "error";
+    if (upper.contains(kWarnRe) || upper.contains(kWarningRe)) return "warning";
+    if (upper.contains(kDebugRe)) return "debug";
+    if (upper.contains(kTraceRe)) return "trace";
+    if (upper.contains(kInfoRe)) return "info";
     return "info";
 }
 
 QString LogView::logTypeLabel(const QString &type) const
 {
-    if (type == "error") return tr("Error");
-    if (type == "warning") return tr("Warning");
+    if (type == "trace") return "TRACE";
     if (type == "debug") return "DEBUG";
-    return tr("Info");
+    if (type == "info") return "INFO";
+    if (type == "warning") return "WARN";
+    if (type == "error") return "ERROR";
+    if (type == "fatal") return "FATAL";
+    if (type == "panic") return "PANIC";
+    return "INFO";
 }
 
 void LogView::updateStyle()
@@ -600,12 +756,26 @@ void LogView::updateStyle()
             color: %2;
             background: %5;
         }
+        #LogBadge[logType="trace"] {
+            color: %2;
+            background: %5;
+        }
+        #LogBadge[logType="fatal"] {
+            color: #ef4444;
+            background: rgba(239,68,68,0.12);
+        }
+        #LogBadge[logType="panic"] {
+            color: #ef4444;
+            background: rgba(239,68,68,0.12);
+        }
         #LogContent {
             color: %2;
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 12px;
         }
-        #LogEntry[logType="error"] #LogContent {
+        #LogEntry[logType="error"] #LogContent,
+        #LogEntry[logType="fatal"] #LogContent,
+        #LogEntry[logType="panic"] #LogContent {
             color: #ef4444;
         }
         #EmptyTitle {
