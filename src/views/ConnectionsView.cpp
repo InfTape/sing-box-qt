@@ -73,7 +73,7 @@ void ConnectionsView::setupUI()
             border: none;
         }
         QHeaderView::section:first {
-            border-top-left-radius: 10px;
+            /* border-top-left-radius removed to align with corner button */
         }
         QHeaderView::section:last {
             border-top-right-radius: 10px;
