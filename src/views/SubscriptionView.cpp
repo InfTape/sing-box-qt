@@ -55,7 +55,6 @@ void SubscriptionView::setupUI()
     titleLayout->setSpacing(6);
 
     m_addBtn = new QPushButton(tr("+ Add Subscription"));
-    m_addBtn->setObjectName("PrimaryActionBtn");
     m_addBtn->setCursor(Qt::PointingHandCursor);
     m_addBtn->setMinimumSize(110, 36);
 
@@ -102,8 +101,20 @@ void SubscriptionView::setupUI()
 void SubscriptionView::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
-
     setStyleSheet(tm.loadStyleSheet(":/styles/subscription_view.qss"));
+
+    if (m_addBtn) {
+        QColor primary = tm.getColor("primary");
+        QColor bg = primary; bg.setAlphaF(0.2);
+        QColor border = primary; border.setAlphaF(0.4);
+        QColor hover = primary; hover.setAlphaF(0.3);
+        
+        m_addBtn->setStyleSheet(QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 8px 16px; font-weight: bold; font-size: 13px; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), primary.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
+    }
 }
 
 void SubscriptionView::onAddClicked()

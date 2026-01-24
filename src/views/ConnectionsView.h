@@ -21,6 +21,7 @@ private slots:
     void onRefresh();
     void onCloseSelected();
     void onCloseAll();
+    void updateStyle();
 
 private:
     void setupUI();

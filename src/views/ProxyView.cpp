@@ -51,11 +51,9 @@ void ProxyView::setupUI()
     
     m_testAllBtn = new QPushButton(tr("Test All"));
     m_testAllBtn->setCursor(Qt::PointingHandCursor);
-    m_testAllBtn->setObjectName("ActionBtn");
     
     m_refreshBtn = new QPushButton(tr("Refresh"));
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
-    m_refreshBtn->setObjectName("ActionBtn");
     
     toolbarLayout->addWidget(m_searchEdit, 1);
     toolbarLayout->addWidget(m_testAllBtn);
@@ -112,10 +110,23 @@ void ProxyView::updateStyle()
     ThemeManager &tm = ThemeManager::instance();
     
     m_searchEdit->setStyleSheet(tm.getInputStyle());
-    m_testAllBtn->setStyleSheet(tm.getButtonStyle());
-    m_refreshBtn->setStyleSheet(tm.getButtonStyle());
-    
     setStyleSheet(tm.loadStyleSheet(":/styles/proxy_view.qss"));
+
+    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
+        if (!btn) return;
+        QColor bg = baseColor; bg.setAlphaF(0.2);
+        QColor border = baseColor; border.setAlphaF(0.4);
+        QColor hover = baseColor; hover.setAlphaF(0.3);
+        
+        btn->setStyleSheet(QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 6px 16px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
+    };
+
+    applyTransparentStyle(m_testAllBtn, tm.getColor("primary"));
+    applyTransparentStyle(m_refreshBtn, tm.getColor("primary"));
 }
 
 void ProxyView::setProxyService(ProxyService *service)

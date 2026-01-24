@@ -101,12 +101,9 @@ void HomeView::setupUI()
     headerLayout->addWidget(m_statusBadge);
     headerLayout->addStretch();
 
-    m_restartBtn = new QPushButton(tr("Restart"));
-    m_restartBtn->setObjectName("RestartButton");
-    m_restartBtn->setCursor(Qt::PointingHandCursor);
-    m_restartBtn->setFixedHeight(40);
-    m_restartBtn->setProperty("danger", false);
-    headerLayout->addWidget(m_restartBtn);
+    headerLayout->addWidget(titleLabel);
+    headerLayout->addWidget(m_statusBadge);
+    headerLayout->addStretch();
 
     mainLayout->addWidget(headerWidget);
 
@@ -237,7 +234,6 @@ void HomeView::setupUI()
     setCardActive(m_tunModeCard, false);
 
     // Signals
-    connect(m_restartBtn, &QPushButton::clicked, this, &HomeView::restartClicked);
     connect(m_systemProxySwitch, &ToggleSwitch::toggled, this, &HomeView::onSystemProxyToggled);
     connect(m_tunModeSwitch, &ToggleSwitch::toggled, this, &HomeView::onTunModeToggled);
     connect(m_globalModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
@@ -385,18 +381,39 @@ void HomeView::updateStyle()
 
     setStyleSheet(tm.loadStyleSheet(":/styles/home_view.qss", extra));
 
-    if (m_statusDot) {
-        const QColor dotColor = m_isRunning ? success : error;
-        m_statusDot->setStyleSheet(QString("background-color: %1; border-radius: 4px;")
-                                       .arg(dotColor.name()));
-    }
+    // Helper to apply transparent style to generic widget (QLabel/QPushButton)
+    auto applyTransparentStyle = [](QWidget *widget, const QColor &baseColor, bool isButton) {
+        if (!widget) return;
+        QColor bg = baseColor;
+        bg.setAlphaF(0.2);
+        QColor border = baseColor;
+        border.setAlphaF(0.4);
+        QColor hoverBg = baseColor;
+        hoverBg.setAlphaF(0.3);
+
+        QString baseStyle = QString(
+            "%1 { background-color: %2; color: %3; border: 1px solid %4; "
+            "border-radius: 10px; font-weight: bold; }"
+        ).arg(isButton ? "QPushButton" : "QLabel")
+         .arg(bg.name(QColor::HexArgb))
+         .arg(baseColor.name())
+         .arg(border.name(QColor::HexArgb));
+
+        if (isButton) {
+            baseStyle += QString("QPushButton:hover { background-color: %1; }")
+                         .arg(hoverBg.name(QColor::HexArgb));
+        }
+        widget->setStyleSheet(baseStyle);
+    };
+
+
+
+
 
     if (m_trafficChart) {
         m_trafficChart->updateStyle();
     }
 
-    m_restartBtn->setProperty("danger", m_isRunning);
-    polishWidget(m_restartBtn);
     polishWidget(m_statusBadge);
 }
 
@@ -449,7 +466,10 @@ void HomeView::updateStatus(bool running)
     m_isRunning = running;
     m_statusText->setText(running ? tr("Running") : tr("Stopped"));
     m_statusBadge->setProperty("status", running ? "running" : "stopped");
-    m_restartBtn->setProperty("danger", running);
+    
+    // Refresh style to update button color
+    updateStyle();
+
     if (m_statusDot) {
         ThemeManager &tm = ThemeManager::instance();
         const QColor dotColor = running ? tm.getColor("success") : tm.getColor("error");
@@ -457,7 +477,6 @@ void HomeView::updateStatus(bool running)
                                        .arg(dotColor.name()));
     }
     polishWidget(m_statusBadge);
-    polishWidget(m_restartBtn);
 
     if (!running) {
         m_totalUpload = 0;

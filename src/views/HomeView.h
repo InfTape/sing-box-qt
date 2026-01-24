@@ -30,7 +30,6 @@ public:
     QString formatBytes(qint64 bytes) const;
 
 signals:
-    void restartClicked();
     void systemProxyChanged(bool enabled);
     void tunModeChanged(bool enabled);
     void proxyModeChanged(const QString &mode);
@@ -55,7 +54,6 @@ private:
     QWidget *m_statusBadge = nullptr;
     QWidget *m_statusDot = nullptr;
     QLabel *m_statusText = nullptr;
-    QPushButton *m_restartBtn = nullptr;
 
     QLabel *m_uploadValue = nullptr;
     QLabel *m_uploadTotal = nullptr;

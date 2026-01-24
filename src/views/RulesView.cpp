@@ -479,6 +479,24 @@ void RulesView::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
     setStyleSheet(tm.loadStyleSheet(":/styles/rules_view.qss"));
+
+    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
+        if (!btn) return;
+        QColor bg = baseColor; bg.setAlphaF(0.2);
+        QColor border = baseColor; border.setAlphaF(0.4);
+        QColor hover = baseColor; hover.setAlphaF(0.3);
+        
+        btn->setStyleSheet(QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 8px 16px; font-weight: bold; font-size: 13px; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
+    };
+
+    QColor primary = tm.getColor("primary");
+    applyTransparentStyle(m_refreshBtn, primary);
+    applyTransparentStyle(m_addBtn, primary);
+    applyTransparentStyle(m_emptyAction, primary);
 }
 
 void RulesView::resizeEvent(QResizeEvent *event)

@@ -244,17 +244,6 @@ void SettingsView::setupUI()
     m_saveBtn = new QPushButton(tr("Save"));
     m_saveBtn->setFixedHeight(36);
     m_saveBtn->setFixedWidth(110);
-    m_saveBtn->setStyleSheet(R"(
-        QPushButton {
-            background-color: #6ee7b7;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        QPushButton:hover { background-color: #6ee7b7ae; }
-    )");
 
     mainLayout->addWidget(proxyGroup);
     mainLayout->addWidget(appearanceGroup);
@@ -290,6 +279,7 @@ void SettingsView::updateStyle()
     applyTransparentStyle(m_downloadKernelBtn, QColor("#e94560"));
     applyTransparentStyle(m_checkKernelBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_checkUpdateBtn, QColor("#3b82f6"));
+    applyTransparentStyle(m_saveBtn, QColor("#10b981"));
 }
 
 void SettingsView::loadSettings()

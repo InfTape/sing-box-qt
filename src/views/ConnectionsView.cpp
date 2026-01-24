@@ -1,5 +1,6 @@
 #include "ConnectionsView.h"
 #include "core/ProxyService.h"
+#include "utils/ThemeManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -15,6 +16,9 @@ ConnectionsView::ConnectionsView(QWidget *parent)
 
     m_refreshTimer->setInterval(1000);
     connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
+    
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
+            this, &ConnectionsView::updateStyle);
 }
 
 void ConnectionsView::setupUI()
@@ -29,18 +33,8 @@ void ConnectionsView::setupUI()
     m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
     m_closeAllBtn = new QPushButton(tr("Close All"));
 
-    QString buttonStyle = R"(
-        QPushButton {
-            background-color: #0f3460;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
-        }
-        QPushButton:hover { background-color: #1f4068; }
-    )";
-    m_closeSelectedBtn->setStyleSheet(buttonStyle);
-    m_closeAllBtn->setStyleSheet(buttonStyle.replace("#0f3460", "#ff6b6b").replace("#1f4068", "#ff8585"));
+    m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
+    m_closeAllBtn = new QPushButton(tr("Close All"));
 
     toolbarLayout->addStretch();
     toolbarLayout->addWidget(m_closeSelectedBtn);
@@ -57,23 +51,23 @@ void ConnectionsView::setupUI()
     m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableWidget->setStyleSheet(R"(
         QTableWidget {
-            background-color: #16213e;
+            background-color: transparent;
             border: none;
             border-radius: 10px;
             color: #eaeaea;
             gridline-color: #0f3460;
         }
         QTableWidget::item { padding: 8px; }
-        QTableWidget::item:selected { background-color: #0f3460; }
+        QTableWidget::item:selected { background-color: rgba(62, 166, 255, 0.2); }
         QHeaderView {
             background: transparent;
         }
         QTableCornerButton::section {
-            background-color: #0f3460;
+            background-color: rgba(62, 166, 255, 0.2);
             border-top-left-radius: 10px;
         }
         QHeaderView::section {
-            background-color: #0f3460;
+            background-color: rgba(62, 166, 255, 0.15);
             color: #eaeaea;
             padding: 8px;
             border: none;
@@ -91,6 +85,8 @@ void ConnectionsView::setupUI()
 
     connect(m_closeSelectedBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseSelected);
     connect(m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
+    
+    updateStyle();
 }
 
 void ConnectionsView::setProxyService(ProxyService *service)
@@ -174,4 +170,25 @@ void ConnectionsView::onCloseAll()
     if (m_proxyService) {
         m_proxyService->closeAllConnections();
     }
+}
+
+void ConnectionsView::updateStyle()
+{
+    ThemeManager &tm = ThemeManager::instance();
+
+    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
+        if (!btn) return;
+        QColor bg = baseColor; bg.setAlphaF(0.2);
+        QColor border = baseColor; border.setAlphaF(0.4);
+        QColor hover = baseColor; hover.setAlphaF(0.3);
+        
+        btn->setStyleSheet(QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 8px 16px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
+    };
+
+    applyTransparentStyle(m_closeSelectedBtn, QColor("#3b82f6"));
+    applyTransparentStyle(m_closeAllBtn, QColor("#e94560"));
 }
