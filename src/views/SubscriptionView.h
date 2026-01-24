@@ -4,9 +4,11 @@
 #include <QWidget>
 #include <QString>
 #include <QPushButton>
-#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QList>
 #include <QScrollArea>
 #include <QLabel>
+#include <QResizeEvent>
 #include <QTimer>
 
 class SubscriptionCard;
@@ -23,13 +25,13 @@ public:
 
 private slots:
     void onAddClicked();
-    void onUpdateAllClicked();
     void onAutoUpdateTimer();
     void updateStyle();
 
 private:
     void setupUI();
     void refreshList();
+    void layoutCards();
     SubscriptionCard* createSubscriptionCard(const SubscriptionInfo &info, bool active);
     void wireCardSignals(SubscriptionCard *card);
     void handleUseSubscription(const QString &id);
@@ -40,12 +42,16 @@ private:
     void handleDeleteSubscription(const QString &id);
     void handleCopyLink(const QString &id);
     bool getSubscriptionById(const QString &id, SubscriptionInfo *out) const;
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
     
     QPushButton *m_addBtn;
-    QPushButton *m_updateAllBtn;
     QScrollArea *m_scrollArea;
     QWidget *m_cardsContainer;
-    QVBoxLayout *m_cardsLayout;
+    QGridLayout *m_cardsLayout;
+    QList<SubscriptionCard*> m_cards;
+    int m_columnCount = 0;
     SubscriptionService *m_subscriptionService;
     QTimer *m_autoUpdateTimer;
 };

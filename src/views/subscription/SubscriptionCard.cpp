@@ -39,32 +39,38 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 {
     setObjectName("SubscriptionCard");
     setFrameShape(QFrame::NoFrame);
-    setFixedHeight(190);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(16, 12, 16, 12);
-    mainLayout->setSpacing(8);
+    mainLayout->setContentsMargins(18, 16, 18, 16);
+    mainLayout->setSpacing(12);
 
     QHBoxLayout *headerLayout = new QHBoxLayout;
     headerLayout->setSpacing(10);
 
-    QLabel *iconLabel = new QLabel(tr("LINK"));
-    iconLabel->setObjectName("CardIcon");
-    iconLabel->setFixedSize(44, 32);
-    iconLabel->setAlignment(Qt::AlignCenter);
-
     QLabel *nameLabel = new QLabel(info.name);
     nameLabel->setObjectName("CardName");
 
-    QLabel *typeTag = new QLabel(info.isManual ? tr("Manual Config") : tr("Subscription URL"));
-    typeTag->setObjectName("CardTag");
-
+    QLabel *typeTag = nullptr;
+    if (info.isManual) {
+        typeTag = new QLabel(tr("Manual Config"));
+        typeTag->setObjectName("CardTag");
+    }
     m_statusTag = new QLabel(this);
-    m_statusTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_statusTag->setAttribute(Qt::WA_StyledBackground, true);
 
-    QLabel *scheduleTag = new QLabel(tr("Every %1 minutes").arg(info.autoUpdateIntervalMinutes));
+    QLabel *scheduleTag = new QLabel;
     scheduleTag->setObjectName("CardTagSchedule");
-    scheduleTag->setVisible(!info.isManual && info.autoUpdateIntervalMinutes > 0);
+    if (!info.isManual && info.autoUpdateIntervalMinutes > 0) {
+        const int intervalMinutes = info.autoUpdateIntervalMinutes;
+        if (intervalMinutes % 60 == 0) {
+            scheduleTag->setText(tr("Every %1 hours").arg(intervalMinutes / 60));
+        } else {
+            scheduleTag->setText(tr("Every %1 minutes").arg(intervalMinutes));
+        }
+        scheduleTag->setVisible(true);
+    } else {
+        scheduleTag->setVisible(false);
+    }
 
     QPushButton *menuBtn = new QPushButton("...");
     menuBtn->setObjectName("CardMenuBtn");
@@ -100,31 +106,34 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
     connect(rollbackAction, &QAction::triggered, [this]() { emit rollbackClicked(m_subId); });
     connect(deleteAction, &QAction::triggered, [this]() { emit deleteClicked(m_subId); });
 
-    headerLayout->addWidget(iconLabel);
     headerLayout->addWidget(nameLabel);
-    headerLayout->addWidget(typeTag);
+    if (typeTag) {
+        headerLayout->addWidget(typeTag);
+    }
     headerLayout->addWidget(m_statusTag);
     headerLayout->addWidget(scheduleTag);
     headerLayout->addStretch();
     headerLayout->addWidget(menuBtn);
 
-    QHBoxLayout *infoLayout = new QHBoxLayout;
-    infoLayout->setSpacing(16);
+    QFrame *infoPanel = new QFrame(this);
+    infoPanel->setObjectName("CardInfoPanel");
+    QVBoxLayout *infoPanelLayout = new QVBoxLayout(infoPanel);
+    infoPanelLayout->setContentsMargins(12, 10, 12, 10);
+    infoPanelLayout->setSpacing(6);
 
     QString urlText = info.isManual ? tr("Manual config content") : info.url;
     if (urlText.length() > 45) {
         urlText = urlText.left(45) + "...";
     }
-    QLabel *urlLabel = new QLabel(tr("URL: ") + urlText);
+    QLabel *urlLabel = new QLabel(urlText);
     urlLabel->setObjectName("CardInfoText");
 
     QLabel *timeLabel = new QLabel(tr("Updated: ") + SubscriptionFormat::formatTimestamp(info.lastUpdate));
     timeLabel->setObjectName("CardInfoText");
 
-    infoLayout->addWidget(urlLabel, 1);
-    infoLayout->addWidget(timeLabel);
+    infoPanelLayout->addWidget(urlLabel);
+    infoPanelLayout->addWidget(timeLabel);
 
-    QVBoxLayout *metaLayout = new QVBoxLayout;
     if (info.subscriptionUpload >= 0 || info.subscriptionDownload >= 0) {
         qint64 used = qMax<qint64>(0, info.subscriptionUpload) + qMax<qint64>(0, info.subscriptionDownload);
         QString trafficText;
@@ -139,27 +148,23 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
         }
         QLabel *trafficLabel = new QLabel(tr("Traffic: ") + trafficText);
         trafficLabel->setObjectName("CardInfoText");
-        metaLayout->addWidget(trafficLabel);
+        infoPanelLayout->addWidget(trafficLabel);
     }
 
     if (info.subscriptionExpire > 0) {
         QLabel *expireLabel = new QLabel(tr("Expires: ") + SubscriptionFormat::formatExpireTime(info.subscriptionExpire));
         expireLabel->setObjectName("CardInfoText");
-        metaLayout->addWidget(expireLabel);
+        infoPanelLayout->addWidget(expireLabel);
     }
 
     m_useBtn = new QPushButton(this);
-    m_useBtn->setObjectName("CardActionBtn");
     m_useBtn->setCursor(Qt::PointingHandCursor);
-    m_useBtn->setFixedHeight(36);
-    m_useBtn->setFixedWidth(110);
+    m_useBtn->setMinimumHeight(38);
+    m_useBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     connect(m_useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
 
     mainLayout->addLayout(headerLayout);
-    mainLayout->addLayout(infoLayout);
-    if (metaLayout->count() > 0) {
-        mainLayout->addLayout(metaLayout);
-    }
+    mainLayout->addWidget(infoPanel);
     mainLayout->addStretch();
     mainLayout->addWidget(m_useBtn);
 }
@@ -174,6 +179,9 @@ void SubscriptionCard::applyActiveState()
     }
     if (m_useBtn) {
         m_useBtn->setText(m_active ? tr("Use Again") : tr("Use"));
+        m_useBtn->setObjectName(m_active ? "CardActionBtnActive" : "CardActionBtn");
+        m_useBtn->style()->unpolish(m_useBtn);
+        m_useBtn->style()->polish(m_useBtn);
     }
     if (m_editConfigAction) {
         m_editConfigAction->setVisible(m_active);
@@ -187,5 +195,32 @@ void SubscriptionCard::updateStyle()
     QMap<QString, QString> extra;
     extra.insert("card-bg", m_active ? tm.getColorString("bg-tertiary") : tm.getColorString("bg-secondary"));
     extra.insert("card-border", m_active ? tm.getColorString("primary") : tm.getColorString("border"));
+    extra.insert("card-radius", m_active ? "12px" : "10px");
     setStyleSheet(tm.loadStyleSheet(":/styles/subscription_card.qss", extra));
+
+    if (m_statusTag) {
+        const QString bg = m_active ? "rgba(16, 185, 129, 0.2)" : tm.getColorString("bg-tertiary");
+        const QString text = m_active ? tm.getColorString("success") : tm.getColorString("text-secondary");
+        const QString border = m_active ? "rgba(16, 185, 129, 0.4)" : tm.getColorString("border");
+        m_statusTag->setStyleSheet(QString(
+            "QLabel { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 3px 10px; font-size: 11px; }"
+        ).arg(bg, text, border));
+    }
+
+    if (m_useBtn) {
+        QColor baseColor = m_active ? tm.getColor("success") : tm.getColor("primary");
+        QColor bg = baseColor;
+        bg.setAlphaF(0.2);
+        QColor border = baseColor;
+        border.setAlphaF(0.4);
+        QColor hoverBg = baseColor;
+        hoverBg.setAlphaF(0.3);
+
+        m_useBtn->setStyleSheet(QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 8px 16px; font-size: 13px; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hoverBg.name(QColor::HexArgb)));
+    }
 }

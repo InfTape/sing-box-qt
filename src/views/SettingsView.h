@@ -25,6 +25,7 @@ private slots:
     void onDownloadKernelClicked();
     void onCheckKernelClicked();
     void onCheckUpdateClicked();
+    void updateStyle();
 
 private:
     void setupUI();

@@ -1,16 +1,11 @@
 #SubscriptionCard {
     background-color: @card-bg@;
     border: 1px solid @card-border@;
-    border-radius: 10px;
-}
-#CardIcon {
-    background-color: @primary@;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: @card-radius@;
 }
 #CardName {
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 600;
     color: @text-primary@;
 }
 #CardTag {
@@ -21,32 +16,38 @@
     font-size: 11px;
 }
 #CardTagActive {
-    background-color: @primary@;
+    background-color: @success@;
     color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 3px 10px;
+    border: 1px solid rgba(16, 185, 129, 0.7);
+    border-radius: 999px;
     font-size: 11px;
 }
 #CardTagSchedule {
-    background-color: transparent;
-    color: @text-secondary@;
-    padding: 2px 8px;
-    border: 1px solid @card-border@;
+    background-color: rgba(90, 169, 255, 0.18);
+    color: @primary@;
+    padding: 3px 10px;
+    border: 1px solid rgba(90, 169, 255, 0.35);
     border-radius: 10px;
     font-size: 11px;
 }
-#CardMenuBtn {
+#CardInfoPanel {
     background-color: @bg-tertiary@;
-    color: @text-primary@;
     border: 1px solid @card-border@;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 0 8px;
     border-radius: 10px;
 }
+#CardMenuBtn {
+    background-color: transparent;
+    color: @text-tertiary@;
+    border: 1px solid transparent;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0 6px;
+    border-radius: 8px;
+}
 #CardMenuBtn:hover {
-    background-color: @primary@;
-    color: white;
+    background-color: @bg-tertiary@;
+    color: @text-primary@;
 }
 #CardInfoText {
     color: @text-secondary@;
@@ -55,13 +56,24 @@
 #CardActionBtn {
     background-color: @primary@;
     color: white;
-    border: none;
+    border: 1px solid @primary@;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 13px;
 }
 #CardActionBtn:hover {
     background-color: @primary@cc;
+}
+#CardActionBtnActive {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: @success@;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+#CardActionBtnActive:hover {
+    background-color: rgba(16, 185, 129, 0.3);
 }
 #SubscriptionMenu {
     background: transparent;

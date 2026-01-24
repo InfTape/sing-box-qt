@@ -65,17 +65,7 @@ void SubscriptionView::setupUI()
 
     mainLayout->addLayout(headerLayout);
 
-    QHBoxLayout *toolbarLayout = new QHBoxLayout;
 
-    m_updateAllBtn = new QPushButton(tr("Update All"));
-    m_updateAllBtn->setObjectName("SecondaryActionBtn");
-    m_updateAllBtn->setCursor(Qt::PointingHandCursor);
-    m_updateAllBtn->setMinimumHeight(32);
-
-    toolbarLayout->addWidget(m_updateAllBtn);
-    toolbarLayout->addStretch();
-
-    mainLayout->addLayout(toolbarLayout);
 
     m_scrollArea = new QScrollArea;
     m_scrollArea->setObjectName("SubscriptionScroll");
@@ -85,17 +75,17 @@ void SubscriptionView::setupUI()
 
     m_cardsContainer = new QWidget;
     m_cardsContainer->setObjectName("SubscriptionCards");
-    m_cardsLayout = new QVBoxLayout(m_cardsContainer);
+    m_cardsLayout = new QGridLayout(m_cardsContainer);
     m_cardsLayout->setContentsMargins(0, 0, 0, 0);
-    m_cardsLayout->setSpacing(12);
-    m_cardsLayout->addStretch();
+    m_cardsLayout->setSpacing(16);
+    m_cardsLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     m_scrollArea->setWidget(m_cardsContainer);
 
     mainLayout->addWidget(m_scrollArea, 1);
 
     connect(m_addBtn, &QPushButton::clicked, this, &SubscriptionView::onAddClicked);
-    connect(m_updateAllBtn, &QPushButton::clicked, this, &SubscriptionView::onUpdateAllClicked);
+
 
     connect(m_subscriptionService, &SubscriptionService::subscriptionAdded,
             this, &SubscriptionView::refreshList);
@@ -141,10 +131,7 @@ void SubscriptionView::onAddClicked()
     }
 }
 
-void SubscriptionView::onUpdateAllClicked()
-{
-    m_subscriptionService->updateAllSubscriptions(false);
-}
+
 
 void SubscriptionView::onAutoUpdateTimer()
 {
@@ -280,18 +267,95 @@ bool SubscriptionView::getSubscriptionById(const QString &id, SubscriptionInfo *
 
 void SubscriptionView::refreshList()
 {
-    while (m_cardsLayout->count() > 1) {
+    while (m_cardsLayout->count() > 0) {
         QLayoutItem *item = m_cardsLayout->takeAt(0);
-        if (item->widget()) {
-            delete item->widget();
+        if (item) {
+            delete item;
         }
-        delete item;
     }
+    for (SubscriptionCard *card : m_cards) {
+        if (card) {
+            card->deleteLater();
+        }
+    }
+    m_cards.clear();
 
     const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
     const int activeIndex = m_subscriptionService->getActiveIndex();
     for (int i = 0; i < subs.count(); ++i) {
         SubscriptionCard *card = createSubscriptionCard(subs[i], i == activeIndex);
-        m_cardsLayout->insertWidget(m_cardsLayout->count() - 1, card);
+        m_cards.append(card);
+    }
+
+    layoutCards();
+}
+
+void SubscriptionView::layoutCards()
+{
+    if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
+
+    while (m_cardsLayout->count() > 0) {
+        QLayoutItem *item = m_cardsLayout->takeAt(0);
+        if (item) {
+            delete item;
+        }
+    }
+
+    if (m_cards.isEmpty()) return;
+
+    const int availableWidth = m_scrollArea->viewport()->width();
+    const int spacing = m_cardsLayout->spacing();
+    const int minColumns = 2;
+    const int maxColumns = 4;
+    const int idealCardWidth = 320;
+    int columns = availableWidth / idealCardWidth;
+    columns = qMax(minColumns, qMin(columns, maxColumns));
+    m_columnCount = columns;
+    const int totalSpacing = spacing * (columns - 1);
+    const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
+    const int cardHeight = qMax(200, qRound(cardWidth * 0.68));
+
+    int row = 0;
+    int col = 0;
+    for (SubscriptionCard *card : m_cards) {
+        card->setFixedSize(cardWidth, cardHeight);
+        m_cardsLayout->addWidget(card, row, col);
+        ++col;
+        if (col >= columns) {
+            col = 0;
+            ++row;
+        }
+    }
+    for (int i = 0; i < columns; ++i) {
+        m_cardsLayout->setColumnStretch(i, 1);
+    }
+}
+
+void SubscriptionView::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (m_cards.isEmpty()) return;
+
+    const int availableWidth = m_scrollArea->viewport()->width();
+    const int spacing = m_cardsLayout->spacing();
+    const int minColumns = 2;
+    const int maxColumns = 4;
+    const int idealCardWidth = 320;
+    int columns = availableWidth / idealCardWidth;
+    columns = qMax(minColumns, qMin(columns, maxColumns));
+    if (columns != m_columnCount) {
+        layoutCards();
+        return;
+    }
+
+    const int totalSpacing = spacing * (columns - 1);
+    const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
+    const int cardHeight = qMax(200, qRound(cardWidth * 0.68));
+    for (int i = 0; i < m_cardsLayout->count(); ++i) {
+        if (QLayoutItem *item = m_cardsLayout->itemAt(i)) {
+            if (QWidget *widget = item->widget()) {
+                widget->setFixedSize(cardWidth, cardHeight);
+            }
+        }
     }
 }

@@ -82,6 +82,9 @@ SettingsView::SettingsView(QWidget *parent)
     loadSettings();
     refreshKernelInfo();
     fetchKernelVersions();
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &SettingsView::updateStyle);
+    updateStyle();
 }
 
 void SettingsView::setupUI()
@@ -221,41 +224,10 @@ void SettingsView::setupUI()
     QHBoxLayout *kernelBtnLayout = new QHBoxLayout;
 
     m_downloadKernelBtn = new QPushButton(tr("Download Kernel"));
-    m_downloadKernelBtn->setStyleSheet(R"(
-        QPushButton {
-            background-color: #e94560;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-        QPushButton:hover { background-color: #ff6b6b; }
-    )");
 
     m_checkKernelBtn = new QPushButton(tr("Check Installation"));
-    m_checkKernelBtn->setStyleSheet(R"(
-        QPushButton {
-            background-color: #0f3460;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-        QPushButton:hover { background-color: #1f4068; }
-    )");
 
     m_checkUpdateBtn = new QPushButton(tr("Check Updates"));
-    m_checkUpdateBtn->setStyleSheet(R"(
-        QPushButton {
-            background-color: #0f3460;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-        QPushButton:hover { background-color: #1f4068; }
-    )");
 
     kernelBtnLayout->addWidget(m_downloadKernelBtn);
     kernelBtnLayout->addWidget(m_checkKernelBtn);
@@ -294,6 +266,30 @@ void SettingsView::setupUI()
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
     connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
+}
+
+void SettingsView::updateStyle()
+{
+    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
+        if (!btn) return;
+        QColor bg = baseColor;
+        bg.setAlphaF(0.2);
+        QColor border = baseColor;
+        border.setAlphaF(0.4);
+        QColor hoverBg = baseColor;
+        hoverBg.setAlphaF(0.3);
+
+        const QString style = QString(
+            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
+            "border-radius: 10px; padding: 10px 20px; font-weight: bold; }"
+            "QPushButton:hover { background-color: %4; }"
+        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hoverBg.name(QColor::HexArgb));
+        btn->setStyleSheet(style);
+    };
+
+    applyTransparentStyle(m_downloadKernelBtn, QColor("#e94560"));
+    applyTransparentStyle(m_checkKernelBtn, QColor("#3b82f6"));
+    applyTransparentStyle(m_checkUpdateBtn, QColor("#3b82f6"));
 }
 
 void SettingsView::loadSettings()

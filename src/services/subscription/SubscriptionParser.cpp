@@ -35,28 +35,206 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray &content)
 {
     QJsonArray nodes;
 
+    auto readString = [](const YAML::Node &node) -> QString {
+        if (!node || !node.IsScalar()) {
+            return QString();
+        }
+        return QString::fromStdString(node.as<std::string>());
+    };
+
+    auto readInt = [](const YAML::Node &node, int defaultValue = 0) -> int {
+        if (!node || !node.IsScalar()) {
+            return defaultValue;
+        }
+        bool ok = false;
+        const int value = QString::fromStdString(node.as<std::string>()).toInt(&ok);
+        return ok ? value : defaultValue;
+    };
+
+    auto readBool = [](const YAML::Node &node, bool defaultValue = false) -> bool {
+        if (!node || !node.IsScalar()) {
+            return defaultValue;
+        }
+        const QString text = QString::fromStdString(node.as<std::string>()).trimmed().toLower();
+        if (text == "true" || text == "1") {
+            return true;
+        }
+        if (text == "false" || text == "0") {
+            return false;
+        }
+        return defaultValue;
+    };
+
+    auto readStringList = [&](const YAML::Node &node) -> QJsonArray {
+        QJsonArray list;
+        if (!node) {
+            return list;
+        }
+        if (node.IsSequence()) {
+            for (const auto &item : node) {
+                const QString value = readString(item).trimmed();
+                if (!value.isEmpty()) {
+                    list.append(value);
+                }
+            }
+        } else {
+            const QString value = readString(node).trimmed();
+            if (!value.isEmpty()) {
+                list.append(value);
+            }
+        }
+        return list;
+    };
+
     try {
         YAML::Node yaml = YAML::Load(content.toStdString());
         if (yaml["proxies"]) {
             for (const auto &proxy : yaml["proxies"]) {
                 QJsonObject node;
-                node["type"] = QString::fromStdString(proxy["type"].as<std::string>());
-                node["tag"] = QString::fromStdString(proxy["name"].as<std::string>());
-                node["server"] = QString::fromStdString(proxy["server"].as<std::string>());
-                node["server_port"] = proxy["port"].as<int>();
+                const QString type = readString(proxy["type"]).trimmed().toLower();
+                if (type.isEmpty()) {
+                    continue;
+                }
 
-                std::string type = proxy["type"].as<std::string>();
+                node["type"] = (type == "ss") ? "shadowsocks" : type;
+                node["tag"] = readString(proxy["name"]);
+                node["server"] = readString(proxy["server"]);
+                node["server_port"] = readInt(proxy["port"], 0);
+
                 if (type == "vmess") {
-                    node["uuid"] = QString::fromStdString(proxy["uuid"].as<std::string>());
-                    if (proxy["alterId"]) {
-                        node["alter_id"] = proxy["alterId"].as<int>();
+                    node["uuid"] = readString(proxy["uuid"]);
+                    node["alter_id"] = readInt(proxy["alterId"], 0);
+                    const QString security = readString(proxy["cipher"]).trimmed();
+                    node["security"] = security.isEmpty() ? "auto" : security;
+                } else if (type == "vless") {
+                    node["uuid"] = readString(proxy["uuid"]);
+                    const QString flow = readString(proxy["flow"]).trimmed();
+                    if (!flow.isEmpty()) {
+                        node["flow"] = flow;
                     }
                 } else if (type == "trojan") {
-                    node["password"] = QString::fromStdString(proxy["password"].as<std::string>());
+                    node["password"] = readString(proxy["password"]);
                 } else if (type == "ss") {
-                    node["type"] = "shadowsocks";
-                    node["method"] = QString::fromStdString(proxy["cipher"].as<std::string>());
-                    node["password"] = QString::fromStdString(proxy["password"].as<std::string>());
+                    node["method"] = readString(proxy["cipher"]);
+                    node["password"] = readString(proxy["password"]);
+                }
+
+                const bool supportsTransport = (type == "vmess" || type == "vless" || type == "trojan");
+                if (supportsTransport) {
+                    const bool tlsEnabled = readBool(proxy["tls"], false);
+                    const QString serverName = readString(proxy["servername"]).trimmed();
+                    const QString sni = readString(proxy["sni"]).trimmed();
+                    const QString peer = readString(proxy["peer"]).trimmed();
+                    const bool insecure = readBool(proxy["skip-cert-verify"], false)
+                        || readBool(proxy["allowInsecure"], false);
+
+                    if (tlsEnabled || !serverName.isEmpty() || !sni.isEmpty() || !peer.isEmpty() || insecure) {
+                        QJsonObject tlsObj;
+                        tlsObj["enabled"] = true;
+
+                        QString tlsServerName = serverName;
+                        if (tlsServerName.isEmpty()) {
+                            tlsServerName = sni;
+                        }
+                        if (tlsServerName.isEmpty()) {
+                            tlsServerName = peer;
+                        }
+                        if (tlsServerName.isEmpty()) {
+                            tlsServerName = node.value("server").toString();
+                        }
+                        if (!tlsServerName.isEmpty()) {
+                            tlsObj["server_name"] = tlsServerName;
+                        }
+                        if (insecure) {
+                            tlsObj["insecure"] = true;
+                        }
+                        if (tlsEnabled && type == "vmess") {
+                            QJsonObject utls;
+                            utls["enabled"] = true;
+                            utls["fingerprint"] = "chrome";
+                            tlsObj["utls"] = utls;
+                        }
+                        node["tls"] = tlsObj;
+                    }
+
+                    const QString network = readString(proxy["network"]).trimmed().toLower();
+                    if (network == "ws") {
+                        QJsonObject transport;
+                        transport["type"] = "ws";
+
+                        YAML::Node wsOpts = proxy["ws-opts"];
+                        QString path;
+                        if (wsOpts && wsOpts.IsMap()) {
+                            path = readString(wsOpts["path"]).trimmed();
+                        }
+                        if (path.isEmpty()) {
+                            path = readString(proxy["path"]).trimmed();
+                        }
+                        if (!path.isEmpty()) {
+                            transport["path"] = path;
+                        }
+
+                        QJsonObject headersObj;
+                        if (wsOpts && wsOpts.IsMap()) {
+                            YAML::Node headers = wsOpts["headers"];
+                            if (headers && headers.IsMap()) {
+                                for (auto it = headers.begin(); it != headers.end(); ++it) {
+                                    const QString key = readString(it->first).trimmed();
+                                    const QString value = readString(it->second).trimmed();
+                                    if (!key.isEmpty() && !value.isEmpty()) {
+                                        headersObj[key] = value;
+                                    }
+                                }
+                            }
+                        }
+                        if (!headersObj.isEmpty()) {
+                            transport["headers"] = headersObj;
+                        }
+
+                        node["transport"] = transport;
+                    } else if (network == "grpc") {
+                        QJsonObject transport;
+                        transport["type"] = "grpc";
+
+                        YAML::Node grpcOpts = proxy["grpc-opts"];
+                        QString serviceName;
+                        if (grpcOpts && grpcOpts.IsMap()) {
+                            serviceName = readString(grpcOpts["grpc-service-name"]).trimmed();
+                        }
+                        if (serviceName.isEmpty()) {
+                            serviceName = readString(proxy["grpc-service-name"]).trimmed();
+                        }
+                        if (serviceName.isEmpty()) {
+                            serviceName = readString(proxy["path"]).trimmed();
+                        }
+                        if (!serviceName.isEmpty()) {
+                            transport["service_name"] = serviceName;
+                        }
+
+                        node["transport"] = transport;
+                    } else if (network == "h2" || network == "http") {
+                        QJsonObject transport;
+                        transport["type"] = "http";
+
+                        YAML::Node opts = (network == "h2") ? proxy["h2-opts"] : proxy["http-opts"];
+                        QString path;
+                        if (opts && opts.IsMap()) {
+                            path = readString(opts["path"]).trimmed();
+                        }
+                        if (!path.isEmpty()) {
+                            transport["path"] = path;
+                        }
+
+                        QJsonArray hostList;
+                        if (opts && opts.IsMap()) {
+                            hostList = readStringList(opts["host"]);
+                        }
+                        if (!hostList.isEmpty()) {
+                            transport["host"] = hostList;
+                        }
+
+                        node["transport"] = transport;
+                    }
                 }
 
                 nodes.append(node);
