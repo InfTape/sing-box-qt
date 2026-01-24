@@ -199,7 +199,11 @@ QJsonObject ConfigBuilder::buildRouteConfig()
     route["rules"] = rules;
     route["rule_set"] = buildRuleSets();
     route["final"] = defaultOutbound;
-    route["auto_detect_interface"] = true;
+    bool autoDetectInterface = false;
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    autoDetectInterface = true;
+#endif
+    route["auto_detect_interface"] = autoDetectInterface;
     route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
 
     return route;
@@ -217,7 +221,11 @@ QJsonArray ConfigBuilder::buildInbounds()
     mixed["listen"] = "127.0.0.1";
     mixed["listen_port"] = settings.mixedPort();
     mixed["sniff"] = true;
-    mixed["set_system_proxy"] = settings.systemProxyEnabled();
+    bool supportsKernelSystemProxy = false;
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    supportsKernelSystemProxy = true;
+#endif
+    mixed["set_system_proxy"] = supportsKernelSystemProxy && settings.systemProxyEnabled();
     inbounds.append(mixed);
 
     if (settings.tunEnabled()) {

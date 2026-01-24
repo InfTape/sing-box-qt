@@ -75,3 +75,8 @@ Desktop.ini
 # Logs
 *.log
 sing-box-qt-portable.zip
+
+# metacube files
+metacube_cache/
+metacubexd/
+1.txt

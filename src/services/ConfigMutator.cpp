@@ -109,6 +109,7 @@ void updateAppGroupSelectors(QJsonArray &outbounds, const QStringList &nodeTags)
         outbounds[idx] = group;
     }
 }
+
 } // namespace
 
 bool ConfigMutator::injectNodes(QJsonObject &config, const QJsonArray &nodes)
@@ -301,6 +302,11 @@ void ConfigMutator::applySettings(QJsonObject &config)
         QJsonObject route = config.value("route").toObject();
         route["final"] = settings.normalizedDefaultOutbound();
         route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
+        bool autoDetectInterface = false;
+#if defined(Q_OS_LINUX) || defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+        autoDetectInterface = true;
+#endif
+        route["auto_detect_interface"] = autoDetectInterface;
 
         if (route.contains("rule_set") && route["rule_set"].isArray()) {
             QJsonArray ruleSets = route.value("rule_set").toArray();
