@@ -50,7 +50,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 
     QLabel *iconLabel = new QLabel(tr("LINK"));
     iconLabel->setObjectName("CardIcon");
-    iconLabel->setFixedSize(32, 32);
+    iconLabel->setFixedSize(44, 32);
     iconLabel->setAlignment(Qt::AlignCenter);
 
     QLabel *nameLabel = new QLabel(info.name);

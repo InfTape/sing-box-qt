@@ -107,18 +107,154 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray &content)
 QJsonObject SubscriptionParser::parseVmessURI(const QString &uri)
 {
     QJsonObject node;
-    const QString encoded = uri.mid(8);
-    const QByteArray decoded = QByteArray::fromBase64(encoded.toUtf8());
+    const QString encoded = uri.mid(8).trimmed();
+    if (encoded.isEmpty()) {
+        return node;
+    }
 
-    QJsonDocument doc = QJsonDocument::fromJson(decoded);
-    if (doc.isObject()) {
-        QJsonObject obj = doc.object();
-        node["type"] = "vmess";
-        node["tag"] = obj["ps"].toString();
-        node["server"] = obj["add"].toString();
-        node["server_port"] = obj["port"].toVariant().toInt();
-        node["uuid"] = obj["id"].toString();
-        node["alter_id"] = obj["aid"].toVariant().toInt();
+    const QString decodedText = tryDecodeBase64ToText(encoded);
+    if (decodedText.isEmpty()) {
+        return node;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(decodedText.toUtf8());
+    if (!doc.isObject()) {
+        return node;
+    }
+
+    QJsonObject obj = doc.object();
+    const QString server = obj.value("add").toString().trimmed();
+    const QString uuid = obj.value("id").toString().trimmed();
+    int port = obj.value("port").toVariant().toInt();
+    if (port <= 0) {
+        port = 443;
+    }
+    if (server.isEmpty() || uuid.isEmpty()) {
+        return QJsonObject();
+    }
+
+    node["type"] = "vmess";
+    node["server"] = server;
+    node["server_port"] = port;
+    node["uuid"] = uuid;
+
+    QString tag = obj.value("ps").toString().trimmed();
+    if (tag.isEmpty()) {
+        tag = QString("vmess-%1:%2").arg(server, QString::number(port));
+    }
+    node["tag"] = tag;
+
+    node["alter_id"] = obj.value("aid").toVariant().toInt();
+
+    QString security = obj.value("scy").toString().trimmed();
+    if (security.isEmpty()) {
+        security = "auto";
+    }
+    node["security"] = security;
+
+    const QString net = obj.value("net").toString().trimmed().toLower();
+    const QString host = obj.value("host").toString().trimmed();
+    const QString path = obj.value("path").toString().trimmed();
+    const QString tls = obj.value("tls").toString().trimmed().toLower();
+    const QString sni = obj.value("sni").toString().trimmed();
+    const QString alpn = obj.value("alpn").toString().trimmed();
+    const QString fp = obj.value("fp").toString().trimmed();
+
+    bool tlsEnabled = (tls == "tls" || tls == "reality");
+    bool insecure = false;
+    if (obj.contains("allowInsecure")) {
+        const QJsonValue insecureVal = obj.value("allowInsecure");
+        insecure = insecureVal.isBool()
+            ? insecureVal.toBool()
+            : insecureVal.toString().trimmed() == "1";
+    }
+    if (tlsEnabled || !sni.isEmpty() || !alpn.isEmpty() || insecure || !fp.isEmpty()) {
+        QJsonObject tlsObj;
+        tlsObj["enabled"] = true;
+        const QString serverName = !sni.isEmpty()
+            ? sni
+            : (!host.isEmpty() ? host : server);
+        if (!serverName.isEmpty()) {
+            tlsObj["server_name"] = serverName;
+        }
+        if (insecure) {
+            tlsObj["insecure"] = true;
+        }
+        if (!alpn.isEmpty()) {
+            QJsonArray alpnArr;
+            const QStringList alpnList = alpn.split(",", Qt::SkipEmptyParts);
+            for (const QString &item : alpnList) {
+                const QString trimmed = item.trimmed();
+                if (!trimmed.isEmpty()) {
+                    alpnArr.append(trimmed);
+                }
+            }
+            if (!alpnArr.isEmpty()) {
+                tlsObj["alpn"] = alpnArr;
+            }
+        }
+
+        QJsonObject utls;
+        bool useUtls = false;
+        if (!fp.isEmpty()) {
+            utls["enabled"] = true;
+            utls["fingerprint"] = fp;
+            useUtls = true;
+        } else if (tlsEnabled) {
+            utls["enabled"] = true;
+            utls["fingerprint"] = "chrome";
+            useUtls = true;
+        }
+        if (useUtls) {
+            tlsObj["utls"] = utls;
+        }
+
+        node["tls"] = tlsObj;
+    }
+
+    if (net == "ws") {
+        QJsonObject transport;
+        transport["type"] = "ws";
+        if (!path.isEmpty()) {
+            transport["path"] = path;
+        }
+        if (!host.isEmpty()) {
+            QJsonObject headers;
+            headers["Host"] = host;
+            transport["headers"] = headers;
+        }
+        node["transport"] = transport;
+    } else if (net == "grpc") {
+        QJsonObject transport;
+        transport["type"] = "grpc";
+        QString serviceName = obj.value("serviceName").toString().trimmed();
+        if (serviceName.isEmpty()) {
+            serviceName = path;
+        }
+        if (!serviceName.isEmpty()) {
+            transport["service_name"] = serviceName;
+        }
+        node["transport"] = transport;
+    } else if (net == "h2" || net == "http") {
+        QJsonObject transport;
+        transport["type"] = "http";
+        if (!path.isEmpty()) {
+            transport["path"] = path;
+        }
+        if (!host.isEmpty()) {
+            QJsonArray hostArr;
+            const QStringList hostList = host.split(",", Qt::SkipEmptyParts);
+            for (const QString &item : hostList) {
+                const QString trimmed = item.trimmed();
+                if (!trimmed.isEmpty()) {
+                    hostArr.append(trimmed);
+                }
+            }
+            if (!hostArr.isEmpty()) {
+                transport["host"] = hostArr;
+            }
+        }
+        node["transport"] = transport;
     }
 
     return node;
