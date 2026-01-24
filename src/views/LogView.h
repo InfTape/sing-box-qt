@@ -1,9 +1,9 @@
 #ifndef LOGVIEW_H
 #define LOGVIEW_H
 
-#include <QDateTime>
 #include <QVector>
 #include <QWidget>
+#include "utils/LogParser.h"
 
 class QCheckBox;
 class QComboBox;
@@ -34,22 +34,12 @@ private slots:
     void onExportClicked();
 
 private:
-    struct LogEntry {
-        QString type;
-        QString payload;
-        QString direction;
-        QDateTime timestamp;
-    };
-
     void setupUI();
     void rebuildList();
     void updateStats();
     void updateEmptyState();
-    QWidget* createLogRow(const LogEntry &entry);
-    QString detectLogType(const QString &message) const;
-    QString logTypeLabel(const QString &type) const;
-    bool logMatchesFilter(const LogEntry &entry) const;
-    void appendLogRow(const LogEntry &entry);
+    bool logMatchesFilter(const LogParser::LogEntry &entry) const;
+    void appendLogRow(const LogParser::LogEntry &entry);
     void removeFirstLogRow();
     void clearListWidgets();
 
@@ -73,8 +63,8 @@ private:
     QFrame *m_emptyState = nullptr;
     QLabel *m_emptyTitle = nullptr;
 
-    QVector<LogEntry> m_logs;
-    QVector<LogEntry> m_filtered;
+    QVector<LogParser::LogEntry> m_logs;
+    QVector<LogParser::LogEntry> m_filtered;
 };
 
 #endif // LOGVIEW_H

@@ -7,6 +7,7 @@
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QMap>
 #include <QMouseEvent>
 #include <QSignalBlocker>
 #include <QStyle>
@@ -371,205 +372,18 @@ void HomeView::updateStyle()
     QColor primaryHover = primary.lighter(110);
     QColor errorHover = error.lighter(110);
 
-    const QString style = QString(R"(
-        #PageTitle {
-            font-size: 32px;
-            font-weight: 700;
-            color: %1;
-        }
-        #StatusBadge {
-            background-color: %2;
-            color: %3;
-            border-radius: 14px;
-        }
-        #StatusBadge[status="running"] {
-            background-color: %4;
-            color: %5;
-        }
-        #StatusBadge[status="pending"] {
-            background-color: %6;
-            color: %7;
-        }
-        #StatusBadge[status="stopped"] {
-            background-color: %8;
-            color: %9;
-        }
-        #StatusDot {
-            min-width: 8px;
-            max-width: 8px;
-            min-height: 8px;
-            max-height: 8px;
-            border-radius: 4px;
-            background-color: %3;
-        }
-        #StatusBadge[status="running"] #StatusDot { background-color: %5; }
-        #StatusBadge[status="pending"] #StatusDot { background-color: %7; }
-        #StatusBadge[status="stopped"] #StatusDot { background-color: %9; }
-        #StatusText {
-            font-size: 13px;
-            font-weight: 600;
-        }
-        #RestartButton {
-            border: none;
-            border-radius: 12px;
-            padding: 8px 20px;
-            font-weight: 600;
-            color: white;
-        }
-        #RestartButton[danger="true"] { background-color: %10; }
-        #RestartButton[danger="true"]:hover { background-color: %11; }
-        #RestartButton[danger="false"] { background-color: %12; }
-        #RestartButton[danger="false"]:hover { background-color: %13; }
+    QMap<QString, QString> extra;
+    extra.insert("success-12", rgba(success, 0.12));
+    extra.insert("warning-12", rgba(warning, 0.12));
+    extra.insert("error-12", rgba(error, 0.12));
+    extra.insert("error-hover", errorHover.name());
+    extra.insert("primary-hover", primaryHover.name());
+    extra.insert("success-18", rgba(success, 0.18));
+    extra.insert("primary-18", rgba(primary, 0.18));
+    extra.insert("warning-18", rgba(warning, 0.18));
+    extra.insert("primary-06", rgba(primary, 0.06));
 
-        #StatCard {
-            background-color: %14;
-            border: 1px solid #353b43;
-            border-radius: 16px;
-        }
-        #StatCard:hover { border-color: %16; }
-        #StatTitle {
-            font-size: 12px;
-            color: %17;
-        }
-        #StatValue {
-            font-size: 20px;
-            font-weight: 700;
-            color: %1;
-        }
-        #StatDesc {
-            font-size: 12px;
-            color: %18;
-        }
-        #StatIcon {
-            background-color: %26;
-            border-radius: 10px;
-        }
-        #StatIconLabel {
-            font-size: 10px;
-            font-weight: 600;
-        }
-        #StatIcon[accent="success"] {
-            background-color: %19;
-            color: %20;
-        }
-        #StatIcon[accent="success"] #StatIconLabel { color: %20; }
-        #StatValue[accent="success"] { color: %20; }
-        #StatIcon[accent="primary"] {
-            background-color: %22;
-            color: %21;
-        }
-        #StatIcon[accent="primary"] #StatIconLabel { color: %21; }
-        #StatValue[accent="primary"] { color: %21; }
-        #StatIcon[accent="warning"] {
-            background-color: %24;
-            color: %23;
-        }
-        #StatIcon[accent="warning"] #StatIconLabel { color: %23; }
-        #StatValue[accent="warning"] { color: %23; }
-
-        #ChartCard {
-            background-color: %14;
-            border: 1px solid #353b43;
-            border-radius: 16px;
-        }
-        #SectionTitle {
-            font-size: 13px;
-            font-weight: 600;
-            color: %18;
-            letter-spacing: 0.06em;
-        }
-        #ModeCard {
-            background-color: %14;
-            border: 1px solid #353b43;
-            border-radius: 16px;
-        }
-        #ModeCard:hover { border-color: %16; }
-        #ModeCard[active="true"] {
-            border-color: %21;
-            background-color: %25;
-        }
-        #ModeIcon {
-            background-color: %26;
-            color: %17;
-            border-radius: 10px;
-        }
-        #ModeIconLabel {
-            font-size: 11px;
-            font-weight: 600;
-            color: %17;
-        }
-        #ModeCard[active="true"] #ModeIconLabel { color: white; }
-        #ModeCard[active="true"] #ModeIcon {
-            background-color: %21;
-            color: white;
-        }
-        #ModeTitle {
-            font-size: 14px;
-            font-weight: 600;
-            color: %1;
-        }
-        #ModeDesc {
-            font-size: 12px;
-            color: %17;
-        }
-        #ModeSwitch { spacing: 0; outline: none; }
-        #ModeSwitch:focus { outline: none; }
-        #ModeSwitch::indicator {
-            width: 36px;
-            height: 20px;
-            border-radius: 10px;
-            background-color: %26;
-            border: 1px solid #353b43;
-            outline: none;
-            image: none;
-        }
-        #ModeSwitch::indicator:checked { background-color: %21; image: none; }
-        #ModeRadio { spacing: 0; outline: none; }
-        #ModeRadio:focus { outline: none; }
-        #ModeRadio::indicator {
-            width: 18px;
-            height: 18px;
-            border-radius: 9px;
-            border: 2px solid %15;
-            background: transparent;
-            outline: none;
-            image: none;
-        }
-        #ModeRadio::indicator:focus { outline: none; }
-        #ModeRadio::indicator:checked {
-            border: 2px solid %21;
-            background-color: %21;
-            image: none;
-        }
-    )")
-        .arg(tm.getColorString("text-primary"))
-        .arg(tm.getColorString("bg-tertiary"))
-        .arg(tm.getColorString("text-secondary"))
-        .arg(rgba(success, 0.12))
-        .arg(success.name())
-        .arg(rgba(warning, 0.12))
-        .arg(warning.name())
-        .arg(rgba(error, 0.12))
-        .arg(error.name())
-        .arg(error.name())
-        .arg(errorHover.name())
-        .arg(primary.name())
-        .arg(primaryHover.name())
-        .arg(tm.getColorString("panel-bg"))
-        .arg(tm.getColorString("border"))
-        .arg(tm.getColorString("border-hover"))
-        .arg(tm.getColorString("text-secondary"))
-        .arg(tm.getColorString("text-tertiary"))
-        .arg(rgba(success, 0.18))
-        .arg(success.name())
-        .arg(primary.name())
-        .arg(rgba(primary, 0.18))
-        .arg(warning.name())
-        .arg(rgba(warning, 0.18))
-        .arg(rgba(primary, 0.06))
-        .arg(tm.getColorString("bg-tertiary"));
-
-    setStyleSheet(style);
+    setStyleSheet(tm.loadStyleSheet(":/styles/home_view.qss", extra));
 
     if (m_statusDot) {
         const QColor dotColor = m_isRunning ? success : error;

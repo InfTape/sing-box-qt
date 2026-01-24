@@ -27,7 +27,7 @@
 #include "utils/ThemeManager.h"
 #include "storage/DatabaseService.h"
 #include "storage/AppSettings.h"
-#include "storage/ConfigManager.h"
+#include "services/ConfigManager.h"
 #include "network/SubscriptionService.h"
 #include "system/AdminHelper.h"
 
@@ -386,56 +386,7 @@ void MainWindow::onStartStopClicked()
 void MainWindow::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
-
-
-    setStyleSheet(QString("#NavContainer { background-color: %1; border-right: 1px solid %2; }"
-                          "#ContentContainer { background-color: %3; }")
-                  .arg(tm.getColorString("bg-secondary"))
-                  .arg(tm.getColorString("border"))
-                  .arg(tm.getColorString("bg-primary")));
-
-
-    findChild<QLabel*>("VersionLabel")->setStyleSheet(QString("color: %1;").arg(tm.getColorString("text-tertiary")));
-
-
-    m_navList->setStyleSheet(QString(R"(
-        QListWidget {
-            background-color: transparent;
-            border: none;
-            outline: none;
-        }
-        QListWidget::item {
-            color: %1;
-            padding: 12px 20px;
-            margin: 4px 12px;
-            border-radius: 10px;
-            border: none;
-        }
-        QListWidget::item:hover {
-            background-color: %2;
-        }
-        QListWidget::item:selected {
-            background-color: %3;
-            color: %4; 
-            font-weight: bold;
-        }
-    )")
-    .arg(tm.getColorString("text-secondary"))
-    .arg(tm.getColorString("bg-tertiary"))
-    .arg("rgba(148, 251, 255, 0.71)") // light yellow highlight
-    .arg(tm.getColorString("text-primary")));
-
-
-    QWidget *statusBar = findChild<QWidget*>("StatusBar");
-    if (statusBar) {
-        statusBar->setStyleSheet(QString(
-            "#StatusBar { background-color: %1; border-top: 1px solid %2; }"
-            "QLabel { color: %3; }"
-        )
-        .arg(tm.getColorString("bg-secondary"))
-        .arg(tm.getColorString("border"))
-        .arg(tm.getColorString("text-secondary")));
-    }
+    setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
 
     if (m_startStopBtn) {
         m_startStopBtn->setStyleSheet(tm.getButtonStyle());

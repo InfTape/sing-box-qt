@@ -2,38 +2,16 @@
 #define SUBSCRIPTIONVIEW_H
 
 #include <QWidget>
-#include <QLineEdit>
+#include <QString>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QScrollArea>
 #include <QLabel>
-#include <QFrame>
 #include <QTimer>
 
+class SubscriptionCard;
 class SubscriptionService;
 struct SubscriptionInfo;
-
-class SubscriptionCard : public QFrame
-{
-    Q_OBJECT
-public:
-    explicit SubscriptionCard(const SubscriptionInfo &info, bool active, QWidget *parent = nullptr);
-    QString subscriptionId() const { return m_subId; }
-
-signals:
-    void useClicked(const QString &id);
-    void editClicked(const QString &id);
-    void editConfigClicked(const QString &id);
-    void refreshClicked(const QString &id, bool applyRuntime);
-    void rollbackClicked(const QString &id);
-    void deleteClicked(const QString &id);
-    void copyLinkClicked(const QString &id);
-
-private:
-    void setupUI(const SubscriptionInfo &info, bool active);
-    void updateStyle(bool active);
-    QString m_subId;
-};
 
 class SubscriptionView : public QWidget
 {
@@ -53,6 +31,15 @@ private:
     void setupUI();
     void refreshList();
     SubscriptionCard* createSubscriptionCard(const SubscriptionInfo &info, bool active);
+    void wireCardSignals(SubscriptionCard *card);
+    void handleUseSubscription(const QString &id);
+    void handleEditSubscription(const QString &id);
+    void handleEditConfig(const QString &id);
+    void handleRefreshSubscription(const QString &id, bool applyRuntime);
+    void handleRollbackSubscription(const QString &id);
+    void handleDeleteSubscription(const QString &id);
+    void handleCopyLink(const QString &id);
+    bool getSubscriptionById(const QString &id, SubscriptionInfo *out) const;
     
     QPushButton *m_addBtn;
     QPushButton *m_updateAllBtn;

@@ -1,0 +1,169 @@
+#PageTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: @text-primary@;
+}
+#StatusBadge {
+    background-color: @bg-tertiary@;
+    color: @text-secondary@;
+    border-radius: 14px;
+}
+#StatusBadge[status="running"] {
+    background-color: @success-12@;
+    color: @success@;
+}
+#StatusBadge[status="pending"] {
+    background-color: @warning-12@;
+    color: @warning@;
+}
+#StatusBadge[status="stopped"] {
+    background-color: @error-12@;
+    color: @error@;
+}
+#StatusDot {
+    min-width: 8px;
+    max-width: 8px;
+    min-height: 8px;
+    max-height: 8px;
+    border-radius: 4px;
+    background-color: @text-secondary@;
+}
+#StatusBadge[status="running"] #StatusDot { background-color: @success@; }
+#StatusBadge[status="pending"] #StatusDot { background-color: @warning@; }
+#StatusBadge[status="stopped"] #StatusDot { background-color: @error@; }
+#StatusText {
+    font-size: 13px;
+    font-weight: 600;
+}
+#RestartButton {
+    border: none;
+    border-radius: 12px;
+    padding: 8px 20px;
+    font-weight: 600;
+    color: white;
+}
+#RestartButton[danger="true"] { background-color: @error@; }
+#RestartButton[danger="true"]:hover { background-color: @error-hover@; }
+#RestartButton[danger="false"] { background-color: @primary@; }
+#RestartButton[danger="false"]:hover { background-color: @primary-hover@; }
+
+#StatCard {
+    background-color: @panel-bg@;
+    border: 1px solid #353b43;
+    border-radius: 16px;
+}
+#StatCard:hover { border-color: @border-hover@; }
+#StatTitle {
+    font-size: 12px;
+    color: @text-secondary@;
+}
+#StatValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: @text-primary@;
+}
+#StatDesc {
+    font-size: 12px;
+    color: @text-tertiary@;
+}
+#StatIcon {
+    background-color: @bg-tertiary@;
+    border-radius: 10px;
+}
+#StatIconLabel {
+    font-size: 10px;
+    font-weight: 600;
+}
+#StatIcon[accent="success"] {
+    background-color: @success-18@;
+    color: @success@;
+}
+#StatIcon[accent="success"] #StatIconLabel { color: @success@; }
+#StatValue[accent="success"] { color: @success@; }
+#StatIcon[accent="primary"] {
+    background-color: @primary-18@;
+    color: @primary@;
+}
+#StatIcon[accent="primary"] #StatIconLabel { color: @primary@; }
+#StatValue[accent="primary"] { color: @primary@; }
+#StatIcon[accent="warning"] {
+    background-color: @warning-18@;
+    color: @warning@;
+}
+#StatIcon[accent="warning"] #StatIconLabel { color: @warning@; }
+#StatValue[accent="warning"] { color: @warning@; }
+
+#ChartCard {
+    background-color: @panel-bg@;
+    border: 1px solid #353b43;
+    border-radius: 16px;
+}
+#SectionTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: @text-tertiary@;
+    letter-spacing: 0.06em;
+}
+#ModeCard {
+    background-color: @panel-bg@;
+    border: 1px solid #353b43;
+    border-radius: 16px;
+}
+#ModeCard:hover { border-color: @border-hover@; }
+#ModeCard[active="true"] {
+    border-color: @primary@;
+    background-color: @primary-06@;
+}
+#ModeIcon {
+    background-color: @bg-tertiary@;
+    color: @text-secondary@;
+    border-radius: 10px;
+}
+#ModeIconLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: @text-secondary@;
+}
+#ModeCard[active="true"] #ModeIconLabel { color: white; }
+#ModeCard[active="true"] #ModeIcon {
+    background-color: @primary@;
+    color: white;
+}
+#ModeTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: @text-primary@;
+}
+#ModeDesc {
+    font-size: 12px;
+    color: @text-secondary@;
+}
+#ModeSwitch { spacing: 0; outline: none; }
+#ModeSwitch:focus { outline: none; }
+#ModeSwitch::indicator {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: @bg-tertiary@;
+    border: 1px solid #353b43;
+    outline: none;
+    image: none;
+}
+#ModeSwitch::indicator:checked { background-color: @primary@; image: none; }
+#ModeRadio { spacing: 0; outline: none; }
+#ModeRadio:focus { outline: none; }
+#ModeRadio::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border: 2px solid @border@;
+    background: transparent;
+    outline: none;
+    image: none;
+}
+#ModeRadio::indicator:focus { outline: none; }
+#ModeRadio::indicator:checked {
+    border: 2px solid @primary@;
+    background-color: @primary@;
+    image: none;
+}

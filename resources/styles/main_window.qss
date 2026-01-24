@@ -1,0 +1,37 @@
+#NavContainer {
+    background-color: @bg-secondary@;
+    border-right: 1px solid @border@;
+}
+#ContentContainer {
+    background-color: @bg-primary@;
+}
+#VersionLabel {
+    color: @text-tertiary@;
+}
+QListWidget {
+    background-color: transparent;
+    border: none;
+    outline: none;
+}
+QListWidget::item {
+    color: @text-secondary@;
+    padding: 12px 20px;
+    margin: 4px 12px;
+    border-radius: 10px;
+    border: none;
+}
+QListWidget::item:hover {
+    background-color: @bg-tertiary@;
+}
+QListWidget::item:selected {
+    background-color: rgba(148, 251, 255, 0.71);
+    color: @text-primary@;
+    font-weight: bold;
+}
+#StatusBar {
+    background-color: @bg-secondary@;
+    border-top: 1px solid @border@;
+}
+#StatusBar QLabel {
+    color: @text-secondary@;
+}

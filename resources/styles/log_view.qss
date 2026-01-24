@@ -1,0 +1,129 @@
+#PageTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: @text-primary@;
+}
+#PageSubtitle {
+    font-size: 13px;
+    color: @text-secondary@;
+}
+#FilterCard, #LogCard {
+    background-color: @bg-secondary@;
+    border: 1px solid @border@;
+    border-radius: 16px;
+}
+#LogCard QScrollArea {
+    background: transparent;
+    border: none;
+}
+#LogCard QScrollArea > QWidget > QWidget {
+    background: transparent;
+}
+#SearchInput, #FilterSelect {
+    background-color: @panel-bg@;
+    border: 1px solid #353b43;
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: @text-primary@;
+}
+#SearchInput:focus, #FilterSelect:focus {
+    border-color: #353b43;
+}
+#TagInfo, #TagError, #TagWarning {
+    padding: 6px 20px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+#TagInfo { color: @text-primary@; background: @panel-bg@; }
+#TagError { color: #ef4444; background: rgba(239,68,68,0.12); }
+#TagWarning { color: #f59e0b; background: rgba(245,158,11,0.12); }
+#AutoScroll {
+    color: @text-primary@;
+}
+#ActionBtn {
+    background-color: @panel-bg@;
+    color: @text-primary@;
+    border: 1px solid #353b43;
+    border-radius: 10px;
+    padding: 6px 14px;
+}
+#ActionBtn:hover {
+    background-color: @primary@;
+    color: white;
+}
+#ActionDangerBtn {
+    background-color: @error@;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 14px;
+}
+#ActionDangerBtn:hover {
+    background-color: @error@cc;
+}
+#LogEntry {
+    background: transparent;
+    border-radius: 8px;
+}
+#LogEntry:hover {
+    background-color: @panel-bg@;
+}
+#LogTime {
+    font-size: 11px;
+    color: @text-secondary@;
+}
+#LogBadge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+#LogBadge[logType="info"] {
+    color: #3b82f6;
+    background: rgba(59,130,246,0.12);
+}
+#LogBadge[logType="warning"] {
+    color: #f59e0b;
+    background: rgba(245,158,11,0.12);
+}
+#LogBadge[logType="error"] {
+    color: #ef4444;
+    background: rgba(239,68,68,0.12);
+}
+#LogBadge[logType="debug"] {
+    color: @text-secondary@;
+    background: @panel-bg@;
+}
+#LogBadge[logType="trace"] {
+    color: @text-secondary@;
+    background: @panel-bg@;
+}
+#LogBadge[logType="fatal"] {
+    color: #ef4444;
+    background: rgba(239,68,68,0.12);
+}
+#LogBadge[logType="panic"] {
+    color: #ef4444;
+    background: rgba(239,68,68,0.12);
+}
+#LogContent {
+    color: @text-secondary@;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+}
+#LogEntry[logType="error"] #LogContent,
+#LogEntry[logType="fatal"] #LogContent,
+#LogEntry[logType="panic"] #LogContent {
+    color: #ef4444;
+}
+#EmptyTitle {
+    font-size: 16px;
+    color: @text-primary@;
+}
+#EmptyIcon {
+    font-size: 24px;
+}
+#EmptyState {
+    background: transparent;
+}

@@ -3,7 +3,7 @@
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
 #include "utils/ThemeManager.h"
-#include "storage/ConfigManager.h"
+#include "services/ConfigManager.h"
 #include "widgets/RoundedMenu.h"
 #include <QMessageBox>
 #include <QApplication>

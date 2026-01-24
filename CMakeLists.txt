@@ -48,11 +48,20 @@ set(SOURCES
     src/core/ProxyService.cpp
     src/core/ProxyController.cpp
     src/core/DelayTestService.cpp
+    src/dialogs/SubscriptionFormDialog.cpp
+    src/dialogs/ConfigEditDialog.cpp
+    src/dialogs/RuleEditorDialog.cpp
     src/network/HttpClient.cpp
     src/network/WebSocketClient.cpp
     src/network/SubscriptionService.cpp
+    src/services/subscription/SubscriptionParser.cpp
+    src/services/ConfigBuilder.cpp
+    src/services/ConfigManager.cpp
+    src/services/ConfigMutator.cpp
+    src/services/RuleConfigService.cpp
     src/storage/DatabaseService.cpp
-    src/storage/ConfigManager.cpp
+    src/storage/ConfigIO.cpp
+    src/storage/SubscriptionConfigStore.cpp
     src/storage/AppSettings.cpp
     src/system/SystemProxy.cpp
     src/system/AutoStart.cpp
@@ -62,15 +71,23 @@ set(SOURCES
     src/views/components/TrafficChart.cpp
     src/views/ProxyView.cpp
     src/views/SubscriptionView.cpp
+    src/views/subscription/SubscriptionCard.cpp
     src/views/ConnectionsView.cpp
     src/views/RulesView.cpp
     src/views/LogView.cpp
     src/views/SettingsView.cpp
+    src/widgets/MenuComboBox.cpp
+    src/widgets/LogRowWidget.cpp
+    src/widgets/RuleCard.cpp
     src/widgets/ToggleSwitch.cpp
     src/widgets/ChevronToggle.cpp
     src/widgets/RoundedMenu.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
+    src/utils/LogParser.cpp
+    src/utils/SubscriptionUserinfo.cpp
+    src/utils/SubscriptionFormat.cpp
+    src/utils/RuleUtils.cpp
     src/utils/ThemeManager.cpp
 )
 
@@ -82,11 +99,21 @@ set(HEADERS
     src/core/ProxyService.h
     src/core/ProxyController.h
     src/core/DelayTestService.h
+    src/dialogs/SubscriptionFormDialog.h
+    src/dialogs/ConfigEditDialog.h
+    src/dialogs/RuleEditorDialog.h
+    src/models/RuleItem.h
     src/network/HttpClient.h
     src/network/WebSocketClient.h
     src/network/SubscriptionService.h
+    src/services/subscription/SubscriptionParser.h
+    src/services/ConfigBuilder.h
+    src/services/ConfigManager.h
+    src/services/ConfigMutator.h
+    src/services/RuleConfigService.h
     src/storage/DatabaseService.h
-    src/storage/ConfigManager.h
+    src/storage/ConfigIO.h
+    src/storage/SubscriptionConfigStore.h
     src/storage/AppSettings.h
     src/system/SystemProxy.h
     src/system/AutoStart.h
@@ -96,15 +123,23 @@ set(HEADERS
     src/views/components/TrafficChart.h
     src/views/ProxyView.h
     src/views/SubscriptionView.h
+    src/views/subscription/SubscriptionCard.h
     src/views/ConnectionsView.h
     src/views/RulesView.h
     src/views/LogView.h
     src/views/SettingsView.h
+    src/widgets/MenuComboBox.h
+    src/widgets/LogRowWidget.h
+    src/widgets/RuleCard.h
     src/widgets/ToggleSwitch.h
     src/widgets/ChevronToggle.h
     src/widgets/RoundedMenu.h
     src/utils/Logger.h
     src/utils/Crypto.h
+    src/utils/LogParser.h
+    src/utils/SubscriptionUserinfo.h
+    src/utils/SubscriptionFormat.h
+    src/utils/RuleUtils.h
     src/utils/ThemeManager.h
 )
 

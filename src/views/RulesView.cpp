@@ -1,184 +1,31 @@
 ﻿#include "RulesView.h"
 #include "core/ProxyService.h"
+#include "dialogs/RuleEditorDialog.h"
+#include "services/RuleConfigService.h"
+#include "utils/RuleUtils.h"
 #include "utils/ThemeManager.h"
-#include "storage/ConfigManager.h"
-#include "storage/DatabaseService.h"
-#include "widgets/RoundedMenu.h"
+#include "widgets/MenuComboBox.h"
+#include "widgets/RuleCard.h"
 #include <QComboBox>
 #include <QDialog>
-#include <QDialogButtonBox>
 #include <QFrame>
-#include <QFormLayout>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
-#include <QFontMetrics>
-#include <QObject>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <QMenu>
-#include <QPainter>
-#include <QPainterPath>
-#include <QPlainTextEdit>
+#include <QMap>
 #include <QPushButton>
-#include <QRegularExpression>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QSet>
-#include <QCursor>
-#include <QtMath>
 #include <QStringList>
 #include <QVBoxLayout>
-#include <utility>
 #include <algorithm>
+#include <utility>
 
-class RulesView;
-
-namespace {
-class MenuComboBox : public QComboBox
-{
-public:
-    explicit MenuComboBox(QWidget *parent = nullptr)
-        : QComboBox(parent)
-    {
-        m_menu = new RoundedMenu(this);
-        m_menu->setObjectName("ComboMenu");
-        updateMenuStyle();
-
-        ThemeManager &tm = ThemeManager::instance();
-        connect(&tm, &ThemeManager::themeChanged, this, [this]() {
-            updateMenuStyle();
-        });
-    }
-
-protected:
-    void showPopup() override
-    {
-        if (!m_menu) return;
-        m_menu->clear();
-
-        for (int i = 0; i < count(); ++i) {
-            QAction *action = m_menu->addAction(itemText(i));
-            action->setCheckable(true);
-            action->setChecked(i == currentIndex());
-            connect(action, &QAction::triggered, this, [this, i]() {
-                setCurrentIndex(i);
-            });
-        }
-
-        const int menuWidth = qMax(width(), 180);
-        m_menu->setFixedWidth(menuWidth);
-        m_menu->popup(mapToGlobal(QPoint(0, height())));
-    }
-
-    void hidePopup() override
-    {
-        if (m_menu) {
-            m_menu->hide();
-        }
-    }
-
-private:
-    void updateMenuStyle()
-    {
-        if (!m_menu) return;
-        ThemeManager &tm = ThemeManager::instance();
-        m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-        m_menu->setStyleSheet(QString(R"(
-            #ComboMenu {
-                background: transparent;
-                border: none;
-                padding: 6px;
-            }
-            #ComboMenu::panel {
-                background: transparent;
-                border: none;
-            }
-            #ComboMenu::item {
-                color: %1;
-                padding: 8px 14px;
-                border-radius: 10px;
-            }
-            #ComboMenu::indicator {
-                width: 14px;
-                height: 14px;
-            }
-            #ComboMenu::indicator:checked {
-                image: url(:/icons/check.svg);
-            }
-            #ComboMenu::indicator:unchecked {
-                image: none;
-            }
-            #ComboMenu::item:selected {
-                background-color: %2;
-                color: white;
-            }
-            #ComboMenu::item:checked {
-                color: %4;
-            }
-            #ComboMenu::item:checked:selected {
-                color: %4;
-            }
-            #ComboMenu::separator {
-                height: 1px;
-                background-color: %3;
-                margin: 6px 4px;
-            }
-        )")
-        .arg(tm.getColorString("text-primary"))
-        .arg(tm.getColorString("bg-tertiary"))
-        .arg(tm.getColorString("border"))
-        .arg(tm.getColorString("primary")));
-    }
-
-    RoundedMenu *m_menu = nullptr;
-};
-
-struct RuleFieldInfo {
-    QString label;
-    QString key;
-    QString placeholder;
-    bool numeric = false;
-};
-
-inline QList<RuleFieldInfo> ruleFieldInfos()
-{
-    return {
-        {QObject::tr("Domain"), "domain", QObject::tr("Example: example.com")},
-        {QObject::tr("Domain Suffix"), "domain_suffix", QObject::tr("Example: example.com")},
-        {QObject::tr("Domain Keyword"), "domain_keyword", QObject::tr("Example: google")},
-        {QObject::tr("Domain Regex"), "domain_regex", QObject::tr("Example: ^.*\\\\.example\\\\.com$")},
-        {QObject::tr("IP CIDR"), "ip_cidr", QObject::tr("Example: 192.168.0.0/16")},
-        {QObject::tr("Private IP"), "ip_is_private", QObject::tr("Example: true / false")},
-        {QObject::tr("Source IP CIDR"), "source_ip_cidr", QObject::tr("Example: 10.0.0.0/8")},
-        {QObject::tr("Port"), "port", QObject::tr("Example: 80,443"), true},
-        {QObject::tr("Source Port"), "source_port", QObject::tr("Example: 80,443"), true},
-        {QObject::tr("Port Range"), "port_range", QObject::tr("Example: 10000:20000")},
-        {QObject::tr("Source Port Range"), "source_port_range", QObject::tr("Example: 10000:20000")},
-        {QObject::tr("Process Name"), "process_name", QObject::tr("Example: chrome.exe")},
-        {QObject::tr("Process Path"), "process_path", QObject::tr("Example: C:\\\\Program Files\\\\App\\\\app.exe")},
-        {QObject::tr("Process Path Regex"), "process_path_regex", QObject::tr("Example: ^C:\\\\\\\\Program Files\\\\\\\\.+")},
-        {QObject::tr("Package Name"), "package_name", QObject::tr("Example: com.example.app")},
-    };
-}
-
-inline QString normalizeRuleTypeKey(const QString &type)
-{
-    const QString trimmed = type.trimmed();
-    if (trimmed.isEmpty()) return "default";
-    return trimmed.toLower();
-}
-
-inline QString displayRuleTypeLabel(const QString &type)
-{
-    const QString trimmed = type.trimmed();
-    if (trimmed.isEmpty()) return QObject::tr("Default");
-    return type;
-}
-
-} // namespace
 
 RulesView::RulesView(QWidget *parent)
     : QWidget(parent)
@@ -319,7 +166,7 @@ void RulesView::setProxyService(ProxyService *service)
             if (source == "user" || source == "custom") {
                 data.isCustom = true;
             } else {
-                data.isCustom = isCustomPayload(data.payload);
+                data.isCustom = RuleUtils::isCustomPayload(data.payload);
             }
             m_rules.push_back(data);
         }
@@ -367,210 +214,26 @@ void RulesView::onEmptyActionClicked()
 
 void RulesView::onAddRuleClicked()
 {
-    const QList<RuleFieldInfo> fields = ruleFieldInfos();
-
-    QDialog dialog(this);
-    dialog.setWindowTitle(tr("Add Rule"));
-    dialog.setModal(true);
-
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QFormLayout *form = new QFormLayout;
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setFormAlignment(Qt::AlignLeft);
-    form->setHorizontalSpacing(12);
-    form->setVerticalSpacing(10);
-
-    MenuComboBox *typeCombo = new MenuComboBox(&dialog);
-    for (const auto &field : fields) {
-        typeCombo->addItem(field.label, field.key);
-    }
-
-    QPlainTextEdit *valueEdit = new QPlainTextEdit(&dialog);
-    valueEdit->setPlaceholderText(fields.first().placeholder + tr(" (separate by commas or new lines)"));
-    valueEdit->setFixedHeight(80);
-
-    MenuComboBox *outboundCombo = new MenuComboBox(&dialog);
-    QSet<QString> outboundTags;
-    const QString configPath = activeConfigPath();
-    const QJsonObject configOut = ConfigManager::instance().loadConfig(configPath);
-    if (!configOut.isEmpty() && configOut.value("outbounds").isArray()) {
-        const QJsonArray outbounds = configOut.value("outbounds").toArray();
-        for (const auto &item : outbounds) {
-            if (!item.isObject()) continue;
-            const QString tag = item.toObject().value("tag").toString().trimmed();
-            if (!tag.isEmpty()) outboundTags.insert(tag);
-        }
-    }
-    if (outboundTags.isEmpty()) {
-        outboundTags.insert("direct");
-    }
-    QStringList outboundList = outboundTags.values();
-    outboundList.sort();
-    outboundCombo->addItems(outboundList);
-
-    form->addRow(tr("Match Type:"), typeCombo);
-    form->addRow(tr("Match Value:"), valueEdit);
-    form->addRow(tr("Outbound:"), outboundCombo);
-
-    QLabel *hintLabel = new QLabel(tr("Note: rules are written to route.rules (1.11+ format). Restart kernel or app to apply."), &dialog);
-    hintLabel->setWordWrap(true);
-    hintLabel->setStyleSheet("color: #94a3b8; font-size: 12px;");
-
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
-    buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
-
-    layout->addLayout(form);
-    layout->addWidget(hintLabel);
-    layout->addWidget(buttons);
-
-    QObject::connect(typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), &dialog, [=](int index) {
-        if (index >= 0 && index < fields.size()) {
-            valueEdit->setPlaceholderText(fields[index].placeholder + tr(" (separate by commas or new lines)"));
-        }
-    });
-    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-    if (dialog.exec() != QDialog::Accepted) return;
-
-    const int fieldIndex = typeCombo->currentIndex();
-    if (fieldIndex < 0 || fieldIndex >= fields.size()) return;
-    const RuleFieldInfo field = fields[fieldIndex];
-
-    const QString rawText = valueEdit->toPlainText().trimmed();
-    if (rawText.isEmpty()) {
-        QMessageBox::warning(this, tr("Add Rule"), tr("Match value cannot be empty."));
+    QString error;
+    const QStringList outboundTags = RuleConfigService::loadOutboundTags(QString(), &error);
+    if (!error.isEmpty()) {
+        QMessageBox::warning(this, tr("Add Rule"), error);
         return;
     }
 
-    QStringList values = rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
-    for (QString &v : values) v = v.trimmed();
-    values.removeAll(QString());
-    if (values.isEmpty()) {
-        QMessageBox::warning(this, tr("Add Rule"), tr("Match value cannot be empty."));
+    RuleEditorDialog dialog(RuleEditorDialog::Mode::Add, this);
+    dialog.setOutboundTags(outboundTags);
+    if (dialog.exec() != QDialog::Accepted) {
         return;
     }
 
-    QJsonArray payload;
-    if (field.numeric) {
-        for (const auto &v : values) {
-            bool ok = false;
-            int num = v.toInt(&ok);
-            if (!ok) {
-                QMessageBox::warning(this, tr("Add Rule"), tr("Port must be numeric: %1").arg(v));
-                return;
-            }
-            payload.append(num);
-        }
-    } else {
-        for (const auto &v : values) {
-            payload.append(v);
-        }
-    }
-
-    const QString outboundTag = outboundCombo->currentText().trimmed();
-    if (outboundTag.isEmpty()) {
-        QMessageBox::warning(this, tr("Add Rule"), tr("Outbound cannot be empty."));
-        return;
-    }
-
-    QJsonObject newConfig = ConfigManager::instance().loadConfig(configPath);
-    if (newConfig.isEmpty()) {
-        QMessageBox::warning(this, tr("Add Rule"), tr("Failed to read config file: %1").arg(configPath));
-        return;
-    }
-
-    QJsonObject route = newConfig.value("route").toObject();
-
-    QJsonObject routeRule;
-    if (field.key == "ip_is_private") {
-        if (payload.size() != 1) {
-            QMessageBox::warning(this, tr("Add Rule"), tr("ip_is_private allows only one value (true/false)."));
-            return;
-        }
-        const QString raw = payload.first().toString().toLower();
-        if (raw != "true" && raw != "false") {
-            QMessageBox::warning(this, tr("Add Rule"), tr("ip_is_private must be true or false."));
-            return;
-        }
-        routeRule.insert(field.key, raw == "true");
-    } else if (payload.size() == 1) {
-        routeRule.insert(field.key, payload.first());
-    } else {
-        routeRule.insert(field.key, payload);
-    }
-    routeRule["action"] = "route";
-    routeRule["outbound"] = outboundTag;
-
-    QJsonArray rules = route.value("rules").toArray();
-    bool hasRouteRule = false;
-    int existingRuleIndex = -1;
-    for (int i = 0; i < rules.size(); ++i) {
-        if (!rules[i].isObject()) continue;
-        const QJsonObject ruleObj = rules[i].toObject();
-        if (ruleObj == routeRule) {
-            hasRouteRule = true;
-            existingRuleIndex = i;
-            break;
-        }
-    }
-    int insertIndex = rules.size();
-    const int directIndex = [&rules]() {
-        for (int i = 0; i < rules.size(); ++i) {
-            if (!rules[i].isObject()) continue;
-            const QJsonObject ruleObj = rules[i].toObject();
-            if (ruleObj.value("clash_mode").toString() == "direct") {
-                return i;
-            }
-        }
-        return -1;
-    }();
-    const int globalIndex = [&rules]() {
-        for (int i = 0; i < rules.size(); ++i) {
-            if (!rules[i].isObject()) continue;
-            const QJsonObject ruleObj = rules[i].toObject();
-            if (ruleObj.value("clash_mode").toString() == "global") {
-                return i;
-            }
-        }
-        return -1;
-    }();
-    int insertionIndex = -1;
-    if (directIndex >= 0 && globalIndex >= 0) {
-        insertionIndex = qMax(directIndex, globalIndex);
-    } else if (directIndex >= 0) {
-        insertionIndex = directIndex;
-    } else if (globalIndex >= 0) {
-        insertionIndex = globalIndex;
-    }
-    if (insertionIndex >= 0) {
-        insertIndex = insertionIndex + 1;
-    } else if (!rules.isEmpty()) {
-        insertIndex = 0;
-    }
-
-    if (!hasRouteRule) {
-        rules.insert(insertIndex, routeRule);
-    } else if (existingRuleIndex >= 0 && existingRuleIndex > insertIndex) {
-        QJsonObject existingRule = rules[existingRuleIndex].toObject();
-        rules.removeAt(existingRuleIndex);
-        rules.insert(insertIndex, existingRule);
-    }
-    route["rules"] = rules;
-
-    newConfig["route"] = route;
-
-    if (!ConfigManager::instance().saveConfig(configPath, newConfig)) {
-        QMessageBox::warning(this, tr("Add Rule"), tr("Failed to save config: %1").arg(configPath));
-        return;
-    }
-
+    RuleConfigService::RuleEditData data = dialog.editData();
     RuleItem added;
-    added.type = field.key;
-    added.payload = QString("%1=%2").arg(field.key, values.join(","));
-    added.proxy = outboundTag;
-    added.isCustom = true;
+    if (!RuleConfigService::addRule(data, &added, &error)) {
+        QMessageBox::warning(this, tr("Add Rule"), error);
+        return;
+    }
+
     m_rules.push_back(added);
     updateFilterOptions();
     applyFilters();
@@ -597,7 +260,7 @@ void RulesView::applyFilters()
 
     m_filteredRules.clear();
     for (const auto &rule : std::as_const(m_rules)) {
-        const QString typeLabel = displayRuleTypeLabel(rule.type);
+        const QString typeLabel = RuleUtils::displayRuleTypeLabel(rule.type);
         const bool matchSearch = query.isEmpty()
             || rule.payload.contains(query, Qt::CaseInsensitive)
             || rule.proxy.contains(query, Qt::CaseInsensitive)
@@ -606,9 +269,9 @@ void RulesView::applyFilters()
             || (typeValue == "custom" && rule.isCustom)
             || (typeValue == "default" && !rule.isCustom)
             || (typeValue != "custom" && typeValue != "default"
-                && normalizeRuleTypeKey(rule.type) == typeValue);
+                && RuleUtils::normalizeRuleTypeKey(rule.type) == typeValue);
         const bool matchProxy = proxyValue.isEmpty()
-            || normalizeProxyValue(rule.proxy) == proxyValue;
+            || RuleUtils::normalizeProxyValue(rule.proxy) == proxyValue;
 
         if (matchSearch && matchType && matchProxy) {
             m_filteredRules.push_back(rule);
@@ -638,14 +301,14 @@ void RulesView::updateFilterOptions()
     bool hasCustom = false;
     bool hasDefault = false;
     for (const auto &rule : std::as_const(m_rules)) {
-        const QString typeKey = normalizeRuleTypeKey(rule.type);
+        const QString typeKey = RuleUtils::normalizeRuleTypeKey(rule.type);
         if (!rule.isCustom) {
             hasDefault = true;
             if (typeKey != "default" && !types.contains(typeKey)) {
-                types.insert(typeKey, displayRuleTypeLabel(rule.type));
+                types.insert(typeKey, RuleUtils::displayRuleTypeLabel(rule.type));
             }
         }
-        proxies.insert(normalizeProxyValue(rule.proxy));
+        proxies.insert(RuleUtils::normalizeProxyValue(rule.proxy));
         if (rule.isCustom) hasCustom = true;
     }
 
@@ -718,7 +381,9 @@ void RulesView::rebuildGrid()
     int row = 0;
     int col = 0;
     for (int i = 0; i < m_filteredRules.size(); ++i) {
-        QWidget *card = createRuleCard(m_filteredRules[i], i + 1);
+        RuleCard *card = new RuleCard(m_filteredRules[i], i + 1, m_gridContainer);
+        connect(card, &RuleCard::editRequested, this, &RulesView::handleEditRule);
+        connect(card, &RuleCard::deleteRequested, this, &RulesView::handleDeleteRule);
         card->setFixedSize(cardWidth, cardHeight);
         m_gridLayout->addWidget(card, row, col);
         col++;
@@ -753,566 +418,67 @@ void RulesView::updateEmptyState()
     }
 }
 
-QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
+void RulesView::handleEditRule(const RuleItem &rule)
 {
-    QFrame *card = new QFrame;
-    card->setObjectName("RuleCard");
-
-    QVBoxLayout *layout = new QVBoxLayout(card);
-    layout->setContentsMargins(14, 14, 14, 14);
-    layout->setSpacing(10);
-
-    QHBoxLayout *headerLayout = new QHBoxLayout;
-    headerLayout->setSpacing(6);
-
-    QLabel *typeTag = new QLabel(rule.isCustom ? tr("Custom Rule") : displayRuleTypeLabel(rule.type));
-    typeTag->setObjectName("RuleTag");
-    typeTag->setProperty("tagType", ruleTagType(rule));
-    typeTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    typeTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    const int tagPaddingX = 6;
-    const int tagPaddingY = 2;
-    const QFontMetrics fm(typeTag->font());
-    const QSize textSize = fm.size(Qt::TextSingleLine, typeTag->text());
-    typeTag->setFixedSize(textSize.width() + tagPaddingX * 2,
-                          textSize.height() + tagPaddingY * 2);
-
-    QLabel *indexLabel = new QLabel(QString("#%1").arg(index));
-    indexLabel->setObjectName("RuleIndex");
-
-    headerLayout->addWidget(typeTag);
-    headerLayout->addStretch();
-    if (rule.isCustom) {
-        QPushButton *menuBtn = new QPushButton("...");
-        menuBtn->setFlat(true);
-        menuBtn->setCursor(Qt::PointingHandCursor);
-        menuBtn->setFixedSize(28, 24);
-        menuBtn->setObjectName("RuleMenuBtn");
-
-        RoundedMenu *menu = new RoundedMenu(card);
-        menu->setObjectName("RuleMenu");
-        ThemeManager &tm = ThemeManager::instance();
-        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-        connect(&tm, &ThemeManager::themeChanged, menu, [menu, &tm]() {
-            menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-        });
-
-        QAction *editTypeAct = menu->addAction(tr("Edit Match Type"));
-        QAction *removeAct = menu->addAction(tr("Delete Rule"));
-        removeAct->setObjectName("DeleteAction");
-
-        connect(menuBtn, &QPushButton::clicked, [menuBtn, menu]() {
-            menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
-        });
-        connect(editTypeAct, &QAction::triggered, card, [this, rule]() {
-            changeRuleType(rule);
-        });
-        connect(removeAct, &QAction::triggered, card, [this, rule]() {
-            const QMessageBox::StandardButton btn = QMessageBox::question(
-                this, tr("Delete Rule"), tr("Delete this custom rule?"));
-            if (btn != QMessageBox::Yes) return;
-            if (!removeRuleFromConfig(rule)) {
-                QMessageBox::warning(this, tr("Delete Rule"), tr("Delete failed, rule not found."));
-                return;
-            }
-            auto it = std::remove_if(m_rules.begin(), m_rules.end(), [&rule](const RuleItem &r) {
-                return r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type;
-            });
-            m_rules.erase(it, m_rules.end());
-            applyFilters();
-        });
-        headerLayout->addWidget(menuBtn);
-    }
-    headerLayout->addWidget(indexLabel);
-
-    QVBoxLayout *bodyLayout = new QVBoxLayout;
-    bodyLayout->setSpacing(6);
-
-    QLabel *contentValue = new QLabel(rule.payload);
-    contentValue->setObjectName("RuleValue");
-    contentValue->setWordWrap(true);
-
-    QLabel *proxyValue = new QLabel(displayProxyLabel(rule.proxy));
-    proxyValue->setObjectName("RuleProxyTag");
-    proxyValue->setProperty("tagType", proxyTagType(rule.proxy));
-
-    bodyLayout->addWidget(contentValue);
-    bodyLayout->addWidget(proxyValue);
-
-    layout->addLayout(headerLayout);
-    layout->addLayout(bodyLayout);
-
-    return card;
-}
-
-QString RulesView::normalizeProxyValue(const QString &proxy) const
-{
-    QString value = proxy.trimmed();
-    if (value.compare("direct", Qt::CaseInsensitive) == 0) return "direct";
-    if (value.compare("reject", Qt::CaseInsensitive) == 0) return "reject";
-    if (value.startsWith('[') && value.endsWith(']')) {
-        value = value.mid(1, value.length() - 2);
-    }
-    if (value.startsWith("Proxy(") && value.endsWith(")")) {
-        value = value.mid(6, value.length() - 7);
-    }
-    if (value.startsWith("route(") && value.endsWith(")")) {
-        value = value.mid(6, value.length() - 7);
-    }
-    return value;
-}
-
-QString RulesView::displayProxyLabel(const QString &proxy) const
-{
-    const QString value = normalizeProxyValue(proxy);
-    if (value == "direct") return tr("Direct");
-    if (value == "reject") return tr("Reject");
-    return value;
-}
-
-QString RulesView::ruleTagType(const RuleItem &rule) const
-{
-    if (rule.isCustom) return "info";
-    const QString lower = rule.type.toLower();
-    if (lower.contains("domain")) return "info";
-    if (lower.contains("ipcidr")) return "success";
-    if (lower.contains("source")) return "warning";
-    if (lower.contains("port")) return "error";
-    return "default";
-}
-
-QString RulesView::proxyTagType(const QString &proxy) const
-{
-    const QString value = normalizeProxyValue(proxy);
-    if (value == "direct") return "success";
-    if (value == "reject") return "error";
-    return "info";
-}
-
-bool RulesView::isCustomPayload(const QString &payload) const
-{
-    const QString p = payload.toLower();
-    return p.startsWith("domain")
-        || p.startsWith("ip")
-        || p.startsWith("process")
-        || p.startsWith("package")
-        || p.startsWith("port")
-        || p.startsWith("source");
-}
-
-QString RulesView::activeConfigPath() const
-{
-    const QString subPath = DatabaseService::instance().getActiveConfigPath();
-    if (!subPath.isEmpty()) return subPath;
-    return ConfigManager::instance().getActiveConfigPath();
-}
-
-bool RulesView::removeRuleFromConfig(const RuleItem &rule)
-{
-    const QString path = activeConfigPath();
-    if (path.isEmpty()) return false;
-
-    QJsonObject config = ConfigManager::instance().loadConfig(path);
-    if (config.isEmpty()) return false;
-
-    QJsonObject route = config.value("route").toObject();
-    QJsonArray rules = route.value("rules").toArray();
-
-    const QString payload = rule.payload.trimmed();
-    const int eq = payload.indexOf('=');
-    if (eq <= 0) return false;
-    const QString key = payload.left(eq).trimmed();
-    const QString valueStr = payload.mid(eq + 1).trimmed();
-    QStringList values = valueStr.split(',', Qt::SkipEmptyParts);
-    for (QString &v : values) v = v.trimmed();
-
-    auto matches = [&](const QJsonObject &obj) -> bool {
-        if (obj.contains("action") && obj.value("action").toString() != "route") return false;
-        if (!obj.contains(key)) return false;
-        const QString objOutbound = normalizeProxyValue(obj.value("outbound").toString());
-        if (normalizeProxyValue(rule.proxy) != objOutbound) return false;
-        const QJsonValue v = obj.value(key);
-        if (v.isArray()) {
-            QStringList arr;
-            for (const auto &it : v.toArray()) {
-                if (it.isDouble()) arr << QString::number(it.toInt());
-                else arr << it.toString();
-            }
-            arr.sort();
-            QStringList sortedValues = values;
-            sortedValues.sort();
-            return arr == sortedValues;
-        }
-        if (v.isDouble()) {
-            return values.size() == 1 && v.toInt() == values.first().toInt();
-        }
-        if (v.isBool()) {
-            return values.size() == 1
-                && ((v.toBool() && values.first().toLower() == "true")
-                    || (!v.toBool() && values.first().toLower() == "false"));
-        }
-        return values.size() == 1 && v.toString().trimmed() == values.first();
-    };
-
-    bool removed = false;
-    for (int i = 0; i < rules.size(); ++i) {
-        if (!rules[i].isObject()) continue;
-        if (matches(rules[i].toObject())) {
-            rules.removeAt(i);
-            removed = true;
-            break;
-        }
+    QString error;
+    const QString outbound = RuleUtils::normalizeProxyValue(rule.proxy);
+    const QStringList outboundTags = RuleConfigService::loadOutboundTags(outbound, &error);
+    if (!error.isEmpty()) {
+        QMessageBox::warning(this, tr("Edit Match Type"), error);
+        return;
     }
 
-    if (!removed) return false;
-
-    route["rules"] = rules;
-    config["route"] = route;
-    if (!ConfigManager::instance().saveConfig(path, config)) {
-        return false;
+    RuleEditorDialog dialog(RuleEditorDialog::Mode::Edit, this);
+    dialog.setOutboundTags(outboundTags);
+    if (!dialog.setEditRule(rule, &error)) {
+        QMessageBox::warning(this, tr("Edit Match Type"), error);
+        return;
     }
-    return true;
-}
-
-bool RulesView::changeRuleType(const RuleItem &rule)
-{
-    const QList<RuleFieldInfo> fields = ruleFieldInfos();
-
-
-    const QString payload = rule.payload.trimmed();
-    const int eq = payload.indexOf('=');
-    if (eq <= 0) {
-        QMessageBox::warning(this, tr("Edit Match Type"), tr("Failed to parse current rule content."));
-        return false;
-    }
-    const QString currentKey = payload.left(eq).trimmed();
-    const QString currentValue = payload.mid(eq + 1).trimmed();
-
-    QDialog dialog(this);
-    dialog.setWindowTitle(tr("Edit Match Type"));
-    dialog.setModal(true);
-
-    QVBoxLayout *layout = new QVBoxLayout(&dialog);
-    QFormLayout *form = new QFormLayout;
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setHorizontalSpacing(12);
-    form->setVerticalSpacing(10);
-
-    MenuComboBox *typeCombo = new MenuComboBox(&dialog);
-    int currentIndex = 0;
-    for (int i = 0; i < fields.size(); ++i) {
-        typeCombo->addItem(fields[i].label, fields[i].key);
-        if (fields[i].key == currentKey) currentIndex = i;
-    }
-    typeCombo->setCurrentIndex(currentIndex);
-
-    QPlainTextEdit *valueEdit = new QPlainTextEdit(&dialog);
-    valueEdit->setPlainText(currentValue);
-    valueEdit->setFixedHeight(80);
-
-
-    MenuComboBox *outboundCombo = new MenuComboBox(&dialog);
-    QSet<QString> outboundTags;
-    const QString configPath = activeConfigPath();
-    const QJsonObject config = ConfigManager::instance().loadConfig(configPath);
-    if (!config.isEmpty() && config.value("outbounds").isArray()) {
-        const QJsonArray outbounds = config.value("outbounds").toArray();
-        for (const auto &item : outbounds) {
-            if (!item.isObject()) continue;
-            const QString tag = item.toObject().value("tag").toString().trimmed();
-            if (!tag.isEmpty()) outboundTags.insert(tag);
-        }
-    }
-    const QString currentOutbound = normalizeProxyValue(rule.proxy);
-    if (!outboundTags.contains(currentOutbound) && !currentOutbound.isEmpty()) {
-        outboundTags.insert(currentOutbound);
-    }
-    if (outboundTags.isEmpty()) outboundTags.insert("direct");
-    QStringList outboundList = outboundTags.values();
-    outboundList.sort();
-    outboundCombo->addItems(outboundList);
-    int outboundIndex = outboundCombo->findText(currentOutbound);
-    if (outboundIndex >= 0) outboundCombo->setCurrentIndex(outboundIndex);
-
-    form->addRow(tr("Match Type:"), typeCombo);
-    form->addRow(tr("Match Value:"), valueEdit);
-    form->addRow(tr("Outbound:"), outboundCombo);
-
-    QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
-    buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
-
-    layout->addLayout(form);
-    layout->addWidget(buttons);
-
-    connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-    if (dialog.exec() != QDialog::Accepted) return false;
-
-    const int idx = typeCombo->currentIndex();
-    if (idx < 0 || idx >= fields.size()) return false;
-    const RuleFieldInfo field = fields[idx];
-
-    QString rawText = valueEdit->toPlainText().trimmed();
-    if (rawText.isEmpty()) {
-        QMessageBox::warning(this, tr("Edit Match Type"), tr("Match value cannot be empty."));
-        return false;
+    if (dialog.exec() != QDialog::Accepted) {
+        return;
     }
 
-    QStringList values = rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
-    for (QString &v : values) v = v.trimmed();
-    values.removeAll(QString());
-    if (values.isEmpty()) {
-        QMessageBox::warning(this, tr("Edit Match Type"), tr("Match value cannot be empty."));
-        return false;
+    RuleConfigService::RuleEditData data = dialog.editData();
+    RuleItem updated;
+    if (!RuleConfigService::updateRule(rule, data, &updated, &error)) {
+        QMessageBox::warning(this, tr("Edit Match Type"), error);
+        return;
     }
-
-    QJsonObject routeRule;
-    if (field.numeric) {
-        QJsonArray arr;
-        for (const auto &v : values) {
-            bool ok = false;
-            int num = v.toInt(&ok);
-            if (!ok) {
-                QMessageBox::warning(this, tr("Edit Match Type"), tr("Port must be numeric: %1").arg(v));
-                return false;
-            }
-            arr.append(num);
-        }
-        if (arr.size() == 1) {
-            routeRule.insert(field.key, arr.first());
-        } else {
-            routeRule.insert(field.key, arr);
-        }
-    } else if (field.key == "ip_is_private") {
-        if (values.size() != 1) {
-            QMessageBox::warning(this, tr("Edit Match Type"), tr("ip_is_private allows only one value (true/false)."));
-            return false;
-        }
-        const QString raw = values.first().toLower();
-        if (raw != "true" && raw != "false") {
-            QMessageBox::warning(this, tr("Edit Match Type"), tr("ip_is_private must be true or false."));
-            return false;
-        }
-        routeRule.insert(field.key, raw == "true");
-    } else {
-        if (values.size() == 1) {
-            routeRule.insert(field.key, values.first());
-        } else {
-            QJsonArray arr;
-            for (const auto &v : values) arr.append(v);
-            routeRule.insert(field.key, arr);
-        }
-    }
-    routeRule["action"] = "route";
-    routeRule["outbound"] = normalizeProxyValue(outboundCombo->currentText());
-
-
-    if (!removeRuleFromConfig(rule)) {
-        QMessageBox::warning(this, tr("Edit Match Type"), tr("Old rule to replace not found."));
-        return false;
-    }
-
-    const QString path = activeConfigPath();
-    QJsonObject configObj = ConfigManager::instance().loadConfig(path);
-    if (configObj.isEmpty()) return false;
-    QJsonObject route = configObj.value("route").toObject();
-    QJsonArray rules = route.value("rules").toArray();
-
-    auto findIndex = [&rules](const QString &mode) -> int {
-        for (int i = 0; i < rules.size(); ++i) {
-            if (!rules[i].isObject()) continue;
-            const QJsonObject obj = rules[i].toObject();
-            if (obj.value("clash_mode").toString() == mode) return i;
-        }
-        return -1;
-    };
-    int insertIndex = rules.size();
-    const int directIndex = findIndex("direct");
-    const int globalIndex = findIndex("global");
-    if (directIndex >= 0 && globalIndex >= 0) insertIndex = qMax(directIndex, globalIndex) + 1;
-    else if (directIndex >= 0) insertIndex = directIndex + 1;
-    else if (globalIndex >= 0) insertIndex = globalIndex + 1;
-    else if (!rules.isEmpty()) insertIndex = 0;
-
-    rules.insert(insertIndex, routeRule);
-    route["rules"] = rules;
-    configObj["route"] = route;
-
-    if (!ConfigManager::instance().saveConfig(path, configObj)) {
-        QMessageBox::warning(this, tr("Edit Match Type"), tr("Failed to save config"));
-        return false;
-    }
-
 
     for (auto &r : m_rules) {
         if (r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type) {
-            r.type = field.key;
-            if (values.size() == 1) {
-                r.payload = QString("%1=%2").arg(field.key, values.first());
-            } else {
-                r.payload = QString("%1=%2").arg(field.key, values.join(","));
-            }
-            r.proxy = normalizeProxyValue(outboundCombo->currentText());
+            r = updated;
             break;
         }
     }
+    updateFilterOptions();
     applyFilters();
-    return true;
+}
+
+void RulesView::handleDeleteRule(const RuleItem &rule)
+{
+    const QMessageBox::StandardButton btn = QMessageBox::question(
+        this, tr("Delete Rule"), tr("Delete this custom rule?"));
+    if (btn != QMessageBox::Yes) return;
+
+    QString error;
+    if (!RuleConfigService::removeRule(rule, &error)) {
+        QMessageBox::warning(this, tr("Delete Rule"), error);
+        return;
+    }
+
+    auto it = std::remove_if(m_rules.begin(), m_rules.end(), [&rule](const RuleItem &r) {
+        return r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type;
+    });
+    m_rules.erase(it, m_rules.end());
+    updateFilterOptions();
+    applyFilters();
 }
 
 void RulesView::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
-
-    const QString style = QString(R"(
-        #PageTitle {
-            font-size: 22px;
-            font-weight: 700;
-            color: %1;
-        }
-        #PageSubtitle {
-            font-size: 13px;
-            color: %2;
-        }
-        #PrimaryActionBtn {
-            background-color: %3;
-            color: white;
-            border-radius: 12px;
-            padding: 8px 18px;
-            border: none;
-        }
-        #PrimaryActionBtn:hover {
-            background-color: %4;
-        }
-        #FilterCard {
-            background-color: %5;
-            border: 1px solid #353b43;
-            border-radius: 16px;
-        }
-        #SearchInput, #FilterSelect {
-            background-color: %7;
-            border: 1px solid #353b43;
-            border-radius: 12px;
-            padding: 8px 12px;
-            color: %1;
-        }
-        #SearchInput:focus, #FilterSelect:focus {
-            border-color: #353b43;
-        }
-        #RuleCard {
-            background-color: %7;
-            border: 1px solid #353b43;
-            border-radius: 16px;
-        }
-        #RuleCard:hover {
-            border-color: #353b43;
-        }
-        #RuleMenuBtn {
-            background-color: %5;
-            color: %1;
-            border: 1px solid %6;
-            font-size: 14px;
-            font-weight: bold;
-            padding: 0 8px;
-            border-radius: 10px;
-        }
-        #RuleMenuBtn:hover {
-            background-color: %3;
-            color: white;
-        }
-        #RuleTag {
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        #RuleTag[tagType="info"] { color: #3b82f6; background: rgba(59,130,246,0.12); }
-        #RuleTag[tagType="success"] { color: #10b981; background: rgba(16,185,129,0.12); }
-        #RuleTag[tagType="warning"] { color: #f59e0b; background: rgba(245,158,11,0.12); }
-        #RuleTag[tagType="error"] { color: #ef4444; background: rgba(239,68,68,0.12); }
-        #RuleTag[tagType="default"] { color: %2; background: %5; }
-        #RuleIndex {
-            font-size: 12px;
-            color: %2;
-        }
-        #RuleLabel {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: %2;
-            letter-spacing: 0.05em;
-        }
-        #RuleValue {
-            font-size: 13px;
-            color: %1;
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        #RuleProxyTag {
-            padding: 6px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        #RuleProxyTag[tagType="success"] { color: #10b981; background: rgba(16,185,129,0.12); }
-        #RuleProxyTag[tagType="error"] { color: #ef4444; background: rgba(239,68,68,0.12); }
-        #RuleProxyTag[tagType="info"] { color: #3b82f6; background: rgba(59,130,246,0.12); }
-        #RuleMenu {
-            background: transparent;
-            border: none;
-            padding: 6px;
-        }
-        #RuleMenu::panel {
-            background: transparent;
-            border: none;
-        }
-        #RuleMenu::item {
-            color: %1;
-            padding: 8px 14px;
-            border-radius: 10px;
-        }
-        #RuleMenu::indicator {
-            width: 14px;
-            height: 14px;
-        }
-        #RuleMenu::indicator:checked {
-            image: url(:/icons/check.svg);
-        }
-        #RuleMenu::indicator:unchecked {
-            image: none;
-        }
-        #RuleMenu::item:selected {
-            background-color: %5;
-            color: %1;
-        }
-        #RuleMenu::separator {
-            height: 1px;
-            background-color: %6;
-            margin: 6px 4px;
-        }
-        #DeleteAction {
-            color: #ef4444;
-        }
-        #EmptyState {
-            background: transparent;
-        }
-        #EmptyTitle {
-            font-size: 16px;
-            color: %1;
-        }
-        #EmptyIcon {
-            font-size: 24px;
-        }
-    )")
-    .arg(tm.getColorString("text-primary"))
-    .arg(tm.getColorString("text-secondary"))
-    .arg(tm.getColorString("primary"))
-    .arg(tm.getColorString("primary") + "cc")
-    .arg(tm.getColorString("bg-tertiary"))
-    .arg(tm.getColorString("border"))
-    .arg(tm.getColorString("panel-bg"));
-
-    setStyleSheet(style);
+    setStyleSheet(tm.loadStyleSheet(":/styles/rules_view.qss"));
 }
 
 void RulesView::resizeEvent(QResizeEvent *event)

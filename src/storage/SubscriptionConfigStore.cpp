@@ -1,0 +1,81 @@
+#include "storage/SubscriptionConfigStore.h"
+#include "services/ConfigManager.h"
+#include <QDateTime>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <QRegularExpression>
+
+namespace {
+QString sanitizeFileName(const QString &name)
+{
+    QString safe = name.toLower();
+    safe.replace(QRegularExpression("[^a-z0-9-_]+"), "-");
+    safe.replace(QRegularExpression("-+"), "-");
+    safe.remove(QRegularExpression("^-|-$"));
+    if (safe.isEmpty()) {
+        safe = "subscription";
+    }
+    return safe;
+}
+} // namespace
+
+namespace SubscriptionConfigStore {
+
+QString generateConfigFileName(const QString &name)
+{
+    const QString safe = sanitizeFileName(name);
+    return QString("%1-%2.json").arg(safe).arg(QDateTime::currentMSecsSinceEpoch());
+}
+
+bool saveConfigWithNodes(const QJsonArray &nodes, const QString &targetPath)
+{
+    return ConfigManager::instance().generateConfigWithNodes(nodes, targetPath);
+}
+
+bool saveOriginalConfig(const QString &content, const QString &targetPath)
+{
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(content.toUtf8(), &err);
+    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+        return false;
+    }
+
+    QJsonObject config = doc.object();
+    ConfigManager::instance().applyPortSettings(config);
+
+    return ConfigManager::instance().saveConfig(targetPath, config);
+}
+
+bool rollbackSubscriptionConfig(const QString &configPath)
+{
+    QFileInfo pathInfo(configPath);
+    if (!pathInfo.exists()) {
+        return false;
+    }
+    const QString backupPath = configPath + ".bak";
+    if (!QFile::exists(backupPath)) {
+        return false;
+    }
+    QFile::remove(configPath);
+    return QFile::copy(backupPath, configPath);
+}
+
+bool deleteSubscriptionConfig(const QString &configPath)
+{
+    if (configPath.isEmpty()) {
+        return false;
+    }
+    if (QFile::exists(configPath)) {
+        QFile::remove(configPath);
+    }
+    const QString backup = configPath + ".bak";
+    if (QFile::exists(backup)) {
+        QFile::remove(backup);
+    }
+    return true;
+}
+
+} // namespace SubscriptionConfigStore

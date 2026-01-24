@@ -1,0 +1,36 @@
+#ifndef RULECONFIGSERVICE_H
+#define RULECONFIGSERVICE_H
+
+#include <QList>
+#include <QString>
+#include <QStringList>
+#include "models/RuleItem.h"
+
+class RuleConfigService
+{
+public:
+    struct RuleFieldInfo {
+        QString label;
+        QString key;
+        QString placeholder;
+        bool numeric = false;
+    };
+
+    struct RuleEditData {
+        RuleFieldInfo field;
+        QStringList values;
+        QString outboundTag;
+    };
+
+    static QList<RuleFieldInfo> fieldInfos();
+    static QString activeConfigPath();
+    static QStringList loadOutboundTags(const QString &extraTag = QString(), QString *error = nullptr);
+
+    static bool addRule(const RuleEditData &data, RuleItem *added, QString *error);
+    static bool updateRule(const RuleItem &existing, const RuleEditData &data, RuleItem *updated, QString *error);
+    static bool removeRule(const RuleItem &rule, QString *error);
+
+    static bool parseRulePayload(const QString &payload, QString *key, QStringList *values, QString *error = nullptr);
+};
+
+#endif // RULECONFIGSERVICE_H

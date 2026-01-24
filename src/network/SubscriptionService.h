@@ -4,9 +4,6 @@
 #include <QObject>
 #include <QString>
 #include <QJsonObject>
-#include <QJsonArray>
-
-class HttpClient;
 
 struct SubscriptionInfo {
     QString id;
@@ -69,9 +66,6 @@ public:
     int getActiveIndex() const;
     QString getActiveConfigPath() const;
 
-    // Parse subscription content.
-    QJsonArray parseSubscriptionContent(const QByteArray &content) const;
-
 signals:
     void subscriptionAdded(const SubscriptionInfo &info);
     void subscriptionRemoved(const QString &id);
@@ -84,31 +78,12 @@ signals:
 private:
     void saveToDatabase();
     SubscriptionInfo* findSubscription(const QString &id);
-    QString generateConfigFileName(const QString &name) const;
     bool isJsonContent(const QString &content) const;
-    QJsonArray extractNodesWithFallback(const QString &content) const;
-    bool saveConfigWithNodes(const QJsonArray &nodes,
-                             const QString &targetPath);
-    bool saveOriginalConfig(const QString &content,
-                            const QString &targetPath);
     void updateSubscriptionUserinfo(SubscriptionInfo &info, const QJsonObject &headers);
     void updateSubscriptionUserinfoFromHeader(SubscriptionInfo &info, const QByteArray &header);
 
-    // Parse different formats.
-    QJsonArray parseSingBoxConfig(const QByteArray &content) const;
-    QJsonArray parseClashConfig(const QByteArray &content) const;
-    QJsonArray parseURIList(const QByteArray &content) const;
-
-    // URI parsing.
-    QJsonObject parseVmessURI(const QString &uri) const;
-    QJsonObject parseVlessURI(const QString &uri) const;
-    QJsonObject parseTrojanURI(const QString &uri) const;
-    QJsonObject parseShadowsocksURI(const QString &uri) const;
-    QJsonObject parseHysteria2URI(const QString &uri) const;
-
     QString generateId() const;
 
-    HttpClient *m_httpClient;
     QList<SubscriptionInfo> m_subscriptions;
     int m_activeIndex;
     QString m_activeConfigPath;

@@ -25,112 +25,13 @@
 #include <QSysInfo>
 #include <QJsonObject>
 #include <QOperatingSystemVersion>
-#include <QMenu>
 #include <functional>
 #include "utils/AppPaths.h"
 #include "utils/ThemeManager.h"
-#include "widgets/RoundedMenu.h"
+#include "widgets/MenuComboBox.h"
 
 namespace {
 
-class MenuComboBox : public QComboBox
-{
-public:
-    explicit MenuComboBox(QWidget *parent = nullptr)
-        : QComboBox(parent)
-    {
-        m_menu = new RoundedMenu(this);
-        m_menu->setObjectName("ComboMenu");
-        updateMenuStyle();
-
-        ThemeManager &tm = ThemeManager::instance();
-        connect(&tm, &ThemeManager::themeChanged, this, [this]() {
-            updateMenuStyle();
-        });
-    }
-
-protected:
-    void showPopup() override
-    {
-        if (!m_menu) return;
-        m_menu->clear();
-
-        for (int i = 0; i < count(); ++i) {
-            QAction *action = m_menu->addAction(itemText(i));
-            action->setCheckable(true);
-            action->setChecked(i == currentIndex());
-            connect(action, &QAction::triggered, this, [this, i]() {
-                setCurrentIndex(i);
-            });
-        }
-
-        const int menuWidth = qMax(width(), 180);
-        m_menu->setFixedWidth(menuWidth);
-        m_menu->popup(mapToGlobal(QPoint(0, height())));
-    }
-
-    void hidePopup() override
-    {
-        if (m_menu) {
-            m_menu->hide();
-        }
-    }
-
-private:
-    void updateMenuStyle()
-    {
-        if (!m_menu) return;
-        ThemeManager &tm = ThemeManager::instance();
-        m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-        m_menu->setStyleSheet(QString(R"(
-            #ComboMenu {
-                background: transparent;
-                border: none;
-                padding: 6px;
-            }
-            #ComboMenu::panel {
-                background: transparent;
-                border: none;
-            }
-            #ComboMenu::item {
-                color: %1;
-                padding: 8px 14px;
-                border-radius: 10px;
-            }
-            #ComboMenu::indicator {
-                width: 14px;
-                height: 14px;
-            }
-            #ComboMenu::indicator:checked {
-                image: url(:/icons/check.svg);
-            }
-            #ComboMenu::indicator:unchecked {
-                image: none;
-            }
-            #ComboMenu::item:selected {
-                background-color: %2;
-                color: white;
-            }
-            #ComboMenu::item:checked {
-                color: %4;
-            }
-            #ComboMenu::item:checked:selected {
-                color: %4;
-            }
-            #ComboMenu::separator {
-                height: 1px;
-                background-color: %3;
-                margin: 6px 4px;
-            }
-        )")
-        .arg(tm.getColorString("text-primary"))
-        .arg(tm.getColorString("bg-tertiary"))
-        .arg(tm.getColorString("border"))
-        .arg(tm.getColorString("primary")));
-    }
-
-    RoundedMenu *m_menu = nullptr;
-};
 
 QString normalizeVersionTag(const QString &raw)
 {

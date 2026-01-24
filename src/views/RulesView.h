@@ -3,6 +3,7 @@
 
 #include <QVector>
 #include <QWidget>
+#include "models/RuleItem.h"
 
 class QComboBox;
 class QGridLayout;
@@ -36,27 +37,13 @@ private slots:
     void onAddRuleClicked();
 
 private:
-    struct RuleItem {
-        QString type;
-        QString payload;
-        QString proxy;
-        bool isCustom = false;
-    };
-
     void setupUI();
     void applyFilters();
     void updateFilterOptions();
     void rebuildGrid();
     void updateEmptyState();
-    QWidget* createRuleCard(const RuleItem &rule, int index);
-    QString normalizeProxyValue(const QString &proxy) const;
-    QString displayProxyLabel(const QString &proxy) const;
-    QString ruleTagType(const RuleItem &rule) const;
-    QString proxyTagType(const QString &proxy) const;
-    bool isCustomPayload(const QString &payload) const;
-    QString activeConfigPath() const;
-    bool removeRuleFromConfig(const RuleItem &rule);
-    bool changeRuleType(const RuleItem &rule);
+    void handleEditRule(const RuleItem &rule);
+    void handleDeleteRule(const RuleItem &rule);
 
     ProxyService *m_proxyService = nullptr;
 

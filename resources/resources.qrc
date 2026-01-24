@@ -4,6 +4,13 @@
         <file>icons/app.png</file>
         <file>icons/tray.png</file>
         <file>icons/check.svg</file>
+        <file>styles/home_view.qss</file>
+        <file>styles/log_view.qss</file>
+        <file>styles/main_window.qss</file>
+        <file>styles/proxy_view.qss</file>
+        <file>styles/rules_view.qss</file>
+        <file>styles/subscription_card.qss</file>
+        <file>styles/subscription_view.qss</file>
     </qresource>
     <qresource prefix="/translations">
         <!-- Translation files are generated at build time. -->

@@ -2,6 +2,7 @@
 #include "storage/DatabaseService.h"
 #include "utils/Logger.h"
 #include <QApplication>
+#include <QFile>
 #include <QPalette>
 #include <QJsonObject>
 #include <QStyleFactory>
@@ -263,6 +264,33 @@ QString ThemeManager::getScrollBarStyle() const
     )")
     .arg(m_colors["border"])
     .arg(m_colors["text-tertiary"]);
+}
+
+QString ThemeManager::getLogViewStyle() const
+{
+    return loadStyleSheet(":/styles/log_view.qss");
+}
+
+QString ThemeManager::loadStyleSheet(const QString &resourcePath,
+                                     const QMap<QString, QString> &extra) const
+{
+    QFile file(resourcePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        Logger::warn(QString("Failed to open stylesheet: %1").arg(resourcePath));
+        return QString();
+    }
+
+    QString qss = QString::fromUtf8(file.readAll());
+    file.close();
+
+    for (auto it = m_colors.constBegin(); it != m_colors.constEnd(); ++it) {
+        qss.replace(QString("@%1@").arg(it.key()), it.value());
+    }
+    for (auto it = extra.constBegin(); it != extra.constEnd(); ++it) {
+        qss.replace(QString("@%1@").arg(it.key()), it.value());
+    }
+
+    return qss;
 }
 
 void ThemeManager::updateApplicationStyle()

@@ -35,6 +35,9 @@ public:
     QString getCardStyle() const;
     QString getInputStyle() const;
     QString getScrollBarStyle() const;
+    QString getLogViewStyle() const;
+    QString loadStyleSheet(const QString &resourcePath,
+                           const QMap<QString, QString> &extra = QMap<QString, QString>()) const;
 
 signals:
     void themeChanged();
