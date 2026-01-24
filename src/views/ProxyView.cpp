@@ -2,13 +2,13 @@
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
 #include "utils/ThemeManager.h"
+#include "widgets/ChevronToggle.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QTimer>
 #include <QMessageBox>
 #include <QLabel>
-#include <QToolButton>
 
 ProxyView::ProxyView(QWidget *parent)
     : QWidget(parent)
@@ -340,11 +340,10 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             }
             cardLayout->addStretch();
 
-            QToolButton *toggleBtn = new QToolButton;
+            ChevronToggle *toggleBtn = new ChevronToggle;
             toggleBtn->setObjectName("ProxyGroupToggle");
-            toggleBtn->setArrowType(groupItem->isExpanded() ? Qt::DownArrow : Qt::RightArrow);
-            toggleBtn->setCursor(Qt::PointingHandCursor);
-            toggleBtn->setAutoRaise(true);
+            toggleBtn->setExpanded(groupItem->isExpanded());
+            toggleBtn->setFixedSize(28, 28);
             cardLayout->addWidget(toggleBtn);
 
             groupItem->setSizeHint(0, QSize(0, 72));
@@ -352,9 +351,8 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             groupItem->setText(2, QString());
             m_treeWidget->setItemWidget(groupItem, 0, groupCard);
 
-            connect(toggleBtn, &QToolButton::clicked, this, [groupItem, toggleBtn]() {
-                groupItem->setExpanded(!groupItem->isExpanded());
-                toggleBtn->setArrowType(groupItem->isExpanded() ? Qt::DownArrow : Qt::RightArrow);
+            connect(toggleBtn, &ChevronToggle::toggled, this, [groupItem](bool expanded) {
+                groupItem->setExpanded(expanded);
             });
             
             for (const auto &nodeName : all) {

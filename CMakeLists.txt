@@ -67,6 +67,7 @@ set(SOURCES
     src/views/LogView.cpp
     src/views/SettingsView.cpp
     src/widgets/ToggleSwitch.cpp
+    src/widgets/ChevronToggle.cpp
     src/widgets/RoundedMenu.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
@@ -100,6 +101,7 @@ set(HEADERS
     src/views/LogView.h
     src/views/SettingsView.h
     src/widgets/ToggleSwitch.h
+    src/widgets/ChevronToggle.h
     src/widgets/RoundedMenu.h
     src/utils/Logger.h
     src/utils/Crypto.h

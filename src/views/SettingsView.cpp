@@ -368,7 +368,7 @@ void SettingsView::setupUI()
     kernelLayout->addRow(m_kernelDownloadStatus);
     kernelLayout->addRow(kernelBtnLayout);
 
-    m_saveBtn = new QPushButton(tr("Save Settings"));
+    m_saveBtn = new QPushButton(tr("Save"));
     m_saveBtn->setFixedHeight(36);
     m_saveBtn->setFixedWidth(110);
     m_saveBtn->setStyleSheet(R"(
