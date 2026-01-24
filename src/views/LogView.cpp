@@ -62,26 +62,20 @@ void LogView::setupUI()
     controlsLayout->setSpacing(8);
 
     m_totalTag = new QLabel(tr("0 entries"));
-    m_totalTag->setObjectName("TagInfo");
     m_errorTag = new QLabel(tr("Errors: 0"));
-    m_errorTag->setObjectName("TagError");
     m_warningTag = new QLabel(tr("Warnings: 0"));
-    m_warningTag->setObjectName("TagWarning");
 
     m_autoScroll = new QCheckBox(tr("Auto scroll"));
     m_autoScroll->setObjectName("AutoScroll");
     m_autoScroll->setChecked(false);
 
     m_clearBtn = new QPushButton(tr("Clear"));
-    m_clearBtn->setObjectName("ActionDangerBtn");
     m_clearBtn->setCursor(Qt::PointingHandCursor);
 
     m_copyBtn = new QPushButton(tr("Copy"));
-    m_copyBtn->setObjectName("ActionBtn");
     m_copyBtn->setCursor(Qt::PointingHandCursor);
 
     m_exportBtn = new QPushButton(tr("Export"));
-    m_exportBtn->setObjectName("ActionBtn");
     m_exportBtn->setCursor(Qt::PointingHandCursor);
 
     controlsLayout->addWidget(m_autoScroll);
@@ -392,4 +386,43 @@ void LogView::updateEmptyState()
 void LogView::updateStyle()
 {
     setStyleSheet(ThemeManager::instance().getLogViewStyle());
+
+    ThemeManager &tm = ThemeManager::instance();
+
+    // Helper to apply transparent style to generic widget (QLabel/QPushButton)
+    auto applyTransparentStyle = [](QWidget *widget, const QColor &baseColor, bool isButton) {
+        if (!widget) return;
+        QColor bg = baseColor;
+        bg.setAlphaF(0.2);
+        QColor border = baseColor;
+        border.setAlphaF(0.4);
+        QColor hoverBg = baseColor;
+        hoverBg.setAlphaF(0.3);
+
+        QString baseStyle = QString(
+            "%1 { background-color: %2; color: %3; border: 1px solid %4; "
+            "border-radius: 10px; padding: 0px 12px; font-weight: bold; font-size: 11px; "
+            "min-height: 26px; max-height: 26px; qproperty-alignment: AlignCenter; }"
+        ).arg(isButton ? "QPushButton" : "QLabel")
+         .arg(bg.name(QColor::HexArgb))
+         .arg(baseColor.name())
+         .arg(border.name(QColor::HexArgb));
+
+        if (isButton) {
+            baseStyle += QString("QPushButton:hover { background-color: %1; }")
+                         .arg(hoverBg.name(QColor::HexArgb));
+        }
+        widget->setStyleSheet(baseStyle);
+    };
+
+    // Tags
+    // Primary: Blue (#3b82f6), Danger: Red (#e94560), Warning: Orange (#f59e0b)
+    applyTransparentStyle(m_totalTag, QColor("#3b82f6"), false);
+    applyTransparentStyle(m_errorTag, QColor("#e94560"), false);
+    applyTransparentStyle(m_warningTag, QColor("#f59e0b"), false);
+
+    // Buttons
+    applyTransparentStyle(m_clearBtn, QColor("#e94560"), true);
+    applyTransparentStyle(m_copyBtn, QColor("#3b82f6"), true);
+    applyTransparentStyle(m_exportBtn, QColor("#3b82f6"), true);
 }
