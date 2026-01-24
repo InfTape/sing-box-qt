@@ -254,8 +254,16 @@ void MainWindow::setupConnections()
             });
 
     connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled) {
+        bool ok = true;
         if (m_proxyController) {
-            m_proxyController->setSystemProxyEnabled(enabled);
+            ok = m_proxyController->setSystemProxyEnabled(enabled);
+        }
+        if (!ok) {
+            if (m_homeView) {
+                m_homeView->setSystemProxyEnabled(false);
+            }
+            QMessageBox::warning(this, tr("System Proxy"), tr("Failed to update system proxy settings."));
+            return;
         }
         if (enabled && m_homeView) {
             m_homeView->setTunModeEnabled(false);

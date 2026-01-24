@@ -1,10 +1,17 @@
 #include "ProcessManager.h"
 #include "utils/Logger.h"
+#include <QProcess>
+#include <QRegularExpression>
+#include <QStandardPaths>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <tlhelp32.h>
 #include <psapi.h>
+#else
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
 #endif
 
 ProcessManager::ProcessManager(QObject *parent)
@@ -38,6 +45,38 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString &name)
     }
 
     CloseHandle(hSnapshot);
+#else
+    const QString psPath = QStandardPaths::findExecutable("ps");
+    if (psPath.isEmpty()) {
+        Logger::warn("ps not found; cannot enumerate processes");
+        return processes;
+    }
+
+    QProcess proc;
+    proc.start(psPath, {"-axo", "pid=,comm="});
+    if (!proc.waitForFinished(2000)) {
+        proc.kill();
+        return processes;
+    }
+
+    const QString output = QString::fromUtf8(proc.readAllStandardOutput());
+    const QStringList lines = output.split('\n', Qt::SkipEmptyParts);
+    for (const QString &line : lines) {
+        const QString trimmed = line.trimmed();
+        if (trimmed.isEmpty()) continue;
+        const QStringList parts = trimmed.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+        if (parts.size() < 2) continue;
+        bool ok = false;
+        const qint64 pid = parts.at(0).toLongLong(&ok);
+        if (!ok) continue;
+        const QString processName = parts.at(1);
+        if (processName.compare(name, Qt::CaseInsensitive) == 0) {
+            ProcessInfo info;
+            info.pid = pid;
+            info.name = processName;
+            processes.append(info);
+        }
+    }
 #endif
 
     return processes;
@@ -62,8 +101,11 @@ bool ProcessManager::isProcessRunning(qint64 pid)
     }
     return false;
 #else
-    // TODO: implement for Unix.
-    return false;
+    if (pid <= 0) return false;
+    if (::kill(static_cast<pid_t>(pid), 0) == 0) {
+        return true;
+    }
+    return errno == EPERM;
 #endif
 }
 
@@ -82,7 +124,14 @@ bool ProcessManager::killProcess(qint64 pid)
     Logger::warn(QString("Failed to terminate process: PID=%1").arg(pid));
     return false;
 #else
-    // TODO: implement for Unix.
+    if (pid <= 0) return false;
+    if (::kill(static_cast<pid_t>(pid), SIGTERM) == 0) {
+        Logger::info(QString("Process terminated: PID=%1").arg(pid));
+        return true;
+    }
+    Logger::warn(QString("Failed to terminate process: PID=%1, error=%2")
+        .arg(pid)
+        .arg(QString::fromLocal8Bit(strerror(errno))));
     return false;
 #endif
 }

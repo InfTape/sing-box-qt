@@ -123,11 +123,17 @@ bool ProxyController::setSystemProxyEnabled(bool enabled)
 {
     if (enabled) {
         int port = ConfigManager::instance().getMixedPort();
-        SystemProxy::setProxy("127.0.0.1", port);
+        if (!SystemProxy::setProxy("127.0.0.1", port)) {
+            Logger::warn("Failed to set system proxy");
+            AppSettings::instance().setSystemProxyEnabled(false);
+            return false;
+        }
         AppSettings::instance().setSystemProxyEnabled(true);
         AppSettings::instance().setTunEnabled(false);
     } else {
-        SystemProxy::clearProxy();
+        if (!SystemProxy::clearProxy()) {
+            Logger::warn("Failed to clear system proxy");
+        }
         AppSettings::instance().setSystemProxyEnabled(false);
     }
     return applySettingsToActiveConfig(true);
@@ -163,14 +169,20 @@ bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning)
 void ProxyController::updateSystemProxyForKernelState(bool running)
 {
     if (!AppSettings::instance().systemProxyEnabled()) {
-        SystemProxy::clearProxy();
+        if (!SystemProxy::clearProxy()) {
+            Logger::warn("Failed to clear system proxy");
+        }
         return;
     }
 
     if (running) {
         int port = ConfigManager::instance().getMixedPort();
-        SystemProxy::setProxy("127.0.0.1", port);
+        if (!SystemProxy::setProxy("127.0.0.1", port)) {
+            Logger::warn("Failed to set system proxy");
+        }
     } else {
-        SystemProxy::clearProxy();
+        if (!SystemProxy::clearProxy()) {
+            Logger::warn("Failed to clear system proxy");
+        }
     }
 }

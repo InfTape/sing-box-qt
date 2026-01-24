@@ -608,7 +608,7 @@ void SettingsView::tryDownloadUrl(int index, const QStringList &urls, const QStr
                 return;
             }
 
-            ProcessManager::killProcessByName("sing-box.exe");
+            ProcessManager::killProcessByName(exeName);
 
             const QString dataDir = kernelInstallDir();
             QDir().mkpath(dataDir);
@@ -625,6 +625,13 @@ void SettingsView::tryDownloadUrl(int index, const QStringList &urls, const QStr
                 QMessageBox::warning(this, tr("Install Failed"), tr("Failed to write kernel file"));
                 return;
             }
+#ifndef Q_OS_WIN
+            QFile::setPermissions(destPath,
+                QFile::permissions(destPath)
+                | QFileDevice::ExeOwner
+                | QFileDevice::ExeGroup
+                | QFileDevice::ExeOther);
+#endif
 
             setDownloadUi(false, tr("Download complete"));
             QMessageBox::information(this, tr("Done"), tr("Kernel downloaded and installed successfully"));
@@ -642,9 +649,26 @@ QString SettingsView::detectKernelPath() const
 #endif
 
     const QString dataDir = kernelInstallDir();
-    const QString path = dataDir + "/" + kernelName;
-    if (QFile::exists(path)) {
-        return path;
+    const QString localPath = dataDir + "/" + kernelName;
+    if (QFile::exists(localPath)) {
+        return localPath;
+    }
+
+#if defined(Q_OS_FREEBSD)
+    const QString usrLocalPath = "/usr/local/bin/" + kernelName;
+    if (QFile::exists(usrLocalPath)) {
+        return usrLocalPath;
+    }
+
+    const QString usrPath = "/usr/bin/" + kernelName;
+    if (QFile::exists(usrPath)) {
+        return usrPath;
+    }
+#endif
+
+    const QString envPath = QStandardPaths::findExecutable(kernelName);
+    if (!envPath.isEmpty() && QFile::exists(envPath)) {
+        return envPath;
     }
 
     return QString();
@@ -697,19 +721,25 @@ QString SettingsView::buildKernelFilename(const QString &version) const
         cleanVersion = cleanVersion.mid(1);
     }
 
-    bool useLegacy = false;
 #ifdef Q_OS_WIN
+    bool useLegacy = false;
     const QOperatingSystemVersion osVersion = QOperatingSystemVersion::current();
     if (osVersion.majorVersion() > 0 && osVersion.majorVersion() < 10) {
         useLegacy = true;
     }
-#endif
 
     if (useLegacy && (arch == "amd64" || arch == "386")) {
         return QString("sing-box-%1-windows-%2-legacy-windows-7.zip").arg(cleanVersion, arch);
     }
 
     return QString("sing-box-%1-windows-%2.zip").arg(cleanVersion, arch);
+#elif defined(Q_OS_FREEBSD)
+    return QString("sing-box-%1-freebsd-%2.tar.gz").arg(cleanVersion, arch);
+#elif defined(Q_OS_MACOS)
+    return QString("sing-box-%1-darwin-%2.tar.gz").arg(cleanVersion, arch);
+#else
+    return QString("sing-box-%1-linux-%2.tar.gz").arg(cleanVersion, arch);
+#endif
 }
 
 QStringList SettingsView::buildDownloadUrls(const QString &version, const QString &filename) const
@@ -775,12 +805,44 @@ bool SettingsView::extractZipArchive(const QString &zipPath, const QString &dest
 
     return true;
 #else
-    Q_UNUSED(zipPath)
-    Q_UNUSED(destDir)
-    if (errorMessage) {
-        *errorMessage = tr("Extraction not supported on this platform");
+    QDir dest(destDir);
+    if (dest.exists()) {
+        dest.removeRecursively();
     }
-    return false;
+    QDir().mkpath(destDir);
+
+    QString tarPath = QStandardPaths::findExecutable("tar");
+    if (tarPath.isEmpty()) {
+        tarPath = QStandardPaths::findExecutable("bsdtar");
+    }
+    if (tarPath.isEmpty()) {
+        if (errorMessage) {
+            *errorMessage = tr("tar not found");
+        }
+        return false;
+    }
+
+    QProcess proc;
+    proc.start(tarPath, {"-xf", zipPath, "-C", destDir});
+    if (!proc.waitForFinished(300000)) {
+        if (errorMessage) {
+            *errorMessage = tr("Extraction timed out");
+        }
+        proc.kill();
+        return false;
+    }
+
+    if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
+        if (errorMessage) {
+            *errorMessage = QString::fromUtf8(proc.readAllStandardError()).trimmed();
+            if (errorMessage->isEmpty()) {
+                *errorMessage = tr("Extraction failed");
+            }
+        }
+        return false;
+    }
+
+    return true;
 #endif
 }
 

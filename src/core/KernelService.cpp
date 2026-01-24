@@ -245,11 +245,33 @@ QString KernelService::findKernelPath() const
     const QString dataDir = appDataDir();
     Logger::info(QString("Searching for kernel, data dir: %1").arg(dataDir));
 
-    const QString path = QDir(dataDir).filePath(kernelName);
-    Logger::info(QString("Trying path: %1").arg(path));
-    if (QFile::exists(path)) {
-        Logger::info(QString("Kernel found: %1").arg(path));
-        return path;
+    const QString localPath = QDir(dataDir).filePath(kernelName);
+    Logger::info(QString("Trying path: %1").arg(localPath));
+    if (QFile::exists(localPath)) {
+        Logger::info(QString("Kernel found: %1").arg(localPath));
+        return localPath;
+    }
+
+#if defined(Q_OS_FREEBSD)
+    const QString usrLocalPath = "/usr/local/bin/" + kernelName;
+    Logger::info(QString("Trying path: %1").arg(usrLocalPath));
+    if (QFile::exists(usrLocalPath)) {
+        Logger::info(QString("Kernel found: %1").arg(usrLocalPath));
+        return usrLocalPath;
+    }
+
+    const QString usrPath = "/usr/bin/" + kernelName;
+    Logger::info(QString("Trying path: %1").arg(usrPath));
+    if (QFile::exists(usrPath)) {
+        Logger::info(QString("Kernel found: %1").arg(usrPath));
+        return usrPath;
+    }
+#endif
+
+    const QString envPath = QStandardPaths::findExecutable(kernelName);
+    if (!envPath.isEmpty() && QFile::exists(envPath)) {
+        Logger::info(QString("Kernel found: %1").arg(envPath));
+        return envPath;
     }
 
     Logger::warn("sing-box kernel not found");

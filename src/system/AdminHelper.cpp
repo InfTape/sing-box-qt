@@ -1,10 +1,14 @@
 #include "AdminHelper.h"
 #include "utils/Logger.h"
 #include <QCoreApplication>
+#include <QProcess>
+#include <QStandardPaths>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #include <shellapi.h>
+#else
+#include <unistd.h>
 #endif
 
 AdminHelper::AdminHelper(QObject *parent)
@@ -29,7 +33,7 @@ bool AdminHelper::isAdmin()
     return isAdmin;
 #else
     // Unix: check if running as root.
-    return getuid() == 0;
+    return geteuid() == 0;
 #endif
 }
 
@@ -74,9 +78,33 @@ bool AdminHelper::runAsAdmin(const QString &program, const QStringList &argument
         return false;
     }
 #else
-    // TODO: use pkexec or similar on Linux/macOS.
-    Q_UNUSED(program)
-    Q_UNUSED(arguments)
+    QString helper = QStandardPaths::findExecutable("pkexec");
+    QStringList args = arguments;
+    if (!helper.isEmpty()) {
+        args.prepend(program);
+    } else {
+        helper = QStandardPaths::findExecutable("doas");
+        if (!helper.isEmpty()) {
+            args.prepend(program);
+        } else {
+            helper = QStandardPaths::findExecutable("sudo");
+            if (!helper.isEmpty()) {
+                args.prepend(program);
+            }
+        }
+    }
+
+    if (helper.isEmpty()) {
+        Logger::warn("No privilege elevation helper found (pkexec/doas/sudo)");
+        return false;
+    }
+
+    if (QProcess::startDetached(helper, args)) {
+        Logger::info("Admin elevation requested");
+        return true;
+    }
+
+    Logger::error("Admin elevation failed to start");
     return false;
 #endif
 }
