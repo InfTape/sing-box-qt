@@ -59,9 +59,9 @@
 
 ## 截图预览
 
-![主页](https://github.com/user-attachments/assets/64c001c0-8a59-4396-ad28-92bae917b8b4)
+![主页](https://github.com/user-attachments/assets/dd2a4cf3-4c84-4384-a42d-6aad93fa586f)
 
-![代理](https://github.com/user-attachments/assets/4d7079aa-6d47-4513-80a8-57d75b5cee5d)
+![代理](https://github.com/user-attachments/assets/62eeeedf-f8a0-4ba9-bf8a-6f7c0511cc05)
 
 ![订阅](https://github.com/user-attachments/assets/9ee8a3cd-9649-442e-a286-76900340e319)
 
@@ -71,7 +71,7 @@
 
 ![日志](https://github.com/user-attachments/assets/1f3428b7-9496-49e7-b8cc-5db8b0730c8c)
 
-![设置](https://github.com/user-attachments/assets/6f6e0658-523e-43c6-ae0b-90968af66f23)
+![设置](https://github.com/user-attachments/assets/1beb08b1-04ac-485a-b8b1-3b3c739ea5b5)
 
 ---
 
