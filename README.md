@@ -73,6 +73,9 @@
 
 ![设置](https://github.com/user-attachments/assets/53e2ece9-2534-4e24-85f2-ffbe5c7173e1)
 
+![托盘](https://github.com/user-attachments/assets/9d4114cf-00a0-4d9b-abd0-b06b34e6da3b)
+
+
 ---
 
 ## 下载安装
