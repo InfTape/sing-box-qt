@@ -67,9 +67,9 @@
 
 ![连接](https://github.com/user-attachments/assets/7abd2eb3-f775-4d45-bc79-f0893b27c04c)
 
-![规则](https://github.com/user-attachments/assets/e0c1e528-d68d-4d6c-85d1-4b5fa6d08b89)
+![规则](https://github.com/user-attachments/assets/ec233a84-94fb-45f7-a829-b48bd666ade5)
 
-![日志](https://github.com/user-attachments/assets/80709fb2-729b-453b-8e70-decd899d7107)
+![日志](https://github.com/user-attachments/assets/1f3428b7-9496-49e7-b8cc-5db8b0730c8c)
 
 ![设置](https://github.com/user-attachments/assets/6f6e0658-523e-43c6-ae0b-90968af66f23)
 
