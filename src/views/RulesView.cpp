@@ -24,6 +24,7 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSet>
 #include <QCursor>
 #include <QtMath>
@@ -162,6 +163,20 @@ inline QList<RuleFieldInfo> ruleFieldInfos()
     };
 }
 
+inline QString normalizeRuleTypeKey(const QString &type)
+{
+    const QString trimmed = type.trimmed();
+    if (trimmed.isEmpty()) return "default";
+    return trimmed.toLower();
+}
+
+inline QString displayRuleTypeLabel(const QString &type)
+{
+    const QString trimmed = type.trimmed();
+    if (trimmed.isEmpty()) return QObject::tr("Default");
+    return type;
+}
+
 } // namespace
 
 RulesView::RulesView(QWidget *parent)
@@ -172,6 +187,7 @@ RulesView::RulesView(QWidget *parent)
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
             this, &RulesView::updateStyle);
+
 }
 
 void RulesView::setupUI()
@@ -245,6 +261,7 @@ void RulesView::setupUI()
     m_gridLayout = new QGridLayout(m_gridContainer);
     m_gridLayout->setContentsMargins(0, 0, 0, 0);
     m_gridLayout->setSpacing(16);
+    m_gridLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
     m_scrollArea->setWidget(m_gridContainer);
 
@@ -548,6 +565,15 @@ void RulesView::onAddRuleClicked()
         return;
     }
 
+    RuleItem added;
+    added.type = field.key;
+    added.payload = QString("%1=%2").arg(field.key, values.join(","));
+    added.proxy = outboundTag;
+    added.isCustom = true;
+    m_rules.push_back(added);
+    updateFilterOptions();
+    applyFilters();
+
     QMessageBox::information(this, tr("Add Rule"),
                              tr("Rules written to route.rules.\nRestart kernel or app to apply."));
 }
@@ -570,12 +596,16 @@ void RulesView::applyFilters()
 
     m_filteredRules.clear();
     for (const auto &rule : std::as_const(m_rules)) {
+        const QString typeLabel = displayRuleTypeLabel(rule.type);
         const bool matchSearch = query.isEmpty()
             || rule.payload.contains(query, Qt::CaseInsensitive)
-            || rule.proxy.contains(query, Qt::CaseInsensitive);
+            || rule.proxy.contains(query, Qt::CaseInsensitive)
+            || typeLabel.contains(query, Qt::CaseInsensitive);
         const bool matchType = typeValue.isEmpty()
             || (typeValue == "custom" && rule.isCustom)
-            || (typeValue != "custom" && rule.type == typeValue);
+            || (typeValue == "default" && !rule.isCustom)
+            || (typeValue != "custom" && typeValue != "default"
+                && normalizeRuleTypeKey(rule.type) == typeValue);
         const bool matchProxy = proxyValue.isEmpty()
             || normalizeProxyValue(rule.proxy) == proxyValue;
 
@@ -590,6 +620,10 @@ void RulesView::applyFilters()
     });
 
     rebuildGrid();
+    if (m_scrollArea) {
+        if (auto *vbar = m_scrollArea->verticalScrollBar()) vbar->setValue(0);
+        if (auto *hbar = m_scrollArea->horizontalScrollBar()) hbar->setValue(0);
+    }
     updateEmptyState();
 }
 
@@ -598,11 +632,18 @@ void RulesView::updateFilterOptions()
     const QString currentType = m_typeFilter->currentData().toString();
     const QString currentProxy = m_proxyFilter->currentData().toString();
 
-    QSet<QString> types;
+    QMap<QString, QString> types;
     QSet<QString> proxies;
     bool hasCustom = false;
+    bool hasDefault = false;
     for (const auto &rule : std::as_const(m_rules)) {
-        types.insert(rule.type);
+        const QString typeKey = normalizeRuleTypeKey(rule.type);
+        if (!rule.isCustom) {
+            hasDefault = true;
+            if (typeKey != "default" && !types.contains(typeKey)) {
+                types.insert(typeKey, displayRuleTypeLabel(rule.type));
+            }
+        }
         proxies.insert(normalizeProxyValue(rule.proxy));
         if (rule.isCustom) hasCustom = true;
     }
@@ -613,10 +654,14 @@ void RulesView::updateFilterOptions()
     if (hasCustom) {
         m_typeFilter->addItem(tr("Custom"), "custom");
     }
-    QStringList typeList = types.values();
-    typeList.sort();
-    for (const auto &type : typeList) {
-        m_typeFilter->addItem(type, type);
+    if (hasDefault) {
+        m_typeFilter->addItem(tr("Default"), "default");
+    }
+    QStringList typeKeys = types.keys();
+    typeKeys.sort();
+    for (const auto &key : typeKeys) {
+        const QString label = types.value(key);
+        m_typeFilter->addItem(label, key);
     }
     int typeIndex = m_typeFilter->findData(currentType);
     m_typeFilter->setCurrentIndex(typeIndex < 0 ? 0 : typeIndex);
@@ -644,6 +689,11 @@ void RulesView::updateFilterOptions()
 
 void RulesView::rebuildGrid()
 {
+    if (!m_gridLayout || !m_scrollArea || !m_gridContainer) return;
+
+    m_gridContainer->setUpdatesEnabled(false);
+    m_scrollArea->viewport()->setUpdatesEnabled(false);
+
     while (m_gridLayout->count() > 0) {
         QLayoutItem *item = m_gridLayout->takeAt(0);
         if (item->widget()) {
@@ -679,6 +729,10 @@ void RulesView::rebuildGrid()
     for (int i = 0; i < columns; ++i) {
         m_gridLayout->setColumnStretch(i, 1);
     }
+
+    m_gridContainer->setUpdatesEnabled(true);
+    m_scrollArea->viewport()->setUpdatesEnabled(true);
+    m_gridContainer->update();
 }
 
 void RulesView::updateEmptyState()
@@ -710,7 +764,7 @@ QWidget* RulesView::createRuleCard(const RuleItem &rule, int index)
     QHBoxLayout *headerLayout = new QHBoxLayout;
     headerLayout->setSpacing(6);
 
-    QLabel *typeTag = new QLabel(rule.isCustom ? tr("Custom Rule") : rule.type);
+    QLabel *typeTag = new QLabel(rule.isCustom ? tr("Custom Rule") : displayRuleTypeLabel(rule.type));
     typeTag->setObjectName("RuleTag");
     typeTag->setProperty("tagType", ruleTagType(rule));
 
@@ -1257,7 +1311,28 @@ void RulesView::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     if (!m_filteredRules.isEmpty()) {
-        rebuildGrid();
+        const int availableWidth = m_scrollArea->viewport()->width();
+        const int spacing = m_gridLayout->spacing();
+        const int minColumns = 2;
+        const int maxColumns = 4;
+        const int idealCardWidth = 320;
+        int columns = availableWidth / idealCardWidth;
+        columns = qMax(minColumns, qMin(columns, maxColumns));
+        if (columns != m_columnCount) {
+            rebuildGrid();
+            return;
+        }
+
+        const int totalSpacing = spacing * (columns - 1);
+        const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
+        const int cardHeight = qMax(150, qRound(cardWidth * 0.55));
+        for (int i = 0; i < m_gridLayout->count(); ++i) {
+            if (QLayoutItem *item = m_gridLayout->itemAt(i)) {
+                if (QWidget *widget = item->widget()) {
+                    widget->setFixedSize(cardWidth, cardHeight);
+                }
+            }
+        }
     }
 }
 

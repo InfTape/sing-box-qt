@@ -116,7 +116,7 @@ void MainWindow::setupUI()
     m_logView = new LogView;
     m_settingsView = new SettingsView;
 
-
+    m_proxyView->setProxyService(m_proxyService);
     m_connectionsView->setProxyService(m_proxyService);
     m_rulesView->setProxyService(m_proxyService);
 

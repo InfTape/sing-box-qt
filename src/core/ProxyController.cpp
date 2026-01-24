@@ -53,7 +53,7 @@ bool ProxyController::ensureConfigExists(QString *outPath)
 
     ConfigManager &cm = ConfigManager::instance();
     if (!cm.generateConfigWithNodes(QJsonArray())) {
-        Logger::error(QStringLiteral(u"\u751f\u6210\u9ed8\u8ba4\u914d\u7f6e\u5931\u8d25"));
+        Logger::error(QStringLiteral("Failed to generate default config"));
         return false;
     }
 
@@ -96,7 +96,7 @@ bool ProxyController::setProxyMode(const QString &mode, bool restartIfRunning, Q
 {
     const QString configPath = activeConfigPath();
     if (configPath.isEmpty()) {
-        if (error) *error = QObject::tr("\u65e0\u6cd5\u83b7\u53d6\u914d\u7f6e\u6587\u4ef6\u8def\u5f84");
+        if (error) *error = QObject::tr("Failed to resolve config path");
         return false;
     }
 
