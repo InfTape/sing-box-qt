@@ -101,9 +101,7 @@ void HomeView::setupUI()
     headerLayout->addWidget(m_statusBadge);
     headerLayout->addStretch();
 
-    headerLayout->addWidget(titleLabel);
-    headerLayout->addWidget(m_statusBadge);
-    headerLayout->addStretch();
+
 
     mainLayout->addWidget(headerWidget);
 

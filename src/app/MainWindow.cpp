@@ -179,6 +179,14 @@ void MainWindow::setupStatusBar()
     m_startStopBtn = new QPushButton(tr("Start"));
     m_startStopBtn->setFixedSize(80, 32);
     m_startStopBtn->setCursor(Qt::PointingHandCursor);
+    
+    // Initial Transparent Green
+    QString startStyle = QString(
+        "QPushButton { background-color: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); "
+        "border-radius: 10px; font-weight: bold; }"
+        "QPushButton:hover { background-color: rgba(16, 185, 129, 0.3); }"
+    );
+    m_startStopBtn->setStyleSheet(startStyle);
 
     statusLayout->addStretch();
     statusLayout->addWidget(m_startStopBtn);
@@ -308,9 +316,6 @@ void MainWindow::setupConnections()
             }
         }
     });
-    connect(m_homeView, &HomeView::restartClicked, this, [this]() {
-        m_kernelService->restart();
-    });
 
     m_homeView->updateStatus(m_kernelService->isRunning());
     m_connectionsView->setAutoRefreshEnabled(m_kernelService->isRunning());
@@ -351,11 +356,14 @@ void MainWindow::onKernelStatusChanged(bool running)
 
     if (running) {
         m_startStopBtn->setText(tr("Stop"));
-        m_startStopBtn->setStyleSheet(QString(
-            "QPushButton { background-color: %1; color: white; border-radius: 10px; border: none; }"
-            "QPushButton:hover { background-color: #d32f2f; }"
-        ).arg(tm.getColorString("error"))); 
-
+        
+        // Transparent Red for Stop
+        QString style = QString(
+            "QPushButton { background-color: rgba(233, 69, 96, 0.2); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.4); "
+            "border-radius: 10px; font-weight: bold; }"
+            "QPushButton:hover { background-color: rgba(233, 69, 96, 0.3); }"
+        );
+        m_startStopBtn->setStyleSheet(style);
 
         m_proxyService->startTrafficMonitor();
         if (m_proxyController) {
@@ -366,7 +374,15 @@ void MainWindow::onKernelStatusChanged(bool running)
 
     } else {
         m_startStopBtn->setText(tr("Start"));
-        m_startStopBtn->setStyleSheet(tm.getButtonStyle());
+        
+        ThemeManager &tm = ThemeManager::instance();
+        // Transparent Green for Start
+        QString style = QString(
+            "QPushButton { background-color: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); "
+            "border-radius: 10px; font-weight: bold; }"
+            "QPushButton:hover { background-color: rgba(16, 185, 129, 0.3); }"
+        );
+        m_startStopBtn->setStyleSheet(style);
 
         m_proxyService->stopTrafficMonitor();
 
@@ -389,7 +405,10 @@ void MainWindow::updateStyle()
     setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
 
     if (m_startStopBtn) {
-        m_startStopBtn->setStyleSheet(tm.getButtonStyle());
+       // Only apply button style if not customized (or rely on onKernelStatusChanged to re-apply)
+       // Actually, onKernelStatusChanged handles dynamic colors. Initial setup handles initial color.
+       // We might lose state if theme changes, but onKernelStatusChanged should be called or we can re-apply based on valid status.
+       // For now, let's NOT override it with generic button style.
     }
 }
 
