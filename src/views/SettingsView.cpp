@@ -11,10 +11,12 @@
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QScrollArea>
+#include <QSizePolicy>
 #include <QStandardPaths>
 #include <QDir>
 #include <QDirIterator>
@@ -28,6 +30,8 @@
 #include <QSysInfo>
 #include <QJsonObject>
 #include <QOperatingSystemVersion>
+#include <QWheelEvent>
+#include <QSignalBlocker>
 #include <functional>
 #include "utils/AppPaths.h"
 #include "utils/ThemeManager.h"
@@ -35,6 +39,25 @@
 #include "widgets/ToggleSwitch.h"
 
 namespace {
+
+constexpr int kThemeDefaultIndex = 0;
+constexpr int kLanguageDefaultIndex = 1;
+constexpr int kSpinBoxHeight = 34;
+
+class NoWheelSpinBox : public QSpinBox
+{
+public:
+    explicit NoWheelSpinBox(QWidget *parent = nullptr)
+        : QSpinBox(parent)
+    {
+    }
+
+protected:
+    void wheelEvent(QWheelEvent *event) override
+    {
+        event->ignore();
+    }
+};
 
 
 QString normalizeVersionTag(const QString &raw)
@@ -113,7 +136,7 @@ void SettingsView::setupUI()
     QString inputStyle = R"(
         QSpinBox, QLineEdit, QPlainTextEdit {
             background-color: %1;
-            border: none;
+            border: 1px solid %2;
             border-radius: 10px;
             padding: 8px 12px;
             color: #eaeaea;
@@ -135,8 +158,21 @@ void SettingsView::setupUI()
         QCheckBox {
             color: #eaeaea;
         }
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid %2;
+            background-color: %1;
+        }
+        QCheckBox::indicator:checked {
+            background-color: #00aaff;
+            border-color: #00aaff;
+            image: url(:/icons/check.svg);
+        }
     )";
-    const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-secondary"));
+    const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-primary"),
+                                                     tm.getColorString("border"));
 
     auto makeSectionTitle = [&tm](const QString &text) {
         QLabel *title = new QLabel(text);
@@ -152,6 +188,12 @@ void SettingsView::setupUI()
             .arg(tm.getColorString("panel-bg")));
         return card;
     };
+    auto makeFormLabel = [](const QString &text) {
+        QLabel *label = new QLabel(text);
+        label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+        label->setStyleSheet("padding-top: 3px;");
+        return label;
+    };
 
 
     QWidget *proxySection = new QWidget;
@@ -163,22 +205,28 @@ void SettingsView::setupUI()
 
     QFrame *proxyCard = makeCard();
 
-    QFormLayout *proxyLayout = new QFormLayout(proxyCard);
+    QGridLayout *proxyLayout = new QGridLayout(proxyCard);
     proxyLayout->setContentsMargins(20, 20, 20, 20);
-    proxyLayout->setSpacing(15);
-    proxyLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    proxyLayout->setHorizontalSpacing(16);
+    proxyLayout->setVerticalSpacing(12);
+    proxyLayout->setColumnStretch(1, 1);
+    proxyLayout->setColumnStretch(3, 1);
 
     m_mixedPortSpin = new QSpinBox;
     m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_mixedPortSpin->setRange(1, 65535);
     m_mixedPortSpin->setValue(7890);
     m_mixedPortSpin->setStyleSheet(inputStyleApplied);
+    m_mixedPortSpin->setFixedHeight(kSpinBoxHeight);
+    m_mixedPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_apiPortSpin = new QSpinBox;
     m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_apiPortSpin->setRange(1, 65535);
     m_apiPortSpin->setValue(9090);
     m_apiPortSpin->setStyleSheet(inputStyleApplied);
+    m_apiPortSpin->setFixedHeight(kSpinBoxHeight);
+    m_apiPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
     m_autoStartCheck->setStyleSheet(inputStyleApplied);
@@ -186,10 +234,12 @@ void SettingsView::setupUI()
     m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
     m_systemProxyCheck->setStyleSheet(inputStyleApplied);
 
-    proxyLayout->addRow(tr("Mixed port:"), m_mixedPortSpin);
-    proxyLayout->addRow(tr("API port:"), m_apiPortSpin);
-    proxyLayout->addRow(m_autoStartCheck);
-    proxyLayout->addRow(m_systemProxyCheck);
+    proxyLayout->addWidget(makeFormLabel(tr("Mixed port:")), 0, 0);
+    proxyLayout->addWidget(m_mixedPortSpin, 0, 1);
+    proxyLayout->addWidget(makeFormLabel(tr("API port:")), 0, 2);
+    proxyLayout->addWidget(m_apiPortSpin, 0, 3);
+    proxyLayout->addWidget(m_autoStartCheck, 1, 0, 1, 4);
+    proxyLayout->addWidget(m_systemProxyCheck, 2, 0, 1, 4);
 
     proxySectionLayout->addWidget(proxyCard);
 
@@ -225,27 +275,30 @@ void SettingsView::setupUI()
     tunLeft->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
     tunRight->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
-    m_tunMtuSpin = new QSpinBox;
+    m_tunMtuSpin = new NoWheelSpinBox;
     m_tunMtuSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_tunMtuSpin->setRange(576, 9000);
     m_tunMtuSpin->setValue(ConfigConstants::DEFAULT_TUN_MTU);
     m_tunMtuSpin->setStyleSheet(inputStyleApplied);
+    m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
 
     m_tunStackCombo = new MenuComboBox;
     m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
+    m_tunStackCombo->setWheelEnabled(false);
     m_tunStackCombo->setStyleSheet(QString(R"(
         QComboBox {
             background-color: %1;
-            border: none;
+            border: 1px solid %2;
             border-radius: 10px;
             padding: 6px 12px;
             color: #eaeaea;
             min-width: 150px;
         }
-    )").arg(tm.getColorString("bg-secondary")));
+    )").arg(tm.getColorString("bg-primary"),
+            tm.getColorString("border")));
 
-    tunLeft->addRow(tr("MTU:"), m_tunMtuSpin);
-    tunRight->addRow(tr("Protocol stack:"), m_tunStackCombo);
+    tunLeft->addRow(makeFormLabel(tr("MTU:")), m_tunMtuSpin);
+    tunRight->addRow(makeFormLabel(tr("Protocol stack:")), m_tunStackCombo);
     tunRow->addLayout(tunLeft, 1);
     tunRow->addLayout(tunRight, 1);
     advancedLayout->addLayout(tunRow);
@@ -282,8 +335,6 @@ void SettingsView::setupUI()
     advancedLayout->addWidget(advancedHint);
 
     m_saveAdvancedBtn = new QPushButton(tr("Save Advanced Settings"));
-    m_saveAdvancedBtn->setFixedHeight(40);
-    m_saveAdvancedBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     advancedLayout->addWidget(m_saveAdvancedBtn);
 
     proxyAdvancedLayout->addWidget(proxyAdvancedCard);
@@ -295,21 +346,30 @@ void SettingsView::setupUI()
     appearanceSectionLayout->addWidget(makeSectionTitle(tr("Appearance")));
 
     QFrame *appearanceCard = makeCard();
-    QFormLayout *appearanceLayout = new QFormLayout(appearanceCard);
+    QGridLayout *appearanceLayout = new QGridLayout(appearanceCard);
     appearanceLayout->setContentsMargins(20, 20, 20, 20);
-    appearanceLayout->setSpacing(15);
-    appearanceLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    appearanceLayout->setHorizontalSpacing(16);
+    appearanceLayout->setVerticalSpacing(12);
+    appearanceLayout->setColumnStretch(1, 1);
+    appearanceLayout->setColumnStretch(3, 1);
+
+    QLabel *themeLabel = makeFormLabel(tr("Theme:"));
+    QLabel *languageLabel = makeFormLabel(tr("Language:"));
 
     m_themeCombo = new MenuComboBox;
     m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
     m_themeCombo->setWheelEnabled(false);
+    m_themeCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_languageCombo = new MenuComboBox;
     m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
     m_languageCombo->setWheelEnabled(false);
+    m_languageCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    appearanceLayout->addRow(tr("Theme:"), m_themeCombo);
-    appearanceLayout->addRow(tr("Language:"), m_languageCombo);
+    appearanceLayout->addWidget(themeLabel, 0, 0);
+    appearanceLayout->addWidget(m_themeCombo, 0, 1);
+    appearanceLayout->addWidget(languageLabel, 0, 2);
+    appearanceLayout->addWidget(m_languageCombo, 0, 3);
 
     appearanceSectionLayout->addWidget(appearanceCard);
 
@@ -374,9 +434,9 @@ void SettingsView::setupUI()
     kernelBtnLayout->addWidget(m_checkUpdateBtn);
     kernelBtnLayout->addStretch();
 
-    kernelLayout->addRow(tr("Installed version:"), m_kernelVersionLabel);
-    kernelLayout->addRow(tr("Select version:"), m_kernelVersionCombo);
-    kernelLayout->addRow(tr("Kernel path:"), m_kernelPathEdit);
+    kernelLayout->addRow(makeFormLabel(tr("Installed version:")), m_kernelVersionLabel);
+    kernelLayout->addRow(makeFormLabel(tr("Select version:")), m_kernelVersionCombo);
+    kernelLayout->addRow(makeFormLabel(tr("Kernel path:")), m_kernelPathEdit);
     kernelLayout->addRow(m_kernelDownloadProgress);
     kernelLayout->addRow(m_kernelDownloadStatus);
     kernelLayout->addRow(kernelBtnLayout);
@@ -402,6 +462,23 @@ void SettingsView::setupUI()
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
     connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
+
+    connect(m_themeCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        if (index == kThemeDefaultIndex) {
+            return;
+        }
+        QMessageBox::information(this, tr("提示"), tr("正在适配中"));
+        QSignalBlocker blocker(m_themeCombo);
+        m_themeCombo->setCurrentIndex(kThemeDefaultIndex);
+    });
+    connect(m_languageCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        if (index == kLanguageDefaultIndex) {
+            return;
+        }
+        QMessageBox::information(this, tr("提示"), tr("正在适配中"));
+        QSignalBlocker blocker(m_languageCombo);
+        m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
+    });
 }
 
 void SettingsView::updateStyle()
@@ -467,25 +544,13 @@ void SettingsView::loadSettings()
     m_tunAutoRouteSwitch->setChecked(config.value("tunAutoRoute").toBool(true));
     m_tunStrictRouteSwitch->setChecked(config.value("tunStrictRoute").toBool(true));
 
-    QJsonObject theme = DatabaseService::instance().getThemeConfig();
-    QString themeName = theme.value("theme").toString("dark");
-    if (themeName == "light") {
-        m_themeCombo->setCurrentIndex(1);
-    } else if (themeName == "auto") {
-        m_themeCombo->setCurrentIndex(2);
-    } else {
-        m_themeCombo->setCurrentIndex(0);
+    {
+        QSignalBlocker blocker(m_themeCombo);
+        m_themeCombo->setCurrentIndex(kThemeDefaultIndex);
     }
-
-    QString locale = DatabaseService::instance().getLocale();
-    if (locale == "en") {
-        m_languageCombo->setCurrentIndex(1);
-    } else if (locale == "ja") {
-        m_languageCombo->setCurrentIndex(2);
-    } else if (locale == "ru") {
-        m_languageCombo->setCurrentIndex(3);
-    } else {
-        m_languageCombo->setCurrentIndex(0);
+    {
+        QSignalBlocker blocker(m_languageCombo);
+        m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
     }
 }
 

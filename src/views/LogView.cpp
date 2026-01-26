@@ -323,8 +323,8 @@ void LogView::updateStats()
     m_totalTag->setText(tr("%1 entries").arg(m_filtered.size()));
     m_errorTag->setText(tr("Errors: %1").arg(errorCount));
     m_warningTag->setText(tr("Warnings: %1").arg(warningCount));
-    m_errorTag->setVisible(errorCount > 0);
-    m_warningTag->setVisible(warningCount > 0);
+    m_errorTag->setVisible(true);
+    m_warningTag->setVisible(true);
 }
 
 bool LogView::logMatchesFilter(const LogParser::LogEntry &entry) const
