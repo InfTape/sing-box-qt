@@ -360,6 +360,143 @@ void SettingsView::setupUI()
 
     proxyAdvancedLayout->addWidget(proxyAdvancedCard);
 
+    QWidget *singboxProfileSection = new QWidget;
+    QVBoxLayout *singboxProfileLayout = new QVBoxLayout(singboxProfileSection);
+    singboxProfileLayout->setContentsMargins(0, 0, 0, 0);
+    singboxProfileLayout->setSpacing(12);
+    singboxProfileLayout->addWidget(makeSectionTitle(tr("Subscription Config Profile (Advanced)")));
+
+    QFrame *singboxProfileCard = makeCard();
+    QVBoxLayout *singboxProfileCardLayout = new QVBoxLayout(singboxProfileCard);
+    singboxProfileCardLayout->setContentsMargins(20, 20, 20, 20);
+    singboxProfileCardLayout->setSpacing(16);
+
+    QLabel *routingTitle = new QLabel(tr("Routing & Downloads"));
+    routingTitle->setStyleSheet("color: #cbd5e1; font-weight: bold;");
+    singboxProfileCardLayout->addWidget(routingTitle);
+
+    QGridLayout *routingGrid = new QGridLayout;
+    routingGrid->setHorizontalSpacing(16);
+    routingGrid->setVerticalSpacing(12);
+    routingGrid->setColumnStretch(1, 1);
+    routingGrid->setColumnStretch(3, 1);
+
+    const QString comboStyle = QString(R"(
+        QComboBox {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 10px;
+            padding: 6px 12px;
+            color: #eaeaea;
+            min-width: 150px;
+        }
+    )").arg(tm.getColorString("bg-primary"),
+            tm.getColorString("border"));
+
+    m_defaultOutboundCombo = new MenuComboBox;
+    m_defaultOutboundCombo->addItems({tr("Manual selector (recommended)"), tr("Auto select (URLTest)")});
+    m_defaultOutboundCombo->setWheelEnabled(false);
+    m_defaultOutboundCombo->setFixedHeight(kSpinBoxHeight);
+    m_defaultOutboundCombo->setStyleSheet(comboStyle);
+
+    m_downloadDetourCombo = new MenuComboBox;
+    m_downloadDetourCombo->addItems({tr("Manual selector"), tr("Direct")});
+    m_downloadDetourCombo->setWheelEnabled(false);
+    m_downloadDetourCombo->setFixedHeight(kSpinBoxHeight);
+    m_downloadDetourCombo->setStyleSheet(comboStyle);
+
+    QLabel *defaultOutboundLabel = makeFormLabel(tr("Default outbound for non-CN traffic"));
+    QLabel *downloadDetourLabel = makeFormLabel(tr("Rule-set/UI download detour"));
+    matchLabelWidth(defaultOutboundLabel, downloadDetourLabel);
+
+    routingGrid->addWidget(defaultOutboundLabel, 0, 0);
+    routingGrid->addWidget(m_defaultOutboundCombo, 0, 1);
+    routingGrid->addWidget(downloadDetourLabel, 0, 2);
+    routingGrid->addWidget(m_downloadDetourCombo, 0, 3);
+
+    singboxProfileCardLayout->addLayout(routingGrid);
+
+    QWidget *profileToggleCard = new QWidget;
+    profileToggleCard->setStyleSheet(QString("background-color: %1; border-radius: 12px;")
+        .arg(tm.getColorString("bg-secondary")));
+    QHBoxLayout *profileToggleLayout = new QHBoxLayout(profileToggleCard);
+    profileToggleLayout->setContentsMargins(16, 10, 16, 10);
+    profileToggleLayout->setSpacing(30);
+
+    auto addProfileToggle = [profileToggleLayout](const QString &text, ToggleSwitch *&toggle) {
+        QWidget *item = new QWidget;
+        QHBoxLayout *itemLayout = new QHBoxLayout(item);
+        itemLayout->setContentsMargins(0, 0, 0, 0);
+        itemLayout->setSpacing(10);
+        QLabel *label = new QLabel(text);
+        label->setStyleSheet("color: #eaeaea;");
+        toggle = new ToggleSwitch;
+        itemLayout->addWidget(label);
+        itemLayout->addWidget(toggle);
+        itemLayout->addStretch();
+        profileToggleLayout->addWidget(item);
+    };
+
+    addProfileToggle(tr("Block ads (geosite-category-ads-all)"), m_blockAdsSwitch);
+    addProfileToggle(tr("DNS hijack (hijack-dns)"), m_dnsHijackSwitch);
+    addProfileToggle(tr("Enable app groups (TG/YouTube/Netflix/OpenAI)"), m_enableAppGroupsSwitch);
+    profileToggleLayout->addStretch();
+    singboxProfileCardLayout->addWidget(profileToggleCard);
+
+    QLabel *dnsTitle = new QLabel(tr("DNS"));
+    dnsTitle->setStyleSheet("color: #cbd5e1; font-weight: bold;");
+    singboxProfileCardLayout->addWidget(dnsTitle);
+
+    QGridLayout *dnsGrid = new QGridLayout;
+    dnsGrid->setHorizontalSpacing(16);
+    dnsGrid->setVerticalSpacing(12);
+    dnsGrid->setColumnStretch(1, 1);
+    dnsGrid->setColumnStretch(3, 1);
+
+    m_dnsProxyEdit = new QLineEdit;
+    m_dnsProxyEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_PROXY);
+    m_dnsProxyEdit->setStyleSheet(inputStyleApplied);
+    m_dnsProxyEdit->setFixedHeight(kSpinBoxHeight);
+
+    m_dnsCnEdit = new QLineEdit;
+    m_dnsCnEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_CN);
+    m_dnsCnEdit->setStyleSheet(inputStyleApplied);
+    m_dnsCnEdit->setFixedHeight(kSpinBoxHeight);
+
+    m_dnsResolverEdit = new QLineEdit;
+    m_dnsResolverEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_RESOLVER);
+    m_dnsResolverEdit->setStyleSheet(inputStyleApplied);
+    m_dnsResolverEdit->setFixedHeight(kSpinBoxHeight);
+
+    m_urltestUrlEdit = new QLineEdit;
+    m_urltestUrlEdit->setPlaceholderText(ConfigConstants::DEFAULT_URLTEST_URL);
+    m_urltestUrlEdit->setStyleSheet(inputStyleApplied);
+    m_urltestUrlEdit->setFixedHeight(kSpinBoxHeight);
+
+    QLabel *dnsProxyLabel = makeFormLabel(tr("Proxy DNS (non-CN)"));
+    QLabel *dnsCnLabel = makeFormLabel(tr("CN DNS"));
+    matchLabelWidth(dnsProxyLabel, dnsCnLabel);
+
+    QLabel *dnsResolverLabel = makeFormLabel(tr("Resolver DNS (for DoH hostname resolving)"));
+    QLabel *urltestLabel = makeFormLabel(tr("URLTest URL"));
+    matchLabelWidth(dnsResolverLabel, urltestLabel);
+
+    dnsGrid->addWidget(dnsProxyLabel, 0, 0);
+    dnsGrid->addWidget(m_dnsProxyEdit, 0, 1);
+    dnsGrid->addWidget(dnsCnLabel, 0, 2);
+    dnsGrid->addWidget(m_dnsCnEdit, 0, 3);
+    dnsGrid->addWidget(dnsResolverLabel, 1, 0);
+    dnsGrid->addWidget(m_dnsResolverEdit, 1, 1);
+    dnsGrid->addWidget(urltestLabel, 1, 2);
+    dnsGrid->addWidget(m_urltestUrlEdit, 1, 3);
+
+    singboxProfileCardLayout->addLayout(dnsGrid);
+
+    m_saveSingboxProfileBtn = new QPushButton(tr("Save Profile Settings"));
+    singboxProfileCardLayout->addWidget(m_saveSingboxProfileBtn);
+
+    singboxProfileLayout->addWidget(singboxProfileCard);
+
     QWidget *appearanceSection = new QWidget;
     QVBoxLayout *appearanceSectionLayout = new QVBoxLayout(appearanceSection);
     appearanceSectionLayout->setContentsMargins(0, 0, 0, 0);
@@ -475,6 +612,7 @@ void SettingsView::setupUI()
 
     mainLayout->addWidget(proxySection);
     mainLayout->addWidget(proxyAdvancedSection);
+    mainLayout->addWidget(singboxProfileSection);
     mainLayout->addWidget(appearanceSection);
     mainLayout->addWidget(kernelSection);
     mainLayout->addStretch();
@@ -485,6 +623,7 @@ void SettingsView::setupUI()
 
     connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
     connect(m_saveAdvancedBtn, &QPushButton::clicked, this, &SettingsView::onSaveAdvancedClicked);
+    connect(m_saveSingboxProfileBtn, &QPushButton::clicked, this, &SettingsView::onSaveSingboxProfileClicked);
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
     connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
@@ -530,6 +669,7 @@ void SettingsView::updateStyle()
     applyTransparentStyle(m_checkKernelBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_checkUpdateBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_saveAdvancedBtn, QColor("#3b82f6"));
+    applyTransparentStyle(m_saveSingboxProfileBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_saveBtn, QColor("#10b981"));
 }
 
@@ -569,6 +709,26 @@ void SettingsView::loadSettings()
     m_tunEnableIpv6Switch->setChecked(config.value("tunEnableIpv6").toBool(false));
     m_tunAutoRouteSwitch->setChecked(config.value("tunAutoRoute").toBool(true));
     m_tunStrictRouteSwitch->setChecked(config.value("tunStrictRoute").toBool(true));
+
+    const QString defaultOutbound = config.value("defaultOutbound").toString("manual");
+    if (defaultOutbound == "auto") {
+        m_defaultOutboundCombo->setCurrentIndex(1);
+    } else {
+        m_defaultOutboundCombo->setCurrentIndex(0);
+    }
+    const QString downloadDetour = config.value("downloadDetour").toString("direct");
+    if (downloadDetour == "manual") {
+        m_downloadDetourCombo->setCurrentIndex(0);
+    } else {
+        m_downloadDetourCombo->setCurrentIndex(1);
+    }
+    m_blockAdsSwitch->setChecked(config.value("blockAds").toBool(false));
+    m_dnsHijackSwitch->setChecked(config.value("dnsHijack").toBool(true));
+    m_enableAppGroupsSwitch->setChecked(config.value("enableAppGroups").toBool(true));
+    m_dnsProxyEdit->setText(config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY));
+    m_dnsCnEdit->setText(config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN));
+    m_dnsResolverEdit->setText(config.value("dnsResolver").toString(ConfigConstants::DEFAULT_DNS_RESOLVER));
+    m_urltestUrlEdit->setText(config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL));
 
     {
         QSignalBlocker blocker(m_themeCombo);
@@ -651,6 +811,36 @@ void SettingsView::onSaveAdvancedClicked()
 
     Logger::info(tr("Advanced settings saved"));
     QMessageBox::information(this, tr("Notice"), tr("Advanced settings saved"));
+}
+
+void SettingsView::onSaveSingboxProfileClicked()
+{
+    QJsonObject config = DatabaseService::instance().getAppConfig();
+
+    const QString defaultOutbound = (m_defaultOutboundCombo->currentIndex() == 1) ? "auto" : "manual";
+    const QString downloadDetour = (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
+
+    auto resolveText = [](const QLineEdit *edit, const QString &fallback) {
+        if (!edit) return fallback;
+        const QString value = edit->text().trimmed();
+        return value.isEmpty() ? fallback : value;
+    };
+
+    config["defaultOutbound"] = defaultOutbound;
+    config["downloadDetour"] = downloadDetour;
+    config["blockAds"] = m_blockAdsSwitch->isChecked();
+    config["dnsHijack"] = m_dnsHijackSwitch->isChecked();
+    config["enableAppGroups"] = m_enableAppGroupsSwitch->isChecked();
+    config["dnsProxy"] = resolveText(m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
+    config["dnsCn"] = resolveText(m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
+    config["dnsResolver"] = resolveText(m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
+    config["urltestUrl"] = resolveText(m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
+
+    DatabaseService::instance().saveAppConfig(config);
+    AppSettings::instance().load();
+
+    Logger::info(tr("Subscription profile settings saved"));
+    QMessageBox::information(this, tr("Notice"), tr("Profile settings saved"));
 }
 
 void SettingsView::onSaveClicked()

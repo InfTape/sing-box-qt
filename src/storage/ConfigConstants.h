@@ -92,9 +92,9 @@ inline QStringList tunRouteExcludes() {
 // ==================== Default configuration ====================
 const int DEFAULT_MIXED_PORT = 7890;
 const int DEFAULT_API_PORT = 9090;
-const QString DEFAULT_DNS_PROXY = "1.1.1.1";
-const QString DEFAULT_DNS_CN = "223.5.5.5";
-const QString DEFAULT_DNS_RESOLVER = "223.5.5.5";
+const QString DEFAULT_DNS_PROXY = "https://1.1.1.1/dns-query";
+const QString DEFAULT_DNS_CN = "h3://dns.alidns.com/dns-query";
+const QString DEFAULT_DNS_RESOLVER = "114.114.114.114";
 const QString DEFAULT_URLTEST_URL = "http://cp.cloudflare.com/generate_204";
 const QString DEFAULT_SYSTEM_PROXY_BYPASS =
     "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*";
