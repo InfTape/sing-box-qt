@@ -62,12 +62,12 @@ private:
     QPushButton *m_saveAdvancedBtn;
 
     // Appearance settings.
-    QComboBox *m_themeCombo;
-    QComboBox *m_languageCombo;
+    MenuComboBox *m_themeCombo;
+    MenuComboBox *m_languageCombo;
 
     // Kernel settings.
     QLabel *m_kernelVersionLabel;
-    QComboBox *m_kernelVersionCombo;
+    MenuComboBox *m_kernelVersionCombo;
     QProgressBar *m_kernelDownloadProgress;
     QLabel *m_kernelDownloadStatus;
     QLineEdit *m_kernelPathEdit;

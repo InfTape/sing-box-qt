@@ -302,9 +302,11 @@ void SettingsView::setupUI()
 
     m_themeCombo = new MenuComboBox;
     m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
+    m_themeCombo->setWheelEnabled(false);
 
     m_languageCombo = new MenuComboBox;
     m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
+    m_languageCombo->setWheelEnabled(false);
 
     appearanceLayout->addRow(tr("Theme:"), m_themeCombo);
     appearanceLayout->addRow(tr("Language:"), m_languageCombo);
@@ -329,6 +331,7 @@ void SettingsView::setupUI()
 
     m_kernelVersionCombo = new MenuComboBox;
     m_kernelVersionCombo->addItem(tr("Latest version"));
+    m_kernelVersionCombo->setWheelEnabled(false);
 
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
