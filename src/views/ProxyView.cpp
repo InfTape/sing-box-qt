@@ -94,8 +94,6 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setStyleSheet("QTreeView::item { height: 36px; }");
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_treeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_treeWidget->setContextMenuPolicy(Qt::NoContextMenu);
     
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
@@ -167,6 +165,11 @@ void ProxyView::refresh()
 }
 
 void ProxyView::onProxiesReceived(const QJsonObject &proxies)
+{
+    renderProxies(proxies);
+}
+
+void ProxyView::renderProxies(const QJsonObject &proxies)
 {
 
     QSet<QString> expandedGroups;

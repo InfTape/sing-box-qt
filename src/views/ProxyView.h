@@ -41,6 +41,7 @@ private slots:
 private:
     void setupUI();
     void handleNodeActivation(QTreeWidgetItem *item);
+    void renderProxies(const QJsonObject &proxies);
     void updateSelectedProxyUI(const QString &group, const QString &proxy);
     void updateProxyItem(QTreeWidgetItem *item, const QJsonObject &proxy);
     QString formatDelay(int delay) const;

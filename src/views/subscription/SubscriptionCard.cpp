@@ -47,18 +47,18 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
     QHBoxLayout *headerLayout = new QHBoxLayout;
     headerLayout->setSpacing(10);
 
-    QLabel *nameLabel = new QLabel(info.name);
+    QLabel *nameLabel = new QLabel(info.name, this);
     nameLabel->setObjectName("CardName");
 
     QLabel *typeTag = nullptr;
     if (info.isManual) {
-        typeTag = new QLabel(tr("Manual Config"));
+        typeTag = new QLabel(tr("Manual Config"), this);
         typeTag->setObjectName("CardTag");
     }
     m_statusTag = new QLabel(this);
     m_statusTag->setAttribute(Qt::WA_StyledBackground, true);
 
-    QLabel *scheduleTag = new QLabel;
+    QLabel *scheduleTag = new QLabel(this);
     scheduleTag->setObjectName("CardTagSchedule");
     if (!info.isManual && info.autoUpdateIntervalMinutes > 0) {
         const int intervalMinutes = info.autoUpdateIntervalMinutes;
@@ -125,10 +125,10 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
     if (urlText.length() > 45) {
         urlText = urlText.left(45) + "...";
     }
-    QLabel *urlLabel = new QLabel(urlText);
+    QLabel *urlLabel = new QLabel(urlText, infoPanel);
     urlLabel->setObjectName("CardInfoText");
 
-    QLabel *timeLabel = new QLabel(tr("Updated: ") + SubscriptionFormat::formatTimestamp(info.lastUpdate));
+    QLabel *timeLabel = new QLabel(tr("Updated: ") + SubscriptionFormat::formatTimestamp(info.lastUpdate), infoPanel);
     timeLabel->setObjectName("CardInfoText");
 
     infoPanelLayout->addWidget(urlLabel);
@@ -146,13 +146,13 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
         } else {
             trafficText = tr("Used %1").arg(SubscriptionFormat::formatBytes(used));
         }
-        QLabel *trafficLabel = new QLabel(tr("Traffic: ") + trafficText);
+        QLabel *trafficLabel = new QLabel(tr("Traffic: ") + trafficText, infoPanel);
         trafficLabel->setObjectName("CardInfoText");
         infoPanelLayout->addWidget(trafficLabel);
     }
 
     if (info.subscriptionExpire > 0) {
-        QLabel *expireLabel = new QLabel(tr("Expires: ") + SubscriptionFormat::formatExpireTime(info.subscriptionExpire));
+        QLabel *expireLabel = new QLabel(tr("Expires: ") + SubscriptionFormat::formatExpireTime(info.subscriptionExpire), infoPanel);
         expireLabel->setObjectName("CardInfoText");
         infoPanelLayout->addWidget(expireLabel);
     }
