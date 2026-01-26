@@ -59,19 +59,22 @@
 
 ## 截图预览
 
-![主页](https://github.com/user-attachments/assets/dd2a4cf3-4c84-4384-a42d-6aad93fa586f)
+![主页](https://github.com/user-attachments/assets/ac4af2a8-df34-47f6-b9a3-b93d1ae31be8)
 
-![代理](https://github.com/user-attachments/assets/62eeeedf-f8a0-4ba9-bf8a-6f7c0511cc05)
+![代理](https://github.com/user-attachments/assets/ad540540-6639-4d50-905c-a15fc8be2aae)
 
-![订阅](https://github.com/user-attachments/assets/9ee8a3cd-9649-442e-a286-76900340e319)
+![订阅](https://github.com/user-attachments/assets/90bca68c-e118-404f-82a6-d4e181ee6442)
 
-![连接](https://github.com/user-attachments/assets/7abd2eb3-f775-4d45-bc79-f0893b27c04c)
+![连接](https://github.com/user-attachments/assets/f966cc0e-fbed-4822-9e0c-940d900c9597)
 
-![规则](https://github.com/user-attachments/assets/ec233a84-94fb-45f7-a829-b48bd666ade5)
+![规则](https://github.com/user-attachments/assets/edff1ff8-8298-4503-b750-d73b0b9a7329)
 
-![日志](https://github.com/user-attachments/assets/1f3428b7-9496-49e7-b8cc-5db8b0730c8c)
+![日志](https://github.com/user-attachments/assets/6df69503-35c1-4543-a94a-09c0b33ce1f7)
 
-![设置](https://github.com/user-attachments/assets/1beb08b1-04ac-485a-b8b1-3b3c739ea5b5)
+![设置](https://github.com/user-attachments/assets/53e2ece9-2534-4e24-85f2-ffbe5c7173e1)
+
+![托盘](https://github.com/user-attachments/assets/9d4114cf-00a0-4d9b-abd0-b06b34e6da3b)
+
 
 ---
 
