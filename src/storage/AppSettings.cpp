@@ -35,6 +35,7 @@ AppSettings::AppSettings(QObject *parent)
     , m_preferIpv6(false)
     , m_dnsHijack(true)
     , m_systemProxyEnabled(false)
+    , m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS)
     // URL test.
     , m_urltestUrl(ConfigConstants::DEFAULT_URLTEST_URL)
     // Outbound selection.
@@ -77,6 +78,7 @@ void AppSettings::load()
     } else {
         m_systemProxyEnabled = config.value("systemProxy").toBool(false);
     }
+    m_systemProxyBypass = config.value("systemProxyBypass").toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
 
     // URL test.
     m_urltestUrl = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
@@ -118,6 +120,7 @@ void AppSettings::save()
     config["dnsHijack"] = m_dnsHijack;
     config["systemProxyEnabled"] = m_systemProxyEnabled;
     config["systemProxy"] = m_systemProxyEnabled;
+    config["systemProxyBypass"] = m_systemProxyBypass;
 
     // URL test.
     config["urltestUrl"] = m_urltestUrl;
@@ -289,6 +292,15 @@ void AppSettings::setSystemProxyEnabled(bool enabled)
 {
     if (m_systemProxyEnabled != enabled) {
         m_systemProxyEnabled = enabled;
+        save();
+        emit settingsChanged();
+    }
+}
+
+void AppSettings::setSystemProxyBypass(const QString &bypass)
+{
+    if (m_systemProxyBypass != bypass) {
+        m_systemProxyBypass = bypass;
         save();
         emit settingsChanged();
     }
