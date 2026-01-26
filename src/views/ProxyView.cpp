@@ -94,6 +94,8 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setStyleSheet("QTreeView::item { height: 36px; }");
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_treeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_treeWidget->setContextMenuPolicy(Qt::NoContextMenu);
     
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
@@ -217,22 +219,23 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             QJsonArray all = proxy["all"].toArray();
             QString now = proxy["now"].toString();
 
-            QFrame *groupCard = new QFrame;
+            QWidget *treeViewport = m_treeWidget->viewport();
+            QFrame *groupCard = new QFrame(treeViewport);
             groupCard->setObjectName("ProxyGroupCard");
             QHBoxLayout *cardLayout = new QHBoxLayout(groupCard);
             cardLayout->setContentsMargins(14, 12, 14, 12);
             cardLayout->setSpacing(10);
 
-            QLabel *titleLabel = new QLabel(it.key());
+            QLabel *titleLabel = new QLabel(it.key(), groupCard);
             titleLabel->setObjectName("ProxyGroupTitle");
 
-            QLabel *typeLabel = new QLabel(type);
+            QLabel *typeLabel = new QLabel(type, groupCard);
             typeLabel->setObjectName("ProxyGroupBadge");
 
-            QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()));
+            QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()), groupCard);
             countLabel->setObjectName("ProxyGroupMeta");
 
-            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("Current: %1").arg(now));
+            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("Current: %1").arg(now), groupCard);
             currentLabel->setObjectName("ProxyGroupCurrent");
             currentLabel->setVisible(!now.isEmpty());
 
@@ -244,7 +247,7 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             cardLayout->addWidget(currentLabel);
             cardLayout->addStretch();
 
-            ChevronToggle *toggleBtn = new ChevronToggle;
+            ChevronToggle *toggleBtn = new ChevronToggle(groupCard);
             toggleBtn->setObjectName("ProxyGroupToggle");
             toggleBtn->setExpanded(groupItem->isExpanded());
             toggleBtn->setFixedSize(28, 28);

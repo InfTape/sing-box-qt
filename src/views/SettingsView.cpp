@@ -32,6 +32,7 @@
 #include <QOperatingSystemVersion>
 #include <QWheelEvent>
 #include <QSignalBlocker>
+#include <algorithm>
 #include <functional>
 #include "utils/AppPaths.h"
 #include "utils/ThemeManager.h"
@@ -194,6 +195,14 @@ void SettingsView::setupUI()
         label->setStyleSheet("padding-top: 3px;");
         return label;
     };
+    auto matchLabelWidth = [](QLabel *left, QLabel *right) {
+        if (!left || !right) {
+            return;
+        }
+        const int width = std::max(left->sizeHint().width(), right->sizeHint().width());
+        left->setFixedWidth(width);
+        right->setFixedWidth(width);
+    };
 
 
     QWidget *proxySection = new QWidget;
@@ -234,9 +243,13 @@ void SettingsView::setupUI()
     m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
     m_systemProxyCheck->setStyleSheet(inputStyleApplied);
 
-    proxyLayout->addWidget(makeFormLabel(tr("Mixed port:")), 0, 0);
+    QLabel *mixedPortLabel = makeFormLabel(tr("Mixed port:"));
+    QLabel *apiPortLabel = makeFormLabel(tr("API port:"));
+    matchLabelWidth(mixedPortLabel, apiPortLabel);
+
+    proxyLayout->addWidget(mixedPortLabel, 0, 0);
     proxyLayout->addWidget(m_mixedPortSpin, 0, 1);
-    proxyLayout->addWidget(makeFormLabel(tr("API port:")), 0, 2);
+    proxyLayout->addWidget(apiPortLabel, 0, 2);
     proxyLayout->addWidget(m_apiPortSpin, 0, 3);
     proxyLayout->addWidget(m_autoStartCheck, 1, 0, 1, 4);
     proxyLayout->addWidget(m_systemProxyCheck, 2, 0, 1, 4);
@@ -274,6 +287,8 @@ void SettingsView::setupUI()
     tunRight->setSpacing(10);
     tunLeft->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
     tunRight->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    tunLeft->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    tunRight->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
 
     m_tunMtuSpin = new NoWheelSpinBox;
     m_tunMtuSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
@@ -281,10 +296,12 @@ void SettingsView::setupUI()
     m_tunMtuSpin->setValue(ConfigConstants::DEFAULT_TUN_MTU);
     m_tunMtuSpin->setStyleSheet(inputStyleApplied);
     m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
+    m_tunMtuSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_tunStackCombo = new MenuComboBox;
     m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
     m_tunStackCombo->setWheelEnabled(false);
+    m_tunStackCombo->setFixedHeight(kSpinBoxHeight);
     m_tunStackCombo->setStyleSheet(QString(R"(
         QComboBox {
             background-color: %1;
@@ -297,8 +314,12 @@ void SettingsView::setupUI()
     )").arg(tm.getColorString("bg-primary"),
             tm.getColorString("border")));
 
-    tunLeft->addRow(makeFormLabel(tr("MTU:")), m_tunMtuSpin);
-    tunRight->addRow(makeFormLabel(tr("Protocol stack:")), m_tunStackCombo);
+    QLabel *mtuLabel = makeFormLabel(tr("MTU:"));
+    QLabel *stackLabel = makeFormLabel(tr("Protocol stack:"));
+    matchLabelWidth(mtuLabel, stackLabel);
+
+    tunLeft->addRow(mtuLabel, m_tunMtuSpin);
+    tunRight->addRow(stackLabel, m_tunStackCombo);
     tunRow->addLayout(tunLeft, 1);
     tunRow->addLayout(tunRight, 1);
     advancedLayout->addLayout(tunRow);
@@ -355,16 +376,19 @@ void SettingsView::setupUI()
 
     QLabel *themeLabel = makeFormLabel(tr("Theme:"));
     QLabel *languageLabel = makeFormLabel(tr("Language:"));
+    matchLabelWidth(themeLabel, languageLabel);
 
     m_themeCombo = new MenuComboBox;
     m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
     m_themeCombo->setWheelEnabled(false);
     m_themeCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_themeCombo->setFixedHeight(kSpinBoxHeight);
 
     m_languageCombo = new MenuComboBox;
     m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
     m_languageCombo->setWheelEnabled(false);
     m_languageCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_languageCombo->setFixedHeight(kSpinBoxHeight);
 
     appearanceLayout->addWidget(themeLabel, 0, 0);
     appearanceLayout->addWidget(m_themeCombo, 0, 1);
@@ -392,11 +416,13 @@ void SettingsView::setupUI()
     m_kernelVersionCombo = new MenuComboBox;
     m_kernelVersionCombo->addItem(tr("Latest version"));
     m_kernelVersionCombo->setWheelEnabled(false);
+    m_kernelVersionCombo->setFixedHeight(kSpinBoxHeight);
 
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
     m_kernelPathEdit->setPlaceholderText(tr("Kernel path"));
     m_kernelPathEdit->setStyleSheet(inputStyleApplied);
+    m_kernelPathEdit->setFixedHeight(kSpinBoxHeight);
 
     m_kernelDownloadProgress = new QProgressBar;
     m_kernelDownloadProgress->setRange(0, 100);
