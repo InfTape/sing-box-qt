@@ -45,6 +45,8 @@ signals:
     void rulesReceived(const QJsonArray &rules);
     void connectionsReceived(const QJsonObject &connections);
     void delayResult(const QString &proxy, int delay);
+    void proxySelected(const QString &group, const QString &proxy);
+    void proxySelectFailed(const QString &group, const QString &proxy);
     void errorOccurred(const QString &error);
     void trafficUpdated(qint64 up, qint64 down);
 

@@ -1,4 +1,6 @@
 #include "SystemProxy.h"
+#include "storage/AppSettings.h"
+#include "storage/ConfigConstants.h"
 #include "utils/Logger.h"
 #include <QProcess>
 #include <QStandardPaths>
@@ -115,6 +117,10 @@ bool SystemProxy::setProxy(const QString &host, int port)
 {
 #ifdef Q_OS_WIN
     QString proxyServer = QString("%1:%2").arg(host).arg(port);
+    QString bypass = AppSettings::instance().systemProxyBypass().trimmed();
+    if (bypass.isEmpty()) {
+        bypass = ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS;
+    }
 
     QSettings settings(
         "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
@@ -123,7 +129,7 @@ bool SystemProxy::setProxy(const QString &host, int port)
 
     settings.setValue("ProxyEnable", 1);
     settings.setValue("ProxyServer", proxyServer);
-    settings.setValue("ProxyOverride", "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*;<local>");
+    settings.setValue("ProxyOverride", bypass);
     settings.sync();
 
     refreshSettings();

@@ -3,6 +3,7 @@
 #include "utils/ThemeManager.h"
 #include <QAction>
 #include <QPoint>
+#include <QWheelEvent>
 #include <QtMath>
 
 MenuComboBox::MenuComboBox(QWidget *parent)
@@ -16,6 +17,11 @@ MenuComboBox::MenuComboBox(QWidget *parent)
     connect(&tm, &ThemeManager::themeChanged, this, [this]() {
         updateMenuStyle();
     });
+}
+
+void MenuComboBox::setWheelEnabled(bool enabled)
+{
+    m_wheelEnabled = enabled;
 }
 
 void MenuComboBox::showPopup()
@@ -42,6 +48,15 @@ void MenuComboBox::hidePopup()
     if (m_menu) {
         m_menu->hide();
     }
+}
+
+void MenuComboBox::wheelEvent(QWheelEvent *event)
+{
+    if (!m_wheelEnabled) {
+        event->ignore();
+        return;
+    }
+    QComboBox::wheelEvent(event);
 }
 
 void MenuComboBox::updateMenuStyle()

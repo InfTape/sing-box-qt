@@ -251,15 +251,18 @@ QString ThemeManager::getScrollBarStyle() const
             margin: 0;
         }
         QScrollBar::handle:vertical {
-            background: %1;
+            background-color: %1;
             min-height: 20px;
-            border-radius: 10px;
+            border-radius: 4px;
         }
         QScrollBar::handle:vertical:hover {
-            background: %2;
+            background-color: %2;
         }
         QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
             height: 0;
+        }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+            background: transparent;
         }
     )")
     .arg(m_colors["border"])

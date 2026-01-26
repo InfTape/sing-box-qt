@@ -6,9 +6,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QTimer>
-#include <QMessageBox>
 #include <QLabel>
+#include <QBrush>
 
 ProxyView::ProxyView(QWidget *parent)
     : QWidget(parent)
@@ -94,6 +93,7 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(1, 100);
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setStyleSheet("QTreeView::item { height: 36px; }");
+    m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
@@ -102,6 +102,7 @@ void ProxyView::setupUI()
     connect(m_searchEdit, &QLineEdit::textChanged, this, &ProxyView::onSearchTextChanged);
     connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyView::onTestAllClicked);
     connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyView::refresh);
+    connect(m_treeWidget, &QTreeWidget::itemClicked, this, &ProxyView::onItemClicked);
     connect(m_treeWidget, &QTreeWidget::itemDoubleClicked, this, &ProxyView::onItemDoubleClicked);
 }
 
@@ -149,6 +150,10 @@ void ProxyView::setProxyService(ProxyService *service)
         
         connect(m_proxyService, &ProxyService::proxiesReceived, 
                 this, &ProxyView::onProxiesReceived);
+        connect(m_proxyService, &ProxyService::proxySelected,
+                this, &ProxyView::onProxySelected);
+        connect(m_proxyService, &ProxyService::proxySelectFailed,
+                this, &ProxyView::onProxySelectFailed);
     }
 }
 
@@ -160,6 +165,11 @@ void ProxyView::refresh()
 }
 
 void ProxyView::onProxiesReceived(const QJsonObject &proxies)
+{
+    renderProxies(proxies);
+}
+
+void ProxyView::renderProxies(const QJsonObject &proxies)
 {
 
     QSet<QString> expandedGroups;
@@ -173,6 +183,9 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
         }
         if ((*it)->isSelected()) {
             selectedNode = (*it)->text(0);
+            if (selectedNode.startsWith("* ")) {
+                selectedNode = selectedNode.mid(2);
+            }
         }
         ++it;
     }
@@ -209,35 +222,35 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
             QJsonArray all = proxy["all"].toArray();
             QString now = proxy["now"].toString();
 
-            QFrame *groupCard = new QFrame;
+            QWidget *treeViewport = m_treeWidget->viewport();
+            QFrame *groupCard = new QFrame(treeViewport);
             groupCard->setObjectName("ProxyGroupCard");
             QHBoxLayout *cardLayout = new QHBoxLayout(groupCard);
             cardLayout->setContentsMargins(14, 12, 14, 12);
             cardLayout->setSpacing(10);
 
-            QLabel *titleLabel = new QLabel(it.key());
+            QLabel *titleLabel = new QLabel(it.key(), groupCard);
             titleLabel->setObjectName("ProxyGroupTitle");
 
-            QLabel *typeLabel = new QLabel(type);
+            QLabel *typeLabel = new QLabel(type, groupCard);
             typeLabel->setObjectName("ProxyGroupBadge");
 
-            QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()));
+            QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()), groupCard);
             countLabel->setObjectName("ProxyGroupMeta");
 
-            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("Current: %1").arg(now));
-            currentLabel->setObjectName("ProxyGroupMeta");
+            QLabel *currentLabel = new QLabel(now.isEmpty() ? QString() : tr("Current: %1").arg(now), groupCard);
+            currentLabel->setObjectName("ProxyGroupCurrent");
+            currentLabel->setVisible(!now.isEmpty());
 
             cardLayout->addWidget(titleLabel);
             cardLayout->addWidget(typeLabel);
             cardLayout->addSpacing(6);
             cardLayout->addWidget(countLabel);
-            if (!now.isEmpty()) {
-                cardLayout->addSpacing(6);
-                cardLayout->addWidget(currentLabel);
-            }
+            cardLayout->addSpacing(6);
+            cardLayout->addWidget(currentLabel);
             cardLayout->addStretch();
 
-            ChevronToggle *toggleBtn = new ChevronToggle;
+            ChevronToggle *toggleBtn = new ChevronToggle(groupCard);
             toggleBtn->setObjectName("ProxyGroupToggle");
             toggleBtn->setExpanded(groupItem->isExpanded());
             toggleBtn->setFixedSize(28, 28);
@@ -293,27 +306,52 @@ void ProxyView::onProxiesReceived(const QJsonObject &proxies)
     }
 }
 
+void ProxyView::onItemClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column)
+    handleNodeActivation(item);
+}
+
 void ProxyView::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column)
-    
-    if (!m_proxyService) return;
-    
-    QString role = item->data(0, Qt::UserRole).toString();
-    
-    if (role == "node") {
-        QString group = item->data(0, Qt::UserRole + 1).toString();
-        QString nodeName = item->text(0);
-        
+    handleNodeActivation(item);
+}
 
-        if (nodeName.startsWith("* ")) {
-            nodeName = nodeName.mid(2);
-        }
-        
-        m_proxyService->selectProxy(group, nodeName);
-        
+void ProxyView::handleNodeActivation(QTreeWidgetItem *item)
+{
+    if (!item || !m_proxyService) return;
 
-        QTimer::singleShot(200, this, &ProxyView::refresh);
+    const QString role = item->data(0, Qt::UserRole).toString();
+    if (role != "node") {
+        return;
+    }
+
+    QString group = item->data(0, Qt::UserRole + 1).toString();
+    QString nodeName = item->text(0);
+
+    if (nodeName.startsWith("* ")) {
+        nodeName = nodeName.mid(2);
+    }
+
+    m_pendingSelection.insert(group, nodeName);
+    m_proxyService->selectProxy(group, nodeName);
+}
+
+void ProxyView::onProxySelected(const QString &group, const QString &proxy)
+{
+    if (!m_pendingSelection.contains(group) || m_pendingSelection.value(group) != proxy) {
+        return;
+    }
+
+    m_pendingSelection.remove(group);
+    updateSelectedProxyUI(group, proxy);
+}
+
+void ProxyView::onProxySelectFailed(const QString &group, const QString &proxy)
+{
+    if (m_pendingSelection.value(group) == proxy) {
+        m_pendingSelection.remove(group);
     }
 }
 
@@ -445,6 +483,60 @@ void ProxyView::onTestCompleted()
     m_testAllBtn->setText(tr("Test All"));
     m_progressBar->hide();
     m_testingNodes.clear();
+}
+
+void ProxyView::updateSelectedProxyUI(const QString &group, const QString &proxy)
+{
+    if (group.isEmpty() || proxy.isEmpty() || !m_treeWidget) {
+        return;
+    }
+
+    if (m_cachedProxies.contains(group)) {
+        QJsonObject groupProxy = m_cachedProxies.value(group).toObject();
+        groupProxy["now"] = proxy;
+        m_cachedProxies[group] = groupProxy;
+    }
+
+    QTreeWidgetItem *groupItem = nullptr;
+    for (int i = 0; i < m_treeWidget->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = m_treeWidget->topLevelItem(i);
+        if (item && item->data(0, Qt::UserRole + 1).toString() == group) {
+            groupItem = item;
+            break;
+        }
+    }
+
+    if (!groupItem) {
+        return;
+    }
+
+    QWidget *groupCard = m_treeWidget->itemWidget(groupItem, 0);
+    if (groupCard) {
+        QLabel *currentLabel = groupCard->findChild<QLabel *>("ProxyGroupCurrent");
+        if (currentLabel) {
+            currentLabel->setText(tr("Current: %1").arg(proxy));
+            currentLabel->setVisible(true);
+        }
+    }
+
+    ThemeManager &tm = ThemeManager::instance();
+    for (int i = 0; i < groupItem->childCount(); ++i) {
+        QTreeWidgetItem *child = groupItem->child(i);
+        if (!child) continue;
+
+        QString name = child->text(0);
+        if (name.startsWith("* ")) {
+            name = name.mid(2);
+        }
+
+        if (name == proxy) {
+            child->setText(0, "* " + name);
+            child->setForeground(0, tm.getColor("success"));
+        } else {
+            child->setText(0, name);
+            child->setForeground(0, QBrush());
+        }
+    }
 }
 
 QString ProxyView::formatDelay(int delay) const

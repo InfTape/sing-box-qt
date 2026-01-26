@@ -1,5 +1,7 @@
 ﻿#include "SettingsView.h"
 #include "storage/DatabaseService.h"
+#include "storage/AppSettings.h"
+#include "storage/ConfigConstants.h"
 #include "system/UpdateService.h"
 #include "system/AutoStart.h"
 #include "utils/Logger.h"
@@ -7,11 +9,14 @@
 #include "core/ProcessManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QGroupBox>
+#include <QFrame>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QScrollArea>
+#include <QSizePolicy>
 #include <QStandardPaths>
 #include <QDir>
 #include <QDirIterator>
@@ -25,12 +30,35 @@
 #include <QSysInfo>
 #include <QJsonObject>
 #include <QOperatingSystemVersion>
+#include <QWheelEvent>
+#include <QSignalBlocker>
+#include <algorithm>
 #include <functional>
 #include "utils/AppPaths.h"
 #include "utils/ThemeManager.h"
 #include "widgets/MenuComboBox.h"
+#include "widgets/ToggleSwitch.h"
 
 namespace {
+
+constexpr int kThemeDefaultIndex = 0;
+constexpr int kLanguageDefaultIndex = 1;
+constexpr int kSpinBoxHeight = 34;
+
+class NoWheelSpinBox : public QSpinBox
+{
+public:
+    explicit NoWheelSpinBox(QWidget *parent = nullptr)
+        : QSpinBox(parent)
+    {
+    }
+
+protected:
+    void wheelEvent(QWheelEvent *event) override
+    {
+        event->ignore();
+    }
+};
 
 
 QString normalizeVersionTag(const QString &raw)
@@ -89,37 +117,34 @@ SettingsView::SettingsView(QWidget *parent)
 
 void SettingsView::setupUI()
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    QVBoxLayout *outerLayout = new QVBoxLayout(this);
+    outerLayout->setContentsMargins(0, 0, 0, 0);
+    outerLayout->setSpacing(0);
+
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setObjectName("SettingsScroll");
+    scrollArea->setStyleSheet("QScrollArea { background: transparent; } QScrollArea > QWidget > QWidget { background: transparent; }");
+
+    QWidget *contentWidget = new QWidget;
+    QVBoxLayout *mainLayout = new QVBoxLayout(contentWidget);
     mainLayout->setContentsMargins(30, 30, 30, 30);
     mainLayout->setSpacing(20);
 
     ThemeManager &tm = ThemeManager::instance();
-    QString groupBoxStyle = QString(R"(
-        QGroupBox {
-            background-color: %1;
-            border: none;
-            border-radius: 10px;
-            margin-top: 20px;
-            padding: 20px;
-            padding-top: 34px;
-            font-weight: bold;
-            color: #eaeaea;
-        }
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 12px;
-            padding: 0;
-        }
-    )").arg(tm.getColorString("panel-bg"));
-
     QString inputStyle = R"(
-        QSpinBox, QLineEdit {
+        QSpinBox, QLineEdit, QPlainTextEdit {
             background-color: %1;
-            border: none;
+            border: 1px solid %2;
             border-radius: 10px;
             padding: 8px 12px;
             color: #eaeaea;
             min-width: 150px;
+        }
+        QPlainTextEdit {
+            min-height: 80px;
         }
         QSpinBox::up-button, QSpinBox::down-button {
             width: 0px;
@@ -134,26 +159,83 @@ void SettingsView::setupUI()
         QCheckBox {
             color: #eaeaea;
         }
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid %2;
+            background-color: %1;
+        }
+        QCheckBox::indicator:checked {
+            background-color: #00aaff;
+            border-color: #00aaff;
+            image: url(:/icons/check.svg);
+        }
     )";
-    const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-secondary"));
+    const QString inputStyleApplied = inputStyle.arg(tm.getColorString("bg-primary"),
+                                                     tm.getColorString("border"));
+
+    auto makeSectionTitle = [&tm](const QString &text) {
+        QLabel *title = new QLabel(text);
+        title->setStyleSheet(QString("font-size: 13px; font-weight: 600; color: %1;")
+            .arg(tm.getColorString("text-tertiary")));
+        return title;
+    };
+
+    auto makeCard = [&tm]() {
+        QFrame *card = new QFrame;
+        card->setObjectName("SettingsCard");
+        card->setStyleSheet(QString("QFrame#SettingsCard { background-color: %1; border: none; border-radius: 10px; }")
+            .arg(tm.getColorString("panel-bg")));
+        return card;
+    };
+    auto makeFormLabel = [](const QString &text) {
+        QLabel *label = new QLabel(text);
+        label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+        label->setStyleSheet("padding-top: 3px;");
+        return label;
+    };
+    auto matchLabelWidth = [](QLabel *left, QLabel *right) {
+        if (!left || !right) {
+            return;
+        }
+        const int width = std::max(left->sizeHint().width(), right->sizeHint().width());
+        left->setFixedWidth(width);
+        right->setFixedWidth(width);
+    };
 
 
-    QGroupBox *proxyGroup = new QGroupBox(tr("Proxy Settings"));
-    proxyGroup->setStyleSheet(groupBoxStyle);
-    QFormLayout *proxyLayout = new QFormLayout(proxyGroup);
-    proxyLayout->setSpacing(15);
+    QWidget *proxySection = new QWidget;
+    QVBoxLayout *proxySectionLayout = new QVBoxLayout(proxySection);
+    proxySectionLayout->setContentsMargins(0, 0, 0, 0);
+    proxySectionLayout->setSpacing(12);
+
+    proxySectionLayout->addWidget(makeSectionTitle(tr("Proxy Settings")));
+
+    QFrame *proxyCard = makeCard();
+
+    QGridLayout *proxyLayout = new QGridLayout(proxyCard);
+    proxyLayout->setContentsMargins(20, 20, 20, 20);
+    proxyLayout->setHorizontalSpacing(16);
+    proxyLayout->setVerticalSpacing(12);
+    proxyLayout->setColumnStretch(1, 1);
+    proxyLayout->setColumnStretch(3, 1);
 
     m_mixedPortSpin = new QSpinBox;
     m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_mixedPortSpin->setRange(1, 65535);
     m_mixedPortSpin->setValue(7890);
     m_mixedPortSpin->setStyleSheet(inputStyleApplied);
+    m_mixedPortSpin->setFixedHeight(kSpinBoxHeight);
+    m_mixedPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_apiPortSpin = new QSpinBox;
     m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_apiPortSpin->setRange(1, 65535);
     m_apiPortSpin->setValue(9090);
     m_apiPortSpin->setStyleSheet(inputStyleApplied);
+    m_apiPortSpin->setFixedHeight(kSpinBoxHeight);
+    m_apiPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
     m_autoStartCheck->setStyleSheet(inputStyleApplied);
@@ -161,42 +243,186 @@ void SettingsView::setupUI()
     m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
     m_systemProxyCheck->setStyleSheet(inputStyleApplied);
 
-    proxyLayout->addRow(tr("Mixed port:"), m_mixedPortSpin);
-    proxyLayout->addRow(tr("API port:"), m_apiPortSpin);
-    proxyLayout->addRow(m_autoStartCheck);
-    proxyLayout->addRow(m_systemProxyCheck);
+    QLabel *mixedPortLabel = makeFormLabel(tr("Mixed port:"));
+    QLabel *apiPortLabel = makeFormLabel(tr("API port:"));
+    matchLabelWidth(mixedPortLabel, apiPortLabel);
 
+    proxyLayout->addWidget(mixedPortLabel, 0, 0);
+    proxyLayout->addWidget(m_mixedPortSpin, 0, 1);
+    proxyLayout->addWidget(apiPortLabel, 0, 2);
+    proxyLayout->addWidget(m_apiPortSpin, 0, 3);
+    proxyLayout->addWidget(m_autoStartCheck, 1, 0, 1, 4);
+    proxyLayout->addWidget(m_systemProxyCheck, 2, 0, 1, 4);
 
-    QGroupBox *appearanceGroup = new QGroupBox(tr("Appearance"));
-    appearanceGroup->setStyleSheet(groupBoxStyle);
-    QFormLayout *appearanceLayout = new QFormLayout(appearanceGroup);
-    appearanceLayout->setSpacing(15);
+    proxySectionLayout->addWidget(proxyCard);
+
+    QWidget *proxyAdvancedSection = new QWidget;
+    QVBoxLayout *proxyAdvancedLayout = new QVBoxLayout(proxyAdvancedSection);
+    proxyAdvancedLayout->setContentsMargins(0, 0, 0, 0);
+    proxyAdvancedLayout->setSpacing(12);
+    proxyAdvancedLayout->addWidget(makeSectionTitle(tr("Proxy Advanced Settings")));
+
+    QFrame *proxyAdvancedCard = makeCard();
+    QVBoxLayout *advancedLayout = new QVBoxLayout(proxyAdvancedCard);
+    advancedLayout->setContentsMargins(20, 20, 20, 20);
+    advancedLayout->setSpacing(16);
+
+    QLabel *bypassLabel = new QLabel(tr("System proxy bypass domains"));
+    bypassLabel->setStyleSheet("color: #cbd5e1;");
+    m_systemProxyBypassEdit = new QPlainTextEdit;
+    m_systemProxyBypassEdit->setPlaceholderText(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
+    m_systemProxyBypassEdit->setStyleSheet(inputStyleApplied);
+
+    advancedLayout->addWidget(bypassLabel);
+    advancedLayout->addWidget(m_systemProxyBypassEdit);
+
+    QLabel *tunTitle = new QLabel(tr("TUN Virtual Adapter"));
+    tunTitle->setStyleSheet("color: #cbd5e1; font-weight: bold;");
+    advancedLayout->addWidget(tunTitle);
+
+    QHBoxLayout *tunRow = new QHBoxLayout;
+    QFormLayout *tunLeft = new QFormLayout;
+    QFormLayout *tunRight = new QFormLayout;
+    tunLeft->setSpacing(10);
+    tunRight->setSpacing(10);
+    tunLeft->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    tunRight->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    tunLeft->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    tunRight->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+
+    m_tunMtuSpin = new NoWheelSpinBox;
+    m_tunMtuSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    m_tunMtuSpin->setRange(576, 9000);
+    m_tunMtuSpin->setValue(ConfigConstants::DEFAULT_TUN_MTU);
+    m_tunMtuSpin->setStyleSheet(inputStyleApplied);
+    m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
+    m_tunMtuSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+    m_tunStackCombo = new MenuComboBox;
+    m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
+    m_tunStackCombo->setWheelEnabled(false);
+    m_tunStackCombo->setFixedHeight(kSpinBoxHeight);
+    m_tunStackCombo->setStyleSheet(QString(R"(
+        QComboBox {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 10px;
+            padding: 6px 12px;
+            color: #eaeaea;
+            min-width: 150px;
+        }
+    )").arg(tm.getColorString("bg-primary"),
+            tm.getColorString("border")));
+
+    QLabel *mtuLabel = makeFormLabel(tr("MTU:"));
+    QLabel *stackLabel = makeFormLabel(tr("Protocol stack:"));
+    matchLabelWidth(mtuLabel, stackLabel);
+
+    tunLeft->addRow(mtuLabel, m_tunMtuSpin);
+    tunRight->addRow(stackLabel, m_tunStackCombo);
+    tunRow->addLayout(tunLeft, 1);
+    tunRow->addLayout(tunRight, 1);
+    advancedLayout->addLayout(tunRow);
+
+    QWidget *toggleCard = new QWidget;
+    toggleCard->setStyleSheet(QString("background-color: %1; border-radius: 12px;")
+        .arg(tm.getColorString("bg-secondary")));
+    QHBoxLayout *toggleLayout = new QHBoxLayout(toggleCard);
+    toggleLayout->setContentsMargins(16, 10, 16, 10);
+    toggleLayout->setSpacing(30);
+
+    auto addToggle = [toggleLayout](const QString &text, ToggleSwitch *&toggle) {
+        QWidget *item = new QWidget;
+        QHBoxLayout *itemLayout = new QHBoxLayout(item);
+        itemLayout->setContentsMargins(0, 0, 0, 0);
+        itemLayout->setSpacing(10);
+        QLabel *label = new QLabel(text);
+        label->setStyleSheet("color: #eaeaea;");
+        toggle = new ToggleSwitch;
+        itemLayout->addWidget(label);
+        itemLayout->addWidget(toggle);
+        itemLayout->addStretch();
+        toggleLayout->addWidget(item);
+    };
+
+    addToggle(tr("Enable IPv6"), m_tunEnableIpv6Switch);
+    addToggle(tr("Auto route"), m_tunAutoRouteSwitch);
+    addToggle(tr("Strict route"), m_tunStrictRouteSwitch);
+    toggleLayout->addStretch();
+    advancedLayout->addWidget(toggleCard);
+
+    QLabel *advancedHint = new QLabel(tr("Changes take effect after restart or proxy re-enable."));
+    advancedHint->setStyleSheet("color: #94a3b8; font-size: 12px;");
+    advancedLayout->addWidget(advancedHint);
+
+    m_saveAdvancedBtn = new QPushButton(tr("Save Advanced Settings"));
+    advancedLayout->addWidget(m_saveAdvancedBtn);
+
+    proxyAdvancedLayout->addWidget(proxyAdvancedCard);
+
+    QWidget *appearanceSection = new QWidget;
+    QVBoxLayout *appearanceSectionLayout = new QVBoxLayout(appearanceSection);
+    appearanceSectionLayout->setContentsMargins(0, 0, 0, 0);
+    appearanceSectionLayout->setSpacing(12);
+    appearanceSectionLayout->addWidget(makeSectionTitle(tr("Appearance")));
+
+    QFrame *appearanceCard = makeCard();
+    QGridLayout *appearanceLayout = new QGridLayout(appearanceCard);
+    appearanceLayout->setContentsMargins(20, 20, 20, 20);
+    appearanceLayout->setHorizontalSpacing(16);
+    appearanceLayout->setVerticalSpacing(12);
+    appearanceLayout->setColumnStretch(1, 1);
+    appearanceLayout->setColumnStretch(3, 1);
+
+    QLabel *themeLabel = makeFormLabel(tr("Theme:"));
+    QLabel *languageLabel = makeFormLabel(tr("Language:"));
+    matchLabelWidth(themeLabel, languageLabel);
 
     m_themeCombo = new MenuComboBox;
     m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
+    m_themeCombo->setWheelEnabled(false);
+    m_themeCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_themeCombo->setFixedHeight(kSpinBoxHeight);
 
     m_languageCombo = new MenuComboBox;
     m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
+    m_languageCombo->setWheelEnabled(false);
+    m_languageCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_languageCombo->setFixedHeight(kSpinBoxHeight);
 
-    appearanceLayout->addRow(tr("Theme:"), m_themeCombo);
-    appearanceLayout->addRow(tr("Language:"), m_languageCombo);
+    appearanceLayout->addWidget(themeLabel, 0, 0);
+    appearanceLayout->addWidget(m_themeCombo, 0, 1);
+    appearanceLayout->addWidget(languageLabel, 0, 2);
+    appearanceLayout->addWidget(m_languageCombo, 0, 3);
+
+    appearanceSectionLayout->addWidget(appearanceCard);
 
 
-    QGroupBox *kernelGroup = new QGroupBox(tr("Kernel Settings"));
-    kernelGroup->setStyleSheet(groupBoxStyle);
-    QFormLayout *kernelLayout = new QFormLayout(kernelGroup);
+    QWidget *kernelSection = new QWidget;
+    QVBoxLayout *kernelSectionLayout = new QVBoxLayout(kernelSection);
+    kernelSectionLayout->setContentsMargins(0, 0, 0, 0);
+    kernelSectionLayout->setSpacing(12);
+    kernelSectionLayout->addWidget(makeSectionTitle(tr("Kernel Settings")));
+
+    QFrame *kernelCard = makeCard();
+    QFormLayout *kernelLayout = new QFormLayout(kernelCard);
+    kernelLayout->setContentsMargins(20, 20, 20, 20);
     kernelLayout->setSpacing(15);
+    kernelLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
     m_kernelVersionLabel = new QLabel(tr("Not installed"));
     m_kernelVersionLabel->setStyleSheet("color: #e94560; font-weight: bold;");
 
     m_kernelVersionCombo = new MenuComboBox;
     m_kernelVersionCombo->addItem(tr("Latest version"));
+    m_kernelVersionCombo->setWheelEnabled(false);
+    m_kernelVersionCombo->setFixedHeight(kSpinBoxHeight);
 
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
     m_kernelPathEdit->setPlaceholderText(tr("Kernel path"));
     m_kernelPathEdit->setStyleSheet(inputStyleApplied);
+    m_kernelPathEdit->setFixedHeight(kSpinBoxHeight);
 
     m_kernelDownloadProgress = new QProgressBar;
     m_kernelDownloadProgress->setRange(0, 100);
@@ -234,27 +460,51 @@ void SettingsView::setupUI()
     kernelBtnLayout->addWidget(m_checkUpdateBtn);
     kernelBtnLayout->addStretch();
 
-    kernelLayout->addRow(tr("Installed version:"), m_kernelVersionLabel);
-    kernelLayout->addRow(tr("Select version:"), m_kernelVersionCombo);
-    kernelLayout->addRow(tr("Kernel path:"), m_kernelPathEdit);
+    kernelLayout->addRow(makeFormLabel(tr("Installed version:")), m_kernelVersionLabel);
+    kernelLayout->addRow(makeFormLabel(tr("Select version:")), m_kernelVersionCombo);
+    kernelLayout->addRow(makeFormLabel(tr("Kernel path:")), m_kernelPathEdit);
     kernelLayout->addRow(m_kernelDownloadProgress);
     kernelLayout->addRow(m_kernelDownloadStatus);
     kernelLayout->addRow(kernelBtnLayout);
+
+    kernelSectionLayout->addWidget(kernelCard);
 
     m_saveBtn = new QPushButton(tr("Save"));
     m_saveBtn->setFixedHeight(36);
     m_saveBtn->setFixedWidth(110);
 
-    mainLayout->addWidget(proxyGroup);
-    mainLayout->addWidget(appearanceGroup);
-    mainLayout->addWidget(kernelGroup);
+    mainLayout->addWidget(proxySection);
+    mainLayout->addWidget(proxyAdvancedSection);
+    mainLayout->addWidget(appearanceSection);
+    mainLayout->addWidget(kernelSection);
     mainLayout->addStretch();
     mainLayout->addWidget(m_saveBtn, 0, Qt::AlignHCenter);
 
+    scrollArea->setWidget(contentWidget);
+    outerLayout->addWidget(scrollArea, 1);
+
     connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
+    connect(m_saveAdvancedBtn, &QPushButton::clicked, this, &SettingsView::onSaveAdvancedClicked);
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
     connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
+
+    connect(m_themeCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        if (index == kThemeDefaultIndex) {
+            return;
+        }
+        QMessageBox::information(this, tr("提示"), tr("正在适配中"));
+        QSignalBlocker blocker(m_themeCombo);
+        m_themeCombo->setCurrentIndex(kThemeDefaultIndex);
+    });
+    connect(m_languageCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
+        if (index == kLanguageDefaultIndex) {
+            return;
+        }
+        QMessageBox::information(this, tr("提示"), tr("正在适配中"));
+        QSignalBlocker blocker(m_languageCombo);
+        m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
+    });
 }
 
 void SettingsView::updateStyle()
@@ -279,6 +529,7 @@ void SettingsView::updateStyle()
     applyTransparentStyle(m_downloadKernelBtn, QColor("#e94560"));
     applyTransparentStyle(m_checkKernelBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_checkUpdateBtn, QColor("#3b82f6"));
+    applyTransparentStyle(m_saveAdvancedBtn, QColor("#3b82f6"));
     applyTransparentStyle(m_saveBtn, QColor("#10b981"));
 }
 
@@ -304,32 +555,34 @@ void SettingsView::loadSettings()
         systemProxyEnabled = config.value("systemProxy").toBool(false);
     }
     m_systemProxyCheck->setChecked(systemProxyEnabled);
-
-    QJsonObject theme = DatabaseService::instance().getThemeConfig();
-    QString themeName = theme.value("theme").toString("dark");
-    if (themeName == "light") {
-        m_themeCombo->setCurrentIndex(1);
-    } else if (themeName == "auto") {
-        m_themeCombo->setCurrentIndex(2);
+    m_systemProxyBypassEdit->setPlainText(
+        config.value("systemProxyBypass").toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS));
+    m_tunMtuSpin->setValue(config.value("tunMtu").toInt(ConfigConstants::DEFAULT_TUN_MTU));
+    const QString tunStack = config.value("tunStack").toString(ConfigConstants::DEFAULT_TUN_STACK);
+    if (tunStack == "system") {
+        m_tunStackCombo->setCurrentIndex(1);
+    } else if (tunStack == "gvisor") {
+        m_tunStackCombo->setCurrentIndex(2);
     } else {
-        m_themeCombo->setCurrentIndex(0);
+        m_tunStackCombo->setCurrentIndex(0);
     }
+    m_tunEnableIpv6Switch->setChecked(config.value("tunEnableIpv6").toBool(false));
+    m_tunAutoRouteSwitch->setChecked(config.value("tunAutoRoute").toBool(true));
+    m_tunStrictRouteSwitch->setChecked(config.value("tunStrictRoute").toBool(true));
 
-    QString locale = DatabaseService::instance().getLocale();
-    if (locale == "en") {
-        m_languageCombo->setCurrentIndex(1);
-    } else if (locale == "ja") {
-        m_languageCombo->setCurrentIndex(2);
-    } else if (locale == "ru") {
-        m_languageCombo->setCurrentIndex(3);
-    } else {
-        m_languageCombo->setCurrentIndex(0);
+    {
+        QSignalBlocker blocker(m_themeCombo);
+        m_themeCombo->setCurrentIndex(kThemeDefaultIndex);
+    }
+    {
+        QSignalBlocker blocker(m_languageCombo);
+        m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
     }
 }
 
 void SettingsView::saveSettings()
 {
-    QJsonObject config;
+    QJsonObject config = DatabaseService::instance().getAppConfig();
     config["mixedPort"] = m_mixedPortSpin->value();
     config["apiPort"] = m_apiPortSpin->value();
     bool autoStartEnabled = m_autoStartCheck->isChecked();
@@ -346,6 +599,7 @@ void SettingsView::saveSettings()
     config["systemProxy"] = systemProxyEnabled;
 
     DatabaseService::instance().saveAppConfig(config);
+    AppSettings::instance().load();
 
     QJsonObject theme;
     switch (m_themeCombo->currentIndex()) {
@@ -359,6 +613,44 @@ void SettingsView::saveSettings()
     DatabaseService::instance().saveLocale(locales[m_languageCombo->currentIndex()]);
 
     Logger::info(tr("Settings saved"));
+}
+
+void SettingsView::onSaveAdvancedClicked()
+{
+    QString bypass = m_systemProxyBypassEdit->toPlainText();
+    bypass.replace(QRegularExpression("[\\r\\n]+"), ";");
+    bypass = bypass.trimmed();
+    if (bypass.isEmpty()) {
+        QMessageBox::warning(this, tr("Notice"), tr("Please enter system proxy bypass domains"));
+        return;
+    }
+
+    const int mtu = m_tunMtuSpin->value();
+    if (mtu < 576 || mtu > 9000) {
+        QMessageBox::warning(this, tr("Notice"), tr("MTU must be between 576 and 9000"));
+        return;
+    }
+
+    QString stack = "mixed";
+    switch (m_tunStackCombo->currentIndex()) {
+        case 1: stack = "system"; break;
+        case 2: stack = "gvisor"; break;
+        default: stack = "mixed"; break;
+    }
+
+    QJsonObject config = DatabaseService::instance().getAppConfig();
+    config["systemProxyBypass"] = bypass;
+    config["tunMtu"] = mtu;
+    config["tunStack"] = stack;
+    config["tunEnableIpv6"] = m_tunEnableIpv6Switch->isChecked();
+    config["tunAutoRoute"] = m_tunAutoRouteSwitch->isChecked();
+    config["tunStrictRoute"] = m_tunStrictRouteSwitch->isChecked();
+
+    DatabaseService::instance().saveAppConfig(config);
+    AppSettings::instance().load();
+
+    Logger::info(tr("Advanced settings saved"));
+    QMessageBox::information(this, tr("Notice"), tr("Advanced settings saved"));
 }
 
 void SettingsView::onSaveClicked()

@@ -323,8 +323,8 @@ void LogView::updateStats()
     m_totalTag->setText(tr("%1 entries").arg(m_filtered.size()));
     m_errorTag->setText(tr("Errors: %1").arg(errorCount));
     m_warningTag->setText(tr("Warnings: %1").arg(warningCount));
-    m_errorTag->setVisible(errorCount > 0);
-    m_warningTag->setVisible(warningCount > 0);
+    m_errorTag->setVisible(true);
+    m_warningTag->setVisible(true);
 }
 
 bool LogView::logMatchesFilter(const LogParser::LogEntry &entry) const
@@ -399,14 +399,16 @@ void LogView::updateStyle()
         QColor hoverBg = baseColor;
         hoverBg.setAlphaF(0.3);
 
+        const QString alignmentStyle = isButton ? QString() : QString("qproperty-alignment: AlignCenter;");
         QString baseStyle = QString(
             "%1 { background-color: %2; color: %3; border: 1px solid %4; "
             "border-radius: 10px; padding: 0px 12px; font-weight: bold; font-size: 11px; "
-            "min-height: 26px; max-height: 26px; qproperty-alignment: AlignCenter; }"
+            "min-height: 26px; max-height: 26px; %5 }"
         ).arg(isButton ? "QPushButton" : "QLabel")
          .arg(bg.name(QColor::HexArgb))
          .arg(baseColor.name())
-         .arg(border.name(QColor::HexArgb));
+         .arg(border.name(QColor::HexArgb))
+         .arg(alignmentStyle);
 
         if (isButton) {
             baseStyle += QString("QPushButton:hover { background-color: %1; }")

@@ -3,6 +3,7 @@
 #include "network/WebSocketClient.h"
 #include "utils/Logger.h"
 #include <QJsonDocument>
+#include <QUrl>
 #include <QUrlQuery>
 
 ProxyService::ProxyService(QObject *parent)
@@ -97,15 +98,19 @@ void ProxyService::fetchConnections()
 
 void ProxyService::selectProxy(const QString &group, const QString &proxy)
 {
-    QString url = buildApiUrl(QString("/proxies/%1").arg(group));
+    const QString groupPath = QString::fromUtf8(QUrl::toPercentEncoding(group));
+    QString url = buildApiUrl(QString("/proxies/%1").arg(groupPath));
 
     QJsonObject body;
     body["name"] = proxy;
 
-    m_httpClient->put(url, QJsonDocument(body).toJson(), [this, proxy](bool success, const QByteArray &) {
+    m_httpClient->put(url, QJsonDocument(body).toJson(), [this, group, proxy](bool success, const QByteArray &) {
         if (success) {
             Logger::info(QString("Proxy switched to: %1").arg(proxy));
+            emit proxySelected(group, proxy);
         } else {
+            Logger::warn(QString("Proxy switch failed: group=%1, proxy=%2").arg(group, proxy));
+            emit proxySelectFailed(group, proxy);
             emit errorOccurred(tr("Failed to switch proxy"));
         }
     });

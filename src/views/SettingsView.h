@@ -7,11 +7,14 @@
 #include <QComboBox>
 #include <QPushButton>
 #include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QLabel>
 #include <QProgressBar>
 #include <QStringList>
 
 class HttpClient;
+class ToggleSwitch;
+class MenuComboBox;
 
 class SettingsView : public QWidget
 {
@@ -22,6 +25,7 @@ public:
 
 private slots:
     void onSaveClicked();
+    void onSaveAdvancedClicked();
     void onDownloadKernelClicked();
     void onCheckKernelClicked();
     void onCheckUpdateClicked();
@@ -49,14 +53,21 @@ private:
     QSpinBox *m_apiPortSpin;
     QCheckBox *m_autoStartCheck;
     QCheckBox *m_systemProxyCheck;
+    QPlainTextEdit *m_systemProxyBypassEdit;
+    QSpinBox *m_tunMtuSpin;
+    MenuComboBox *m_tunStackCombo;
+    ToggleSwitch *m_tunEnableIpv6Switch;
+    ToggleSwitch *m_tunAutoRouteSwitch;
+    ToggleSwitch *m_tunStrictRouteSwitch;
+    QPushButton *m_saveAdvancedBtn;
 
     // Appearance settings.
-    QComboBox *m_themeCombo;
-    QComboBox *m_languageCombo;
+    MenuComboBox *m_themeCombo;
+    MenuComboBox *m_languageCombo;
 
     // Kernel settings.
     QLabel *m_kernelVersionLabel;
-    QComboBox *m_kernelVersionCombo;
+    MenuComboBox *m_kernelVersionCombo;
     QProgressBar *m_kernelDownloadProgress;
     QLabel *m_kernelDownloadStatus;
     QLineEdit *m_kernelPathEdit;

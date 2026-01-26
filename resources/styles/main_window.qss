@@ -24,7 +24,7 @@ QListWidget::item:hover {
     background-color: @bg-tertiary@;
 }
 QListWidget::item:selected {
-    background-color: rgba(148, 251, 255, 0.71);
+    background-color: rgba(16, 185, 129, 0.25);
     color: @text-primary@;
     font-weight: bold;
 }

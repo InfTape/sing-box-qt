@@ -5,6 +5,26 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QJsonArray>
+#include <QStyledItemDelegate>
+
+namespace {
+class ConnectionsItemDelegate : public QStyledItemDelegate
+{
+public:
+    explicit ConnectionsItemDelegate(QObject *parent = nullptr)
+        : QStyledItemDelegate(parent)
+    {
+    }
+
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override
+    {
+        QStyleOptionViewItem opt(option);
+        opt.state &= ~QStyle::State_HasFocus;
+        opt.showDecorationSelected = true;
+        QStyledItemDelegate::paint(painter, opt, index);
+    }
+};
+} // namespace
 
 ConnectionsView::ConnectionsView(QWidget *parent)
     : QWidget(parent)
@@ -59,15 +79,17 @@ void ConnectionsView::setupUI()
         }
         QTableWidget::item { padding: 8px; }
         QTableWidget::item:selected { background-color: rgba(62, 166, 255, 0.2); }
+        QTableWidget::item:focus { outline: none; }
+        QTableWidget::item:selected:focus { outline: none; }
         QHeaderView {
             background: transparent;
         }
         QTableCornerButton::section {
-            background-color: rgba(62, 166, 255, 0.2);
+            background-color: rgba(59, 130, 246, 0.18);
             border-top-left-radius: 10px;
         }
         QHeaderView::section {
-            background-color: rgba(62, 166, 255, 0.15);
+            background-color: rgba(59, 130, 246, 0.12);
             color: #eaeaea;
             padding: 8px;
             border: none;
@@ -82,6 +104,7 @@ void ConnectionsView::setupUI()
             border-bottom-left-radius: 10px;
         }
     )");
+    m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
 
     mainLayout->addLayout(toolbarLayout);
     mainLayout->addWidget(m_tableWidget, 1);

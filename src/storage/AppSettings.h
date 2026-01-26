@@ -57,12 +57,14 @@ public:
     bool preferIpv6() const { return m_preferIpv6; }
     bool dnsHijack() const { return m_dnsHijack; }
     bool systemProxyEnabled() const { return m_systemProxyEnabled; }
+    QString systemProxyBypass() const { return m_systemProxyBypass; }
 
     void setBlockAds(bool enabled);
     void setEnableAppGroups(bool enabled);
     void setPreferIpv6(bool enabled);
     void setDnsHijack(bool enabled);
     void setSystemProxyEnabled(bool enabled);
+    void setSystemProxyBypass(const QString &bypass);
 
     // URL test config.
     QString urltestUrl() const { return m_urltestUrl; }
@@ -118,6 +120,7 @@ private:
     bool m_preferIpv6;
     bool m_dnsHijack;
     bool m_systemProxyEnabled;
+    QString m_systemProxyBypass;
 
     // URL test.
     QString m_urltestUrl;
