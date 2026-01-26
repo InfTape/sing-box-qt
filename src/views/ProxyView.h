@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QSet>
 #include <QProgressBar>
+#include <QHash>
 
 class ProxyService;
 class DelayTestService;
@@ -27,7 +28,10 @@ public:
 private slots:
     void updateStyle();
     void onProxiesReceived(const QJsonObject &proxies);
+    void onItemClicked(QTreeWidgetItem *item, int column);
     void onItemDoubleClicked(QTreeWidgetItem *item, int column);
+    void onProxySelected(const QString &group, const QString &proxy);
+    void onProxySelectFailed(const QString &group, const QString &proxy);
     void onTestAllClicked();
     void onSearchTextChanged(const QString &text);
     void onDelayResult(const ProxyDelayTestResult &result);
@@ -36,6 +40,8 @@ private slots:
 
 private:
     void setupUI();
+    void handleNodeActivation(QTreeWidgetItem *item);
+    void updateSelectedProxyUI(const QString &group, const QString &proxy);
     void updateProxyItem(QTreeWidgetItem *item, const QJsonObject &proxy);
     QString formatDelay(int delay) const;
     QColor getDelayColor(int delay) const;
@@ -50,6 +56,7 @@ private:
     DelayTestService *m_delayTestService;
     QSet<QString> m_testingNodes;  // Nodes under test.
     QJsonObject m_cachedProxies;   // Cached proxy data.
+    QHash<QString, QString> m_pendingSelection; // group -> proxy
 };
 
 #endif // PROXYVIEW_H
