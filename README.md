@@ -61,8 +61,7 @@
 
 ![主页](https://github.com/user-attachments/assets/ac4af2a8-df34-47f6-b9a3-b93d1ae31be8)
 
-![代理](https://github.com/user-attachments/assets/17e873d7-1eb5-4ace-904a-67ecccfe72be>
-)
+![代理](https://github.com/user-attachments/assets/17e873d7-1eb5-4ace-904a-67ecccfe72be)
 
 ![订阅](https://github.com/user-attachments/assets/90bca68c-e118-404f-82a6-d4e181ee6442)
 
