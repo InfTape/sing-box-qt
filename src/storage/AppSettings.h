@@ -68,6 +68,12 @@ public:
 
     // URL test config.
     QString urltestUrl() const { return m_urltestUrl; }
+    int urltestTimeoutMs() const { return m_urltestTimeoutMs; }
+    int urltestConcurrency() const { return m_urltestConcurrency; }
+    int urltestSamples() const { return m_urltestSamples; }
+    void setUrltestTimeoutMs(int ms);
+    void setUrltestConcurrency(int c);
+    void setUrltestSamples(int s);
     void setUrltestUrl(const QString &url);
 
     // Default outbound selection.
@@ -124,6 +130,9 @@ private:
 
     // URL test.
     QString m_urltestUrl;
+    int m_urltestTimeoutMs;
+    int m_urltestConcurrency;
+    int m_urltestSamples;
 
     // Outbound selection.
     QString m_defaultOutbound;

@@ -2,6 +2,7 @@
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
 #include "utils/ThemeManager.h"
+#include "storage/AppSettings.h"
 #include "widgets/ChevronToggle.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -198,6 +199,7 @@ void ProxyView::setProxyService(ProxyService *service)
         }
         
         m_delayTestService->setApiPort(m_proxyService->getApiPort());
+        m_delayTestService->setApiToken(m_proxyService->getApiToken());
         
         connect(m_proxyService, &ProxyService::proxiesReceived, 
                 this, &ProxyView::onProxiesReceived);
@@ -509,7 +511,9 @@ void ProxyView::onTestSelectedClicked()
     }
 
     DelayTestOptions options;
-    options.timeoutMs = 8000;
+    options.timeoutMs = AppSettings::instance().urltestTimeoutMs();
+    options.url = AppSettings::instance().urltestUrl();
+    options.samples = AppSettings::instance().urltestSamples();
     options.concurrency = 1;
     m_delayTestService->testNodeDelay(name, options);
 }
@@ -564,8 +568,10 @@ void ProxyView::onTestAllClicked()
     
 
     DelayTestOptions options;
-    options.timeoutMs = 8000;
-    options.concurrency = 6;
+    options.timeoutMs = AppSettings::instance().urltestTimeoutMs();
+    options.url = AppSettings::instance().urltestUrl();
+    options.samples = AppSettings::instance().urltestSamples();
+    options.concurrency = AppSettings::instance().urltestConcurrency();
     
     m_delayTestService->testNodesDelay(nodesToTest, options);
 }

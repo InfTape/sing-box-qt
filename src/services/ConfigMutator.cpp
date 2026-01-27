@@ -131,19 +131,19 @@ bool ConfigMutator::injectNodes(QJsonObject &config, const QJsonArray &nodes)
 
     for (int i = 0; i < nodes.size(); ++i) {
         if (!nodes[i].isObject()) {
-            Logger::error(QString("Node is not an object: index=%1").arg(i));
-            return false;
+            Logger::warn(QString("Skip node: not an object, index=%1").arg(i));
+            continue;
         }
         QJsonObject node = nodes[i].toObject();
 
         const QString rawTag = node.value("tag").toString().trimmed();
         if (rawTag.isEmpty()) {
-            Logger::error(QString("Node missing tag: index=%1").arg(i));
-            return false;
+            Logger::warn(QString("Skip node: missing tag, index=%1").arg(i));
+            continue;
         }
         if (node.value("type").toString().trimmed().isEmpty()) {
-            Logger::error(QString("Node missing type: tag=%1, index=%2").arg(rawTag).arg(i));
-            return false;
+            Logger::warn(QString("Skip node: missing type, tag=%1, index=%2").arg(rawTag).arg(i));
+            continue;
         }
 
         QString tag = rawTag;

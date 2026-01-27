@@ -8,15 +8,16 @@
 #include <QMutex>
 #include <QSemaphore>
 #include <QFuture>
+#include <atomic>
 
 class HttpClient;
 
 // Delay test options.
 struct DelayTestOptions {
-    int timeoutMs = 8000;   // Timeout in ms.
+    int timeoutMs = 3000;   // Timeout in ms (Throne-dev 默认 3s).
     QString url;            // Test URL; empty uses AppSettings::urltestUrl().
-    int samples = 2;        // Sample count.
-    int concurrency = 6;    // Concurrency.
+    int samples = 2;        // Sample count (Throne-dev 复测用 2 次).
+    int concurrency = 10;   // Concurrency (Throne-dev 默认 10，内部再限 100).
 };
 
 // Delay test result.
@@ -38,6 +39,7 @@ public:
 
     // Set API port.
     void setApiPort(int port);
+    void setApiToken(const QString &token);
 
     // Test single proxy delay (median of samples).
     void testNodeDelay(const QString &proxy, const DelayTestOptions &options = DelayTestOptions());
@@ -86,6 +88,8 @@ private:
     mutable QMutex m_mutex;
     QSemaphore *m_semaphore;  // Concurrency control.
     QFuture<void> m_lastFuture; // Hold last future to satisfy MSVC warning.
+    QString m_apiToken;
+    std::atomic<int> m_activeTasks;
 };
 
 #endif // DELAYTESTSERVICE_H

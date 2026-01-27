@@ -38,6 +38,9 @@ AppSettings::AppSettings(QObject *parent)
     , m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS)
     // URL test.
     , m_urltestUrl(ConfigConstants::DEFAULT_URLTEST_URL)
+    , m_urltestTimeoutMs(ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS)
+    , m_urltestConcurrency(ConfigConstants::DEFAULT_URLTEST_CONCURRENCY)
+    , m_urltestSamples(ConfigConstants::DEFAULT_URLTEST_SAMPLES)
     // Outbound selection.
     , m_defaultOutbound("manual")
     , m_downloadDetour("direct")
@@ -82,6 +85,9 @@ void AppSettings::load()
 
     // URL test.
     m_urltestUrl = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
+    m_urltestTimeoutMs = config.value("urltestTimeoutMs").toInt(ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS);
+    m_urltestConcurrency = config.value("urltestConcurrency").toInt(ConfigConstants::DEFAULT_URLTEST_CONCURRENCY);
+    m_urltestSamples = config.value("urltestSamples").toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
 
     // Outbound selection.
     m_defaultOutbound = config.value("defaultOutbound").toString("manual");
@@ -124,6 +130,9 @@ void AppSettings::save()
 
     // URL test.
     config["urltestUrl"] = m_urltestUrl;
+    config["urltestTimeoutMs"] = m_urltestTimeoutMs;
+    config["urltestConcurrency"] = m_urltestConcurrency;
+    config["urltestSamples"] = m_urltestSamples;
 
     // Outbound selection.
     config["defaultOutbound"] = m_defaultOutbound;
@@ -310,6 +319,42 @@ void AppSettings::setUrltestUrl(const QString &url)
 {
     if (m_urltestUrl != url) {
         m_urltestUrl = url;
+        save();
+        emit settingsChanged();
+    }
+}
+
+void AppSettings::setUrltestTimeoutMs(int ms)
+{
+    if (ms <= 0) {
+        ms = ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS;
+    }
+    if (m_urltestTimeoutMs != ms) {
+        m_urltestTimeoutMs = ms;
+        save();
+        emit settingsChanged();
+    }
+}
+
+void AppSettings::setUrltestConcurrency(int c)
+{
+    if (c <= 0) {
+        c = 1;
+    }
+    if (m_urltestConcurrency != c) {
+        m_urltestConcurrency = c;
+        save();
+        emit settingsChanged();
+    }
+}
+
+void AppSettings::setUrltestSamples(int s)
+{
+    if (s <= 0) {
+        s = 1;
+    }
+    if (m_urltestSamples != s) {
+        m_urltestSamples = s;
         save();
         emit settingsChanged();
     }

@@ -183,13 +183,19 @@ void SubscriptionService::addUrlSubscription(const QString &url,
             saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(QString::fromUtf8(data));
-            if (nodes.isEmpty()) {
-                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
-                return;
+            if (nodes.isEmpty() && isJsonContent(QString::fromUtf8(data))) {
+                // Fall back to saving original config when JSON is a full config.
+                info.useOriginalConfig = true;
+                saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), configPath);
+            } else {
+                if (nodes.isEmpty()) {
+                    emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
+                    return;
+                }
+                info.nodeCount = nodes.count();
+                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
+                DatabaseService::instance().saveSubscriptionNodes(id, nodes);
             }
-            info.nodeCount = nodes.count();
-            saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
-            DatabaseService::instance().saveSubscriptionNodes(id, nodes);
         }
 
         if (!saved) {
@@ -254,13 +260,18 @@ void SubscriptionService::addManualSubscription(const QString &content,
         saved = SubscriptionConfigStore::saveOriginalConfig(trimmed, configPath);
     } else {
         QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(trimmed);
-        if (nodes.isEmpty()) {
-            emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
-            return;
+        if (nodes.isEmpty() && isJsonContent(trimmed)) {
+            info.useOriginalConfig = true;
+            saved = SubscriptionConfigStore::saveOriginalConfig(trimmed, configPath);
+        } else {
+            if (nodes.isEmpty()) {
+                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
+                return;
+            }
+            info.nodeCount = nodes.count();
+            saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
+            DatabaseService::instance().saveSubscriptionNodes(id, nodes);
         }
-        info.nodeCount = nodes.count();
-        saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
-        DatabaseService::instance().saveSubscriptionNodes(id, nodes);
     }
 
     if (!saved) {
@@ -331,13 +342,18 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
             saved = SubscriptionConfigStore::saveOriginalConfig(sub->manualContent, sub->configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(sub->manualContent);
-            if (nodes.isEmpty()) {
-                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
-                return;
+            if (nodes.isEmpty() && isJsonContent(sub->manualContent)) {
+                sub->useOriginalConfig = true;
+                saved = SubscriptionConfigStore::saveOriginalConfig(sub->manualContent, sub->configPath);
+            } else {
+                if (nodes.isEmpty()) {
+                    emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
+                    return;
+                }
+                sub->nodeCount = nodes.count();
+                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
+                DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
             }
-            sub->nodeCount = nodes.count();
-            saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
-            DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
         }
         if (!saved) {
             emit errorOccurred(tr("Failed to refresh subscription"));
@@ -385,13 +401,18 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
             saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), sub->configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(QString::fromUtf8(data));
-            if (nodes.isEmpty()) {
-                emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
-                return;
+            if (nodes.isEmpty() && isJsonContent(QString::fromUtf8(data))) {
+                sub->useOriginalConfig = true;
+                saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), sub->configPath);
+            } else {
+                if (nodes.isEmpty()) {
+                    emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
+                    return;
+                }
+                sub->nodeCount = nodes.count();
+                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
+                DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
             }
-            sub->nodeCount = nodes.count();
-            saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
-            DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
         }
 
         if (!saved) {

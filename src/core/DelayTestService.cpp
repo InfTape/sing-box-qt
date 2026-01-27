@@ -10,6 +10,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QAtomicInt>
 #include <algorithm>
 
 DelayTestService::DelayTestService(QObject *parent)
@@ -18,6 +19,7 @@ DelayTestService::DelayTestService(QObject *parent)
     , m_apiPort(9090)
     , m_stopping(false)
     , m_semaphore(nullptr)
+    , m_activeTasks(0)
 {
 }
 
@@ -32,16 +34,23 @@ void DelayTestService::setApiPort(int port)
     m_apiPort = port;
 }
 
+void DelayTestService::setApiToken(const QString &token)
+{
+    m_apiToken = token.trimmed();
+}
+
 bool DelayTestService::isTesting() const
 {
-    QMutexLocker locker(&m_mutex);
-    return m_semaphore != nullptr && m_semaphore->available() < 6;
+    return m_activeTasks.load() > 0;
 }
 
 void DelayTestService::stopAllTests()
 {
     QMutexLocker locker(&m_mutex);
     m_stopping = true;
+    if (m_semaphore) {
+        m_semaphore->release(m_semaphore->available() + 1);
+    }
 }
 
 QString DelayTestService::buildClashDelayUrl(const QString &proxy, int timeoutMs, const QString &testUrl) const
@@ -79,12 +88,22 @@ QString resolveTestUrl(const DelayTestOptions &options)
 
 int DelayTestService::fetchSingleDelay(const QString &proxy, int timeoutMs, const QString &testUrl)
 {
+    {
+        QMutexLocker locker(&m_mutex);
+        if (m_stopping) {
+            return -1;
+        }
+    }
+
     QString url = buildClashDelayUrl(proxy, timeoutMs, testUrl);
 
     // Create a local QNetworkAccessManager to avoid cross-thread issues.
     QNetworkAccessManager manager;
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    if (!m_apiToken.isEmpty()) {
+        request.setRawHeader("Authorization", QByteArray("Bearer ").append(m_apiToken.toUtf8()));
+    }
     request.setTransferTimeout(timeoutMs + 2000);
 
     QNetworkReply *reply = manager.get(request);
@@ -180,14 +199,15 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
 
 void DelayTestService::testNodeDelay(const QString &proxy, const DelayTestOptions &options)
 {
-    // Run in background thread.
-    // Keep the future to avoid MSVC warning about discarded return value.
+    m_activeTasks.store(1);
+
     m_lastFuture = QtConcurrent::run([this, proxy, options]() {
         ProxyDelayTestResult result = measureProxyDelay(proxy, options);
 
         // Emit on the main thread.
         QMetaObject::invokeMethod(this, [this, result]() {
             emit nodeDelayResult(result);
+            m_activeTasks.store(0);
         }, Qt::QueuedConnection);
     });
 }
@@ -205,11 +225,15 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
         m_stopping = false;
     }
 
+    // 并发数量与 Throne-dev 一致：默认 10，最大 100，最小 1。
+    const int maxConcurrency = std::clamp(options.concurrency, 1, 100);
+
     // Create semaphore for concurrency control.
     delete m_semaphore;
-    m_semaphore = new QSemaphore(qMax(1, options.concurrency));
+    m_semaphore = new QSemaphore(maxConcurrency);
 
     int total = proxies.size();
+    m_activeTasks.store(total);
 
     m_lastFuture = QtConcurrent::run([this, proxies, options, total]() {
         QAtomicInt completed(0);
@@ -239,6 +263,7 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
                 QMetaObject::invokeMethod(this, [this, result, current, total]() {
                     emit nodeDelayResult(result);
                     emit testProgress(current, total);
+                    m_activeTasks.fetch_sub(1);
                 }, Qt::QueuedConnection);
             });
 
@@ -253,6 +278,7 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
         // Emit completion.
         QMetaObject::invokeMethod(this, [this]() {
             emit testCompleted();
+            m_activeTasks.store(0);
         }, Qt::QueuedConnection);
     });
 }

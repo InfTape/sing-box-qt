@@ -95,13 +95,20 @@ const int DEFAULT_API_PORT = 9090;
 const QString DEFAULT_DNS_PROXY = "https://1.1.1.1/dns-query";
 const QString DEFAULT_DNS_CN = "h3://dns.alidns.com/dns-query";
 const QString DEFAULT_DNS_RESOLVER = "114.114.114.114";
-const QString DEFAULT_URLTEST_URL = "http://cp.cloudflare.com/generate_204";
+// 与 Throne-dev 保持一致的默认延迟测试地址
+const QString DEFAULT_URLTEST_URL = "http://cp.cloudflare.com/";
 const QString DEFAULT_SYSTEM_PROXY_BYPASS =
     "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*";
 const QString DEFAULT_TUN_IPV4 = "172.19.0.1/30";
 const QString DEFAULT_TUN_IPV6 = "fdfe:dcba:9876::1/126";
 const QString DEFAULT_TUN_STACK = "mixed";
 const int DEFAULT_TUN_MTU = 1500;
+
+// ==================== URL test defaults ====================
+// Throne-dev 默认值：3s 超时、10 并发、双次采样
+const int DEFAULT_URLTEST_TIMEOUT_MS = 3000;
+const int DEFAULT_URLTEST_CONCURRENCY = 10;
+const int DEFAULT_URLTEST_SAMPLES = 2;
 
 } // namespace ConfigConstants
 

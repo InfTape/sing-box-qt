@@ -1,21 +1,135 @@
 #include "services/subscription/SubscriptionParser.h"
 #include "utils/Logger.h"
 #include <QJsonDocument>
+#include <QJsonParseError>
+#include <QList>
+#include <QMap>
+#include <QSet>
 #include <QRegularExpression>
 #include <QStringList>
 #include <QUrl>
 #include <QUrlQuery>
 #include <yaml-cpp/yaml.h>
 
+namespace {
+void appendArray(QJsonArray &target, const QJsonArray &source)
+{
+    for (const auto &val : source) {
+        target.append(val);
+    }
+}
+
+bool looksLikeWireguardConfig(const QString &text)
+{
+    return text.contains("[Interface]") && text.contains("[Peer]");
+}
+
+QString normalizeHostToAscii(const QString &host)
+{
+    if (host.isEmpty()) {
+        return host;
+    }
+    const QByteArray ace = QUrl::toAce(host);
+    if (!ace.isEmpty()) {
+        return QString::fromLatin1(ace);
+    }
+    return host;
+}
+
+QList<QString> splitContentEntries(const QString &text)
+{
+    QList<QString> entries;
+    int idx = 0;
+    const int len = text.length();
+    while (idx < len) {
+        const QChar ch = text[idx];
+        if (ch == '\n' || ch == '\r') {
+            idx += 1;
+            continue;
+        }
+        if (ch == '{' || ch == '[') {
+            const QChar open = ch;
+            const QChar close = (ch == '{') ? '}' : ']';
+            int depth = 1;
+            int i = idx + 1;
+            for (; i < len; ++i) {
+                if (text[i] == open) depth++;
+                else if (text[i] == close) {
+                    depth--;
+                    if (depth == 0) break;
+                }
+            }
+            const int end = (i < len) ? i + 1 : len;
+            entries.append(text.mid(idx, end - idx).trimmed());
+            idx = end;
+            continue;
+        }
+        int nl = text.indexOf('\n', idx);
+        if (nl == -1) nl = len;
+        const QString segment = text.mid(idx, nl - idx).trimmed();
+        if (!segment.isEmpty()) {
+            entries.append(segment);
+        }
+        idx = nl + 1;
+    }
+    return entries;
+}
+
+QJsonArray parseJsonContentToNodes(const QByteArray &content)
+{
+    QJsonArray result;
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(content, &err);
+    if (err.error != QJsonParseError::NoError) {
+        return result;
+    }
+
+    if (doc.isObject()) {
+        QJsonObject obj = doc.object();
+        if (obj.contains("outbounds") || obj.contains("endpoints")) {
+            return SubscriptionParser::parseSingBoxConfig(content);
+        }
+        if (obj.contains("servers")) {
+            return SubscriptionParser::parseSip008Config(obj);
+        }
+        QJsonObject single = SubscriptionParser::parseSingleJsonNode(obj);
+        if (!single.isEmpty()) {
+            result.append(single);
+        }
+        return result;
+    }
+
+    if (doc.isArray()) {
+        for (const auto &item : doc.array()) {
+            if (!item.isObject()) continue;
+            QJsonObject single = SubscriptionParser::parseSingleJsonNode(item.toObject());
+            if (!single.isEmpty()) {
+                result.append(single);
+            }
+        }
+    }
+    return result;
+}
+} // namespace
+
 QJsonArray SubscriptionParser::parseSubscriptionContent(const QByteArray &content)
 {
-    QJsonDocument doc = QJsonDocument::fromJson(content);
-    if (!doc.isNull() && doc.isObject()) {
-        return parseSingBoxConfig(content);
+    QJsonArray jsonNodes = parseJsonContentToNodes(content);
+    if (!jsonNodes.isEmpty()) {
+        return jsonNodes;
     }
 
     const QString str = QString::fromUtf8(content);
-    if (str.contains("proxies:")) {
+    if (looksLikeWireguardConfig(str)) {
+        QJsonObject wg = parseWireguardConfig(str);
+        if (!wg.isEmpty()) {
+            QJsonArray arr;
+            arr.append(wg);
+            return arr;
+        }
+    }
+
+    if (str.contains("proxies")) {
         return parseClashConfig(content);
     }
 
@@ -24,11 +138,50 @@ QJsonArray SubscriptionParser::parseSubscriptionContent(const QByteArray &conten
 
 QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray &content)
 {
+    QJsonArray nodes;
     QJsonDocument doc = QJsonDocument::fromJson(content);
-    if (doc.isObject() && doc.object().contains("outbounds")) {
-        return doc.object()["outbounds"].toArray();
+    if (!doc.isObject()) {
+        return nodes;
     }
-    return QJsonArray();
+
+    auto isProxyOutbound = [](const QJsonObject &ob) -> bool {
+        const QString type = ob.value("type").toString().trimmed().toLower();
+        if (type.isEmpty()) return false;
+
+        static const QSet<QString> proxyTypes = {
+            "socks", "http", "shadowsocks", "vmess", "vless", "trojan",
+            "anytls", "hysteria", "hysteria2", "tuic", "wireguard", "ssh"
+        };
+        if (!proxyTypes.contains(type)) {
+            return false;
+        }
+
+        const QString server = ob.value("server").toString().trimmed();
+        int port = ob.value("server_port").toVariant().toInt();
+        if (port <= 0) {
+            port = ob.value("port").toVariant().toInt();
+        }
+        return !server.isEmpty() && port > 0;
+    };
+
+    QJsonObject root = doc.object();
+    const QJsonArray outbounds = root.value("outbounds").toArray();
+    for (const auto &ob : outbounds) {
+        if (!ob.isObject()) continue;
+        QJsonObject outbound = ob.toObject();
+        if (!isProxyOutbound(outbound)) continue;
+        nodes.append(outbound);
+    }
+
+    const QJsonArray endpoints = root.value("endpoints").toArray();
+    for (const auto &ep : endpoints) {
+        if (!ep.isObject()) continue;
+        QJsonObject endpoint = ep.toObject();
+        if (!isProxyOutbound(endpoint)) continue;
+        nodes.append(endpoint);
+    }
+
+    return nodes;
 }
 
 QJsonArray SubscriptionParser::parseClashConfig(const QByteArray &content)
@@ -247,14 +400,91 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray &content)
     return nodes;
 }
 
+QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject &obj)
+{
+    QJsonArray nodes;
+    if (!obj.contains("servers") || !obj.value("servers").isArray()) {
+        return nodes;
+    }
+
+    const QJsonArray servers = obj.value("servers").toArray();
+    for (const auto &serverVal : servers) {
+        if (!serverVal.isObject()) continue;
+        const QJsonObject serverObj = serverVal.toObject();
+        QJsonObject node;
+        node["type"] = "shadowsocks";
+        node["server"] = serverObj.value("server").toString();
+        node["server_port"] = serverObj.value("server_port").toVariant().toInt();
+        node["method"] = serverObj.value("method").toString();
+        node["password"] = serverObj.value("password").toString();
+        QString tag = serverObj.value("remarks").toString().trimmed();
+        if (tag.isEmpty()) {
+            tag = serverObj.value("name").toString().trimmed();
+        }
+        if (tag.isEmpty()) {
+            tag = QString("%1:%2").arg(node.value("server").toString())
+                .arg(node.value("server_port").toInt());
+        }
+        node["tag"] = tag;
+        if (!node.value("server").toString().isEmpty() && node.value("server_port").toInt() > 0) {
+            nodes.append(node);
+        }
+    }
+
+    return nodes;
+}
+
+QJsonObject SubscriptionParser::parseSingleJsonNode(const QJsonObject &obj)
+{
+    QJsonObject node = obj;
+
+    QString type = node.value("type").toString().trimmed();
+    if (type.isEmpty()) {
+        type = node.value("protocol").toString().trimmed();
+    }
+
+    QString server = node.value("server").toString().trimmed();
+    if (server.isEmpty()) {
+        server = node.value("address").toString().trimmed();
+    }
+    if (server.isEmpty()) {
+        server = node.value("host").toString().trimmed();
+    }
+
+    int port = node.value("server_port").toVariant().toInt();
+    if (port <= 0) {
+        port = node.value("port").toVariant().toInt();
+    }
+
+    QString tag = node.value("tag").toString().trimmed();
+    if (tag.isEmpty()) {
+        tag = node.value("name").toString().trimmed();
+    }
+    if (tag.isEmpty() && !server.isEmpty() && port > 0) {
+        tag = QString("%1:%2").arg(server).arg(port);
+    }
+
+    if (type.isEmpty() || server.isEmpty() || port <= 0) {
+        return QJsonObject();
+    }
+
+    node["type"] = type;
+    node["server"] = server;
+    node["server_port"] = port;
+    if (!tag.isEmpty()) {
+        node["tag"] = tag;
+    }
+    return node;
+}
+
 QJsonArray SubscriptionParser::parseURIList(const QByteArray &content)
 {
     QJsonArray nodes;
 
-    QByteArray decoded = QByteArray::fromBase64(content);
-    QString text = decoded.isEmpty()
-        ? QString::fromUtf8(content)
-        : QString::fromUtf8(decoded);
+    QString text = tryDecodeBase64ToText(QString::fromUtf8(content));
+    if (text.isEmpty()) {
+        text = QString::fromUtf8(content);
+    }
 
     const QStringList lines = text.split('\n', Qt::SkipEmptyParts);
 
@@ -262,7 +492,16 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray &content)
         const QString uri = line.trimmed();
         QJsonObject node;
 
-        if (uri.startsWith("vmess://")) {
+        if (uri.startsWith("{") || uri.startsWith("[")) {
+            appendArray(nodes, parseJsonContentToNodes(uri.toUtf8()));
+            continue;
+        } else if (uri.startsWith("json://")) {
+            const QString decoded = tryDecodeBase64ToText(uri.mid(7));
+            if (!decoded.isEmpty()) {
+                appendArray(nodes, parseJsonContentToNodes(decoded.toUtf8()));
+                continue;
+            }
+        } else if (uri.startsWith("vmess://")) {
             node = parseVmessURI(uri);
         } else if (uri.startsWith("vless://")) {
             node = parseVlessURI(uri);
@@ -272,6 +511,16 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray &content)
             node = parseShadowsocksURI(uri);
         } else if (uri.startsWith("hysteria2://") || uri.startsWith("hy2://")) {
             node = parseHysteria2URI(uri);
+        } else if (uri.startsWith("hysteria://")) {
+            node = parseHysteriaURI(uri);
+        } else if (uri.startsWith("tuic://")) {
+            node = parseTuicURI(uri);
+        } else if (uri.startsWith("socks://") || uri.startsWith("socks5://") || uri.startsWith("socks4://") || uri.startsWith("socks4a://")) {
+            node = parseSocksURI(uri);
+        } else if (uri.startsWith("http://") || uri.startsWith("https://")) {
+            node = parseHttpURI(uri);
+        } else if (uri.startsWith("wg://")) {
+            node = parseWireguardConfig(uri);
         }
 
         if (!node.isEmpty()) {
@@ -445,10 +694,19 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
     QUrlQuery query(url.query());
 
     node["type"] = "vless";
-    node["tag"] = QUrl::fromPercentEncoding(url.fragment().toUtf8());
-    node["server"] = url.host();
-    node["server_port"] = url.port();
+    node["server"] = normalizeHostToAscii(url.host());
+    int port = url.port();
+    if (port <= 0) {
+        port = 443;
+    }
+    node["server_port"] = port;
     node["uuid"] = url.userName();
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("vless-%1:%2").arg(node["server"].toString()).arg(port);
+    }
+    node["tag"] = tag;
 
     QString flow = query.queryItemValue("flow");
     if (!flow.isEmpty()) {
@@ -460,7 +718,7 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
         QJsonObject tls;
         tls["enabled"] = true;
 
-        QString sni = query.queryItemValue("sni");
+        QString sni = normalizeHostToAscii(query.queryItemValue("sni"));
         if (!sni.isEmpty()) {
             tls["server_name"] = sni;
         }
@@ -495,7 +753,17 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
         node["tls"] = tls;
     }
 
-    node["packet_encoding"] = "xudp";
+    // 仅当订阅显式指定 packetEncoding/pe 时才开启，避免对不支持 XUDP 的节点造成问题
+    QString packetEncoding = query.queryItemValue("packetEncoding");
+    if (packetEncoding.isEmpty()) {
+        packetEncoding = query.queryItemValue("packetencoding");
+    }
+    if (packetEncoding.isEmpty()) {
+        packetEncoding = query.queryItemValue("pe");
+    }
+    if (!packetEncoding.isEmpty()) {
+        node["packet_encoding"] = packetEncoding;
+    }
 
     QString type = query.queryItemValue("type");
     if (type == "ws") {
@@ -504,10 +772,13 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
 
         QString path = query.queryItemValue("path");
         if (!path.isEmpty()) {
+            path = QUrl::fromPercentEncoding(path.toUtf8());
+        }
+        if (!path.isEmpty()) {
             transport["path"] = path;
         }
 
-        QString host = query.queryItemValue("host");
+        QString host = normalizeHostToAscii(query.queryItemValue("host"));
         if (!host.isEmpty()) {
             QJsonObject headers;
             headers["Host"] = host;
@@ -531,6 +802,9 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
 
         QString path = query.queryItemValue("path");
         if (!path.isEmpty()) {
+            path = QUrl::fromPercentEncoding(path.toUtf8());
+        }
+        if (!path.isEmpty()) {
             transport["path"] = path;
         }
 
@@ -552,10 +826,19 @@ QJsonObject SubscriptionParser::parseTrojanURI(const QString &uri)
     QUrlQuery query(url.query());
 
     node["type"] = "trojan";
-    node["tag"] = QUrl::fromPercentEncoding(url.fragment().toUtf8());
     node["server"] = url.host();
-    node["server_port"] = url.port();
+    int port = url.port();
+    if (port <= 0) {
+        port = 443;
+    }
+    node["server_port"] = port;
     node["password"] = url.userName();
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("trojan-%1:%2").arg(node["server"].toString()).arg(port);
+    }
+    node["tag"] = tag;
 
     QJsonObject tls;
     tls["enabled"] = true;
@@ -631,14 +914,23 @@ QJsonObject SubscriptionParser::parseHysteria2URI(const QString &uri)
     QUrlQuery query(url.query());
 
     node["type"] = "hysteria2";
-    node["tag"] = QUrl::fromPercentEncoding(url.fragment().toUtf8());
     node["server"] = url.host();
-    node["server_port"] = url.port();
+    int port = url.port();
+    if (port <= 0) {
+        port = 443;
+    }
+    node["server_port"] = port;
     node["password"] = url.userName();
 
     if (node["password"].toString().isEmpty()) {
         node["password"] = query.queryItemValue("auth");
     }
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("hy2-%1:%2").arg(node.value("server").toString()).arg(port);
+    }
+    node["tag"] = tag;
 
     QJsonObject tls;
     tls["enabled"] = true;
@@ -652,6 +944,328 @@ QJsonObject SubscriptionParser::parseHysteria2URI(const QString &uri)
         obfs["password"] = query.queryItemValue("obfs-password");
         node["obfs"] = obfs;
     }
+
+    return node;
+}
+
+QJsonObject SubscriptionParser::parseHysteriaURI(const QString &uri)
+{
+    QJsonObject node;
+    QUrl url(uri);
+    if (!url.isValid()) {
+        return node;
+    }
+    QUrlQuery query(url.query());
+
+    const QString host = url.host();
+    int port = url.port();
+    if (port <= 0) {
+        port = 443;
+    }
+
+    node["type"] = "hysteria";
+    node["server"] = host;
+    node["server_port"] = port;
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("hysteria-%1:%2").arg(host).arg(port);
+    }
+    node["tag"] = tag;
+
+    QString auth = url.userName();
+    if (auth.isEmpty()) {
+        auth = query.queryItemValue("auth");
+    }
+    if (!auth.isEmpty()) {
+        node["auth"] = auth;
+    }
+
+    QString up = query.queryItemValue("up");
+    QString down = query.queryItemValue("down");
+    if (!up.isEmpty()) node["up_mbps"] = up;
+    if (!down.isEmpty()) node["down_mbps"] = down;
+
+    QJsonObject tls;
+    tls["enabled"] = true;
+    QString sni = query.queryItemValue("sni");
+    QString peer = query.queryItemValue("peer");
+    if (!sni.isEmpty() || !peer.isEmpty()) {
+        const QString serverName = !sni.isEmpty() ? sni : peer;
+        tls["server_name"] = serverName;
+    }
+    if (query.queryItemValue("insecure") == "1" || query.queryItemValue("allow_insecure") == "1") {
+        tls["insecure"] = true;
+    }
+    if (!tls.isEmpty()) {
+        node["tls"] = tls;
+    }
+
+    const QString obfsType = query.queryItemValue("obfs");
+    QString obfsParam = query.queryItemValue("obfs-password");
+    if (obfsParam.isEmpty()) {
+        obfsParam = query.queryItemValue("obfsParam");
+    }
+    if (!obfsType.isEmpty()) {
+        QJsonObject obfs;
+        obfs["type"] = obfsType;
+        if (!obfsParam.isEmpty()) {
+            obfs["password"] = obfsParam;
+        }
+        node["obfs"] = obfs;
+    }
+
+    return node;
+}
+
+QJsonObject SubscriptionParser::parseTuicURI(const QString &uri)
+{
+    QJsonObject node;
+    QUrl url(uri);
+    if (!url.isValid()) {
+        return node;
+    }
+
+    QUrlQuery query(url.query());
+    const QString host = url.host();
+    int port = url.port();
+    if (port <= 0) {
+        port = 443;
+    }
+
+    node["type"] = "tuic";
+    node["server"] = host;
+    node["server_port"] = port;
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("tuic-%1:%2").arg(host).arg(port);
+    }
+    node["tag"] = tag;
+
+    const QString uuid = url.userName();
+    const QString password = url.password();
+    if (!uuid.isEmpty()) node["uuid"] = uuid;
+    if (!password.isEmpty()) node["password"] = password;
+
+    const QString token = query.queryItemValue("token");
+    if (!token.isEmpty()) node["token"] = token;
+
+    const QString congestion = query.queryItemValue("congestion_control").isEmpty()
+        ? query.queryItemValue("congestion")
+        : query.queryItemValue("congestion_control");
+    if (!congestion.isEmpty()) {
+        node["congestion_control"] = congestion;
+    }
+
+    const QString udpRelay = query.queryItemValue("udp_relay_mode");
+    if (!udpRelay.isEmpty()) {
+        node["udp_relay_mode"] = udpRelay;
+    }
+
+    const QString heartbeat = query.queryItemValue("heartbeat_interval");
+    if (!heartbeat.isEmpty()) {
+        node["heartbeat"] = heartbeat;
+    }
+
+    QString alpn = query.queryItemValue("alpn");
+    if (!alpn.isEmpty()) {
+        node["alpn"] = QJsonArray::fromStringList(alpn.split(",", Qt::SkipEmptyParts));
+    }
+
+    const bool insecure = query.queryItemValue("allow_insecure") == "1" || query.queryItemValue("insecure") == "1";
+    QString sni = query.queryItemValue("sni");
+    QString peer = query.queryItemValue("peer");
+    if (peer.isEmpty()) {
+        peer = query.queryItemValue("serverName");
+    }
+    if (insecure || !sni.isEmpty() || !peer.isEmpty()) {
+        QJsonObject tls;
+        tls["enabled"] = true;
+        QString serverName = !sni.isEmpty() ? sni : peer;
+        if (serverName.isEmpty()) {
+            serverName = host;
+        }
+        if (!serverName.isEmpty()) {
+            tls["server_name"] = serverName;
+        }
+        if (insecure) {
+            tls["insecure"] = true;
+        }
+        node["tls"] = tls;
+    }
+
+    return node;
+}
+
+QJsonObject SubscriptionParser::parseSocksURI(const QString &uri)
+{
+    QJsonObject node;
+    QUrl url(uri);
+    if (!url.isValid()) {
+        return node;
+    }
+
+    const QString host = url.host();
+    int port = url.port();
+    if (host.isEmpty() || port <= 0) {
+        return node;
+    }
+
+    node["type"] = "socks";
+    node["server"] = host;
+    node["server_port"] = port;
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("socks-%1:%2").arg(host).arg(port);
+    }
+    node["tag"] = tag;
+
+    if (!url.userName().isEmpty()) {
+        node["username"] = url.userName();
+    }
+    if (!url.password().isEmpty()) {
+        node["password"] = url.password();
+    }
+    return node;
+}
+
+QJsonObject SubscriptionParser::parseHttpURI(const QString &uri)
+{
+    QJsonObject node;
+    QUrl url(uri);
+    if (!url.isValid()) {
+        return node;
+    }
+
+    const QString host = url.host();
+    int port = url.port();
+    if (host.isEmpty()) {
+        return node;
+    }
+    if (port <= 0) {
+        port = url.scheme().toLower() == "https" ? 443 : 80;
+    }
+
+    node["type"] = "http";
+    node["server"] = host;
+    node["server_port"] = port;
+
+    QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+    if (tag.isEmpty()) {
+        tag = QString("http-%1:%2").arg(host).arg(port);
+    }
+    node["tag"] = tag;
+
+    if (!url.userName().isEmpty()) {
+        node["username"] = url.userName();
+    }
+    if (!url.password().isEmpty()) {
+        node["password"] = url.password();
+    }
+
+    if (url.scheme().toLower() == "https") {
+        QJsonObject tls;
+        tls["enabled"] = true;
+        tls["server_name"] = host;
+        node["tls"] = tls;
+    }
+
+    return node;
+}
+
+QJsonObject SubscriptionParser::parseWireguardConfig(const QString &content)
+{
+    if (content.startsWith("wg://")) {
+        const QString encoded = content.mid(5);
+        const QString decoded = tryDecodeBase64ToText(encoded);
+        if (!decoded.isEmpty() && decoded != content) {
+            return parseWireguardConfig(decoded);
+        }
+    }
+
+    QMap<QString, QString> interfaceMap;
+    QMap<QString, QString> peerMap;
+    QMap<QString, QString> *current = nullptr;
+
+    const QStringList lines = content.split('\n');
+    for (QString line : lines) {
+        line = line.trimmed();
+        if (line.isEmpty() || line.startsWith('#') || line.startsWith(';')) {
+            continue;
+        }
+        if (line.startsWith('[') && line.endsWith(']')) {
+            const QString section = line.mid(1, line.length() - 2).toLower();
+            if (section == "interface") {
+                current = &interfaceMap;
+            } else if (section == "peer") {
+                current = &peerMap;
+            } else {
+                current = nullptr;
+            }
+            continue;
+        }
+
+        const int eqIndex = line.indexOf('=');
+        if (eqIndex <= 0 || !current) {
+            continue;
+        }
+        const QString key = line.left(eqIndex).trimmed().toLower();
+        const QString value = line.mid(eqIndex + 1).trimmed();
+        (*current)[key] = value;
+    }
+
+    const QString privateKey = interfaceMap.value("privatekey");
+    const QString endpoint = peerMap.value("endpoint");
+    if (privateKey.isEmpty() || endpoint.isEmpty()) {
+        return QJsonObject();
+    }
+
+    QString host;
+    int port = 0;
+    int colon = endpoint.lastIndexOf(':');
+    if (colon > 0) {
+        host = endpoint.left(colon).trimmed();
+        port = endpoint.mid(colon + 1).toInt();
+    } else {
+        host = endpoint.trimmed();
+    }
+    if (port <= 0) {
+        port = 51820;
+    }
+
+    QStringList addresses;
+    const QString addrValue = interfaceMap.value("address");
+    for (const QString &addr : addrValue.split(',', Qt::SkipEmptyParts)) {
+        const QString trimmed = addr.trimmed();
+        if (!trimmed.isEmpty()) {
+            addresses.append(trimmed);
+        }
+    }
+
+    QJsonObject node;
+    node["type"] = "wireguard";
+    node["server"] = host;
+    node["server_port"] = port;
+    node["private_key"] = privateKey;
+    const QString peerPublic = peerMap.value("publickey");
+    if (!peerPublic.isEmpty()) {
+        node["peer_public_key"] = peerPublic;
+    }
+    const QString preShared = peerMap.value("presharedkey");
+    if (!preShared.isEmpty()) {
+        node["pre_shared_key"] = preShared;
+    }
+    if (!addresses.isEmpty()) {
+        node["local_address"] = QJsonArray::fromStringList(addresses);
+    }
+
+    QString tag = interfaceMap.value("description").trimmed();
+    if (tag.isEmpty()) {
+        tag = QString("wireguard-%1:%2").arg(host).arg(port);
+    }
+    node["tag"] = tag;
 
     return node;
 }
@@ -685,14 +1299,29 @@ QString SubscriptionParser::tryDecodeBase64ToText(const QString &raw)
 
 QJsonArray SubscriptionParser::extractNodesWithFallback(const QString &content)
 {
-    QJsonArray nodes = parseSubscriptionContent(content.toUtf8());
+    auto tryParse = [](const QString &text) -> QJsonArray {
+        QJsonArray parsed = SubscriptionParser::parseSubscriptionContent(text.toUtf8());
+        if (!parsed.isEmpty()) {
+            return parsed;
+        }
+
+        QJsonArray merged;
+        const QList<QString> parts = splitContentEntries(text);
+        for (const auto &part : parts) {
+            QJsonArray sub = SubscriptionParser::parseSubscriptionContent(part.toUtf8());
+            appendArray(merged, sub);
+        }
+        return merged;
+    };
+
+    QJsonArray nodes = tryParse(content.trimmed());
     if (!nodes.isEmpty()) {
         return nodes;
     }
 
     const QString decoded = tryDecodeBase64ToText(content);
     if (!decoded.isEmpty()) {
-        nodes = parseSubscriptionContent(decoded.toUtf8());
+        nodes = tryParse(decoded);
         if (!nodes.isEmpty()) {
             return nodes;
         }
@@ -705,9 +1334,12 @@ QJsonArray SubscriptionParser::extractNodesWithFallback(const QString &content)
     stripped.replace("ss://", "");
     stripped.replace("hysteria2://", "");
     stripped.replace("hy2://", "");
+    stripped.replace("hysteria://", "");
+    stripped.replace("tuic://", "");
+    stripped.replace("wg://", "");
     const QString decodedStripped = tryDecodeBase64ToText(stripped);
     if (!decodedStripped.isEmpty()) {
-        nodes = parseSubscriptionContent(decodedStripped.toUtf8());
+        nodes = tryParse(decodedStripped);
     }
     return nodes;
 }

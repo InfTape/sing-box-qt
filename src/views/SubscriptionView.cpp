@@ -95,6 +95,10 @@ void SubscriptionView::setupUI()
             this, &SubscriptionView::refreshList);
     connect(m_subscriptionService, &SubscriptionService::activeSubscriptionChanged,
             this, &SubscriptionView::refreshList);
+    connect(m_subscriptionService, &SubscriptionService::errorOccurred,
+            this, [this](const QString &err) {
+                QMessageBox::warning(this, tr("Notice"), err);
+            });
 
     refreshList();
 }

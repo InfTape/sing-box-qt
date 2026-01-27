@@ -21,6 +21,7 @@ public:
     void setApiPort(int port);
     int getApiPort() const;
     void setApiToken(const QString &token);
+    QString getApiToken() const;
 
     // Fetch proxy data.
     void fetchProxies();

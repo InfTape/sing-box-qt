@@ -44,6 +44,11 @@ void ProxyService::setApiToken(const QString &token)
     m_httpClient->setAuthToken(token);
 }
 
+QString ProxyService::getApiToken() const
+{
+    return m_apiToken;
+}
+
 QString ProxyService::buildApiUrl(const QString &path) const
 {
     return QString("http://127.0.0.1:%1%2").arg(m_apiPort).arg(path);
