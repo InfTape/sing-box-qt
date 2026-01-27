@@ -18,9 +18,9 @@
 #CardTagActive {
     background-color: @success@;
     color: white;
-    padding: 3px 10px;
+    padding: 4px 10px;
     border: 1px solid rgba(16, 185, 129, 0.7);
-    border-radius: 999px;
+    border-radius: 12px;
     font-size: 11px;
 }
 #CardTagSchedule {
@@ -54,26 +54,26 @@
     font-size: 12px;
 }
 #CardActionBtn {
-    background-color: @primary@;
-    color: white;
-    border: 1px solid @primary@;
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 13px;
 }
 #CardActionBtn:hover {
-    background-color: @primary@cc;
+    background-color: @primary-30@;
 }
 #CardActionBtnActive {
-    background-color: rgba(16, 185, 129, 0.2);
-    color: @success@;
-    border: 1px solid rgba(16, 185, 129, 0.4);
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 13px;
 }
 #CardActionBtnActive:hover {
-    background-color: rgba(16, 185, 129, 0.3);
+    background-color: @primary-30@;
 }
 #SubscriptionMenu {
     background: transparent;

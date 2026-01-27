@@ -31,6 +31,7 @@ private:
     void setupUI(const SubscriptionInfo &info);
     void applyActiveState();
     void updateStyle();
+    void applyUseButtonStyle();
 
     QString m_subId;
     bool m_active = false;

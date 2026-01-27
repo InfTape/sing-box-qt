@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QMessageBox>
+#include <QStyle>
 #include "views/HomeView.h"
 #include "views/ProxyView.h"
 #include "views/SubscriptionView.h"
@@ -180,6 +181,7 @@ void MainWindow::setupStatusBar()
     m_startStopBtn->setCursor(Qt::PointingHandCursor);
     m_startStopBtn->setObjectName("StartStopBtn");
     m_startStopBtn->setProperty("state", "start");
+    applyStartStopStyle();
 
     statusLayout->addStretch();
     statusLayout->addWidget(m_startStopBtn);
@@ -351,6 +353,7 @@ void MainWindow::onKernelStatusChanged(bool running)
         m_startStopBtn->setText(tr("Stop"));
         
         m_startStopBtn->setProperty("state", "stop");
+        applyStartStopStyle();
 
         m_proxyService->startTrafficMonitor();
         if (m_proxyController) {
@@ -364,6 +367,7 @@ void MainWindow::onKernelStatusChanged(bool running)
         
         ThemeManager &tm = ThemeManager::instance();
         m_startStopBtn->setProperty("state", "start");
+        applyStartStopStyle();
 
         m_proxyService->stopTrafficMonitor();
 
@@ -385,12 +389,7 @@ void MainWindow::updateStyle()
     ThemeManager &tm = ThemeManager::instance();
     setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
 
-    if (m_startStopBtn) {
-       // Only apply button style if not customized (or rely on onKernelStatusChanged to re-apply)
-       // Actually, onKernelStatusChanged handles dynamic colors. Initial setup handles initial color.
-       // We might lose state if theme changes, but onKernelStatusChanged should be called or we can re-apply based on valid status.
-       // For now, let's NOT override it with generic button style.
-    }
+    applyStartStopStyle();
 }
 
 void MainWindow::showAndActivate()
@@ -404,6 +403,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     hide();
     event->ignore();
+}
+
+void MainWindow::applyStartStopStyle()
+{
+    if (!m_startStopBtn) return;
+    m_startStopBtn->style()->unpolish(m_startStopBtn);
+    m_startStopBtn->style()->polish(m_startStopBtn);
+    m_startStopBtn->update();
 }
 
 void MainWindow::loadSettings()

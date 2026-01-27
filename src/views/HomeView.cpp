@@ -90,6 +90,7 @@ void HomeView::setupUI()
     m_statusDot = new QWidget;
     m_statusDot->setObjectName("StatusDot");
     m_statusDot->setFixedSize(8, 8);
+    m_statusDot->setProperty("status", "stopped");
 
     m_statusText = new QLabel(tr("Stopped"));
     m_statusText->setObjectName("StatusText");
@@ -384,6 +385,7 @@ void HomeView::updateStyle()
     }
 
     polishWidget(m_statusBadge);
+    polishWidget(m_statusDot);
 }
 
 bool HomeView::isSystemProxyEnabled() const
@@ -441,6 +443,7 @@ void HomeView::updateStatus(bool running)
 
     if (m_statusDot) {
         m_statusDot->setProperty("status", running ? "running" : "stopped");
+        polishWidget(m_statusDot);
     }
     polishWidget(m_statusBadge);
 

@@ -48,6 +48,7 @@ private:
     void testSingleNode(const QString &proxy);
     void applyTreeItemColors();
     void markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText = QString());
+    void updateTestButtonStyle(bool testing);
 
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;

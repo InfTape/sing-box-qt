@@ -51,7 +51,7 @@ void RuleCard::setupUI()
         QPushButton *menuBtn = new QPushButton("...");
         menuBtn->setFlat(true);
         menuBtn->setCursor(Qt::PointingHandCursor);
-        menuBtn->setFixedSize(28, 24);
+        menuBtn->setFixedSize(32, 28);
         menuBtn->setObjectName("RuleMenuBtn");
 
         m_menu = new RoundedMenu(this);

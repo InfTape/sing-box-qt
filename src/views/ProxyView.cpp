@@ -8,6 +8,41 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QBrush>
+#include <QStyledItemDelegate>
+
+namespace {
+
+class ProxyTreeDelegate : public QStyledItemDelegate
+{
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+
+    void initStyleOption(QStyleOptionViewItem *option,
+                         const QModelIndex &index) const override
+    {
+        QStyledItemDelegate::initStyleOption(option, index);
+
+        ThemeManager &tm = ThemeManager::instance();
+        const QString state = index.data(Qt::UserRole + 2).toString();
+
+        if (index.column() == 0 && state == "active") {
+            option->palette.setColor(QPalette::Text, tm.getColor("success"));
+        }
+
+        if (index.column() == 2) {
+            if (state == "loading")
+                option->palette.setColor(QPalette::Text, tm.getColor("text-tertiary"));
+            else if (state == "ok")
+                option->palette.setColor(QPalette::Text, tm.getColor("success"));
+            else if (state == "warn")
+                option->palette.setColor(QPalette::Text, tm.getColor("warning"));
+            else if (state == "bad")
+                option->palette.setColor(QPalette::Text, tm.getColor("error"));
+        }
+    }
+};
+
+} // namespace
 
 ProxyView::ProxyView(QWidget *parent)
     : QWidget(parent)
@@ -49,9 +84,11 @@ void ProxyView::setupUI()
     m_searchEdit->setObjectName("SearchInput");
     
     m_testAllBtn = new QPushButton(tr("Test All"));
+    m_testAllBtn->setObjectName("TestAllBtn");
     m_testAllBtn->setCursor(Qt::PointingHandCursor);
     
     m_refreshBtn = new QPushButton(tr("Refresh"));
+    m_refreshBtn->setObjectName("RefreshBtn");
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     
     toolbarLayout->addWidget(m_searchEdit, 1);
@@ -93,6 +130,7 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(1, 100);
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_treeWidget->setItemDelegate(new ProxyTreeDelegate(m_treeWidget));
     
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
@@ -111,6 +149,10 @@ void ProxyView::updateStyle()
     
     setStyleSheet(tm.loadStyleSheet(":/styles/proxy_view.qss"));
     applyTreeItemColors();
+    if (m_treeWidget && m_treeWidget->viewport()) {
+        m_treeWidget->viewport()->update();
+    }
+    updateTestButtonStyle(m_delayTestService && m_delayTestService->isTesting());
 }
 
 void ProxyView::setProxyService(ProxyService *service)
@@ -403,6 +445,7 @@ void ProxyView::onTestAllClicked()
     if (m_delayTestService->isTesting()) {
         m_delayTestService->stopAllTests();
         m_testAllBtn->setText(tr("Test All"));
+        updateTestButtonStyle(false);
         return;
     }
     
@@ -438,6 +481,7 @@ void ProxyView::onTestAllClicked()
     
 
     m_testAllBtn->setText(tr("Stop Tests"));
+    updateTestButtonStyle(true);
     m_progressBar->show();
     m_progressBar->setValue(0);
     
@@ -521,6 +565,7 @@ void ProxyView::onTestProgress(int current, int total)
 void ProxyView::onTestCompleted()
 {
     m_testAllBtn->setText(tr("Test All"));
+    updateTestButtonStyle(false);
     m_progressBar->hide();
     m_testingNodes.clear();
 }
@@ -588,4 +633,31 @@ void ProxyView::testSingleNode(const QString &proxy)
 {
     if (!m_delayTestService) return;
     m_delayTestService->testNodeDelay(proxy);
+}
+
+void ProxyView::updateTestButtonStyle(bool testing)
+{
+    if (!m_testAllBtn) return;
+
+    ThemeManager &tm = ThemeManager::instance();
+    const QString bg = testing ? tm.getColorString("error-18") : tm.getColorString("primary-20");
+    const QString border = testing ? tm.getColorString("error-40") : tm.getColorString("primary-40");
+    const QString text = testing ? tm.getColorString("error") : tm.getColorString("primary");
+    const QString hover = testing ? tm.getColorString("error-30") : tm.getColorString("primary-30");
+
+    const QString style = QStringLiteral(
+        "#TestAllBtn {"
+        "background-color: %1;"
+        "color: %2;"
+        "border: 1px solid %3;"
+        "border-radius: 10px;"
+        "padding: 6px 16px;"
+        "font-weight: bold;"
+        "}"
+        "#TestAllBtn:hover {"
+        "background-color: %4;"
+        "}"
+    ).arg(bg, text, border, hover);
+
+    m_testAllBtn->setStyleSheet(style);
 }
