@@ -107,7 +107,7 @@ void ProxyView::setupUI()
     toolbarCardLayout->addLayout(toolbarLayout);
     toolbarCardLayout->addWidget(m_progressBar);
     mainLayout->addWidget(toolbarCard);
-
+    
 
     QFrame *treeCard = new QFrame;
     treeCard->setObjectName("TreeCard");
@@ -116,6 +116,7 @@ void ProxyView::setupUI()
     treeLayout->setSpacing(0);
 
     m_treeWidget = new QTreeWidget;
+    m_treeWidget->setObjectName("ProxyTree");
     m_treeWidget->setHeaderLabels({"", "", ""});
     m_treeWidget->setRootIsDecorated(false);
     m_treeWidget->setIndentation(0);
@@ -257,8 +258,29 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
             QLabel *titleLabel = new QLabel(it.key(), groupCard);
             titleLabel->setObjectName("ProxyGroupTitle");
 
-            QLabel *typeLabel = new QLabel(type, groupCard);
-            typeLabel->setObjectName("ProxyGroupBadge");
+            QFrame *typeFrame = new QFrame(groupCard);
+            typeFrame->setObjectName("ProxyGroupBadge");
+            // 直接设置样式确保圆角生效
+            ThemeManager &tm = ThemeManager::instance();
+            QString badgeStyle = QString(
+                "QFrame#ProxyGroupBadge {"
+                "  background-color: %1;"
+                "  border-radius: 14px;"
+                "  padding: 4px 12px;"
+                "}"
+                "QFrame#ProxyGroupBadge QLabel {"
+                "  color: %2;"
+                "  font-size: 11px;"
+                "  font-weight: 600;"
+                "  background: transparent;"
+                "}"
+            ).arg(tm.getColorString("bg-tertiary"), tm.getColorString("text-primary"));
+            typeFrame->setStyleSheet(badgeStyle);
+            QHBoxLayout *typeLayout = new QHBoxLayout(typeFrame);
+            typeLayout->setContentsMargins(0, 0, 0, 0);
+            QLabel *typeLabel = new QLabel(type, typeFrame);
+            typeLabel->setAlignment(Qt::AlignCenter);
+            typeLayout->addWidget(typeLabel);
 
             QLabel *countLabel = new QLabel(tr("%1 nodes").arg(all.size()), groupCard);
             countLabel->setObjectName("ProxyGroupMeta");
@@ -268,7 +290,7 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
             currentLabel->setVisible(!now.isEmpty());
 
             cardLayout->addWidget(titleLabel);
-            cardLayout->addWidget(typeLabel);
+            cardLayout->addWidget(typeFrame);
             cardLayout->addSpacing(6);
             cardLayout->addWidget(countLabel);
             cardLayout->addSpacing(6);

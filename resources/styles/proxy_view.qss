@@ -31,8 +31,8 @@
     color: @text-secondary@;
 }
 #ProxyGroupBadge {
-    padding: 4px 8px;
-    border-radius: 10px;
+    padding: 4px 12px;
+    border-radius: 14px;
     background-color: @bg-tertiary@;
     color: @text-primary@;
     font-size: 11px;
@@ -93,9 +93,12 @@ QTreeWidget#ProxyTree::item {
 }
 QTreeWidget#ProxyTree::item[active="true"] {
     color: @success@;
+    font-weight: 600;
 }
 QTreeWidget#ProxyTree::item[typecol="true"] {
     color: @text-tertiary@;
+    font-size: 11px;
+    font-weight: 500;
 }
 QTreeWidget#ProxyTree::item[delayState="loading"] {
     color: @text-tertiary@;
@@ -117,17 +120,21 @@ QTreeView::branch:open, QTreeView::branch:closed {
     image: none;
 }
 QTreeWidget#ProxyTree::item {
-    padding: 8px;
-    border-radius: 10px;
-    margin: 2px 4px;
-    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin: 3px 6px;
+    color: @text-primary@;
+    border: 1px solid transparent;
+    font-size: 13px;
 }
 QTreeWidget#ProxyTree::item:selected {
-    background-color: rgba(16, 185, 129, 0.25);
+    background-color: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
     color: @text-primary@;
 }
 QTreeWidget#ProxyTree::item:hover:!selected {
-    background-color: rgba(59, 130, 246, 0.2);
+    background-color: rgba(90, 169, 255, 0.15);
+    border: 1px solid rgba(90, 169, 255, 0.3);
     color: @text-primary@;
 }
 QTreeWidget#ProxyTree::header, QHeaderView {
