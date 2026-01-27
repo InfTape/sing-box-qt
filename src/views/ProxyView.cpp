@@ -643,25 +643,7 @@ void ProxyView::updateTestButtonStyle(bool testing)
 {
     if (!m_testAllBtn) return;
 
-    ThemeManager &tm = ThemeManager::instance();
-    const QString bg = testing ? tm.getColorString("error-18") : tm.getColorString("primary-20");
-    const QString border = testing ? tm.getColorString("error-40") : tm.getColorString("primary-40");
-    const QString text = testing ? tm.getColorString("error") : tm.getColorString("primary");
-    const QString hover = testing ? tm.getColorString("error-30") : tm.getColorString("primary-30");
-
-    const QString style = QStringLiteral(
-        "#TestAllBtn {"
-        "background-color: %1;"
-        "color: %2;"
-        "border: 1px solid %3;"
-        "border-radius: 10px;"
-        "padding: 6px 16px;"
-        "font-weight: bold;"
-        "}"
-        "#TestAllBtn:hover {"
-        "background-color: %4;"
-        "}"
-    ).arg(bg, text, border, hover);
-
-    m_testAllBtn->setStyleSheet(style);
+    m_testAllBtn->setProperty("testing", testing);
+    m_testAllBtn->style()->unpolish(m_testAllBtn);
+    m_testAllBtn->style()->polish(m_testAllBtn);
 }

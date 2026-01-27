@@ -305,8 +305,8 @@ void SubscriptionView::layoutCards()
     const int availableWidth = m_scrollArea->viewport()->width();
     const int spacing = m_cardsLayout->spacing();
     const int minColumns = 2;
-    const int maxColumns = 4;
-    const int idealCardWidth = 320;
+    const int maxColumns = 5;          // allow more cards per row on wide screens
+    const int idealCardWidth = 260;    // shrink ideal width to fit更多列
     int columns = availableWidth / idealCardWidth;
     columns = qMax(minColumns, qMin(columns, maxColumns));
     m_columnCount = columns;
@@ -338,8 +338,8 @@ void SubscriptionView::resizeEvent(QResizeEvent *event)
     const int availableWidth = m_scrollArea->viewport()->width();
     const int spacing = m_cardsLayout->spacing();
     const int minColumns = 2;
-    const int maxColumns = 4;
-    const int idealCardWidth = 320;
+    const int maxColumns = 5;
+    const int idealCardWidth = 260;
     int columns = availableWidth / idealCardWidth;
     columns = qMax(minColumns, qMin(columns, maxColumns));
     if (columns != m_columnCount) {

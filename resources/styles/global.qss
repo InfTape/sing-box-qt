@@ -141,3 +141,52 @@ QFrame#Card, QWidget#Card {
     border-radius: 10px;
 }
 
+/* Menus */
+#ComboMenu, #TrayMenu {
+    background: transparent;
+    border: none;
+    padding: 6px;
+}
+#ComboMenu::panel, #TrayMenu::panel {
+    background: transparent;
+    border: none;
+}
+#ComboMenu::item, #TrayMenu::item {
+    color: @text-primary@;
+    padding: 8px 14px;
+    border-radius: 10px;
+}
+#ComboMenu::item:selected, #TrayMenu::item:selected {
+    background-color: @bg-tertiary@;
+    color: @text-primary@;
+}
+#ComboMenu::item:checked, #ComboMenu::item:checked:selected,
+#TrayMenu::item:checked, #TrayMenu::item:checked:selected {
+    color: @primary@;
+}
+#ComboMenu::separator, #TrayMenu::separator {
+    height: 1px;
+    background-color: @border@;
+    margin: 6px 4px;
+}
+#TrayMenu::indicator {
+    width: 14px;
+    height: 14px;
+}
+#TrayMenu::indicator:checked {
+    image: url(:/icons/check.svg);
+}
+#TrayMenu::indicator:unchecked {
+    image: none;
+}
+
+/* Dialog hints */
+#SubscriptionHint {
+    color: @warning@;
+    font-size: 12px;
+}
+#RuleHint {
+    color: @text-tertiary@;
+    font-size: 12px;
+}
+

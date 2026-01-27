@@ -92,42 +92,4 @@ void MenuComboBox::updateMenuStyle()
     if (!m_menu) return;
     ThemeManager &tm = ThemeManager::instance();
     m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    m_menu->setStyleSheet(QString(R"(
-        #ComboMenu {
-            background: transparent;
-            border: none;
-            padding: 6px;
-        }
-        #ComboMenu::panel {
-            background: transparent;
-            border: none;
-        }
-        #ComboMenu::item {
-            color: %1;
-            padding: 8px 14px;
-            border-radius: 10px;
-        }
-
-        #ComboMenu::item:selected {
-            background-color: %2;
-        }
-        #ComboMenu::item:selected:!checked {
-            color: %1;
-        }
-        #ComboMenu::item:checked {
-            color: %4;
-        }
-        #ComboMenu::item:checked:selected {
-            color: %4;
-        }
-        #ComboMenu::separator {
-            height: 1px;
-            background-color: %3;
-            margin: 6px 4px;
-        }
-    )")
-    .arg(tm.getColorString("text-primary"))
-    .arg(tm.getColorString("bg-tertiary"))
-    .arg(tm.getColorString("border"))
-    .arg(tm.getColorString("primary")));
 }

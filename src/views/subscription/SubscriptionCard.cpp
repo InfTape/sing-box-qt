@@ -182,7 +182,6 @@ void SubscriptionCard::applyActiveState()
     if (m_editConfigAction) {
         m_editConfigAction->setVisible(m_active);
     }
-    applyUseButtonStyle();
 }
 
 void SubscriptionCard::updateStyle()
@@ -194,36 +193,4 @@ void SubscriptionCard::updateStyle()
     extra.insert("card-border", m_active ? tm.getColorString("primary") : tm.getColorString("border"));
     extra.insert("card-radius", m_active ? "12px" : "10px");
     setStyleSheet(tm.loadStyleSheet(":/styles/subscription_card.qss", extra));
-
-    // Styles fully controlled by QSS via objectName/state.
-    applyUseButtonStyle();
-}
-
-void SubscriptionCard::applyUseButtonStyle()
-{
-    if (!m_useBtn) return;
-
-    ThemeManager &tm = ThemeManager::instance();
-    const QString bg = tm.getColorString("primary-20");
-    const QString border = tm.getColorString("primary-40");
-    const QString text = tm.getColorString("primary");
-    const QString hover = tm.getColorString("primary-30");
-
-    const QString id = m_useBtn->objectName();
-    const QString style = QStringLiteral(
-        "#%1 {"
-        "background-color: %2;"
-        "color: %3;"
-        "border: 1px solid %4;"
-        "border-radius: 10px;"
-        "padding: 8px 16px;"
-        "font-size: 13px;"
-        "font-weight: bold;"
-        "}"
-        "#%1:hover {"
-        "background-color: %5;"
-        "}"
-    ).arg(id, bg, text, border, hover);
-
-    m_useBtn->setStyleSheet(style);
 }

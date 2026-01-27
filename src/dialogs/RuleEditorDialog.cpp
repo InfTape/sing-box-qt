@@ -44,7 +44,7 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget *parent)
     form->addRow(tr("Outbound:"), m_outboundCombo);
 
     m_hintLabel->setWordWrap(true);
-    m_hintLabel->setStyleSheet("color: #94a3b8; font-size: 12px;");
+    m_hintLabel->setObjectName("RuleHint");
     m_hintLabel->setText(tr("Note: rules are written to route.rules (1.11+ format). Restart kernel or app to apply."));
     m_hintLabel->setVisible(m_mode == Mode::Add);
 

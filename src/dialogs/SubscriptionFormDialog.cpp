@@ -52,7 +52,7 @@ SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     m_autoUpdateCombo->addItem(tr("1 day"), 1440);
 
     m_hintLabel->setWordWrap(true);
-    m_hintLabel->setStyleSheet("color: #f59e0b; font-size: 12px;");
+    m_hintLabel->setObjectName("SubscriptionHint");
     m_hintLabel->setText(tr("Advanced templates are disabled when using the original config"));
     m_hintLabel->setVisible(false);
 
