@@ -8,14 +8,15 @@
     color: @text-secondary@;
 }
 #PrimaryActionBtn {
-    background-color: @primary@;
-    color: white;
+    background-color: @primary-12@;
+    color: @primary@;
     border-radius: 12px;
     padding: 8px 18px;
-    border: none;
+    border: 1px solid @primary-12@;
 }
 #PrimaryActionBtn:hover {
-    background-color: @primary@cc;
+    background-color: @primary-20@;
+    border-color: @primary-20@;
 }
 #EmptyActionBtn {
     background-color: @primary-12@;

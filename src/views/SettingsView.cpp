@@ -543,8 +543,25 @@ void SettingsView::setupUI()
 
     QWidget *contentWidget = new QWidget;
     QVBoxLayout *mainLayout = new QVBoxLayout(contentWidget);
-    mainLayout->setContentsMargins(30, 30, 30, 30);
-    mainLayout->setSpacing(20);
+    mainLayout->setContentsMargins(24, 24, 24, 24);
+    mainLayout->setSpacing(16);
+
+    // Header (match Rules page layout spacing)
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    QVBoxLayout *titleLayout = new QVBoxLayout;
+    titleLayout->setSpacing(4);
+
+    QLabel *titleLabel = new QLabel(tr("Settings"));
+    titleLabel->setObjectName("PageTitle");
+    QLabel *subtitleLabel = new QLabel(tr("Configure application preferences"));
+    subtitleLabel->setObjectName("PageSubtitle");
+
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subtitleLabel);
+    headerLayout->addLayout(titleLayout);
+    headerLayout->addStretch();
+
+    mainLayout->addLayout(headerLayout);
 
     mainLayout->addWidget(buildProxySection());
     mainLayout->addWidget(buildProxyAdvancedSection());

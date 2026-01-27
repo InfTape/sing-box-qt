@@ -3,6 +3,8 @@
 #include "utils/ThemeManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLabel>
+#include <QFrame>
 #include <QHeaderView>
 #include <QJsonArray>
 #include <QStyledItemDelegate>
@@ -44,21 +46,33 @@ ConnectionsView::ConnectionsView(QWidget *parent)
 void ConnectionsView::setupUI()
 {
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(20, 20, 20, 20);
-    mainLayout->setSpacing(15);
+    mainLayout->setContentsMargins(24, 24, 24, 24);
+    mainLayout->setSpacing(12);
 
-    // Toolbar.
-    QHBoxLayout *toolbarLayout = new QHBoxLayout;
+    // Header (align with Rules page style)
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    QVBoxLayout *titleLayout = new QVBoxLayout;
+    titleLayout->setSpacing(4);
 
+    QLabel *titleLabel = new QLabel(tr("Connections"));
+    titleLabel->setObjectName("PageTitle");
+    QLabel *subtitleLabel = new QLabel(tr("View and manage active connections"));
+    subtitleLabel->setObjectName("PageSubtitle");
+
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subtitleLabel);
+    headerLayout->addLayout(titleLayout);
     m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
     m_closeAllBtn = new QPushButton(tr("Close All"));
 
     m_closeSelectedBtn->setObjectName("CloseSelectedBtn");
     m_closeAllBtn->setObjectName("CloseAllBtn");
 
-    toolbarLayout->addStretch();
-    toolbarLayout->addWidget(m_closeSelectedBtn);
-    toolbarLayout->addWidget(m_closeAllBtn);
+    headerLayout->addStretch();
+    headerLayout->addWidget(m_closeSelectedBtn);
+    headerLayout->addWidget(m_closeAllBtn);
+
+    mainLayout->addLayout(headerLayout);
 
     // Connections table.
     m_tableWidget = new QTableWidget;
@@ -72,7 +86,6 @@ void ConnectionsView::setupUI()
     m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
 
-    mainLayout->addLayout(toolbarLayout);
     mainLayout->addWidget(m_tableWidget, 1);
 
     connect(m_closeSelectedBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseSelected);

@@ -20,6 +20,7 @@
     border: 1px solid @success-12@;
     border-radius: 10px;
     font-weight: bold;
+    padding: 8px 16px;
 }
 #StartStopBtn[state="start"]:hover {
     background-color: @success-12@;
@@ -30,6 +31,7 @@
     border: 1px solid @error-12@;
     border-radius: 10px;
     font-weight: bold;
+    padding: 8px 16px;
 }
 #StartStopBtn[state="stop"]:hover {
     background-color: @error-12@;

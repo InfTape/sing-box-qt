@@ -63,10 +63,13 @@ void LogView::setupUI()
 
     m_totalTag = new QLabel(tr("0 entries"));
     m_totalTag->setObjectName("TotalTag");
+    m_totalTag->setFixedHeight(32);
     m_errorTag = new QLabel(tr("Errors: 0"));
     m_errorTag->setObjectName("ErrorTag");
+    m_errorTag->setFixedHeight(32);
     m_warningTag = new QLabel(tr("Warnings: 0"));
     m_warningTag->setObjectName("WarningTag");
+    m_warningTag->setFixedHeight(32);
 
     m_autoScroll = new QCheckBox(tr("Auto scroll"));
     m_autoScroll->setObjectName("AutoScroll");
@@ -75,14 +78,17 @@ void LogView::setupUI()
     m_clearBtn = new QPushButton(tr("Clear"));
     m_clearBtn->setObjectName("ClearBtn");
     m_clearBtn->setCursor(Qt::PointingHandCursor);
+    m_clearBtn->setFixedHeight(32);
 
     m_copyBtn = new QPushButton(tr("Copy"));
     m_copyBtn->setObjectName("CopyBtn");
     m_copyBtn->setCursor(Qt::PointingHandCursor);
+    m_copyBtn->setFixedHeight(32);
 
     m_exportBtn = new QPushButton(tr("Export"));
     m_exportBtn->setObjectName("ExportBtn");
     m_exportBtn->setCursor(Qt::PointingHandCursor);
+    m_exportBtn->setFixedHeight(32);
 
     controlsLayout->addWidget(m_autoScroll);
     controlsLayout->addSpacing(10);

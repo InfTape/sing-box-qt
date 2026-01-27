@@ -1,3 +1,13 @@
+#PageTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: @text-primary@;
+}
+#PageSubtitle {
+    font-size: 13px;
+    color: @text-secondary@;
+}
+
 #ConnectionsTable {
     background-color: transparent;
     border: none;

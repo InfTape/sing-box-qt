@@ -63,53 +63,40 @@
     background-color: @error@cc;
 }
 
+#TotalTag, #ErrorTag, #WarningTag, #ClearBtn, #CopyBtn, #ExportBtn {
+    min-height: 20px;
+    max-height: 20px;
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 10px;
+    qproperty-alignment: AlignCenter;
+    border: 1px solid transparent;
+}
 #TotalTag {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
-    border-radius: 10px;
-    padding: 0px 12px;
-    font-weight: bold;
-    font-size: 11px;
-    min-height: 26px;
-    max-height: 26px;
-    qproperty-alignment: AlignCenter;
+    border-color: @primary-12@;
 }
 #ErrorTag {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @error-12@;
-    border-radius: 10px;
-    padding: 0px 12px;
-    font-weight: bold;
-    font-size: 11px;
-    min-height: 26px;
-    max-height: 26px;
-    qproperty-alignment: AlignCenter;
+    border-color: @error-12@;
 }
 #WarningTag {
     background-color: @warning-20@;
     color: @warning@;
-    border: 1px solid @warning-40@;
-    border-radius: 10px;
-    padding: 0px 12px;
-    font-weight: bold;
-    font-size: 11px;
-    min-height: 26px;
-    max-height: 26px;
-    qproperty-alignment: AlignCenter;
+    border-color: @warning-40@;
 }
 
 #ClearBtn, #CopyBtn, #ExportBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
-    border-radius: 10px;
-    padding: 6px 16px;
-    font-weight: bold;
+    border-color: @primary-12@;
 }
 #ClearBtn:hover, #CopyBtn:hover, #ExportBtn:hover {
-    background-color: @primary-12@;
+    background-color: @primary-20@;
+    border-color: @primary-20@;
 }
 #LogEntry {
     background: transparent;

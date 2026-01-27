@@ -168,7 +168,8 @@ void MainWindow::setupStatusBar()
     statusLayout->setContentsMargins(20, 0, 20, 0);
 
     m_startStopBtn = new QPushButton(tr("Start"));
-    m_startStopBtn->setFixedSize(80, 32);
+    m_startStopBtn->setFixedHeight(36);
+    m_startStopBtn->setMinimumWidth(88);
     m_startStopBtn->setCursor(Qt::PointingHandCursor);
     m_startStopBtn->setObjectName("StartStopBtn");
     m_startStopBtn->setProperty("state", "start");
