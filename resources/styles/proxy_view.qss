@@ -10,7 +10,7 @@
 #ToolbarCard, #TreeCard {
     background-color: @bg-secondary@;
     border: 1px solid @border@;
-    border-radius: 12px;
+    border-radius: 16px;
 }
 #ProxyGroupCard {
     background-color: @bg-secondary@;

@@ -29,7 +29,7 @@
     background-color: @primary-12@;
 }
 #FilterCard {
-    background-color: @bg-tertiary@;
+    background-color: @bg-secondary@;
     border: 1px solid @border@;
     border-radius: 16px;
 }
