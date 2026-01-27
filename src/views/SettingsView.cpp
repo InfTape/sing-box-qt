@@ -117,7 +117,6 @@ QLabel* SettingsView::createFormLabel(const QString &text)
 {
     QLabel *label = new QLabel(text);
     label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    label->setStyleSheet("padding-top: 3px;");
     return label;
 }
 
@@ -153,7 +152,6 @@ QWidget* SettingsView::buildProxySection()
     m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_mixedPortSpin->setRange(1, 65535);
     m_mixedPortSpin->setValue(7890);
-    m_mixedPortSpin->setStyleSheet(m_inputStyleApplied);
     m_mixedPortSpin->setMinimumWidth(150);
     m_mixedPortSpin->setFixedHeight(kSpinBoxHeight);
     m_mixedPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -162,16 +160,13 @@ QWidget* SettingsView::buildProxySection()
     m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_apiPortSpin->setRange(1, 65535);
     m_apiPortSpin->setValue(9090);
-    m_apiPortSpin->setStyleSheet(m_inputStyleApplied);
     m_apiPortSpin->setMinimumWidth(150);
     m_apiPortSpin->setFixedHeight(kSpinBoxHeight);
     m_apiPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
-    m_autoStartCheck->setStyleSheet(m_inputStyleApplied);
 
     m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
-    m_systemProxyCheck->setStyleSheet(m_inputStyleApplied);
 
     QLabel *mixedPortLabel = createFormLabel(tr("Mixed port:"));
     QLabel *apiPortLabel = createFormLabel(tr("API port:"));
@@ -207,17 +202,14 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     advancedLayout->setSpacing(16);
 
     QLabel *bypassLabel = new QLabel(tr("System proxy bypass domains"));
-    bypassLabel->setStyleSheet(QString("color: %1;").arg(colorTextSecondary));
     m_systemProxyBypassEdit = new QPlainTextEdit;
     m_systemProxyBypassEdit->setPlaceholderText(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
-    m_systemProxyBypassEdit->setStyleSheet(m_inputStyleApplied);
     m_systemProxyBypassEdit->setMinimumHeight(80);
 
     advancedLayout->addWidget(bypassLabel);
     advancedLayout->addWidget(m_systemProxyBypassEdit);
 
     QLabel *tunTitle = new QLabel(tr("TUN Virtual Adapter"));
-    tunTitle->setStyleSheet(QString("color: %1; font-weight: bold;").arg(colorTextSecondary));
     advancedLayout->addWidget(tunTitle);
 
     QHBoxLayout *tunRow = new QHBoxLayout;
@@ -234,7 +226,6 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     m_tunMtuSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
     m_tunMtuSpin->setRange(576, 9000);
     m_tunMtuSpin->setValue(ConfigConstants::DEFAULT_TUN_MTU);
-    m_tunMtuSpin->setStyleSheet(m_inputStyleApplied);
     m_tunMtuSpin->setMinimumWidth(150);
     m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
     m_tunMtuSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -243,7 +234,6 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
     m_tunStackCombo->setWheelEnabled(false);
     m_tunStackCombo->setFixedHeight(kSpinBoxHeight);
-    m_tunStackCombo->setStyleSheet(m_comboStyle);
     m_tunStackCombo->setMinimumWidth(150);
 
     QLabel *mtuLabel = createFormLabel(tr("MTU:"));
@@ -262,13 +252,12 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     toggleLayout->setContentsMargins(16, 10, 16, 10);
     toggleLayout->setSpacing(30);
 
-    auto addToggle = [toggleLayout, colorTextPrimary](const QString &text, ToggleSwitch *&toggle) {
+    auto addToggle = [toggleLayout](const QString &text, ToggleSwitch *&toggle) {
         QWidget *item = new QWidget;
         QHBoxLayout *itemLayout = new QHBoxLayout(item);
         itemLayout->setContentsMargins(0, 0, 0, 0);
         itemLayout->setSpacing(10);
         QLabel *label = new QLabel(text);
-        label->setStyleSheet(QString("color: %1;").arg(colorTextPrimary));
         toggle = new ToggleSwitch;
         itemLayout->addWidget(label);
         itemLayout->addWidget(toggle);
@@ -312,7 +301,7 @@ QWidget* SettingsView::buildProfileSection()
     singboxProfileCardLayout->setSpacing(16);
 
     QLabel *routingTitle = new QLabel(tr("Routing & Downloads"));
-    routingTitle->setStyleSheet(QString("color: %1; font-weight: bold;").arg(colorTextSecondary));
+    routingTitle->setProperty("class", "SettingsSectionSubTitle");
     singboxProfileCardLayout->addWidget(routingTitle);
 
     QGridLayout *routingGrid = new QGridLayout;
@@ -325,14 +314,12 @@ QWidget* SettingsView::buildProfileSection()
     m_defaultOutboundCombo->addItems({tr("Manual selector (recommended)"), tr("Auto select (URLTest)")});
     m_defaultOutboundCombo->setWheelEnabled(false);
     m_defaultOutboundCombo->setFixedHeight(kSpinBoxHeight);
-    m_defaultOutboundCombo->setStyleSheet(m_comboStyle);
     m_defaultOutboundCombo->setMinimumWidth(150);
 
     m_downloadDetourCombo = new MenuComboBox;
     m_downloadDetourCombo->addItems({tr("Manual selector"), tr("Direct")});
     m_downloadDetourCombo->setWheelEnabled(false);
     m_downloadDetourCombo->setFixedHeight(kSpinBoxHeight);
-    m_downloadDetourCombo->setStyleSheet(m_comboStyle);
     m_downloadDetourCombo->setMinimumWidth(150);
 
     QLabel *defaultOutboundLabel = createFormLabel(tr("Default outbound for non-CN traffic"));
@@ -352,13 +339,12 @@ QWidget* SettingsView::buildProfileSection()
     profileToggleLayout->setContentsMargins(16, 10, 16, 10);
     profileToggleLayout->setSpacing(30);
 
-    auto addProfileToggle = [profileToggleLayout, colorTextPrimary](const QString &text, ToggleSwitch *&toggle) {
+    auto addProfileToggle = [profileToggleLayout](const QString &text, ToggleSwitch *&toggle) {
         QWidget *item = new QWidget;
         QHBoxLayout *itemLayout = new QHBoxLayout(item);
         itemLayout->setContentsMargins(0, 0, 0, 0);
         itemLayout->setSpacing(10);
         QLabel *label = new QLabel(text);
-        label->setStyleSheet(QString("color: %1;").arg(colorTextPrimary));
         toggle = new ToggleSwitch;
         itemLayout->addWidget(label);
         itemLayout->addWidget(toggle);
@@ -373,7 +359,7 @@ QWidget* SettingsView::buildProfileSection()
     singboxProfileCardLayout->addWidget(profileToggleCard);
 
     QLabel *dnsTitle = new QLabel(tr("DNS"));
-    dnsTitle->setStyleSheet(QString("color: %1; font-weight: bold;").arg(colorTextSecondary));
+    dnsTitle->setProperty("class", "SettingsSectionSubTitle");
     singboxProfileCardLayout->addWidget(dnsTitle);
 
     QGridLayout *dnsGrid = new QGridLayout;
@@ -384,25 +370,21 @@ QWidget* SettingsView::buildProfileSection()
 
     m_dnsProxyEdit = new QLineEdit;
     m_dnsProxyEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_PROXY);
-    m_dnsProxyEdit->setStyleSheet(m_inputStyleApplied);
     m_dnsProxyEdit->setFixedHeight(kSpinBoxHeight);
     m_dnsProxyEdit->setMinimumWidth(150);
 
     m_dnsCnEdit = new QLineEdit;
     m_dnsCnEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_CN);
-    m_dnsCnEdit->setStyleSheet(m_inputStyleApplied);
     m_dnsCnEdit->setFixedHeight(kSpinBoxHeight);
     m_dnsCnEdit->setMinimumWidth(150);
 
     m_dnsResolverEdit = new QLineEdit;
     m_dnsResolverEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_RESOLVER);
-    m_dnsResolverEdit->setStyleSheet(m_inputStyleApplied);
     m_dnsResolverEdit->setFixedHeight(kSpinBoxHeight);
     m_dnsResolverEdit->setMinimumWidth(150);
 
     m_urltestUrlEdit = new QLineEdit;
     m_urltestUrlEdit->setPlaceholderText(ConfigConstants::DEFAULT_URLTEST_URL);
-    m_urltestUrlEdit->setStyleSheet(m_inputStyleApplied);
     m_urltestUrlEdit->setFixedHeight(kSpinBoxHeight);
     m_urltestUrlEdit->setMinimumWidth(150);
 
@@ -507,33 +489,18 @@ QWidget* SettingsView::buildKernelSection()
     m_kernelPathEdit = new QLineEdit;
     m_kernelPathEdit->setReadOnly(true);
     m_kernelPathEdit->setPlaceholderText(tr("Kernel path"));
-    m_kernelPathEdit->setStyleSheet(m_inputStyleApplied);
     m_kernelPathEdit->setFixedHeight(kSpinBoxHeight);
     m_kernelPathEdit->setMinimumWidth(150);
 
     m_kernelDownloadProgress = new QProgressBar;
+    m_kernelDownloadProgress->setObjectName("KernelProgress");
     m_kernelDownloadProgress->setRange(0, 100);
     m_kernelDownloadProgress->setValue(0);
     m_kernelDownloadProgress->setTextVisible(true);
     m_kernelDownloadProgress->setVisible(false);
-    m_kernelDownloadProgress->setStyleSheet(QString(R"(
-        QProgressBar {
-            background-color: %1;
-            border: none;
-            border-radius: 8px;
-            color: %2;
-            height: 16px;
-        }
-        QProgressBar::chunk {
-            background-color: %3;
-            border-radius: 8px;
-        }
-    )").arg(tm.getColorString("bg-secondary"),
-            colorTextPrimary,
-            tm.getColorString("success")));
 
     m_kernelDownloadStatus = new QLabel;
-    m_kernelDownloadStatus->setStyleSheet(QString("color: %1; font-size: 12px;").arg(colorTextSecondary));
+    m_kernelDownloadStatus->setObjectName("KernelStatusLabel");
     m_kernelDownloadStatus->setVisible(false);
 
     QHBoxLayout *kernelBtnLayout = new QHBoxLayout;
@@ -581,7 +548,6 @@ void SettingsView::setupUI()
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setObjectName("SettingsScroll");
-    scrollArea->setStyleSheet("QScrollArea { background: transparent; } QScrollArea > QWidget > QWidget { background: transparent; }");
 
     QWidget *contentWidget = new QWidget;
     QVBoxLayout *mainLayout = new QVBoxLayout(contentWidget);

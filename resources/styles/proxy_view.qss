@@ -87,6 +87,9 @@ QTreeWidget#ProxyTree {
     color: @text-primary@;
     outline: none;
 }
+QTreeWidget#ProxyTree::item {
+    height: 36px;
+}
 QTreeView::branch {
     image: none;
     background: transparent;

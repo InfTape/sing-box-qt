@@ -84,7 +84,6 @@ void MainWindow::setupUI()
     QLabel *logoLabel = new QLabel("Sing-Box");
     logoLabel->setObjectName("LogoLabel");
     logoLabel->setAlignment(Qt::AlignCenter);
-    logoLabel->setStyleSheet("font-size: 20px; font-weight: bold; padding: 10px;");
     navLayout->addWidget(logoLabel);
 
     setupNavigation();

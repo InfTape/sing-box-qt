@@ -47,6 +47,7 @@ private:
     QString formatDelay(int delay) const;
     QColor getDelayColor(int delay) const;
     void testSingleNode(const QString &proxy);
+    void applyTreeItemColors();
 
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;

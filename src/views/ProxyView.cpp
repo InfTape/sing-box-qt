@@ -92,7 +92,6 @@ void ProxyView::setupUI()
     m_treeWidget->header()->setSectionResizeMode(2, QHeaderView::Fixed);
     m_treeWidget->header()->resizeSection(1, 100);
     m_treeWidget->header()->resizeSection(2, 100);
-    m_treeWidget->setStyleSheet("QTreeView::item { height: 36px; }");
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     
     treeLayout->addWidget(m_treeWidget);
@@ -111,22 +110,7 @@ void ProxyView::updateStyle()
     ThemeManager &tm = ThemeManager::instance();
     
     setStyleSheet(tm.loadStyleSheet(":/styles/proxy_view.qss"));
-
-    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
-        if (!btn) return;
-        QColor bg = baseColor; bg.setAlphaF(0.2);
-        QColor border = baseColor; border.setAlphaF(0.4);
-        QColor hover = baseColor; hover.setAlphaF(0.3);
-        
-        btn->setStyleSheet(QString(
-            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
-            "border-radius: 10px; padding: 6px 16px; font-weight: bold; }"
-            "QPushButton:hover { background-color: %4; }"
-        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
-    };
-
-    applyTransparentStyle(m_testAllBtn, tm.getColor("primary"));
-    applyTransparentStyle(m_refreshBtn, tm.getColor("primary"));
+    applyTreeItemColors();
 }
 
 void ProxyView::setProxyService(ProxyService *service)
@@ -315,6 +299,47 @@ void ProxyView::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column)
     handleNodeActivation(item);
+}
+
+void ProxyView::applyTreeItemColors()
+{
+    ThemeManager &tm = ThemeManager::instance();
+    QTreeWidgetItemIterator it(m_treeWidget);
+    while (*it) {
+        QTreeWidgetItem *item = *it;
+        const QString role = item->data(0, Qt::UserRole).toString();
+        if (role == "node") {
+            QString name = item->text(0);
+            bool hasStar = name.startsWith("* ");
+            if (hasStar) name = name.mid(2);
+
+            const QString group = item->data(0, Qt::UserRole + 1).toString();
+            const QString now = m_cachedProxies.value(group).toObject().value("now").toString();
+            if (name == now) {
+                if (!hasStar) item->setText(0, "* " + name);
+                item->setForeground(0, tm.getColor("success"));
+            } else {
+                if (hasStar) item->setText(0, name);
+                item->setForeground(0, QBrush());
+            }
+
+            // Type column
+            item->setForeground(1, tm.getColor("text-tertiary"));
+
+            // Delay column
+            const QString delayText = item->text(2);
+            if (!delayText.isEmpty() && delayText != "...") {
+                bool ok = false;
+                QString delayStr = delayText;
+                delayStr.remove(" ms");
+                const int delay = delayStr.toInt(&ok);
+                item->setForeground(2, ok ? getDelayColor(delay) : tm.getColor("text-tertiary"));
+            } else {
+                item->setForeground(2, tm.getColor("text-tertiary"));
+            }
+        }
+        ++it;
+    }
 }
 
 void ProxyView::handleNodeActivation(QTreeWidgetItem *item)

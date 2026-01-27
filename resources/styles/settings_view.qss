@@ -15,6 +15,11 @@
     font-size: 12px;
 }
 
+QLabel[class="SettingsSectionSubTitle"] {
+    color: @text-secondary@;
+    font-weight: bold;
+}
+
 #SaveAdvancedBtn,
 #SaveProfileBtn,
 #SaveBtn,
@@ -53,4 +58,21 @@
 
 #SettingsToggleCard QLabel {
     color: @text-primary@;
+}
+
+#KernelProgress {
+    background-color: @bg-secondary@;
+    border: none;
+    border-radius: 8px;
+    color: @text-primary@;
+    height: 16px;
+}
+#KernelProgress::chunk {
+    background-color: @success@;
+    border-radius: 8px;
+}
+
+#KernelStatusLabel {
+    color: @text-secondary@;
+    font-size: 12px;
 }

@@ -379,31 +379,6 @@ void HomeView::updateStyle()
 
     setStyleSheet(tm.loadStyleSheet(":/styles/home_view.qss", extra));
 
-    // Helper to apply transparent style to generic widget (QLabel/QPushButton)
-    auto applyTransparentStyle = [](QWidget *widget, const QColor &baseColor, bool isButton) {
-        if (!widget) return;
-        QColor bg = baseColor;
-        bg.setAlphaF(0.2);
-        QColor border = baseColor;
-        border.setAlphaF(0.4);
-        QColor hoverBg = baseColor;
-        hoverBg.setAlphaF(0.3);
-
-        QString baseStyle = QString(
-            "%1 { background-color: %2; color: %3; border: 1px solid %4; "
-            "border-radius: 10px; font-weight: bold; }"
-        ).arg(isButton ? "QPushButton" : "QLabel")
-         .arg(bg.name(QColor::HexArgb))
-         .arg(baseColor.name())
-         .arg(border.name(QColor::HexArgb));
-
-        if (isButton) {
-            baseStyle += QString("QPushButton:hover { background-color: %1; }")
-                         .arg(hoverBg.name(QColor::HexArgb));
-        }
-        widget->setStyleSheet(baseStyle);
-    };
-
 
 
 
