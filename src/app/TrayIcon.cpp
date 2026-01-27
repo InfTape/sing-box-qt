@@ -1,4 +1,4 @@
-﻿#include "TrayIcon.h"
+#include "TrayIcon.h"
 #include "MainWindow.h"
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
@@ -51,7 +51,6 @@ void TrayIcon::setupMenu()
     m_menu->addSeparator();
     
     m_toggleAction = m_menu->addAction(tr("Start/Stop Proxy"));
-    m_toggleAction->setCheckable(true);
     connect(m_toggleAction, &QAction::triggered, this, &TrayIcon::onToggleProxy);
 
     m_menu->addSeparator();
@@ -139,7 +138,6 @@ void TrayIcon::updateProxyStatus()
 {
     if (!m_mainWindow) return;
     const bool running = m_mainWindow->isKernelRunning();
-    m_toggleAction->setChecked(running);
     m_toggleAction->setText(running ? tr("Stop Proxy") : tr("Start Proxy"));
     setToolTip(running ? tr("Sing-Box - Running") : tr("Sing-Box - Stopped"));
 

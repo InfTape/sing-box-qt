@@ -4,9 +4,6 @@
 #include <QSplitter>
 #include <QCloseEvent>
 #include <QSettings>
-#include <QSplitter>
-#include <QCloseEvent>
-#include <QSettings>
 #include <QApplication>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -33,20 +30,21 @@
 #include "system/AdminHelper.h"
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , m_kernelService(new KernelService(this))
-    , m_proxyService(new ProxyService(this)) // Initialize ProxyService
-    , m_proxyController(new ProxyController(m_kernelService, nullptr, this))
+    : QMainWindow(parent), m_kernelService(new KernelService(this)), m_proxyService(new ProxyService(this)) // Initialize ProxyService
+      ,
+      m_proxyController(new ProxyController(m_kernelService, nullptr, this))
 {
     setupUI();
     m_proxyController->setSubscriptionService(m_subscriptionView ? m_subscriptionView->getService() : nullptr);
     setupConnections();
     loadSettings();
-    if (m_homeView) {
+    if (m_homeView)
+    {
         m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
         m_homeView->setTunModeEnabled(false);
         QString configPath = m_proxyController->activeConfigPath();
-        if (!configPath.isEmpty()) {
+        if (!configPath.isEmpty())
+        {
             m_homeView->setProxyMode(ConfigManager::instance().readClashDefaultMode(configPath));
         }
     }
@@ -58,7 +56,6 @@ MainWindow::~MainWindow()
 {
     saveSettings();
 }
-
 
 // ... existing code ...
 
@@ -74,13 +71,11 @@ void MainWindow::setupUI()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-
     QWidget *navContainer = new QWidget;
     navContainer->setObjectName("NavContainer");
     QVBoxLayout *navLayout = new QVBoxLayout(navContainer);
     navLayout->setContentsMargins(0, 20, 0, 20);
     navLayout->setSpacing(10);
-
 
     QLabel *logoLabel = new QLabel("Sing-Box");
     logoLabel->setObjectName("LogoLabel");
@@ -97,16 +92,13 @@ void MainWindow::setupUI()
 
     mainLayout->addWidget(navContainer);
 
-
     QWidget *contentContainer = new QWidget;
     contentContainer->setObjectName("ContentContainer");
     QVBoxLayout *contentLayout = new QVBoxLayout(contentContainer);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(0);
 
-
     m_stackedWidget = new QStackedWidget;
-
 
     m_homeView = new HomeView;
     m_proxyView = new ProxyView;
@@ -130,9 +122,7 @@ void MainWindow::setupUI()
 
     contentLayout->addWidget(m_stackedWidget, 1);
 
-
     mainLayout->addWidget(contentContainer, 1);
-
 
     setupStatusBar();
 }
@@ -144,8 +134,11 @@ void MainWindow::setupNavigation()
     m_navList->setIconSize(QSize(20, 20));
     m_navList->setFocusPolicy(Qt::NoFocus);
 
-
-    struct NavItem { QString name; QString icon; };
+    struct NavItem
+    {
+        QString name;
+        QString icon;
+    };
     QList<NavItem> items = {
         {tr("Home"), "home"},
         {tr("Proxy"), "proxy"},
@@ -153,10 +146,10 @@ void MainWindow::setupNavigation()
         {tr("Connections"), "conn"},
         {tr("Rules"), "rule"},
         {tr("Logs"), "log"},
-        {tr("Settings"), "settings"}
-    };
+        {tr("Settings"), "settings"}};
 
-    for (const auto &item : items) {
+    for (const auto &item : items)
+    {
         QListWidgetItem *listItem = new QListWidgetItem(item.name);
         listItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         m_navList->addItem(listItem);
@@ -174,8 +167,6 @@ void MainWindow::setupStatusBar()
     QHBoxLayout *statusLayout = new QHBoxLayout(statusWidget);
     statusLayout->setContentsMargins(20, 0, 20, 0);
 
-
-
     m_startStopBtn = new QPushButton(tr("Start"));
     m_startStopBtn->setFixedSize(80, 32);
     m_startStopBtn->setCursor(Qt::PointingHandCursor);
@@ -186,21 +177,38 @@ void MainWindow::setupStatusBar()
     statusLayout->addStretch();
     statusLayout->addWidget(m_startStopBtn);
 
-
-    QWidget *contentContainer = findChild<QWidget*>("ContentContainer");
-    if (contentContainer) {
+    QWidget *contentContainer = findChild<QWidget *>("ContentContainer");
+    if (contentContainer)
+    {
         contentContainer->layout()->addWidget(statusWidget);
     }
 }
 
 void MainWindow::setupConnections()
 {
-    connect(m_navList, &QListWidget::itemClicked, 
+    setupNavigationConnections();
+    setupKernelConnections();
+    setupThemeConnections();
+    setupSubscriptionConnections();
+    setupProxyServiceConnections();
+    setupHomeViewConnections();
+    
+    // Initialize states.
+    m_homeView->updateStatus(m_kernelService->isRunning());
+    m_connectionsView->setAutoRefreshEnabled(m_kernelService->isRunning());
+}
+
+void MainWindow::setupNavigationConnections()
+{
+    connect(m_navList, &QListWidget::itemClicked,
             this, &MainWindow::onNavigationItemClicked);
 
     connect(m_startStopBtn, &QPushButton::clicked,
             this, &MainWindow::onStartStopClicked);
+}
 
+void MainWindow::setupKernelConnections()
+{
     connect(m_kernelService, &KernelService::statusChanged,
             this, &MainWindow::onKernelStatusChanged);
 
@@ -209,55 +217,68 @@ void MainWindow::setupConnections()
 
     connect(m_kernelService, &KernelService::outputReceived,
             m_logView, &LogView::appendLog);
+    
     connect(m_kernelService, &KernelService::errorOccurred, this,
-            [this](const QString &error) {
+            [this](const QString &error)
+            {
                 m_logView->appendLog(QString("[ERROR] %1").arg(error));
             });
+}
 
-
+void MainWindow::setupThemeConnections()
+{
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
             this, &MainWindow::updateStyle);
+}
 
-
+void MainWindow::setupSubscriptionConnections()
+{
     connect(m_subscriptionView->getService(), &SubscriptionService::applyConfigRequested,
-            this, [this](const QString &configPath, bool restart) {
+            this, [this](const QString &configPath, bool restart)
+            {
                 if (configPath.isEmpty()) return;
                 m_kernelService->setConfigPath(configPath);
                 if (restart && m_kernelService->isRunning()) {
                     m_kernelService->restartWithConfig(configPath);
-                }
-            });
+                } });
+}
 
-
+void MainWindow::setupProxyServiceConnections()
+{
     connect(m_proxyService, &ProxyService::trafficUpdated,
             m_homeView, &HomeView::updateTraffic);
 
-
-
     connect(m_proxyService, &ProxyService::connectionsReceived, this,
-            [this](const QJsonObject &connections) {
+            [this](const QJsonObject &connections)
+            {
                 const QJsonArray conns = connections.value("connections").toArray();
                 QJsonValue memoryValue = connections.value("memory");
-                if (memoryValue.isUndefined()) {
+                if (memoryValue.isUndefined())
+                {
                     memoryValue = connections.value("memory_usage");
                 }
-                if (memoryValue.isUndefined()) {
+                if (memoryValue.isUndefined())
+                {
                     memoryValue = connections.value("memoryUsage");
                 }
                 const qint64 memoryUsage = memoryValue.toVariant().toLongLong();
                 m_homeView->updateConnections(conns.count(), memoryUsage);
             });
+}
 
-    connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled) {
+void MainWindow::setupHomeViewConnections()
+{
+    connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled)
+            {
         if (m_proxyController) {
             m_proxyController->setSystemProxyEnabled(enabled);
         }
         if (enabled && m_homeView) {
             m_homeView->setTunModeEnabled(false);
-        }
-    });
+        } });
 
-    connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled) {
+    connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled)
+            {
         if (enabled && !AdminHelper::isAdmin()) {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
@@ -291,10 +312,10 @@ void MainWindow::setupConnections()
         }
         if (enabled && m_homeView) {
             m_homeView->setSystemProxyEnabled(false);
-        }
-    });
+        } });
 
-    connect(m_homeView, &HomeView::proxyModeChanged, this, [this](const QString &mode) {
+    connect(m_homeView, &HomeView::proxyModeChanged, this, [this](const QString &mode)
+            {
         QString error;
         const bool restartKernel = m_kernelService && m_kernelService->isRunning();
         if (m_proxyController && m_proxyController->setProxyMode(mode, restartKernel, &error)) {
@@ -309,12 +330,9 @@ void MainWindow::setupConnections()
             if (m_logView) {
                 m_logView->appendLog(QString("[ERROR] %1").arg(msg));
             }
-        }
-    });
-
-    m_homeView->updateStatus(m_kernelService->isRunning());
-    m_connectionsView->setAutoRefreshEnabled(m_kernelService->isRunning());
+        } });
 }
+
 
 void MainWindow::onNavigationItemClicked(QListWidgetItem *item)
 {
@@ -339,39 +357,41 @@ QString MainWindow::currentProxyMode() const
 
 void MainWindow::setProxyModeUI(const QString &mode)
 {
-    if (m_homeView) {
+    if (m_homeView)
+    {
         m_homeView->setProxyMode(mode);
     }
 }
 
 void MainWindow::onKernelStatusChanged(bool running)
 {
-    ThemeManager &tm = ThemeManager::instance();
     m_connectionsView->setAutoRefreshEnabled(running);
 
-    if (running) {
+    if (running)
+    {
         m_startStopBtn->setText(tr("Stop"));
-        
+
         m_startStopBtn->setProperty("state", "stop");
         applyStartStopStyle();
 
         m_proxyService->startTrafficMonitor();
-        if (m_proxyController) {
+        if (m_proxyController)
+        {
             m_proxyController->updateSystemProxyForKernelState(true);
         }
         QTimer::singleShot(1000, m_proxyView, &ProxyView::refresh);
         QTimer::singleShot(1200, m_rulesView, &RulesView::refresh);
-
-    } else {
+    }
+    else
+    {
         m_startStopBtn->setText(tr("Start"));
-        
-        ThemeManager &tm = ThemeManager::instance();
         m_startStopBtn->setProperty("state", "start");
         applyStartStopStyle();
 
         m_proxyService->stopTrafficMonitor();
 
-        if (m_proxyController) {
+        if (m_proxyController)
+        {
             m_proxyController->updateSystemProxyForKernelState(false);
         }
     }
@@ -379,7 +399,8 @@ void MainWindow::onKernelStatusChanged(bool running)
 
 void MainWindow::onStartStopClicked()
 {
-    if (!m_proxyController || !m_proxyController->toggleKernel()) {
+    if (!m_proxyController || !m_proxyController->toggleKernel())
+    {
         QMessageBox::warning(this, tr("Start kernel"), tr("Config file not found at the expected location; startup failed."));
     }
 }
@@ -407,11 +428,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::applyStartStopStyle()
 {
-    if (!m_startStopBtn) return;
-    m_startStopBtn->style()->unpolish(m_startStopBtn);
+    // Qt will automatically update styles when properties change.
+    // We only need to polish if the style doesn't update automatically.
     m_startStopBtn->style()->polish(m_startStopBtn);
-    m_startStopBtn->update();
 }
+
 
 void MainWindow::loadSettings()
 {

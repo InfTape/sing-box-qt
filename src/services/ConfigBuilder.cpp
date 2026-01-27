@@ -270,31 +270,22 @@ QJsonArray ConfigBuilder::buildOutbounds()
     outbounds.append(manualOutbound);
 
     if (settings.enableAppGroups()) {
-        QJsonArray base = QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_MANUAL
-                                                                  << ConfigConstants::TAG_AUTO);
-        QJsonObject tg;
-        tg["type"] = "selector";
-        tg["tag"] = ConfigConstants::TAG_TELEGRAM;
-        tg["outbounds"] = base;
-        outbounds.append(tg);
-
-        QJsonObject yt;
-        yt["type"] = "selector";
-        yt["tag"] = ConfigConstants::TAG_YOUTUBE;
-        yt["outbounds"] = base;
-        outbounds.append(yt);
-
-        QJsonObject nf;
-        nf["type"] = "selector";
-        nf["tag"] = ConfigConstants::TAG_NETFLIX;
-        nf["outbounds"] = base;
-        outbounds.append(nf);
-
-        QJsonObject ai;
-        ai["type"] = "selector";
-        ai["tag"] = ConfigConstants::TAG_OPENAI;
-        ai["outbounds"] = base;
-        outbounds.append(ai);
+        const QJsonArray base = QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_MANUAL
+                                                                          << ConfigConstants::TAG_AUTO);
+        
+        // Helper lambda to create selector outbounds.
+        auto createSelector = [&base](const QString &tag) {
+            QJsonObject obj;
+            obj["type"] = "selector";
+            obj["tag"] = tag;
+            obj["outbounds"] = base;
+            return obj;
+        };
+        
+        outbounds.append(createSelector(ConfigConstants::TAG_TELEGRAM));
+        outbounds.append(createSelector(ConfigConstants::TAG_YOUTUBE));
+        outbounds.append(createSelector(ConfigConstants::TAG_NETFLIX));
+        outbounds.append(createSelector(ConfigConstants::TAG_OPENAI));
     }
 
     QJsonObject direct;
@@ -338,26 +329,19 @@ QJsonArray ConfigBuilder::buildRuleSets()
         "1d"));
 
     if (settings.enableAppGroups()) {
-        ruleSets.append(makeRemoteRuleSet(
-            ConfigConstants::RS_GEOSITE_TELEGRAM,
-            ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_TELEGRAM),
-            downloadDetour,
-            "7d"));
-        ruleSets.append(makeRemoteRuleSet(
-            ConfigConstants::RS_GEOSITE_YOUTUBE,
-            ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_YOUTUBE),
-            downloadDetour,
-            "7d"));
-        ruleSets.append(makeRemoteRuleSet(
-            ConfigConstants::RS_GEOSITE_NETFLIX,
-            ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_NETFLIX),
-            downloadDetour,
-            "7d"));
-        ruleSets.append(makeRemoteRuleSet(
-            ConfigConstants::RS_GEOSITE_OPENAI,
-            ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_OPENAI),
-            downloadDetour,
-            "7d"));
+        // Helper lambda to add app-specific rule sets.
+        auto addAppRuleSet = [&ruleSets, &downloadDetour](const QString &tag) {
+            ruleSets.append(makeRemoteRuleSet(
+                tag,
+                ConfigConstants::ruleSetUrl(tag),
+                downloadDetour,
+                "7d"));
+        };
+        
+        addAppRuleSet(ConfigConstants::RS_GEOSITE_TELEGRAM);
+        addAppRuleSet(ConfigConstants::RS_GEOSITE_YOUTUBE);
+        addAppRuleSet(ConfigConstants::RS_GEOSITE_NETFLIX);
+        addAppRuleSet(ConfigConstants::RS_GEOSITE_OPENAI);
     }
 
     ruleSets.append(makeRemoteRuleSet(

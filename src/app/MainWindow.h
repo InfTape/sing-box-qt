@@ -47,6 +47,12 @@ private:
     void setupNavigation();
     void setupStatusBar();
     void setupConnections();
+    void setupNavigationConnections();
+    void setupKernelConnections();
+    void setupThemeConnections();
+    void setupSubscriptionConnections();
+    void setupProxyServiceConnections();
+    void setupHomeViewConnections();
     void loadSettings();
     void saveSettings();
     void updateStyle();
