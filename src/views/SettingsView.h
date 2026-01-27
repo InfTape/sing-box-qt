@@ -32,8 +32,6 @@ protected:
 
 private slots:
     void onSaveClicked();
-    void onSaveAdvancedClicked();
-    void onSaveSingboxProfileClicked();
     void onDownloadKernelClicked();
     void onCheckKernelClicked();
     void onCheckUpdateClicked();
@@ -77,7 +75,6 @@ private:
     ToggleSwitch *m_tunEnableIpv6Switch;
     ToggleSwitch *m_tunAutoRouteSwitch;
     ToggleSwitch *m_tunStrictRouteSwitch;
-    QPushButton *m_saveAdvancedBtn;
 
     // Subscription profile (advanced).
     MenuComboBox *m_defaultOutboundCombo;
@@ -89,7 +86,6 @@ private:
     QLineEdit *m_dnsCnEdit;
     QLineEdit *m_dnsResolverEdit;
     QLineEdit *m_urltestUrlEdit;
-    QPushButton *m_saveSingboxProfileBtn;
 
     // Appearance settings.
     MenuComboBox *m_themeCombo;

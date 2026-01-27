@@ -275,10 +275,6 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     advancedHint->setObjectName("SettingsHint");
     advancedLayout->addWidget(advancedHint);
 
-    m_saveAdvancedBtn = new QPushButton(tr("Save Advanced Settings"));
-    m_saveAdvancedBtn->setObjectName("SaveAdvancedBtn");
-    advancedLayout->addWidget(m_saveAdvancedBtn);
-
     proxyAdvancedLayout->addWidget(proxyAdvancedCard);
     return proxyAdvancedSection;
 }
@@ -406,10 +402,6 @@ QWidget* SettingsView::buildProfileSection()
     dnsGrid->addWidget(m_urltestUrlEdit, 1, 3);
 
     singboxProfileCardLayout->addLayout(dnsGrid);
-
-    m_saveSingboxProfileBtn = new QPushButton(tr("Save Profile Settings"));
-    m_saveSingboxProfileBtn->setObjectName("SaveProfileBtn");
-    singboxProfileCardLayout->addWidget(m_saveSingboxProfileBtn);
 
     singboxProfileLayout->addWidget(singboxProfileCard);
     return singboxProfileSection;
@@ -571,8 +563,6 @@ void SettingsView::setupUI()
     outerLayout->addWidget(scrollArea, 1);
 
     connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
-    connect(m_saveAdvancedBtn, &QPushButton::clicked, this, &SettingsView::onSaveAdvancedClicked);
-    connect(m_saveSingboxProfileBtn, &QPushButton::clicked, this, &SettingsView::onSaveSingboxProfileClicked);
     connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
     connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
@@ -703,6 +693,8 @@ bool SettingsView::saveSettings()
 {
     SettingsModel::Data data = SettingsService::loadSettings();
     fillGeneralFromUi(data);
+    fillAdvancedFromUi(data);
+    fillProfileFromUi(data);
 
     QString errorMessage;
     if (!SettingsService::saveSettings(data,
@@ -713,36 +705,6 @@ bool SettingsView::saveSettings()
         return false;
     }
     return true;
-}
-
-void SettingsView::onSaveAdvancedClicked()
-{
-    SettingsModel::Data data = SettingsModel::load();
-    fillAdvancedFromUi(data);
-
-    QString errorMessage;
-    if (!SettingsModel::save(data, &errorMessage)) {
-        QMessageBox::warning(this, tr("Notice"), errorMessage);
-        return;
-    }
-
-    Logger::info(tr("Advanced settings saved"));
-    QMessageBox::information(this, tr("Notice"), tr("Advanced settings saved"));
-}
-
-void SettingsView::onSaveSingboxProfileClicked()
-{
-    SettingsModel::Data data = SettingsModel::load();
-    fillProfileFromUi(data);
-
-    QString errorMessage;
-    if (!SettingsModel::save(data, &errorMessage)) {
-        QMessageBox::warning(this, tr("Notice"), errorMessage);
-        return;
-    }
-
-    Logger::info(tr("Subscription profile settings saved"));
-    QMessageBox::information(this, tr("Notice"), tr("Profile settings saved"));
 }
 
 void SettingsView::onSaveClicked()
