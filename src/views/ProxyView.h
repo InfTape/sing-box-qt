@@ -45,9 +45,9 @@ private:
     void updateSelectedProxyUI(const QString &group, const QString &proxy);
     void updateProxyItem(QTreeWidgetItem *item, const QJsonObject &proxy);
     QString formatDelay(int delay) const;
-    QColor getDelayColor(int delay) const;
     void testSingleNode(const QString &proxy);
     void applyTreeItemColors();
+    void markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText = QString());
 
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;

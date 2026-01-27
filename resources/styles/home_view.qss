@@ -28,9 +28,9 @@
     border-radius: 4px;
     background-color: @text-secondary@;
 }
-#StatusBadge[status="running"] #StatusDot { background-color: @success@; }
-#StatusBadge[status="pending"] #StatusDot { background-color: @warning@; }
-#StatusBadge[status="stopped"] #StatusDot { background-color: @error@; }
+#StatusDot[status="running"] { background-color: @success@; }
+#StatusDot[status="pending"] { background-color: @warning@; }
+#StatusDot[status="stopped"] { background-color: @error@; }
 #StatusText {
     font-size: 13px;
     font-weight: 600;

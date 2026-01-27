@@ -174,14 +174,10 @@ void SubscriptionCard::applyActiveState()
     if (m_statusTag) {
         m_statusTag->setText(m_active ? tr("Active") : tr("Inactive"));
         m_statusTag->setObjectName(m_active ? "CardTagActive" : "CardTag");
-        m_statusTag->style()->unpolish(m_statusTag);
-        m_statusTag->style()->polish(m_statusTag);
     }
     if (m_useBtn) {
         m_useBtn->setText(m_active ? tr("Use Again") : tr("Use"));
         m_useBtn->setObjectName(m_active ? "CardActionBtnActive" : "CardActionBtn");
-        m_useBtn->style()->unpolish(m_useBtn);
-        m_useBtn->style()->polish(m_useBtn);
     }
     if (m_editConfigAction) {
         m_editConfigAction->setVisible(m_active);
@@ -198,29 +194,5 @@ void SubscriptionCard::updateStyle()
     extra.insert("card-radius", m_active ? "12px" : "10px");
     setStyleSheet(tm.loadStyleSheet(":/styles/subscription_card.qss", extra));
 
-    if (m_statusTag) {
-        const QString bg = m_active ? "rgba(16, 185, 129, 0.2)" : tm.getColorString("bg-tertiary");
-        const QString text = m_active ? tm.getColorString("success") : tm.getColorString("text-secondary");
-        const QString border = m_active ? "rgba(16, 185, 129, 0.4)" : tm.getColorString("border");
-        m_statusTag->setStyleSheet(QString(
-            "QLabel { background-color: %1; color: %2; border: 1px solid %3; "
-            "border-radius: 10px; padding: 3px 10px; font-size: 11px; }"
-        ).arg(bg, text, border));
-    }
-
-    if (m_useBtn) {
-        QColor baseColor = m_active ? tm.getColor("success") : tm.getColor("primary");
-        QColor bg = baseColor;
-        bg.setAlphaF(0.2);
-        QColor border = baseColor;
-        border.setAlphaF(0.4);
-        QColor hoverBg = baseColor;
-        hoverBg.setAlphaF(0.3);
-
-        m_useBtn->setStyleSheet(QString(
-            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
-            "border-radius: 10px; padding: 8px 16px; font-size: 13px; }"
-            "QPushButton:hover { background-color: %4; }"
-        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hoverBg.name(QColor::HexArgb)));
-    }
+    // Styles fully controlled by QSS via objectName/state.
 }

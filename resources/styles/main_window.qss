@@ -14,6 +14,26 @@
     padding: 10px;
     color: @text-primary@;
 }
+#StartStopBtn[state="start"] {
+    background-color: @success-20@;
+    color: @success@;
+    border: 1px solid @success-40@;
+    border-radius: 10px;
+    font-weight: bold;
+}
+#StartStopBtn[state="start"]:hover {
+    background-color: @success-30@;
+}
+#StartStopBtn[state="stop"] {
+    background-color: @error-20@;
+    color: @error@;
+    border: 1px solid @error-40@;
+    border-radius: 10px;
+    font-weight: bold;
+}
+#StartStopBtn[state="stop"]:hover {
+    background-color: @error-30@;
+}
 QListWidget {
     background-color: transparent;
     border: none;

@@ -253,12 +253,7 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
                 QTreeWidgetItem *nodeItem = new QTreeWidgetItem(groupItem);
                 
 
-                if (name == now) {
-                    nodeItem->setText(0, "* " + name);
-                    nodeItem->setForeground(0, tm.getColor("success"));
-                } else {
-                    nodeItem->setText(0, name);
-                }
+                nodeItem->setText(0, name);
                 
                 nodeItem->setData(0, Qt::UserRole, "node");
                 nodeItem->setData(0, Qt::UserRole + 1, it.key());
@@ -272,7 +267,6 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
                 if (m_cachedProxies.contains(name)) {
                     QJsonObject nodeProxy = m_cachedProxies[name].toObject();
                     nodeItem->setText(1, nodeProxy["type"].toString());
-                    nodeItem->setForeground(1, tm.getColor("text-tertiary"));
                     
 
                     if (nodeProxy.contains("history")) {
@@ -280,12 +274,12 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
                         if (!history.isEmpty()) {
                             int delay = history.last().toObject()["delay"].toInt();
                             nodeItem->setText(2, formatDelay(delay));
-                            nodeItem->setForeground(2, getDelayColor(delay));
-                        }
+                            // delay text only; color via stylesheet / delegate if needed
                     }
                 }
             }
         }
+    }
     }
 }
 
@@ -303,7 +297,6 @@ void ProxyView::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 
 void ProxyView::applyTreeItemColors()
 {
-    ThemeManager &tm = ThemeManager::instance();
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
         QTreeWidgetItem *item = *it;
@@ -317,29 +310,53 @@ void ProxyView::applyTreeItemColors()
             const QString now = m_cachedProxies.value(group).toObject().value("now").toString();
             if (name == now) {
                 if (!hasStar) item->setText(0, "* " + name);
-                item->setForeground(0, tm.getColor("success"));
             } else {
                 if (hasStar) item->setText(0, name);
-                item->setForeground(0, QBrush());
             }
-
-            // Type column
-            item->setForeground(1, tm.getColor("text-tertiary"));
-
-            // Delay column
-            const QString delayText = item->text(2);
-            if (!delayText.isEmpty() && delayText != "...") {
-                bool ok = false;
-                QString delayStr = delayText;
-                delayStr.remove(" ms");
-                const int delay = delayStr.toInt(&ok);
-                item->setForeground(2, ok ? getDelayColor(delay) : tm.getColor("text-tertiary"));
-            } else {
-                item->setForeground(2, tm.getColor("text-tertiary"));
-            }
+            item->setData(1, Qt::UserRole + 2, "type");
+            markNodeState(item, group, now, item->text(2));
         }
         ++it;
     }
+}
+
+void ProxyView::markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText)
+{
+    Q_UNUSED(group);
+    if (!item) return;
+
+    QString name = item->text(0);
+    bool hasStar = name.startsWith("* ");
+    if (hasStar) name = name.mid(2);
+
+    const bool isActive = (name == now);
+    item->setData(0, Qt::UserRole + 2, isActive ? "active" : "");
+    if (isActive && !hasStar) {
+        item->setText(0, "* " + name);
+    } else if (!isActive && hasStar) {
+        item->setText(0, name);
+    }
+
+    // type column marker
+    item->setData(1, Qt::UserRole + 2, "type");
+
+    // delay state marker
+    QString state = "loading";
+    if (!delayText.isEmpty() && delayText != "...") {
+        QString delayStr = delayText;
+        delayStr.remove(" ms");
+        bool ok = false;
+        const int delay = delayStr.toInt(&ok);
+        if (ok) {
+            if (delay <= 0) state = "bad";
+            else if (delay < 100) state = "ok";
+            else if (delay < 300) state = "warn";
+            else state = "bad";
+        } else {
+            state.clear();
+        }
+    }
+    item->setData(2, Qt::UserRole + 2, state);
 }
 
 void ProxyView::handleNodeActivation(QTreeWidgetItem *item)
@@ -403,9 +420,8 @@ void ProxyView::onTestAllClicked()
                 nodesToTest.append(name);
             }
             
-
             (*it)->setText(2, "...");
-            (*it)->setForeground(2, QColor("#888888"));
+            (*it)->setData(2, Qt::UserRole + 2, QString("loading"));
         }
         ++it;
     }
@@ -466,14 +482,12 @@ void ProxyView::onSearchTextChanged(const QString &text)
 void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
 {
     QString displayText;
-    QColor color;
+    
     
     if (result.ok) {
         displayText = formatDelay(result.delay);
-        color = getDelayColor(result.delay);
     } else {
         displayText = tr("Timeout");
-        color = ThemeManager::instance().getColor("error");
     }
     
 
@@ -486,7 +500,9 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
         
         if (name == result.proxy) {
             (*it)->setText(2, displayText);
-            (*it)->setForeground(2, color);
+            const QString group = (*it)->data(0, Qt::UserRole + 1).toString();
+            const QString now = m_cachedProxies.value(group).toObject().value("now").toString();
+            markNodeState(*it, group, now, displayText);
         }
         ++it;
     }
@@ -543,7 +559,6 @@ void ProxyView::updateSelectedProxyUI(const QString &group, const QString &proxy
         }
     }
 
-    ThemeManager &tm = ThemeManager::instance();
     for (int i = 0; i < groupItem->childCount(); ++i) {
         QTreeWidgetItem *child = groupItem->child(i);
         if (!child) continue;
@@ -555,10 +570,10 @@ void ProxyView::updateSelectedProxyUI(const QString &group, const QString &proxy
 
         if (name == proxy) {
             child->setText(0, "* " + name);
-            child->setForeground(0, tm.getColor("success"));
+            child->setData(0, Qt::UserRole + 2, "active");
         } else {
             child->setText(0, name);
-            child->setForeground(0, QBrush());
+            child->setData(0, Qt::UserRole + 2, "");
         }
     }
 }
@@ -567,15 +582,6 @@ QString ProxyView::formatDelay(int delay) const
 {
     if (delay <= 0) return tr("Timeout");
     return QString::number(delay) + " ms";
-}
-
-QColor ProxyView::getDelayColor(int delay) const
-{
-    ThemeManager &tm = ThemeManager::instance();
-    if (delay <= 0) return tm.getColor("error");
-    if (delay < 100) return tm.getColor("success");
-    if (delay < 300) return tm.getColor("warning");
-    return tm.getColor("error");
 }
 
 void ProxyView::testSingleNode(const QString &proxy)

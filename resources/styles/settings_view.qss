@@ -76,3 +76,10 @@ QLabel[class="SettingsSectionSubTitle"] {
     color: @text-secondary@;
     font-size: 12px;
 }
+#KernelVersionLabel {
+    font-weight: bold;
+    color: @error@;
+}
+#KernelVersionLabel[status="success"] {
+    color: @success@;
+}

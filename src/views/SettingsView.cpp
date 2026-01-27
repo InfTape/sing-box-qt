@@ -477,8 +477,8 @@ QWidget* SettingsView::buildKernelSection()
     kernelLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
     m_kernelVersionLabel = new QLabel(tr("Not installed"));
-    m_kernelVersionLabel->setStyleSheet(QString("color: %1; font-weight: bold;")
-        .arg(tm.getColorString("error")));
+    m_kernelVersionLabel->setObjectName("KernelVersionLabel");
+    m_kernelVersionLabel->setProperty("status", "error");
 
     m_kernelVersionCombo = new MenuComboBox;
     m_kernelVersionCombo->addItem(tr("Latest version"));
@@ -794,12 +794,10 @@ void SettingsView::onKernelInstalledReady(const QString &path, const QString &ve
     if (m_kernelVersionLabel) {
         if (version.isEmpty()) {
             m_kernelVersionLabel->setText(tr("Not installed"));
-            m_kernelVersionLabel->setStyleSheet(QString("color: %1; font-weight: bold;")
-                .arg(ThemeManager::instance().getColorString("error")));
+            m_kernelVersionLabel->setProperty("status", "error");
         } else {
             m_kernelVersionLabel->setText(version);
-            m_kernelVersionLabel->setStyleSheet(QString("color: %1; font-weight: bold;")
-                .arg(ThemeManager::instance().getColorString("success")));
+            m_kernelVersionLabel->setProperty("status", "success");
         }
     }
     if (m_checkingInstall) {

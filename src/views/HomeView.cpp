@@ -363,15 +363,11 @@ void HomeView::updateStyle()
     QColor success = tm.getColor("success");
     QColor warning = tm.getColor("warning");
     QColor error = tm.getColor("error");
-    QColor primaryHover = primary.lighter(110);
-    QColor errorHover = error.lighter(110);
 
     QMap<QString, QString> extra;
     extra.insert("success-12", rgba(success, 0.12));
     extra.insert("warning-12", rgba(warning, 0.12));
     extra.insert("error-12", rgba(error, 0.12));
-    extra.insert("error-hover", errorHover.name());
-    extra.insert("primary-hover", primaryHover.name());
     extra.insert("success-18", rgba(success, 0.18));
     extra.insert("primary-18", rgba(primary, 0.18));
     extra.insert("warning-18", rgba(warning, 0.18));
@@ -444,10 +440,7 @@ void HomeView::updateStatus(bool running)
     updateStyle();
 
     if (m_statusDot) {
-        ThemeManager &tm = ThemeManager::instance();
-        const QColor dotColor = running ? tm.getColor("success") : tm.getColor("error");
-        m_statusDot->setStyleSheet(QString("background-color: %1; border-radius: 4px;")
-                                       .arg(dotColor.name()));
+        m_statusDot->setProperty("status", running ? "running" : "stopped");
     }
     polishWidget(m_statusBadge);
 

@@ -89,6 +89,25 @@ QTreeWidget#ProxyTree {
 }
 QTreeWidget#ProxyTree::item {
     height: 36px;
+    color: @text-primary@;
+}
+QTreeWidget#ProxyTree::item[active="true"] {
+    color: @success@;
+}
+QTreeWidget#ProxyTree::item[typecol="true"] {
+    color: @text-tertiary@;
+}
+QTreeWidget#ProxyTree::item[delayState="loading"] {
+    color: @text-tertiary@;
+}
+QTreeWidget#ProxyTree::item[delayState="ok"] {
+    color: @success@;
+}
+QTreeWidget#ProxyTree::item[delayState="warn"] {
+    color: @warning@;
+}
+QTreeWidget#ProxyTree::item[delayState="bad"] {
+    color: @error@;
 }
 QTreeView::branch {
     image: none;

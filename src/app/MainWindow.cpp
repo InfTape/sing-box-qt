@@ -178,14 +178,8 @@ void MainWindow::setupStatusBar()
     m_startStopBtn = new QPushButton(tr("Start"));
     m_startStopBtn->setFixedSize(80, 32);
     m_startStopBtn->setCursor(Qt::PointingHandCursor);
-    
-    // Initial Transparent Green
-    QString startStyle = QString(
-        "QPushButton { background-color: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); "
-        "border-radius: 10px; font-weight: bold; }"
-        "QPushButton:hover { background-color: rgba(16, 185, 129, 0.3); }"
-    );
-    m_startStopBtn->setStyleSheet(startStyle);
+    m_startStopBtn->setObjectName("StartStopBtn");
+    m_startStopBtn->setProperty("state", "start");
 
     statusLayout->addStretch();
     statusLayout->addWidget(m_startStopBtn);
@@ -356,13 +350,7 @@ void MainWindow::onKernelStatusChanged(bool running)
     if (running) {
         m_startStopBtn->setText(tr("Stop"));
         
-        // Transparent Red for Stop
-        QString style = QString(
-            "QPushButton { background-color: rgba(233, 69, 96, 0.2); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.4); "
-            "border-radius: 10px; font-weight: bold; }"
-            "QPushButton:hover { background-color: rgba(233, 69, 96, 0.3); }"
-        );
-        m_startStopBtn->setStyleSheet(style);
+        m_startStopBtn->setProperty("state", "stop");
 
         m_proxyService->startTrafficMonitor();
         if (m_proxyController) {
@@ -375,13 +363,7 @@ void MainWindow::onKernelStatusChanged(bool running)
         m_startStopBtn->setText(tr("Start"));
         
         ThemeManager &tm = ThemeManager::instance();
-        // Transparent Green for Start
-        QString style = QString(
-            "QPushButton { background-color: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); "
-            "border-radius: 10px; font-weight: bold; }"
-            "QPushButton:hover { background-color: rgba(16, 185, 129, 0.3); }"
-        );
-        m_startStopBtn->setStyleSheet(style);
+        m_startStopBtn->setProperty("state", "start");
 
         m_proxyService->stopTrafficMonitor();
 

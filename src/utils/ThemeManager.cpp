@@ -79,6 +79,12 @@ void ThemeManager::loadThemeColors()
         c.setAlphaF(alpha);
         m_colors[key] = c.name(QColor::HexArgb);
     };
+    // Derived hover colors
+    {
+        QColor err(m_colors["error"]);
+        err = err.lighter(110);
+        m_colors["error-hover"] = err.name();
+    }
 
     const ThemeMode effectiveMode = resolveModeForColors();
 
