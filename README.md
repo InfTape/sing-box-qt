@@ -59,7 +59,8 @@
 
 ## 截图预览
 
-![展示](https://github.com/user-attachments/assets/42e4d935-26b9-4696-857a-abf0bf9c9b5b)
+![TUN模式展示](https://github.com/user-attachments/assets/4feaa2e8-0a54-4b2d-8164-093282765cf2)
+![系统代理模式展示](https://github.com/user-attachments/assets/6ca2a9de-ff1f-46f0-b2bb-0b7c5e321b03)
 
 ---
 
