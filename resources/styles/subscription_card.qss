@@ -16,10 +16,10 @@
     font-size: 11px;
 }
 #CardTagActive {
-    background-color: @success@;
-    color: white;
+    background-color: rgba(16, 185, 129, 0.12);
+    color: @success@;
     padding: 4px 10px;
-    border: 1px solid rgba(16, 185, 129, 0.7);
+    border: 1px solid rgba(16, 185, 129, 0.35);
     border-radius: 12px;
     font-size: 11px;
 }

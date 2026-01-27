@@ -229,7 +229,7 @@ void TrafficChart::drawCurve(QPainter &painter, const QRect &chartRect,
 
 void TrafficChart::drawLegend(QPainter &painter)
 {
-    const int legendWidth = 160;
+    const int legendWidth = 135;
     const int legendHeight = 28;
     const int margin = 12;
     
@@ -263,7 +263,7 @@ void TrafficChart::drawLegend(QPainter &painter)
                     Qt::AlignVCenter, tr("Up"));
     
     // Download legend
-    itemX += 80;
+    itemX += 55;
     painter.setBrush(m_downloadColor);
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(QPoint(itemX, centerY), 4, 4);
