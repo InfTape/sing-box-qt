@@ -80,7 +80,7 @@ QComboBox QAbstractItemView::item {
     color: @text-primary@;
 }
 QComboBox QAbstractItemView::item:hover {
-    background-color: @primary-20@;
+    background-color: @primary-12@;
     color: @text-primary@;
 }
 QComboBox QAbstractItemView::item:selected {
@@ -140,3 +140,4 @@ QFrame#Card, QWidget#Card {
     border: 1px solid @border@;
     border-radius: 10px;
 }
+

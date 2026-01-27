@@ -18,15 +18,15 @@
     background-color: @primary@cc;
 }
 #EmptyActionBtn {
-    background-color: @primary-20@;
+    background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-40@;
+    border: 1px solid @primary-12@;
     border-radius: 10px;
     padding: 8px 16px;
     font-weight: bold;
 }
 #EmptyActionBtn:hover {
-    background-color: @primary-30@;
+    background-color: @primary-12@;
 }
 #FilterCard {
     background-color: @bg-tertiary@;
@@ -71,9 +71,9 @@
     font-weight: 600;
 }
 #RuleTag[tagType="info"] { color: #3b82f6; background: rgba(59,130,246,0.12); }
-#RuleTag[tagType="success"] { color: #10b981; background: rgba(16,185,129,0.12); }
+#RuleTag[tagType="success"] { color: #10b981; background: @success-12@; }
 #RuleTag[tagType="warning"] { color: #f59e0b; background: rgba(245,158,11,0.12); }
-#RuleTag[tagType="error"] { color: #ef4444; background: rgba(239,68,68,0.12); }
+#RuleTag[tagType="error"] { color: #ef4444; background: @error-12@; }
 #RuleTag[tagType="default"] { color: @text-secondary@; background: @bg-tertiary@; }
 #RuleIndex {
     font-size: 12px;
@@ -96,8 +96,8 @@
     font-size: 11px;
     font-weight: 600;
 }
-#RuleProxyTag[tagType="success"] { color: #10b981; background: rgba(16,185,129,0.12); }
-#RuleProxyTag[tagType="error"] { color: #ef4444; background: rgba(239,68,68,0.12); }
+#RuleProxyTag[tagType="success"] { color: #10b981; background: @success-12@; }
+#RuleProxyTag[tagType="error"] { color: #ef4444; background: @error-12@; }
 #RuleProxyTag[tagType="info"] { color: #3b82f6; background: rgba(59,130,246,0.12); }
 #RuleMenu {
     background: transparent;
@@ -145,3 +145,4 @@
 #EmptyIcon {
     font-size: 24px;
 }
+

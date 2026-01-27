@@ -15,24 +15,24 @@
     color: @text-primary@;
 }
 #StartStopBtn[state="start"] {
-    background-color: @success-20@;
+    background-color: @success-12@;
     color: @success@;
-    border: 1px solid @success-40@;
+    border: 1px solid @success-12@;
     border-radius: 10px;
     font-weight: bold;
 }
 #StartStopBtn[state="start"]:hover {
-    background-color: @success-30@;
+    background-color: @success-12@;
 }
 #StartStopBtn[state="stop"] {
-    background-color: @error-20@;
+    background-color: @error-12@;
     color: @error@;
-    border: 1px solid @error-40@;
+    border: 1px solid @error-12@;
     border-radius: 10px;
     font-weight: bold;
 }
 #StartStopBtn[state="stop"]:hover {
-    background-color: @error-30@;
+    background-color: @error-12@;
 }
 QListWidget {
     background-color: transparent;
@@ -50,7 +50,7 @@ QListWidget::item:hover {
     background-color: @bg-tertiary@;
 }
 QListWidget::item:selected {
-    background-color: rgba(16, 185, 129, 0.25);
+    background-color: @success-12@;
     color: @text-primary@;
     font-weight: bold;
 }

@@ -25,9 +25,9 @@ QLabel[class="SettingsSectionSubTitle"] {
 #SaveBtn,
 #CheckKernelBtn,
 #CheckUpdateBtn {
-    background-color: @primary-20@;
+    background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-40@;
+    border: 1px solid @primary-12@;
     border-radius: 10px;
     padding: 8px 16px;
     font-weight: bold;
@@ -37,19 +37,19 @@ QLabel[class="SettingsSectionSubTitle"] {
 #SaveBtn:hover,
 #CheckKernelBtn:hover,
 #CheckUpdateBtn:hover {
-    background-color: @primary-30@;
+    background-color: @primary-12@;
 }
 
 #DownloadKernelBtn {
-    background-color: @error-20@;
+    background-color: @error-12@;
     color: @error@;
-    border: 1px solid @error-40@;
+    border: 1px solid @error-12@;
     border-radius: 10px;
     padding: 8px 16px;
     font-weight: bold;
 }
 #DownloadKernelBtn:hover {
-    background-color: @error-30@;
+    background-color: @error-12@;
 }
 #SettingsToggleCard {
     background-color: @bg-secondary@;
@@ -83,3 +83,4 @@ QLabel[class="SettingsSectionSubTitle"] {
 #KernelVersionLabel[status="success"] {
     color: @success@;
 }
+

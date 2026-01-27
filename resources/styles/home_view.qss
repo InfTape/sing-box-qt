@@ -75,13 +75,13 @@
     font-weight: 600;
 }
 #StatIcon[accent="success"] {
-    background-color: @success-18@;
+    background-color: @success-12@;
     color: @success@;
 }
 #StatIcon[accent="success"] #StatIconLabel { color: @success@; }
 #StatValue[accent="success"] { color: @success@; }
 #StatIcon[accent="primary"] {
-    background-color: @primary-18@;
+    background-color: @primary-12@;
     color: @primary@;
 }
 #StatIcon[accent="primary"] #StatIconLabel { color: @primary@; }
@@ -112,7 +112,7 @@
 #ModeCard:hover { border-color: @border-hover@; }
 #ModeCard[active="true"] {
     border-color: @primary@;
-    background-color: @primary-06@;
+    background-color: @primary-12@;
 }
 #ModeIcon {
     background-color: @bg-tertiary@;
@@ -167,3 +167,4 @@
     background-color: @primary@;
     image: none;
 }
+
