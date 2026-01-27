@@ -32,6 +32,7 @@
 #include <QOperatingSystemVersion>
 #include <QWheelEvent>
 #include <QSignalBlocker>
+#include <QShowEvent>
 #include <algorithm>
 #include <functional>
 #include "utils/AppPaths.h"
@@ -108,11 +109,25 @@ SettingsView::SettingsView(QWidget *parent)
 {
     setupUI();
     loadSettings();
-    refreshKernelInfo();
-    fetchKernelVersions();
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &SettingsView::updateStyle);
     updateStyle();
+}
+
+void SettingsView::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    ensureKernelInfoLoaded();
+}
+
+void SettingsView::ensureKernelInfoLoaded()
+{
+    if (m_kernelInfoLoaded) {
+        return;
+    }
+    m_kernelInfoLoaded = true;
+    refreshKernelInfo();
+    fetchKernelVersions();
 }
 
 void SettingsView::setupUI()

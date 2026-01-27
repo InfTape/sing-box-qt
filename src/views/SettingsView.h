@@ -23,6 +23,9 @@ class SettingsView : public QWidget
 public:
     explicit SettingsView(QWidget *parent = nullptr);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void onSaveClicked();
     void onSaveAdvancedClicked();
@@ -48,6 +51,7 @@ private:
     QString findExecutableInDir(const QString &dirPath, const QString &exeName) const;
     bool extractZipArchive(const QString &zipPath, const QString &destDir, QString *errorMessage) const;
     void setDownloadUi(bool downloading, const QString &message = QString());
+    void ensureKernelInfoLoaded();
 
     // Proxy settings.
     QSpinBox *m_mixedPortSpin;
@@ -90,6 +94,7 @@ private:
     HttpClient *m_httpClient;
     QString m_latestKernelVersion;
     bool m_isDownloading = false;
+    bool m_kernelInfoLoaded = false;
 
     QPushButton *m_saveBtn;
 };
