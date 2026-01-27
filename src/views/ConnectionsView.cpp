@@ -53,8 +53,8 @@ void ConnectionsView::setupUI()
     m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
     m_closeAllBtn = new QPushButton(tr("Close All"));
 
-    m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
-    m_closeAllBtn = new QPushButton(tr("Close All"));
+    m_closeSelectedBtn->setObjectName("CloseSelectedBtn");
+    m_closeAllBtn->setObjectName("CloseAllBtn");
 
     toolbarLayout->addStretch();
     toolbarLayout->addWidget(m_closeSelectedBtn);
@@ -62,6 +62,7 @@ void ConnectionsView::setupUI()
 
     // Connections table.
     m_tableWidget = new QTableWidget;
+    m_tableWidget->setObjectName("ConnectionsTable");
     m_tableWidget->setColumnCount(6);
     m_tableWidget->setHorizontalHeaderLabels({
         tr("Source"), tr("Destination"), tr("Network"), tr("Rule"), tr("Upload"), tr("Download")
@@ -69,41 +70,6 @@ void ConnectionsView::setupUI()
     m_tableWidget->horizontalHeader()->setStretchLastSection(true);
     m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_tableWidget->setStyleSheet(R"(
-        QTableWidget {
-            background-color: transparent;
-            border: none;
-            border-radius: 10px;
-            color: #eaeaea;
-            gridline-color: #0f3460;
-        }
-        QTableWidget::item { padding: 8px; }
-        QTableWidget::item:selected { background-color: rgba(62, 166, 255, 0.2); }
-        QTableWidget::item:focus { outline: none; }
-        QTableWidget::item:selected:focus { outline: none; }
-        QHeaderView {
-            background: transparent;
-        }
-        QTableCornerButton::section {
-            background-color: rgba(59, 130, 246, 0.18);
-            border-top-left-radius: 10px;
-        }
-        QHeaderView::section {
-            background-color: rgba(59, 130, 246, 0.12);
-            color: #eaeaea;
-            padding: 8px;
-            border: none;
-        }
-        QHeaderView::section:first {
-            /* border-top-left-radius removed to align with corner button */
-        }
-        QHeaderView::section:horizontal:last {
-            border-top-right-radius: 10px;
-        }
-        QHeaderView::section:vertical:last {
-            border-bottom-left-radius: 10px;
-        }
-    )");
     m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
 
     mainLayout->addLayout(toolbarLayout);
@@ -201,20 +167,5 @@ void ConnectionsView::onCloseAll()
 void ConnectionsView::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
-
-    auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {
-        if (!btn) return;
-        QColor bg = baseColor; bg.setAlphaF(0.2);
-        QColor border = baseColor; border.setAlphaF(0.4);
-        QColor hover = baseColor; hover.setAlphaF(0.3);
-        
-        btn->setStyleSheet(QString(
-            "QPushButton { background-color: %1; color: %2; border: 1px solid %3; "
-            "border-radius: 10px; padding: 8px 16px; font-weight: bold; }"
-            "QPushButton:hover { background-color: %4; }"
-        ).arg(bg.name(QColor::HexArgb), baseColor.name(), border.name(QColor::HexArgb), hover.name(QColor::HexArgb)));
-    };
-
-    applyTransparentStyle(m_closeSelectedBtn, QColor("#3b82f6"));
-    applyTransparentStyle(m_closeAllBtn, QColor("#e94560"));
+    setStyleSheet(tm.loadStyleSheet(":/styles/connections_view.qss"));
 }

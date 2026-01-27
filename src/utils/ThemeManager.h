@@ -30,11 +30,6 @@ public:
     // Get global stylesheet.
     QString getGlobalStyleSheet() const;
 
-    // Get component styles.
-    QString getButtonStyle() const;
-    QString getCardStyle() const;
-    QString getInputStyle() const;
-    QString getScrollBarStyle() const;
     QString getLogViewStyle() const;
     QString loadStyleSheet(const QString &resourcePath,
                            const QMap<QString, QString> &extra = QMap<QString, QString>()) const;
@@ -48,6 +43,7 @@ private:
 
     void loadThemeColors();
     void updateApplicationStyle();
+    ThemeMode resolveModeForColors() const;
 
     ThemeMode m_currentMode;
     QMap<QString, QString> m_colors;

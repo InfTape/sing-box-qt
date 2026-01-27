@@ -11,6 +11,9 @@
         <file>styles/rules_view.qss</file>
         <file>styles/subscription_card.qss</file>
         <file>styles/subscription_view.qss</file>
+        <file>styles/global.qss</file>
+        <file>styles/settings_view.qss</file>
+        <file>styles/connections_view.qss</file>
     </qresource>
     <qresource prefix="/translations">
         <!-- Translation files are generated at build time. -->

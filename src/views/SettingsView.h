@@ -11,10 +11,14 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QStringList>
+#include <QString>
 
-class HttpClient;
+#include "models/SettingsModel.h"
+#include "services/SettingsService.h"
+
 class ToggleSwitch;
 class MenuComboBox;
+class KernelManager;
 
 class SettingsView : public QWidget
 {
@@ -34,24 +38,33 @@ private slots:
     void onCheckKernelClicked();
     void onCheckUpdateClicked();
     void updateStyle();
+    void onKernelInstalledReady(const QString &path, const QString &version);
+    void onKernelReleasesReady(const QStringList &versions, const QString &latest);
+    void onKernelLatestReady(const QString &latest, const QString &installed);
+    void onKernelDownloadProgress(int percent);
+    void onKernelStatusChanged(const QString &status);
+    void onKernelFinished(bool ok, const QString &message);
 
 private:
     void setupUI();
     void loadSettings();
-    void saveSettings();
-    void refreshKernelInfo();
-    void fetchKernelVersions();
-    void startKernelDownload(const QString &version);
-    void tryDownloadUrl(int index, const QStringList &urls, const QString &savePath, const QString &extractDir, const QString &version);
-    QString detectKernelPath() const;
-    QString queryKernelVersion(const QString &kernelPath) const;
-    QString getKernelArch() const;
-    QString buildKernelFilename(const QString &version) const;
-    QStringList buildDownloadUrls(const QString &version, const QString &filename) const;
-    QString findExecutableInDir(const QString &dirPath, const QString &exeName) const;
-    bool extractZipArchive(const QString &zipPath, const QString &destDir, QString *errorMessage) const;
+    bool saveSettings();
     void setDownloadUi(bool downloading, const QString &message = QString());
     void ensureKernelInfoLoaded();
+    QWidget* buildProxySection();
+    QWidget* buildProxyAdvancedSection();
+    QWidget* buildProfileSection();
+    QWidget* buildAppearanceSection();
+    QWidget* buildKernelSection();
+    QLabel* createSectionTitle(const QString &text);
+    QFrame* createCard();
+    QLabel* createFormLabel(const QString &text);
+    void matchLabelWidth(QLabel *left, QLabel *right);
+    void applySettingsToUi(const SettingsModel::Data &data);
+    void fillGeneralFromUi(SettingsModel::Data &data) const;
+    void fillAdvancedFromUi(SettingsModel::Data &data) const;
+    void fillProfileFromUi(SettingsModel::Data &data) const;
+    QString normalizeBypassText(const QString &text) const;
 
     // Proxy settings.
     QSpinBox *m_mixedPortSpin;
@@ -91,10 +104,12 @@ private:
     QPushButton *m_downloadKernelBtn;
     QPushButton *m_checkKernelBtn;
     QPushButton *m_checkUpdateBtn;
-    HttpClient *m_httpClient;
-    QString m_latestKernelVersion;
     bool m_isDownloading = false;
+    bool m_checkingInstall = false;
+    KernelManager *m_kernelManager;
     bool m_kernelInfoLoaded = false;
+    QString m_inputStyleApplied;
+    QString m_comboStyle;
 
     QPushButton *m_saveBtn;
 };

@@ -65,7 +65,7 @@ void TrafficChart::clear()
 void TrafficChart::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
-    m_uploadColor = QColor("#10b981"); // Emerald/Success
+    m_uploadColor = tm.getColor("success");
     m_downloadColor = tm.getColor("primary");
     m_gridColor = tm.getColor("border");
     m_textColor = tm.getColor("text-secondary");

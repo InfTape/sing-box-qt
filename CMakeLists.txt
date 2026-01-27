@@ -76,6 +76,10 @@ set(SOURCES
     src/views/RulesView.cpp
     src/views/LogView.cpp
     src/views/SettingsView.cpp
+    src/services/KernelManager.cpp
+    src/services/KernelPlatform.cpp
+    src/services/SettingsService.cpp
+    src/models/SettingsModel.cpp
     src/widgets/MenuComboBox.cpp
     src/widgets/LogRowWidget.cpp
     src/widgets/RuleCard.cpp
@@ -128,6 +132,10 @@ set(HEADERS
     src/views/RulesView.h
     src/views/LogView.h
     src/views/SettingsView.h
+    src/services/KernelManager.h
+    src/services/KernelPlatform.h
+    src/services/SettingsService.h
+    src/models/SettingsModel.h
     src/widgets/MenuComboBox.h
     src/widgets/LogRowWidget.h
     src/widgets/RuleCard.h

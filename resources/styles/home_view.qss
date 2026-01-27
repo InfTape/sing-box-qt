@@ -49,7 +49,7 @@
 
 #StatCard {
     background-color: @panel-bg@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     border-radius: 16px;
 }
 #StatCard:hover { border-color: @border-hover@; }
@@ -95,7 +95,7 @@
 
 #ChartCard {
     background-color: @panel-bg@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     border-radius: 16px;
 }
 #SectionTitle {
@@ -106,7 +106,7 @@
 }
 #ModeCard {
     background-color: @panel-bg@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     border-radius: 16px;
 }
 #ModeCard:hover { border-color: @border-hover@; }
@@ -145,7 +145,7 @@
     height: 20px;
     border-radius: 10px;
     background-color: @bg-tertiary@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     outline: none;
     image: none;
 }

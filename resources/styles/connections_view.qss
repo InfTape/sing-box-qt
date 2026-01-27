@@ -1,0 +1,60 @@
+#ConnectionsTable {
+    background-color: transparent;
+    border: none;
+    border-radius: 10px;
+    color: @text-primary@;
+    gridline-color: @border@;
+}
+#ConnectionsTable::item {
+    padding: 8px;
+}
+#ConnectionsTable::item:selected {
+    background-color: @primary-20@;
+}
+#ConnectionsTable::item:focus,
+#ConnectionsTable::item:selected:focus {
+    outline: none;
+}
+#ConnectionsTable QHeaderView {
+    background: transparent;
+}
+#ConnectionsTable QTableCornerButton::section {
+    background-color: @primary-18@;
+    border-top-left-radius: 10px;
+}
+#ConnectionsTable QHeaderView::section {
+    background-color: @primary-12@;
+    color: @text-primary@;
+    padding: 8px;
+    border: none;
+}
+#ConnectionsTable QHeaderView::section:horizontal:last {
+    border-top-right-radius: 10px;
+}
+#ConnectionsTable QHeaderView::section:vertical:last {
+    border-bottom-left-radius: 10px;
+}
+
+#CloseSelectedBtn {
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+#CloseSelectedBtn:hover {
+    background-color: @primary-30@;
+}
+
+#CloseAllBtn {
+    background-color: @error-20@;
+    color: @error@;
+    border: 1px solid @error-40@;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+#CloseAllBtn:hover {
+    background-color: @error-30@;
+}

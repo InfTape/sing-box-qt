@@ -17,6 +17,19 @@
 #PrimaryActionBtn:hover {
     background-color: @primary@cc;
 }
+
+#AddSubscriptionBtn {
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-weight: bold;
+    font-size: 13px;
+}
+#AddSubscriptionBtn:hover {
+    background-color: @primary-30@;
+}
 #SecondaryActionBtn {
     background-color: @bg-tertiary@;
     color: @text-primary@;

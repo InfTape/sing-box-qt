@@ -110,7 +110,6 @@ void ProxyView::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
     
-    m_searchEdit->setStyleSheet(tm.getInputStyle());
     setStyleSheet(tm.loadStyleSheet(":/styles/proxy_view.qss"));
 
     auto applyTransparentStyle = [](QPushButton *btn, const QColor &baseColor) {

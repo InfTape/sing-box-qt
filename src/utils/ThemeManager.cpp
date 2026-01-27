@@ -5,8 +5,8 @@
 #include <QFile>
 #include <QPalette>
 #include <QJsonObject>
-#include <QStyleFactory>
 #include <QFont>
+#include <QSettings>
 
 ThemeManager& ThemeManager::instance()
 {
@@ -34,7 +34,7 @@ void ThemeManager::init()
         m_currentMode = Light;
     } else if (themeEntry == "auto") {
         m_currentMode = Auto;
-        // TODO: detect system theme.
+        // Actual palette will follow the system theme inside loadThemeColors().
     } else {
         m_currentMode = Dark;
     }
@@ -45,8 +45,6 @@ void ThemeManager::init()
 
 void ThemeManager::setThemeMode(ThemeMode mode)
 {
-    if (m_currentMode == mode) return;
-    
     m_currentMode = mode;
     loadThemeColors();
     updateApplicationStyle();
@@ -67,7 +65,7 @@ ThemeManager::ThemeMode ThemeManager::getThemeMode() const
 void ThemeManager::loadThemeColors()
 {
     m_colors.clear();
-    
+
     // Base palette (Tailwind CSS style).
     m_colors["primary"] = "#5aa9ff";       // Light Blue
     m_colors["primary-hover"] = "#7bbcff"; // Light Blue Hover
@@ -76,8 +74,15 @@ void ThemeManager::loadThemeColors()
     m_colors["success"] = "#10b981";       // Emerald 500
     m_colors["warning"] = "#f59e0b";       // Amber 500
     m_colors["error"] = "#ef4444";         // Red 500
-    
-    if (m_currentMode == Light) {
+    auto addAlpha = [this](const QString &key, const QColor &color, double alpha) {
+        QColor c = color;
+        c.setAlphaF(alpha);
+        m_colors[key] = c.name(QColor::HexArgb);
+    };
+
+    const ThemeMode effectiveMode = resolveModeForColors();
+
+    if (effectiveMode == Light) {
         // Light theme variables.
         m_colors["bg-primary"] = "#f8fafc";   // Slate 50
         m_colors["bg-secondary"] = "#ffffff"; // White
@@ -108,6 +113,48 @@ void ThemeManager::loadThemeColors()
         m_colors["panel-bg"] = "#1e293b"; // Slate 800
         m_colors["input-bg"] = "#0f172a"; // Slate 900
     }
+
+    // Derived translucent colors (for backgrounds/overlays).
+    addAlpha("primary-06", QColor(m_colors["primary"]), 0.06);
+    addAlpha("primary-12", QColor(m_colors["primary"]), 0.12);
+    addAlpha("primary-18", QColor(m_colors["primary"]), 0.18);
+    addAlpha("primary-20", QColor(m_colors["primary"]), 0.20);
+    addAlpha("primary-30", QColor(m_colors["primary"]), 0.30);
+    addAlpha("primary-40", QColor(m_colors["primary"]), 0.40);
+
+    addAlpha("success-12", QColor(m_colors["success"]), 0.12);
+    addAlpha("success-18", QColor(m_colors["success"]), 0.18);
+    addAlpha("success-20", QColor(m_colors["success"]), 0.20);
+    addAlpha("success-30", QColor(m_colors["success"]), 0.30);
+    addAlpha("success-40", QColor(m_colors["success"]), 0.40);
+
+    addAlpha("warning-12", QColor(m_colors["warning"]), 0.12);
+    addAlpha("warning-18", QColor(m_colors["warning"]), 0.18);
+    addAlpha("warning-20", QColor(m_colors["warning"]), 0.20);
+    addAlpha("warning-30", QColor(m_colors["warning"]), 0.30);
+    addAlpha("warning-40", QColor(m_colors["warning"]), 0.40);
+
+    addAlpha("error-12", QColor(m_colors["error"]), 0.12);
+    addAlpha("error-18", QColor(m_colors["error"]), 0.18);
+    addAlpha("error-20", QColor(m_colors["error"]), 0.20);
+    addAlpha("error-30", QColor(m_colors["error"]), 0.30);
+    addAlpha("error-40", QColor(m_colors["error"]), 0.40);
+}
+
+ThemeManager::ThemeMode ThemeManager::resolveModeForColors() const
+{
+    if (m_currentMode != Auto) {
+        return m_currentMode;
+    }
+
+#if defined(Q_OS_WIN)
+    QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                       QSettings::NativeFormat);
+    const bool useLight = settings.value("AppsUseLightTheme", 0).toInt() != 0;
+    return useLight ? Light : Dark;
+#else
+    return Dark;
+#endif
 }
 
 QColor ThemeManager::getColor(const QString &key) const
@@ -130,143 +177,17 @@ QString ThemeManager::getGlobalStyleSheet() const
     if (familyList.isEmpty()) {
         familyList = family;
     }
-    return QString(R"(
-        QMainWindow, QDialog {
-            background-color: %1;
-            color: %2;
-        }
-        QWidget {
-            font-family: '%3';
-            font-size: 14px;
-        }
-        QLabel {
-            color: %2;
-        }
-    )")
-    .arg(m_colors["bg-primary"])
-    .arg(m_colors["text-primary"])
-    .arg(familyList);
-}
+    if (!familyList.startsWith("'")) {
+        familyList.prepend("'");
+    }
+    if (!familyList.endsWith("'")) {
+        familyList.append("'");
+    }
 
-QString ThemeManager::getButtonStyle() const
-{
-    return QString(R"(
-        QPushButton {
-            background-color: %1;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        QPushButton:hover {
-            background-color: %2;
-        }
-        QPushButton:pressed {
-            background-color: %3;
-        }
-        QPushButton:disabled {
-            background-color: %4;
-            color: %5;
-        }
-    )")
-    .arg(m_colors["primary"])
-    .arg(m_colors["primary-hover"])
-    .arg(m_colors["primary-active"])
-    .arg(m_colors["bg-tertiary"])
-    .arg(m_colors["text-tertiary"]);
-}
-
-QString ThemeManager::getCardStyle() const
-{
-    return QString(R"(
-        QFrame, QWidget#Card {
-            background-color: %1;
-            border: 1px solid #353b43;
-            border-radius: 10px;
-        }
-    )")
-    .arg(m_colors["panel-bg"])
-    .arg(m_colors["border"]);
-}
-
-QString ThemeManager::getInputStyle() const
-{
-    return QString(R"(
-        QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {
-            background-color: %1;
-            border: 1px solid #353b43;
-            border-radius: 10px;
-            padding: 8px 12px;
-            color: %3;
-            selection-background-color: %4;
-        }
-        QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {
-            border: 1px solid #353b43;
-        }
-        QComboBox::drop-down {
-            border: none;
-        }
-        QComboBox QAbstractItemView {
-            background-color: %1;
-            color: %3;
-            selection-background-color: %4;
-            border: 1px solid #353b43;
-        }
-        QCheckBox {
-            color: %3;
-            spacing: 8px;
-        }
-        QCheckBox::indicator {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-            border: 1px solid #353b43;
-            background-color: %1;
-        }
-        QCheckBox::indicator:checked {
-            background-color: %4;
-            border-color: %4;
-            image: url(:/icons/check.svg);
-        }
-        QCheckBox::indicator:disabled {
-            border-color: %2;
-            background-color: %1;
-            image: none;
-        }
-    )")
-    .arg(m_colors["input-bg"])
-    .arg(m_colors["border"])
-    .arg(m_colors["text-primary"])
-    .arg(m_colors["primary"]);
-}
-
-QString ThemeManager::getScrollBarStyle() const
-{
-    return QString(R"(
-        QScrollBar:vertical {
-            border: none;
-            background: transparent;
-            width: 8px;
-            margin: 0;
-        }
-        QScrollBar::handle:vertical {
-            background-color: %1;
-            min-height: 20px;
-            border-radius: 4px;
-        }
-        QScrollBar::handle:vertical:hover {
-            background-color: %2;
-        }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-            height: 0;
-        }
-        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-            background: transparent;
-        }
-    )")
-    .arg(m_colors["border"])
-    .arg(m_colors["text-tertiary"]);
+    QMap<QString, QString> extra;
+    extra.insert("font-family", family);
+    extra.insert("font-family-list", familyList);
+    return loadStyleSheet(":/styles/global.qss", extra);
 }
 
 QString ThemeManager::getLogViewStyle() const
@@ -308,10 +229,7 @@ void ThemeManager::updateApplicationStyle()
         }
         qApp->setFont(font);
     }
-    qApp->setStyleSheet(getGlobalStyleSheet() + 
-                       getButtonStyle() + 
-                       getInputStyle() + 
-                       getScrollBarStyle());
+    qApp->setStyleSheet(getGlobalStyleSheet());
                        
     // Set Qt palette for widgets not fully covered by styles.
     QPalette palette;

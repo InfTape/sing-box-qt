@@ -21,13 +21,13 @@
 }
 #SearchInput, #FilterSelect {
     background-color: @panel-bg@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     border-radius: 12px;
     padding: 8px 12px;
     color: @text-primary@;
 }
 #SearchInput:focus, #FilterSelect:focus {
-    border-color: #353b43;
+    border-color: @border-hover@;
 }
 #TagInfo, #TagError, #TagWarning {
     padding: 6px 20px;
@@ -44,7 +44,7 @@
 #ActionBtn {
     background-color: @panel-bg@;
     color: @text-primary@;
-    border: 1px solid #353b43;
+    border: 1px solid @border@;
     border-radius: 10px;
     padding: 6px 14px;
 }
@@ -61,6 +61,55 @@
 }
 #ActionDangerBtn:hover {
     background-color: @error@cc;
+}
+
+#TotalTag {
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
+    border-radius: 10px;
+    padding: 0px 12px;
+    font-weight: bold;
+    font-size: 11px;
+    min-height: 26px;
+    max-height: 26px;
+    qproperty-alignment: AlignCenter;
+}
+#ErrorTag {
+    background-color: @error-20@;
+    color: @error@;
+    border: 1px solid @error-40@;
+    border-radius: 10px;
+    padding: 0px 12px;
+    font-weight: bold;
+    font-size: 11px;
+    min-height: 26px;
+    max-height: 26px;
+    qproperty-alignment: AlignCenter;
+}
+#WarningTag {
+    background-color: @warning-20@;
+    color: @warning@;
+    border: 1px solid @warning-40@;
+    border-radius: 10px;
+    padding: 0px 12px;
+    font-weight: bold;
+    font-size: 11px;
+    min-height: 26px;
+    max-height: 26px;
+    qproperty-alignment: AlignCenter;
+}
+
+#ClearBtn, #CopyBtn, #ExportBtn {
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-40@;
+    border-radius: 10px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+#ClearBtn:hover, #CopyBtn:hover, #ExportBtn:hover {
+    background-color: @primary-30@;
 }
 #LogEntry {
     background: transparent;
