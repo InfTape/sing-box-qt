@@ -67,25 +67,37 @@ void ProxyView::setupUI()
     mainLayout->setSpacing(16);
 
 
+    QHBoxLayout *headerLayout = new QHBoxLayout;
+    QVBoxLayout *titleLayout = new QVBoxLayout;
+    titleLayout->setSpacing(4);
+
     QLabel *titleLabel = new QLabel(tr("Proxy"));
     titleLabel->setObjectName("PageTitle");
     QLabel *subtitleLabel = new QLabel(tr("Select proxy nodes and run latency tests"));
     subtitleLabel->setObjectName("PageSubtitle");
-    mainLayout->addWidget(titleLabel);
-    mainLayout->addWidget(subtitleLabel);
+
+    titleLayout->addWidget(titleLabel);
+    titleLayout->addWidget(subtitleLabel);
+    headerLayout->addLayout(titleLayout);
+    headerLayout->addStretch();
+
+    mainLayout->addLayout(headerLayout);
     
 
     QFrame *toolbarCard = new QFrame;
     toolbarCard->setObjectName("ToolbarCard");
     QVBoxLayout *toolbarCardLayout = new QVBoxLayout(toolbarCard);
-    toolbarCardLayout->setContentsMargins(16, 16, 16, 12);
+    toolbarCardLayout->setContentsMargins(14, 12, 14, 12);
     toolbarCardLayout->setSpacing(12);
 
     QHBoxLayout *toolbarLayout = new QHBoxLayout;
+    toolbarLayout->setContentsMargins(0, 0, 0, 0);
+    toolbarLayout->setSpacing(12);
     
     m_searchEdit = new QLineEdit;
     m_searchEdit->setPlaceholderText(tr("Search nodes..."));
     m_searchEdit->setObjectName("SearchInput");
+    m_searchEdit->setClearButtonEnabled(true);
     
     m_testSelectedBtn = new QPushButton(tr("Test Selected"));
     m_testSelectedBtn->setObjectName("TestSelectedBtn");
