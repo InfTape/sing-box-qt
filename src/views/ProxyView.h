@@ -32,6 +32,7 @@ private slots:
     void onItemDoubleClicked(QTreeWidgetItem *item, int column);
     void onProxySelected(const QString &group, const QString &proxy);
     void onProxySelectFailed(const QString &group, const QString &proxy);
+    void onTestSelectedClicked();
     void onTestAllClicked();
     void onSearchTextChanged(const QString &text);
     void onDelayResult(const ProxyDelayTestResult &result);
@@ -46,6 +47,11 @@ private:
     void updateProxyItem(QTreeWidgetItem *item, const QJsonObject &proxy);
     QString formatDelay(int delay) const;
     void testSingleNode(const QString &proxy);
+    QWidget* buildNodeRow(const QString &name, const QString &type, const QString &delay) const;
+    void updateNodeRowDelay(QTreeWidgetItem *item, const QString &delayText, const QString &state);
+    QString nodeDisplayName(QTreeWidgetItem *item) const;
+    void updateNodeRowSelected(QTreeWidgetItem *item, bool selected);
+    void onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void applyTreeItemColors();
     void markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText = QString());
     void updateTestButtonStyle(bool testing);
@@ -53,6 +59,7 @@ private:
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;
     QPushButton *m_testAllBtn;
+    QPushButton *m_testSelectedBtn;
     QPushButton *m_refreshBtn;
     QProgressBar *m_progressBar;
     ProxyService *m_proxyService;
@@ -60,6 +67,8 @@ private:
     QSet<QString> m_testingNodes;  // Nodes under test.
     QJsonObject m_cachedProxies;   // Cached proxy data.
     QHash<QString, QString> m_pendingSelection; // group -> proxy
+    bool m_singleTesting{false};
+    QString m_singleTestingTarget;
 };
 
 #endif // PROXYVIEW_H

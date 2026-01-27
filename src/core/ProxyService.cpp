@@ -1,6 +1,7 @@
 #include "ProxyService.h"
 #include "network/HttpClient.h"
 #include "network/WebSocketClient.h"
+#include "storage/AppSettings.h"
 #include "utils/Logger.h"
 #include <QJsonDocument>
 #include <QUrl>
@@ -119,7 +120,7 @@ void ProxyService::selectProxy(const QString &group, const QString &proxy)
 void ProxyService::testDelay(const QString &proxy, const QString &url, int timeout)
 {
     QString testUrl = url.isEmpty()
-        ? "http://www.gstatic.com/generate_204"
+        ? AppSettings::instance().urltestUrl()
         : url;
 
     QUrlQuery query;
@@ -147,8 +148,8 @@ void ProxyService::testGroupDelay(const QString &group)
     QString url = buildApiUrl(QString("/group/%1/delay").arg(group));
 
     QUrlQuery query;
-    query.addQueryItem("url", "http://www.gstatic.com/generate_204");
-    query.addQueryItem("timeout", "5000");
+    query.addQueryItem("url", AppSettings::instance().urltestUrl());
+    query.addQueryItem("timeout", "8000");
 
     m_httpClient->get(url + "?" + query.toString(), [this](bool success, const QByteArray &data) {
         if (success) {

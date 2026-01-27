@@ -10,6 +10,8 @@
 #include <QBrush>
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItemIterator>
+#include <QFrame>
+#include <QItemSelection>
 
 namespace {
 
@@ -49,6 +51,7 @@ ProxyView::ProxyView(QWidget *parent)
     : QWidget(parent)
     , m_proxyService(nullptr)
     , m_delayTestService(nullptr)
+    , m_testSelectedBtn(nullptr)
 {
     setupUI();
     updateStyle();
@@ -84,6 +87,10 @@ void ProxyView::setupUI()
     m_searchEdit->setPlaceholderText(tr("Search nodes..."));
     m_searchEdit->setObjectName("SearchInput");
     
+    m_testSelectedBtn = new QPushButton(tr("Test Selected"));
+    m_testSelectedBtn->setObjectName("TestSelectedBtn");
+    m_testSelectedBtn->setCursor(Qt::PointingHandCursor);
+    
     m_testAllBtn = new QPushButton(tr("Test All"));
     m_testAllBtn->setObjectName("TestAllBtn");
     m_testAllBtn->setCursor(Qt::PointingHandCursor);
@@ -93,6 +100,7 @@ void ProxyView::setupUI()
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     
     toolbarLayout->addWidget(m_searchEdit, 1);
+    toolbarLayout->addWidget(m_testSelectedBtn);
     toolbarLayout->addWidget(m_testAllBtn);
     toolbarLayout->addWidget(m_refreshBtn);
     
@@ -133,12 +141,15 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     m_treeWidget->setItemDelegate(new ProxyTreeDelegate(m_treeWidget));
+    connect(m_treeWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, &ProxyView::onSelectionChanged);
     
     treeLayout->addWidget(m_treeWidget);
     mainLayout->addWidget(treeCard, 1);
     
 
     connect(m_searchEdit, &QLineEdit::textChanged, this, &ProxyView::onSearchTextChanged);
+    connect(m_testSelectedBtn, &QPushButton::clicked, this, &ProxyView::onTestSelectedClicked);
     connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyView::onTestAllClicked);
     connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyView::refresh);
     connect(m_treeWidget, &QTreeWidget::itemClicked, this, &ProxyView::onItemClicked);
@@ -210,7 +221,7 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
             expandedGroups.insert(groupName.isEmpty() ? (*it)->text(0) : groupName);
         }
         if ((*it)->isSelected()) {
-            selectedNode = (*it)->text(0);
+            selectedNode = nodeDisplayName(*it);
             if (selectedNode.startsWith("* ")) {
                 selectedNode = selectedNode.mid(2);
             }
@@ -297,36 +308,43 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
             for (const auto &nodeName : all) {
                 QString name = nodeName.toString();
                 QTreeWidgetItem *nodeItem = new QTreeWidgetItem(groupItem);
-                
 
-                nodeItem->setText(0, name);
-                
+                nodeItem->setText(0, QString());
+                nodeItem->setText(1, QString());
+                nodeItem->setText(2, QString());
+                nodeItem->setFirstColumnSpanned(true);
                 nodeItem->setData(0, Qt::UserRole, "node");
                 nodeItem->setData(0, Qt::UserRole + 1, it.key());
-                
+                nodeItem->setData(0, Qt::UserRole + 3, name); // store display name
 
                 if (name == selectedNode) {
                     nodeItem->setSelected(true);
                 }
-                
 
+                QString nodeType;
+                QString delayText;
                 if (m_cachedProxies.contains(name)) {
                     QJsonObject nodeProxy = m_cachedProxies[name].toObject();
-                    nodeItem->setText(1, nodeProxy["type"].toString());
-                    
+                    nodeType = nodeProxy["type"].toString();
 
                     if (nodeProxy.contains("history")) {
                         QJsonArray history = nodeProxy["history"].toArray();
                         if (!history.isEmpty()) {
                             int delay = history.last().toObject()["delay"].toInt();
-                            nodeItem->setText(2, formatDelay(delay));
-                            // delay text only; color via stylesheet / delegate if needed
+                            delayText = formatDelay(delay);
+                        }
                     }
                 }
+
+                nodeItem->setText(2, delayText);
+                QWidget *rowCard = buildNodeRow(name, nodeType, delayText);
+                nodeItem->setSizeHint(0, rowCard->sizeHint());
+                m_treeWidget->setItemWidget(nodeItem, 0, rowCard);
+                updateNodeRowSelected(nodeItem, nodeItem->isSelected());
             }
         }
     }
-    }
+    applyTreeItemColors();
 }
 
 void ProxyView::onItemClicked(QTreeWidgetItem *item, int column)
@@ -348,18 +366,15 @@ void ProxyView::applyTreeItemColors()
         QTreeWidgetItem *item = *it;
         const QString role = item->data(0, Qt::UserRole).toString();
         if (role == "node") {
-            QString name = item->text(0);
+            QString name = item->data(0, Qt::UserRole + 3).toString();
+            if (name.isEmpty()) {
+                name = item->text(0);
+            }
             bool hasStar = name.startsWith("* ");
             if (hasStar) name = name.mid(2);
 
             const QString group = item->data(0, Qt::UserRole + 1).toString();
             const QString now = m_cachedProxies.value(group).toObject().value("now").toString();
-            if (name == now) {
-                if (!hasStar) item->setText(0, "* " + name);
-            } else {
-                if (hasStar) item->setText(0, name);
-            }
-            item->setData(1, Qt::UserRole + 2, "type");
             markNodeState(item, group, now, item->text(2));
         }
         ++it;
@@ -371,20 +386,16 @@ void ProxyView::markNodeState(QTreeWidgetItem *item, const QString &group, const
     Q_UNUSED(group);
     if (!item) return;
 
-    QString name = item->text(0);
-    bool hasStar = name.startsWith("* ");
-    if (hasStar) name = name.mid(2);
-
-    const bool isActive = (name == now);
-    item->setData(0, Qt::UserRole + 2, isActive ? "active" : "");
-    if (isActive && !hasStar) {
-        item->setText(0, "* " + name);
-    } else if (!isActive && hasStar) {
-        item->setText(0, name);
+    QString baseName = item->data(0, Qt::UserRole + 3).toString();
+    if (baseName.isEmpty()) {
+        baseName = item->text(0);
     }
+    bool hasStar = baseName.startsWith("* ");
+    if (hasStar) baseName = baseName.mid(2);
 
-    // type column marker
-    item->setData(1, Qt::UserRole + 2, "type");
+    const bool isActive = (baseName == now);
+    item->setData(0, Qt::UserRole + 2, isActive ? "active" : "");
+    QString displayName = isActive ? "* " + baseName : baseName;
 
     // delay state marker
     QString state = "loading";
@@ -403,6 +414,13 @@ void ProxyView::markNodeState(QTreeWidgetItem *item, const QString &group, const
         }
     }
     item->setData(2, Qt::UserRole + 2, state);
+    if (QWidget *row = m_treeWidget->itemWidget(item, 0)) {
+        if (auto *nameLabel = row->findChild<QLabel*>("ProxyNodeName")) {
+            nameLabel->setText(displayName);
+        }
+    }
+    updateNodeRowDelay(item, delayText, state);
+    updateNodeRowSelected(item, item->isSelected());
 }
 
 void ProxyView::handleNodeActivation(QTreeWidgetItem *item)
@@ -415,11 +433,8 @@ void ProxyView::handleNodeActivation(QTreeWidgetItem *item)
     }
 
     QString group = item->data(0, Qt::UserRole + 1).toString();
-    QString nodeName = item->text(0);
-
-    if (nodeName.startsWith("* ")) {
-        nodeName = nodeName.mid(2);
-    }
+    QString nodeName = nodeDisplayName(item);
+    if (nodeName.startsWith("* ")) nodeName = nodeName.mid(2);
 
     m_pendingSelection.insert(group, nodeName);
     m_proxyService->selectProxy(group, nodeName);
@@ -442,9 +457,55 @@ void ProxyView::onProxySelectFailed(const QString &group, const QString &proxy)
     }
 }
 
+void ProxyView::onTestSelectedClicked()
+{
+    if (!m_delayTestService || !m_treeWidget) return;
+
+    // 避免与批量测试并行冲突。
+    if (m_delayTestService->isTesting() && !m_testingNodes.isEmpty()) {
+        return;
+    }
+
+    const auto selected = m_treeWidget->selectedItems();
+    if (selected.isEmpty()) return;
+
+    QTreeWidgetItem *item = selected.first();
+    if (!item || item->data(0, Qt::UserRole).toString() != "node") {
+        return;
+    }
+
+    QString name = nodeDisplayName(item);
+    if (name.startsWith("* ")) {
+        name = name.mid(2);
+    }
+
+    if (name == "DIRECT" || name == "REJECT" || name == "COMPATIBLE") {
+        return;
+    }
+
+    item->setText(2, "...");
+    item->setData(2, Qt::UserRole + 2, QString("loading"));
+
+    m_testingNodes.insert(name);
+    m_singleTesting = true;
+    m_singleTestingTarget = name;
+    if (m_testSelectedBtn) {
+        m_testSelectedBtn->setEnabled(false);
+        m_testSelectedBtn->setProperty("testing", true);
+        m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
+        m_testSelectedBtn->style()->polish(m_testSelectedBtn);
+    }
+
+    DelayTestOptions options;
+    options.timeoutMs = 8000;
+    options.concurrency = 1;
+    m_delayTestService->testNodeDelay(name, options);
+}
+
 void ProxyView::onTestAllClicked()
 {
     if (!m_delayTestService) return;
+    if (m_singleTesting) return;
     
     if (m_delayTestService->isTesting()) {
         m_delayTestService->stopAllTests();
@@ -458,7 +519,7 @@ void ProxyView::onTestAllClicked()
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
         if ((*it)->data(0, Qt::UserRole).toString() == "node") {
-            QString name = (*it)->text(0);
+            QString name = nodeDisplayName(*it);
             if (name.startsWith("* ")) {
                 name = name.mid(2);
             }
@@ -491,7 +552,7 @@ void ProxyView::onTestAllClicked()
     
 
     DelayTestOptions options;
-    options.timeoutMs = 5000;
+    options.timeoutMs = 8000;
     options.concurrency = 6;
     
     m_delayTestService->testNodesDelay(nodesToTest, options);
@@ -502,7 +563,7 @@ void ProxyView::onSearchTextChanged(const QString &text)
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
         if ((*it)->data(0, Qt::UserRole).toString() == "node") {
-             bool match = (*it)->text(0).contains(text, Qt::CaseInsensitive);
+             bool match = nodeDisplayName(*it).contains(text, Qt::CaseInsensitive);
              (*it)->setHidden(!match && !text.isEmpty());
         }
         ++it;
@@ -541,13 +602,12 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
 
     QTreeWidgetItemIterator it(m_treeWidget);
     while (*it) {
-        QString name = (*it)->text(0);
+        QString name = nodeDisplayName(*it);
         if (name.startsWith("* ")) {
             name = name.mid(2);
         }
         
         if (name == result.proxy) {
-            (*it)->setText(2, displayText);
             const QString group = (*it)->data(0, Qt::UserRole + 1).toString();
             const QString now = m_cachedProxies.value(group).toObject().value("now").toString();
             markNodeState(*it, group, now, displayText);
@@ -556,6 +616,22 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
     }
     
     m_testingNodes.remove(result.proxy);
+
+    if (m_singleTesting && result.proxy == m_singleTestingTarget) {
+        m_singleTesting = false;
+        m_singleTestingTarget.clear();
+        if (m_testSelectedBtn) {
+            m_testSelectedBtn->setEnabled(true);
+            m_testSelectedBtn->setProperty("testing", false);
+            m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
+            m_testSelectedBtn->style()->polish(m_testSelectedBtn);
+        }
+    }
+
+    // 更新选中态的视觉效果（防止延迟更新后样式丢失）
+    if (QTreeWidgetItem *current = m_treeWidget->currentItem()) {
+        updateNodeRowSelected(current, current->isSelected());
+    }
 }
 
 void ProxyView::onTestProgress(int current, int total)
@@ -572,6 +648,10 @@ void ProxyView::onTestCompleted()
     updateTestButtonStyle(false);
     m_progressBar->hide();
     m_testingNodes.clear();
+
+    if (QTreeWidgetItem *current = m_treeWidget->currentItem()) {
+        updateNodeRowSelected(current, current->isSelected());
+    }
 }
 
 void ProxyView::updateSelectedProxyUI(const QString &group, const QString &proxy)
@@ -633,6 +713,70 @@ QString ProxyView::formatDelay(int delay) const
     return QString::number(delay) + " ms";
 }
 
+QString ProxyView::nodeDisplayName(QTreeWidgetItem *item) const
+{
+    if (!item) return QString();
+    QString name = item->data(0, Qt::UserRole + 3).toString();
+    if (name.isEmpty()) {
+        name = item->text(0);
+    }
+    return name;
+}
+
+QWidget* ProxyView::buildNodeRow(const QString &name, const QString &type, const QString &delay) const
+{
+    QWidget *card = new QFrame(m_treeWidget->viewport());
+    card->setObjectName("ProxyNodeCard");
+    card->setAttribute(Qt::WA_Hover, true);
+    card->setMouseTracking(true);
+    card->setProperty("selected", false);
+    QHBoxLayout *layout = new QHBoxLayout(card);
+    layout->setContentsMargins(14, 10, 14, 10);
+    layout->setSpacing(10);
+
+    QLabel *nameLabel = new QLabel(name, card);
+    nameLabel->setObjectName("ProxyNodeName");
+
+    QLabel *typeLabel = new QLabel(type, card);
+    typeLabel->setObjectName("ProxyNodeType");
+    typeLabel->setAlignment(Qt::AlignCenter);
+    typeLabel->setMinimumWidth(64);
+
+    QLabel *delayLabel = new QLabel(delay, card);
+    delayLabel->setObjectName("ProxyNodeDelay");
+    delayLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+    layout->addWidget(nameLabel, 1);
+    layout->addWidget(typeLabel);
+    layout->addStretch();
+    layout->addWidget(delayLabel, 0, Qt::AlignRight);
+
+    return card;
+}
+
+void ProxyView::updateNodeRowDelay(QTreeWidgetItem *item, const QString &delayText, const QString &state)
+{
+    if (!item) return;
+    QWidget *row = m_treeWidget->itemWidget(item, 0);
+    if (!row) return;
+    if (auto *delayLabel = row->findChild<QLabel *>("ProxyNodeDelay")) {
+        delayLabel->setText(delayText);
+        delayLabel->setProperty("state", state);
+        delayLabel->style()->unpolish(delayLabel);
+        delayLabel->style()->polish(delayLabel);
+    }
+}
+
+void ProxyView::updateNodeRowSelected(QTreeWidgetItem *item, bool selected)
+{
+    if (!item) return;
+    QWidget *row = m_treeWidget->itemWidget(item, 0);
+    if (!row) return;
+    row->setProperty("selected", selected);
+    row->style()->unpolish(row);
+    row->style()->polish(row);
+}
+
 void ProxyView::testSingleNode(const QString &proxy)
 {
     if (!m_delayTestService) return;
@@ -646,4 +790,32 @@ void ProxyView::updateTestButtonStyle(bool testing)
     m_testAllBtn->setProperty("testing", testing);
     m_testAllBtn->style()->unpolish(m_testAllBtn);
     m_testAllBtn->style()->polish(m_testAllBtn);
+
+    if (m_testSelectedBtn) {
+        const bool busy = testing || m_singleTesting;
+        m_testSelectedBtn->setEnabled(!busy);
+        m_testSelectedBtn->setProperty("testing", busy);
+        m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
+        m_testSelectedBtn->style()->polish(m_testSelectedBtn);
+    }
+}
+
+void ProxyView::onSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+{
+    for (const QModelIndex &idx : selected.indexes()) {
+        if (idx.column() != 0) continue;
+        if (auto *item = m_treeWidget->itemFromIndex(idx)) {
+            if (item->data(0, Qt::UserRole).toString() == "node") {
+                updateNodeRowSelected(item, true);
+            }
+        }
+    }
+    for (const QModelIndex &idx : deselected.indexes()) {
+        if (idx.column() != 0) continue;
+        if (auto *item = m_treeWidget->itemFromIndex(idx)) {
+            if (item->data(0, Qt::UserRole).toString() == "node") {
+                updateNodeRowSelected(item, false);
+            }
+        }
+    }
 }

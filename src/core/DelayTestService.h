@@ -7,15 +7,16 @@
 #include <QHash>
 #include <QMutex>
 #include <QSemaphore>
+#include <QFuture>
 
 class HttpClient;
 
 // Delay test options.
 struct DelayTestOptions {
-    int timeoutMs = 8000;                                              // Timeout in ms.
-    QString url = "https://connectivitycheck.gstatic.com/generate_204"; // Test URL.
-    int samples = 2;                                                    // Sample count.
-    int concurrency = 6;                                                // Concurrency.
+    int timeoutMs = 8000;   // Timeout in ms.
+    QString url;            // Test URL; empty uses AppSettings::urltestUrl().
+    int samples = 2;        // Sample count.
+    int concurrency = 6;    // Concurrency.
 };
 
 // Delay test result.
@@ -84,6 +85,7 @@ private:
     bool m_stopping;
     mutable QMutex m_mutex;
     QSemaphore *m_semaphore;  // Concurrency control.
+    QFuture<void> m_lastFuture; // Hold last future to satisfy MSVC warning.
 };
 
 #endif // DELAYTESTSERVICE_H

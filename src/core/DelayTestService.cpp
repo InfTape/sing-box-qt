@@ -1,5 +1,6 @@
 #include "DelayTestService.h"
 #include "network/HttpClient.h"
+#include "storage/AppSettings.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QUrl>
@@ -65,6 +66,17 @@ QString DelayTestService::buildClashDelayUrl(const QString &proxy, int timeoutMs
     return url.toString();
 }
 
+namespace {
+QString resolveTestUrl(const DelayTestOptions &options)
+{
+    const QString candidate = options.url.trimmed();
+    if (!candidate.isEmpty()) {
+        return candidate;
+    }
+    return AppSettings::instance().urltestUrl();
+}
+} // namespace
+
 int DelayTestService::fetchSingleDelay(const QString &proxy, int timeoutMs, const QString &testUrl)
 {
     QString url = buildClashDelayUrl(proxy, timeoutMs, testUrl);
@@ -121,6 +133,8 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
     ProxyDelayTestResult result;
     result.proxy = proxy;
 
+    const QString testUrl = resolveTestUrl(options);
+
     QVector<int> okValues;
     QString lastError;
 
@@ -136,7 +150,7 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
             }
         }
 
-        int delay = fetchSingleDelay(proxy, options.timeoutMs, options.url);
+        int delay = fetchSingleDelay(proxy, options.timeoutMs, testUrl);
 
         if (delay > 0) {
             okValues.append(delay);
@@ -167,7 +181,8 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString &proxy, c
 void DelayTestService::testNodeDelay(const QString &proxy, const DelayTestOptions &options)
 {
     // Run in background thread.
-    QtConcurrent::run([this, proxy, options]() {
+    // Keep the future to avoid MSVC warning about discarded return value.
+    m_lastFuture = QtConcurrent::run([this, proxy, options]() {
         ProxyDelayTestResult result = measureProxyDelay(proxy, options);
 
         // Emit on the main thread.
@@ -196,7 +211,7 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
 
     int total = proxies.size();
 
-    QtConcurrent::run([this, proxies, options, total]() {
+    m_lastFuture = QtConcurrent::run([this, proxies, options, total]() {
         QAtomicInt completed(0);
         QList<QFuture<void>> futures;
 
