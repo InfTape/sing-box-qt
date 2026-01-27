@@ -73,16 +73,19 @@ QComboBox QAbstractItemView {
     background-color: @input-bg@;
     color: @text-primary@;
     selection-background-color: @primary@;
-    selection-color: white;
     border: 1px solid @border@;
     outline: none;
 }
-QComboBox QAbstractItemView::item:selected {
-    color: white;
+QComboBox QAbstractItemView::item {
+    color: @text-primary@;
 }
 QComboBox QAbstractItemView::item:hover {
     background-color: @primary-20@;
     color: @text-primary@;
+}
+QComboBox QAbstractItemView::item:selected {
+    background-color: @primary@;
+    color: white;
 }
 QCheckBox {
     color: @text-primary@;

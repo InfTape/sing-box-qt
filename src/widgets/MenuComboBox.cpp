@@ -2,6 +2,10 @@
 #include "widgets/RoundedMenu.h"
 #include "utils/ThemeManager.h"
 #include <QAction>
+#include <QPainter>
+#include <QPainterPath>
+#include <QPen>
+#include <QPixmap>
 #include <QPoint>
 #include <QWheelEvent>
 #include <QtMath>
@@ -29,10 +33,34 @@ void MenuComboBox::showPopup()
     if (!m_menu) return;
     m_menu->clear();
 
+    ThemeManager &tm = ThemeManager::instance();
+    QColor checkColor = tm.getColor("primary");
+    
     for (int i = 0; i < count(); ++i) {
         QAction *action = m_menu->addAction(itemText(i));
-        action->setCheckable(true);
-        action->setChecked(i == currentIndex());
+        
+        if (i == currentIndex()) {
+            // 为选中项创建勾号图标
+            QPixmap pixmap(14, 14);
+            pixmap.fill(Qt::transparent);
+            QPainter painter(&pixmap);
+            painter.setRenderHint(QPainter::Antialiasing);
+            
+            QPen pen(checkColor, 2);
+            pen.setCapStyle(Qt::RoundCap);
+            pen.setJoinStyle(Qt::RoundJoin);
+            painter.setPen(pen);
+            
+            // 绘制勾号路径
+            QPainterPath path;
+            path.moveTo(1, 7);
+            path.lineTo(5, 11);
+            path.lineTo(13, 1);
+            painter.drawPath(path);
+            
+            action->setIcon(QIcon(pixmap));
+        }
+        
         connect(action, &QAction::triggered, this, [this, i]() {
             setCurrentIndex(i);
         });
@@ -79,19 +107,12 @@ void MenuComboBox::updateMenuStyle()
             padding: 8px 14px;
             border-radius: 10px;
         }
-        #ComboMenu::indicator {
-            width: 14px;
-            height: 14px;
-        }
-        #ComboMenu::indicator:checked {
-            image: url(:/icons/check.svg);
-        }
-        #ComboMenu::indicator:unchecked {
-            image: none;
-        }
+
         #ComboMenu::item:selected {
             background-color: %2;
-            color: white;
+        }
+        #ComboMenu::item:selected:!checked {
+            color: %1;
         }
         #ComboMenu::item:checked {
             color: %4;
