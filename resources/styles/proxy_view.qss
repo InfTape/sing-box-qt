@@ -31,12 +31,6 @@
     color: @text-secondary@;
 }
 #ProxyGroupBadge {
-    padding: 4px 12px;
-    border-radius: 14px;
-    background-color: @bg-tertiary@;
-    color: @text-primary@;
-    font-size: 11px;
-    font-weight: 600;
 }
 #ProxyGroupToggle {
     width: 28px;
