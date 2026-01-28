@@ -795,12 +795,6 @@ void ProxyView::updateNodeRowSelected(QTreeWidgetItem *item, bool selected)
     row->style()->polish(row);
 }
 
-void ProxyView::testSingleNode(const QString &proxy)
-{
-    if (!m_delayTestService) return;
-    m_delayTestService->testNodeDelay(proxy);
-}
-
 void ProxyView::updateTestButtonStyle(bool testing)
 {
     if (!m_testAllBtn) return;

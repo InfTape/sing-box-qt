@@ -1,11 +1,9 @@
 #include "ProxyService.h"
 #include "network/HttpClient.h"
 #include "network/WebSocketClient.h"
-#include "storage/AppSettings.h"
 #include "utils/Logger.h"
 #include <QJsonDocument>
 #include <QUrl>
-#include <QUrlQuery>
 
 ProxyService::ProxyService(QObject *parent)
     : QObject(parent)
@@ -118,55 +116,6 @@ void ProxyService::selectProxy(const QString &group, const QString &proxy)
             Logger::warn(QString("Proxy switch failed: group=%1, proxy=%2").arg(group, proxy));
             emit proxySelectFailed(group, proxy);
             emit errorOccurred(tr("Failed to switch proxy"));
-        }
-    });
-}
-
-void ProxyService::testDelay(const QString &proxy, const QString &url, int timeout)
-{
-    QString testUrl = url.isEmpty()
-        ? AppSettings::instance().urltestUrl()
-        : url;
-
-    QUrlQuery query;
-    query.addQueryItem("url", testUrl);
-    query.addQueryItem("timeout", QString::number(timeout));
-
-    QString apiUrl = buildApiUrl(QString("/proxies/%1/delay?%2")
-        .arg(proxy, query.toString()));
-
-    m_httpClient->get(apiUrl, [this, proxy](bool success, const QByteArray &data) {
-        if (success) {
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            if (doc.isObject() && doc.object().contains("delay")) {
-                int delay = doc.object()["delay"].toInt();
-                emit delayResult(proxy, delay);
-            }
-        } else {
-            emit delayResult(proxy, -1);
-        }
-    });
-}
-
-void ProxyService::testGroupDelay(const QString &group)
-{
-    QString url = buildApiUrl(QString("/group/%1/delay").arg(group));
-
-    QUrlQuery query;
-    query.addQueryItem("url", AppSettings::instance().urltestUrl());
-    query.addQueryItem("timeout", "8000");
-
-    m_httpClient->get(url + "?" + query.toString(), [this](bool success, const QByteArray &data) {
-        if (success) {
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            if (doc.isObject()) {
-                QJsonObject delays = doc.object();
-                for (auto it = delays.begin(); it != delays.end(); ++it) {
-                    emit delayResult(it.key(), it.value().toInt());
-                }
-            }
-        } else {
-            emit errorOccurred(tr("Failed to test group delay"));
         }
     });
 }

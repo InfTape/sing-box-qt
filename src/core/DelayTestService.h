@@ -4,13 +4,10 @@
 #include <QObject>
 #include <QString>
 #include <QVector>
-#include <QHash>
 #include <QMutex>
 #include <QSemaphore>
 #include <QFuture>
 #include <atomic>
-
-class HttpClient;
 
 // Delay test options.
 struct DelayTestOptions {
@@ -47,9 +44,6 @@ public:
     // Test multiple proxies (with concurrency control).
     void testNodesDelay(const QStringList &proxies, const DelayTestOptions &options = DelayTestOptions());
 
-    // Test a proxy group.
-    void testGroupDelay(const QString &group, const QJsonArray &nodes, const DelayTestOptions &options = DelayTestOptions());
-
     // Stop all tests.
     void stopAllTests();
 
@@ -82,7 +76,6 @@ private:
     // Build Clash API URL.
     QString buildClashDelayUrl(const QString &proxy, int timeoutMs, const QString &testUrl) const;
 
-    HttpClient *m_httpClient;
     int m_apiPort;
     bool m_stopping;
     mutable QMutex m_mutex;

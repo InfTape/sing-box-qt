@@ -1,5 +1,4 @@
 #include "DelayTestService.h"
-#include "network/HttpClient.h"
 #include "storage/AppSettings.h"
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,7 +14,6 @@
 
 DelayTestService::DelayTestService(QObject *parent)
     : QObject(parent)
-    , m_httpClient(new HttpClient(this))
     , m_apiPort(9090)
     , m_stopping(false)
     , m_semaphore(nullptr)
@@ -281,16 +279,4 @@ void DelayTestService::testNodesDelay(const QStringList &proxies, const DelayTes
             m_activeTasks.store(0);
         }, Qt::QueuedConnection);
     });
-}
-
-void DelayTestService::testGroupDelay(const QString &group, const QJsonArray &nodes, const DelayTestOptions &options)
-{
-    Q_UNUSED(group)
-
-    QStringList proxies;
-    for (const auto &node : nodes) {
-        proxies.append(node.toString());
-    }
-
-    testNodesDelay(proxies, options);
 }

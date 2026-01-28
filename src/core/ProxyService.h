@@ -30,8 +30,6 @@ public:
 
     // Proxy operations.
     void selectProxy(const QString &group, const QString &proxy);
-    void testDelay(const QString &proxy, const QString &url = QString(), int timeout = 8000);
-    void testGroupDelay(const QString &group);
     void setProxyMode(const QString &mode);
 
     // Connection operations.
@@ -45,7 +43,6 @@ signals:
     void proxiesReceived(const QJsonObject &proxies);
     void rulesReceived(const QJsonArray &rules);
     void connectionsReceived(const QJsonObject &connections);
-    void delayResult(const QString &proxy, int delay);
     void proxySelected(const QString &group, const QString &proxy);
     void proxySelectFailed(const QString &group, const QString &proxy);
     void errorOccurred(const QString &error);

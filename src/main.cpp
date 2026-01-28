@@ -20,10 +20,10 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     // Application metadata
-    app.setApplicationName("Sing-Box");
-    app.setApplicationVersion("1.0.0");
-    app.setOrganizationName("XingGao");
-    app.setOrganizationDomain("github.com/xinggaoya");
+    app.setApplicationName("Sing-Box——Qt");
+    app.setApplicationVersion("1.0.5");
+    app.setOrganizationName("InfTape");
+    app.setOrganizationDomain("github.com/inftape");
     app.setWindowIcon(QIcon(":/icons/app.png"));
 
     // Set application style

@@ -44,9 +44,7 @@ private:
     void handleNodeActivation(QTreeWidgetItem *item);
     void renderProxies(const QJsonObject &proxies);
     void updateSelectedProxyUI(const QString &group, const QString &proxy);
-    void updateProxyItem(QTreeWidgetItem *item, const QJsonObject &proxy);
     QString formatDelay(int delay) const;
-    void testSingleNode(const QString &proxy);
     QWidget* buildNodeRow(const QString &name, const QString &type, const QString &delay) const;
     void updateNodeRowDelay(QTreeWidgetItem *item, const QString &delayText, const QString &state);
     QString nodeDisplayName(QTreeWidgetItem *item) const;
