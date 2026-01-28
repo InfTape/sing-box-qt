@@ -17,7 +17,7 @@
 #StartStopBtn[state="start"] {
     background-color: @success-12@;
     color: @success@;
-    border: 1px solid #3f454d;
+    border: 1px solid @success@;
     border-radius: 10px;
     font-weight: bold;
     padding: 8px 16px;

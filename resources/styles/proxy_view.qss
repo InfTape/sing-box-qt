@@ -67,7 +67,7 @@
 #TestAllBtn, #RefreshBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @primary@;
     border-radius: 10px;
     padding: 6px 16px;
     font-weight: bold;
@@ -75,7 +75,7 @@
 #TestSelectedBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @primary@;
     border-radius: 10px;
     padding: 6px 12px;
     font-weight: bold;
@@ -132,11 +132,11 @@ QTreeView::branch:open, QTreeView::branch:closed {
 }
 #ProxyNodeCard[selected="true"] {
     background-color: @success-12@;
-    border-color: #3f454d;
+    border-color: @success@;
 }
 #ProxyNodeCard:hover {
     background-color: @primary-12@;
-    border-color: #3f454d;
+    border-color: @primary@;
 }
 #ProxyNodeName {
     font-weight: 600;
@@ -173,4 +173,3 @@ QTreeWidget#ProxyTree QHeaderView::section:first {
 QTreeWidget#ProxyTree QHeaderView::section:last {
     border-top-right-radius: 10px;
 }
-

@@ -76,27 +76,27 @@
 #TotalTag {
     background-color: @primary-12@;
     color: @primary@;
-    border-color: #3f454d;
+    border: 1px solid @primary@;
 }
 #ErrorTag {
     background-color: @error-12@;
     color: @error@;
-    border-color: #3f454d;
+    border: 1px solid #3f454d;
 }
 #WarningTag {
     background-color: @warning-20@;
     color: @warning@;
-    border-color: #3f454d;
+    border: 1px solid @warning@;
 }
 
 #ClearBtn, #CopyBtn, #ExportBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border-color: #3f454d;
+    border: 1px solid @primary@;
 }
 #ClearBtn:hover, #CopyBtn:hover, #ExportBtn:hover {
     background-color: @primary-20@;
-    border-color: #3f454d;
+    border: 1px solid @primary@;
 }
 #LogEntry {
     background: transparent;

@@ -35,7 +35,7 @@ QLabel[class="SettingsSectionSubTitle"] {
 #CheckUpdateBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @primary@;
     border-radius: 10px;
     padding: 8px 16px;
     font-weight: bold;

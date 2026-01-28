@@ -116,7 +116,7 @@
 }
 #ModeCard:hover { border: 1px solid #3f454d; }
 #ModeCard[active="true"] {
-    border: 1px solid #3f454d;
+    border: 1px solid @primary@;
     background-color: @primary-12@;
 }
 #ModeIcon {
