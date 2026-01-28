@@ -9,12 +9,12 @@
 }
 #ToolbarCard, #TreeCard {
     background-color: @bg-secondary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 16px;
 }
 #ProxyGroupCard {
     background-color: @bg-secondary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 12px;
 }
 #ProxyGroupTitle {
@@ -55,13 +55,13 @@
 
 #SearchInput {
     background-color: @panel-bg@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 12px;
     padding: 8px 12px;
     color: @text-primary@;
 }
 #SearchInput:focus {
-    border-color: #3f454d;
+    border-color: @border-solid@;
 }
 
 #TestAllBtn, #RefreshBtn {
@@ -83,7 +83,7 @@
 #TestSelectedBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
 }
 #TestAllBtn:hover, #RefreshBtn:hover {
     background-color: @primary-12@;
@@ -91,7 +91,7 @@
 #TestAllBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
 }
 #TestAllBtn[testing="true"]:hover {
     background-color: @error-12@;
@@ -127,7 +127,7 @@ QTreeView::branch:open, QTreeView::branch:closed {
 
 #ProxyNodeCard {
     background-color: @bg-secondary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 12px;
 }
 #ProxyNodeCard[selected="true"] {

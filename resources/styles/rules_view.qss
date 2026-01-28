@@ -31,26 +31,26 @@
 }
 #FilterCard {
     background-color: @bg-secondary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 16px;
 }
 #SearchInput, #FilterSelect {
     background-color: @panel-bg@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 12px;
     padding: 8px 12px;
     color: @text-primary@;
 }
 #SearchInput:focus, #FilterSelect:focus {
-    border-color: #3f454d;
+    border-color: @border-solid@;
 }
 #RuleCard {
     background-color: @panel-bg@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 16px;
 }
 #RuleCard:hover {
-    border-color: #3f454d;
+    border-color: @border-solid@;
 }
 #RuleMenuBtn {
     background-color: transparent;

@@ -1,6 +1,6 @@
 #SubscriptionCard {
     background-color: @card-bg@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: @card-radius@;
 }
 #CardName {
@@ -14,7 +14,7 @@
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 11px;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
 }
 #CardTagActive {
     background-color: @success-12@;
@@ -34,7 +34,7 @@
 }
 #CardInfoPanel {
     background-color: @bg-tertiary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 10px;
 }
 #CardMenuBtn {

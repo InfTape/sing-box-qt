@@ -9,7 +9,7 @@
 }
 #FilterCard, #LogCard {
     background-color: @bg-secondary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 16px;
 }
 #LogCard QScrollArea {
@@ -21,13 +21,13 @@
 }
 #SearchInput, #FilterSelect {
     background-color: @panel-bg@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 12px;
     padding: 8px 12px;
     color: @text-primary@;
 }
 #SearchInput:focus, #FilterSelect:focus {
-    border-color: #3f454d;
+    border-color: @border-solid@;
 }
 #TagInfo, #TagError, #TagWarning {
     padding: 6px 20px;
@@ -44,7 +44,7 @@
 #ActionBtn {
     background-color: @panel-bg@;
     color: @text-primary@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 10px;
     padding: 6px 14px;
 }
@@ -71,7 +71,7 @@
     font-size: 13px;
     border-radius: 10px;
     qproperty-alignment: AlignCenter;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
 }
 #TotalTag {
     background-color: @primary-12@;
@@ -81,7 +81,7 @@
 #ErrorTag {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
 }
 #WarningTag {
     background-color: @warning-20@;

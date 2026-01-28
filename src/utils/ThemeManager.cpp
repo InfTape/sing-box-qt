@@ -100,6 +100,7 @@ void ThemeManager::loadThemeColors()
         
         m_colors["border"] = "rgba(148, 163, 184, 0.2)";
         m_colors["border-hover"] = "rgba(90, 169, 255, 0.35)";
+        m_colors["border-solid"] = "#d1d8de";  // Light border for solids
         
         m_colors["panel-bg"] = "#ffffff";
         m_colors["input-bg"] = "#f1f5f9";
@@ -115,6 +116,7 @@ void ThemeManager::loadThemeColors()
         
         m_colors["border"] = "rgba(255, 255, 255, 0.1)";
         m_colors["border-hover"] = "rgba(90, 169, 255, 0.45)";
+        m_colors["border-solid"] = "#3f454d";  // Keep original for dark mode
         
         m_colors["panel-bg"] = "#1e293b"; // Slate 800
         m_colors["input-bg"] = "#0f172a"; // Slate 900

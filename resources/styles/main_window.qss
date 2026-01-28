@@ -1,6 +1,6 @@
 #NavContainer {
     background-color: @bg-secondary@;
-    border-right: 1px solid #3f454d;
+    border-right: 1px solid @border-solid@;
 }
 #ContentContainer {
     background-color: @bg-primary@;
@@ -28,7 +28,7 @@
 #StartStopBtn[state="stop"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid #3f454d;
+    border: 1px solid @border-solid@;
     border-radius: 10px;
     font-weight: bold;
     padding: 8px 16px;
@@ -58,7 +58,7 @@ QListWidget::item:selected {
 }
 #StatusBar {
     background-color: @bg-secondary@;
-    border-top: 1px solid #3f454d;
+    border-top: 1px solid @border-solid@;
 }
 #StatusBar QLabel {
     color: @text-secondary@;
