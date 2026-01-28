@@ -54,10 +54,10 @@
 
 #StatCard {
     background-color: @panel-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 16px;
 }
-#StatCard:hover { border-color: @border-hover@; }
+#StatCard:hover { border: 1px solid #3f454d; }
 #StatTitle {
     font-size: 12px;
     color: @text-secondary@;
@@ -100,7 +100,7 @@
 
 #ChartCard {
     background-color: @panel-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 16px;
 }
 #SectionTitle {
@@ -111,12 +111,12 @@
 }
 #ModeCard {
     background-color: @panel-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 16px;
 }
-#ModeCard:hover { border-color: @border-hover@; }
+#ModeCard:hover { border: 1px solid #3f454d; }
 #ModeCard[active="true"] {
-    border-color: @primary@;
+    border: 1px solid #3f454d;
     background-color: @primary-12@;
 }
 #ModeIcon {
@@ -150,7 +150,7 @@
     height: 20px;
     border-radius: 10px;
     background-color: @bg-tertiary@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     outline: none;
     image: none;
 }
@@ -161,14 +161,14 @@
     width: 18px;
     height: 18px;
     border-radius: 9px;
-    border: 2px solid @border@;
+    border: 1px solid #3f454d;
     background: transparent;
     outline: none;
     image: none;
 }
 #ModeRadio::indicator:focus { outline: none; }
 #ModeRadio::indicator:checked {
-    border: 2px solid @primary@;
+    border: 1px solid #3f454d;
     background-color: @primary@;
     image: none;
 }

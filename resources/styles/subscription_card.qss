@@ -1,6 +1,6 @@
 #SubscriptionCard {
     background-color: @card-bg@;
-    border: 1px solid @card-border@;
+    border: 1px solid #3f454d;
     border-radius: @card-radius@;
 }
 #CardName {
@@ -14,13 +14,13 @@
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 11px;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
 }
 #CardTagActive {
     background-color: @success-12@;
     color: @success@;
     padding: 4px 10px;
-    border: 1px solid @success-12@;
+    border: 1px solid #3f454d;
     border-radius: 12px;
     font-size: 11px;
 }
@@ -28,13 +28,13 @@
     background-color: @primary-12@;
     color: @primary@;
     padding: 3px 10px;
-    border: 1px solid @primary-12@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     font-size: 11px;
 }
 #CardInfoPanel {
     background-color: @bg-tertiary@;
-    border: 1px solid @card-border@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
 }
 #CardMenuBtn {
@@ -57,7 +57,7 @@
 #CardActionBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 13px;
@@ -68,7 +68,7 @@
 #CardActionBtnActive {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     padding: 8px 16px;
     font-size: 13px;

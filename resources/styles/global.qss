@@ -38,7 +38,7 @@ QPushButton:disabled {
 /* Inputs */
 QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {
     background-color: @input-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     padding: 8px 12px;
     color: @text-primary@;
@@ -55,7 +55,7 @@ QSpinBox::up-arrow, QSpinBox::down-arrow {
     image: none;
 }
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus {
-    border: 1px solid @border-hover@;
+    border: 1px solid #3f454d;
 }
 QSpinBox::up-button, QSpinBox::down-button {
     width: 0px;
@@ -74,7 +74,7 @@ QComboBox QAbstractItemView {
     background-color: @input-bg@;
     color: @text-primary@;
     selection-background-color: @primary@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     outline: none;
 }
 QComboBox QAbstractItemView::item {
@@ -96,16 +96,16 @@ QCheckBox::indicator {
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     background-color: @input-bg@;
 }
 QCheckBox::indicator:checked {
     background-color: @primary@;
-    border-color: @primary@;
+    border-color: #3f454d;
     image: url(:/icons/check.svg);
 }
 QCheckBox::indicator:disabled {
-    border-color: @text-tertiary@;
+    border-color: #3f454d;
     background-color: @input-bg@;
     image: none;
 }
@@ -138,7 +138,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 /* Generic cards */
 QFrame#Card, QWidget#Card {
     background-color: @panel-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
 }
 

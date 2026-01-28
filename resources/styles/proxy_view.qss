@@ -9,12 +9,12 @@
 }
 #ToolbarCard, #TreeCard {
     background-color: @bg-secondary@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 16px;
 }
 #ProxyGroupCard {
     background-color: @bg-secondary@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 12px;
 }
 #ProxyGroupTitle {
@@ -55,19 +55,19 @@
 
 #SearchInput {
     background-color: @panel-bg@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 12px;
     padding: 8px 12px;
     color: @text-primary@;
 }
 #SearchInput:focus {
-    border-color: @border-hover@;
+    border-color: #3f454d;
 }
 
 #TestAllBtn, #RefreshBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     padding: 6px 16px;
     font-weight: bold;
@@ -75,7 +75,7 @@
 #TestSelectedBtn {
     background-color: @primary-12@;
     color: @primary@;
-    border: 1px solid @primary-12@;
+    border: 1px solid #3f454d;
     border-radius: 10px;
     padding: 6px 12px;
     font-weight: bold;
@@ -83,7 +83,7 @@
 #TestSelectedBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @error-12@;
+    border: 1px solid #3f454d;
 }
 #TestAllBtn:hover, #RefreshBtn:hover {
     background-color: @primary-12@;
@@ -91,7 +91,7 @@
 #TestAllBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @error-12@;
+    border: 1px solid #3f454d;
 }
 #TestAllBtn[testing="true"]:hover {
     background-color: @error-12@;
@@ -127,16 +127,16 @@ QTreeView::branch:open, QTreeView::branch:closed {
 
 #ProxyNodeCard {
     background-color: @bg-secondary@;
-    border: 1px solid @border@;
+    border: 1px solid #3f454d;
     border-radius: 12px;
 }
 #ProxyNodeCard[selected="true"] {
     background-color: @success-12@;
-    border-color: @success-12@;
+    border-color: #3f454d;
 }
 #ProxyNodeCard:hover {
     background-color: @primary-12@;
-    border-color: @primary-12@;
+    border-color: #3f454d;
 }
 #ProxyNodeName {
     font-weight: 600;
