@@ -83,7 +83,7 @@
 #TestSelectedBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @border-solid@;
+    border: 1px solid @error@;
 }
 #TestAllBtn:hover, #RefreshBtn:hover {
     background-color: @primary-12@;
@@ -91,7 +91,7 @@
 #TestAllBtn[testing="true"] {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @border-solid@;
+    border: 1px solid @error@;
 }
 #TestAllBtn[testing="true"]:hover {
     background-color: @error-12@;

@@ -81,7 +81,7 @@
 #ErrorTag {
     background-color: @error-12@;
     color: @error@;
-    border: 1px solid @border-solid@;
+    border: 1px solid @error@;
 }
 #WarningTag {
     background-color: @warning-20@;
