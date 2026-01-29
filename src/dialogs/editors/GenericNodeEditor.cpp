@@ -198,7 +198,9 @@ QJsonObject GenericNodeEditor::getOutbound() const
 
     if (m_type == "vmess") {
         outbound["uuid"] = m_uuidEdit->text();
-        outbound["security"] = m_securityEdit->text().isEmpty() ? "auto" : m_securityEdit->text();
+        // VMess security 默认 auto，避免空字符串导致配置无效
+        const QString sec = m_securityEdit->text().trimmed();
+        outbound["security"] = sec.isEmpty() ? "auto" : sec;
         outbound["alter_id"] = m_alterIdEdit->text().toInt();
     } else if (m_type == "vless") {
         outbound["uuid"] = m_uuidEdit->text();
@@ -237,41 +239,50 @@ QJsonObject GenericNodeEditor::getOutbound() const
         outbound["transport"] = transport;
     }
 
-    QString vlessSecurity;
-    if (m_securityCombo) {
-        vlessSecurity = m_securityCombo->currentText();
-    }
+    const QString vlessSecurity = m_securityCombo ? m_securityCombo->currentText() : QString();
 
-    if (m_tlsCheck && (m_tlsCheck->isChecked() || !m_publicKeyEdit->text().isEmpty() || vlessSecurity == "reality" || vlessSecurity == "tls")) {
+    auto lineText = [](QLineEdit *w) -> QString { return w ? w->text() : QString(); };
+    auto comboText = [](QComboBox *c) -> QString { return c ? c->currentText() : QString(); };
+
+    // 启用 TLS 的条件：勾选、明确 security=tls/reality，或 Reality 字段非空
+    const bool hasRealityField = m_publicKeyEdit && !m_publicKeyEdit->text().isEmpty();
+    const bool shouldEnableTls = (m_tlsCheck && m_tlsCheck->isChecked())
+        || (vlessSecurity == "reality")
+        || (vlessSecurity == "tls")
+        || hasRealityField;
+
+    if (shouldEnableTls && m_serverNameEdit && m_networkCombo) {
         QJsonObject tls;
         tls["enabled"] = true;
         
-        QString sni = m_serverNameEdit->text();
+        QString sni = lineText(m_serverNameEdit);
         if (sni.isEmpty() && m_networkCombo->isVisible()) {
             // If SNI is empty, try to use Host/ServiceName as fallback
-            QString net = m_networkCombo->currentText();
-            if ((net == "ws" || net == "http") && !m_hostEdit->text().isEmpty()) {
-                sni = m_hostEdit->text();
-            } else if (net == "grpc" && !m_serviceNameEdit->text().isEmpty()) {
-                sni = m_serviceNameEdit->text();
+            const QString net = comboText(m_networkCombo);
+            if ((net == "ws" || net == "http") && !lineText(m_hostEdit).isEmpty()) {
+                sni = lineText(m_hostEdit);
+            } else if (net == "grpc" && !lineText(m_serviceNameEdit).isEmpty()) {
+                sni = lineText(m_serviceNameEdit);
             }
         }
         tls["server_name"] = sni;
         
-        tls["insecure"] = m_insecureCheck->isChecked();
-        if (!m_alpnEdit->text().isEmpty()) {
+        if (m_insecureCheck) {
+            tls["insecure"] = m_insecureCheck->isChecked();
+        }
+        if (m_alpnEdit && !m_alpnEdit->text().isEmpty()) {
             // tls["alpn"] = QJsonArray::fromStringList(m_alpnEdit->text().split(","));
              // Simplified
         }
-        if ((vlessSecurity == "reality") || !m_publicKeyEdit->text().isEmpty()) {
+        if ((vlessSecurity == "reality") || hasRealityField) {
              QJsonObject reality;
              reality["enabled"] = true;
-             reality["public_key"] = m_publicKeyEdit->text();
-             reality["short_id"] = m_shortIdEdit->text();
+             if (m_publicKeyEdit) reality["public_key"] = m_publicKeyEdit->text();
+             if (m_shortIdEdit) reality["short_id"] = m_shortIdEdit->text();
              tls["reality"] = reality;
-             tls["utm"] = m_shortIdEdit->text(); // Specific field for some cores
+             if (m_shortIdEdit) tls["utm"] = m_shortIdEdit->text(); // Specific field for some cores
         }
-        if (!m_fingerprintEdit->text().isEmpty()) {
+        if (m_fingerprintEdit && !m_fingerprintEdit->text().isEmpty()) {
              QJsonObject utls;
              utls["enabled"] = true;
              utls["fingerprint"] = m_fingerprintEdit->text();

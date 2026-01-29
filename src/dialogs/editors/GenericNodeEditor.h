@@ -27,39 +27,39 @@ private:
 
     // Common
     QLineEdit *m_nameEdit;
-    QLineEdit *m_serverEdit;
-    QSpinBox *m_portScan;
+    QLineEdit *m_serverEdit = nullptr;
+    QSpinBox *m_portScan = nullptr;
     
     // VMess/VLESS
-    QLineEdit *m_uuidEdit;
-    QLineEdit *m_securityEdit; // VMess security / VLESS flow? No, flow is flow.
-    QLineEdit *m_flowEdit; // VLESS flow
-    QLineEdit *m_alterIdEdit; // VMess alterId (deprecated but maybe needed?)
+    QLineEdit *m_uuidEdit = nullptr;
+    QLineEdit *m_securityEdit = nullptr; // VMess security / VLESS flow? No, flow is flow.
+    QLineEdit *m_flowEdit = nullptr; // VLESS flow
+    QLineEdit *m_alterIdEdit = nullptr; // VMess alterId (deprecated but maybe needed?)
 
     // Shadowsocks / Trojan / Tuic / Hysteria
-    QLineEdit *m_methodEdit; // SS method
-    QLineEdit *m_passwordEdit; 
+    QLineEdit *m_methodEdit = nullptr; // SS method
+    QLineEdit *m_passwordEdit = nullptr; 
 
     // VMess/VLESS/Trojan Transport & TLS
-    MenuComboBox *m_networkCombo; // tcp, ws, grpc, etc.
-    MenuComboBox *m_securityCombo; // VLESS security: none/tls/reality
-    QCheckBox *m_tlsCheck;
-    QLineEdit *m_serverNameEdit; // SNI
-    QLineEdit *m_alpnEdit;
-    QCheckBox *m_insecureCheck;
-    QLineEdit *m_fingerprintEdit;
-    QLineEdit *m_publicKeyEdit; // Reality
-    QLineEdit *m_shortIdEdit; // Reality
-    QLineEdit *m_spiderXEdit; // Reality
+    MenuComboBox *m_networkCombo = nullptr; // tcp, ws, grpc, etc.
+    MenuComboBox *m_securityCombo = nullptr; // VLESS security: none/tls/reality
+    QCheckBox *m_tlsCheck = nullptr;
+    QLineEdit *m_serverNameEdit = nullptr; // SNI
+    QLineEdit *m_alpnEdit = nullptr;
+    QCheckBox *m_insecureCheck = nullptr;
+    QLineEdit *m_fingerprintEdit = nullptr;
+    QLineEdit *m_publicKeyEdit = nullptr; // Reality
+    QLineEdit *m_shortIdEdit = nullptr; // Reality
+    QLineEdit *m_spiderXEdit = nullptr; // Reality
     
     // Transport specific
-    QLineEdit *m_pathEdit; // WS/HTTP/gRPC path
-    QLineEdit *m_hostEdit; // HTTP/WS Host
-    QLineEdit *m_serviceNameEdit; // gRPC serviceName
+    QLineEdit *m_pathEdit = nullptr; // WS/HTTP/gRPC path
+    QLineEdit *m_hostEdit = nullptr; // HTTP/WS Host
+    QLineEdit *m_serviceNameEdit = nullptr; // gRPC serviceName
 
     // Hysteria2
-    QLineEdit *m_obfsTypeEdit;
-    QLineEdit *m_obfsPasswordEdit;
+    QLineEdit *m_obfsTypeEdit = nullptr;
+    QLineEdit *m_obfsPasswordEdit = nullptr;
 };
 
 #endif // GENERICNODEEDITOR_H
