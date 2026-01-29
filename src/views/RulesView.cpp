@@ -6,7 +6,6 @@
 #include "utils/ThemeManager.h"
 #include "widgets/MenuComboBox.h"
 #include "widgets/RuleCard.h"
-#include <QComboBox>
 #include <QDialog>
 #include <QFrame>
 #include <QGridLayout>

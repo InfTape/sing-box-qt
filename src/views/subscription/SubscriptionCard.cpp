@@ -176,8 +176,13 @@ void SubscriptionCard::applyActiveState()
         m_statusTag->setObjectName(m_active ? "CardTagActive" : "CardTag");
     }
     if (m_useBtn) {
-        m_useBtn->setText(m_active ? tr("Use Again") : tr("Use"));
-        m_useBtn->setObjectName(m_active ? "CardActionBtnActive" : "CardActionBtn");
+        if (m_active) {
+            m_useBtn->setText(tr("Refresh & Apply"));
+            m_useBtn->setObjectName("CardActionBtnActive");
+        } else {
+            m_useBtn->setText(tr("Use"));
+            m_useBtn->setObjectName("CardActionBtn");
+        }
     }
     if (m_editConfigAction) {
         m_editConfigAction->setVisible(m_active);

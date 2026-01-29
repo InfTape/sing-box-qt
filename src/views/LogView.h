@@ -4,9 +4,9 @@
 #include <QVector>
 #include <QWidget>
 #include "utils/LogParser.h"
+#include "widgets/MenuComboBox.h"
 
 class QCheckBox;
-class QComboBox;
 class QFrame;
 class QLabel;
 class QLineEdit;
@@ -55,7 +55,7 @@ private:
     QPushButton *m_exportBtn = nullptr;
 
     QLineEdit *m_searchEdit = nullptr;
-    QComboBox *m_typeFilter = nullptr;
+    MenuComboBox *m_typeFilter = nullptr;
 
     QScrollArea *m_scrollArea = nullptr;
     QWidget *m_listContainer = nullptr;

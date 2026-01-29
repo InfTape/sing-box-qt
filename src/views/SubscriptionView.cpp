@@ -1,16 +1,19 @@
-﻿
-#include "SubscriptionView.h"
+﻿#include "SubscriptionView.h"
 #include "dialogs/ConfigEditDialog.h"
 #include "dialogs/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
 #include "utils/ThemeManager.h"
 #include "views/subscription/SubscriptionCard.h"
+#include "dialogs/NodeEditDialog.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QDateTime>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include <QMenu>
+#include <QJsonArray>
+#include <QJsonDocument>
 
 // ==================== SubscriptionView ====================
 
@@ -111,6 +114,14 @@ void SubscriptionView::updateStyle()
 
 void SubscriptionView::onAddClicked()
 {
+    QMenu menu(this);
+    menu.addAction(tr("Add Subscription URL"), this, &SubscriptionView::openSubscriptionDialog);
+    menu.addAction(tr("Add Manual Node"), this, &SubscriptionView::onAddNodeClicked);
+    menu.exec(m_addBtn->mapToGlobal(QPoint(0, m_addBtn->height())));
+}
+
+void SubscriptionView::openSubscriptionDialog()
+{
     SubscriptionFormDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
@@ -134,7 +145,20 @@ void SubscriptionView::onAddClicked()
     }
 }
 
-
+void SubscriptionView::onAddNodeClicked()
+{
+    NodeEditDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        QJsonObject node = dialog.nodeData();
+        QJsonArray arr;
+        arr.append(node);
+        QJsonDocument doc(arr);
+        QString content = doc.toJson(QJsonDocument::Compact);
+        
+        QString name = node["tag"].toString();
+        m_subscriptionService->addManualSubscription(content, name, false, false, true);
+    }
+}
 
 void SubscriptionView::onAutoUpdateTimer()
 {
@@ -174,7 +198,25 @@ void SubscriptionView::wireCardSignals(SubscriptionCard *card)
 
 void SubscriptionView::handleUseSubscription(const QString &id)
 {
-    m_subscriptionService->setActiveSubscription(id, true);
+    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+    const int activeIndex = m_subscriptionService->getActiveIndex();
+
+    int clickedIndex = -1;
+    for (int i = 0; i < subs.size(); ++i) {
+        if (subs[i].id == id) {
+            clickedIndex = i;
+            break;
+        }
+    }
+    if (clickedIndex < 0) return;
+
+    if (clickedIndex == activeIndex) {
+        // 当前已选中的订阅：执行刷新并应用
+        m_subscriptionService->refreshSubscription(id, true);
+    } else {
+        // 未选中的订阅：切换为当前并应用
+        m_subscriptionService->setActiveSubscription(id, true);
+    }
 }
 
 void SubscriptionView::handleEditSubscription(const QString &id)
@@ -182,27 +224,71 @@ void SubscriptionView::handleEditSubscription(const QString &id)
     SubscriptionInfo target;
     if (!getSubscriptionById(id, &target)) return;
 
-    SubscriptionFormDialog dialog(this);
-    dialog.setEditData(target);
-    if (dialog.exec() != QDialog::Accepted) return;
-
-    QString error;
-    if (!dialog.validateInput(&error)) {
-        QMessageBox::warning(this, tr("Notice"), error);
-        return;
+    // Check if it looks like a single manual node
+    bool isSingleNode = false;
+    QJsonObject singleNodeObj;
+    if (target.isManual && !target.useOriginalConfig) {
+        QJsonDocument doc = QJsonDocument::fromJson(target.manualContent.toUtf8());
+        if (doc.isArray()) {
+            QJsonArray arr = doc.array();
+            if (arr.count() == 1 && arr[0].isObject()) {
+                isSingleNode = true;
+                singleNodeObj = arr[0].toObject();
+            }
+        } else if (doc.isObject()) {
+             // Some parsers might allow single object? strict JSON requires root to be object or array
+             // but if it has "type" and "server", it's likely a node. 
+             QJsonObject obj = doc.object();
+             if (obj.contains("type") && obj.contains("server")) {
+                 isSingleNode = true;
+                 singleNodeObj = obj;
+             }
+        }
     }
 
-    const bool isManual = dialog.isManual();
-    const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
-    m_subscriptionService->updateSubscriptionMeta(
-        id,
-        dialog.name(),
-        dialog.url(),
-        isManual,
-        content,
-        dialog.useOriginalConfig(),
-        dialog.autoUpdateIntervalMinutes()
-    );
+    if (isSingleNode) {
+        NodeEditDialog dialog(this);
+        dialog.setNodeData(singleNodeObj);
+        if (dialog.exec() != QDialog::Accepted) return;
+
+        QJsonObject newNode = dialog.nodeData();
+        QJsonArray arr;
+        arr.append(newNode);
+        QString content = QJsonDocument(arr).toJson(QJsonDocument::Compact);
+        QString name = newNode["tag"].toString();
+
+        m_subscriptionService->updateSubscriptionMeta(
+            id,
+            name,
+            target.url,
+            true, // isManual
+            content,
+            target.useOriginalConfig,
+            target.autoUpdateIntervalMinutes
+        );
+    } else {
+        SubscriptionFormDialog dialog(this);
+        dialog.setEditData(target);
+        if (dialog.exec() != QDialog::Accepted) return;
+
+        QString error;
+        if (!dialog.validateInput(&error)) {
+            QMessageBox::warning(this, tr("Notice"), error);
+            return;
+        }
+
+        const bool isManual = dialog.isManual();
+        const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
+        m_subscriptionService->updateSubscriptionMeta(
+            id,
+            dialog.name(),
+            dialog.url(),
+            isManual,
+            content,
+            dialog.useOriginalConfig(),
+            dialog.autoUpdateIntervalMinutes()
+        );
+    }
 }
 
 void SubscriptionView::handleEditConfig(const QString &id)

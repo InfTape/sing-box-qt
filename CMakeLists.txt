@@ -62,6 +62,8 @@ set(SOURCES
     src/storage/DatabaseService.cpp
     src/storage/ConfigIO.cpp
     src/storage/SubscriptionConfigStore.cpp
+    src/dialogs/NodeEditDialog.cpp
+    src/dialogs/editors/GenericNodeEditor.cpp
     src/storage/AppSettings.cpp
     src/system/SystemProxy.cpp
     src/system/AutoStart.cpp
@@ -116,6 +118,9 @@ set(HEADERS
     src/services/ConfigMutator.h
     src/services/RuleConfigService.h
     src/storage/DatabaseService.h
+    src/dialogs/NodeEditDialog.h
+    src/dialogs/editors/NodeEditor.h
+    src/dialogs/editors/GenericNodeEditor.h
     src/storage/ConfigIO.h
     src/storage/SubscriptionConfigStore.h
     src/storage/AppSettings.h

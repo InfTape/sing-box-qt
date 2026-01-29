@@ -70,7 +70,6 @@
     font-weight: 700;
     font-size: 13px;
     border-radius: 10px;
-    qproperty-alignment: AlignCenter;
     border: 1px solid @border-solid@;
 }
 #TotalTag {

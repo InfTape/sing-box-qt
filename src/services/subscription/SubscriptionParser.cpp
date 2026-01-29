@@ -713,39 +713,54 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString &uri)
         node["flow"] = flow;
     }
 
-    QString security = query.queryItemValue("security");
-    if (security == "tls" || security == "reality") {
+    const QString security = query.queryItemValue("security").trimmed().toLower();
+    const QString sni = normalizeHostToAscii(query.queryItemValue("sni"));
+    const QString alpn = query.queryItemValue("alpn");
+    const QString fp = query.queryItemValue("fp");
+    const QString pbk = query.queryItemValue("pbk");
+    const QString sid = query.queryItemValue("sid");
+    const bool insecure = query.queryItemValue("allowInsecure") == "1";
+
+    // 许多订阅/手填链接省略 security=tls，但依然带有 SNI/指纹/公钥或使用典型 TLS 端口，这里自动补全。
+    const bool hasTlsHints = security == "tls"
+        || security == "reality"
+        || !sni.isEmpty()
+        || !fp.isEmpty()
+        || !pbk.isEmpty()
+        || !alpn.isEmpty()
+        || port == 443 || port == 8443 || port == 2053 || port == 2083 || port == 2087 || port == 2096 || port == 9443;
+
+    if (hasTlsHints && security != "none") {
         QJsonObject tls;
         tls["enabled"] = true;
 
-        QString sni = normalizeHostToAscii(query.queryItemValue("sni"));
-        if (!sni.isEmpty()) {
-            tls["server_name"] = sni;
+        QString serverName = sni;
+        if (serverName.isEmpty()) {
+            const QString host = normalizeHostToAscii(query.queryItemValue("host"));
+            serverName = host.isEmpty() ? node.value("server").toString() : host;
+        }
+        if (!serverName.isEmpty()) {
+            tls["server_name"] = serverName;
         }
 
-        if (query.queryItemValue("allowInsecure") == "1") {
+        if (insecure) {
             tls["insecure"] = true;
         }
-
-        QString alpn = query.queryItemValue("alpn");
         if (!alpn.isEmpty()) {
             tls["alpn"] = QJsonArray::fromStringList(alpn.split(","));
         }
-
-        if (query.hasQueryItem("fp")) {
+        if (!fp.isEmpty()) {
             QJsonObject utls;
             utls["enabled"] = true;
-            utls["fingerprint"] = query.queryItemValue("fp");
+            utls["fingerprint"] = fp;
             tls["utls"] = utls;
         }
-
-        if (security == "reality") {
+        if (security == "reality" || !pbk.isEmpty()) {
             QJsonObject reality;
             reality["enabled"] = true;
-            reality["public_key"] = query.queryItemValue("pbk");
-            QString shortId = query.queryItemValue("sid");
-            if (!shortId.isEmpty()) {
-                reality["short_id"] = shortId;
+            reality["public_key"] = pbk;
+            if (!sid.isEmpty()) {
+                reality["short_id"] = sid;
             }
             tls["reality"] = reality;
         }

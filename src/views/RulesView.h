@@ -4,8 +4,8 @@
 #include <QVector>
 #include <QWidget>
 #include "models/RuleItem.h"
+#include "widgets/MenuComboBox.h"
 
-class QComboBox;
 class QGridLayout;
 class QLabel;
 class QLineEdit;
@@ -52,8 +52,8 @@ private:
     QPushButton *m_refreshBtn = nullptr;
     QPushButton *m_addBtn = nullptr;
     QLineEdit *m_searchEdit = nullptr;
-    QComboBox *m_typeFilter = nullptr;
-    QComboBox *m_proxyFilter = nullptr;
+    MenuComboBox *m_typeFilter = nullptr;
+    MenuComboBox *m_proxyFilter = nullptr;
 
     QScrollArea *m_scrollArea = nullptr;
     QWidget *m_gridContainer = nullptr;

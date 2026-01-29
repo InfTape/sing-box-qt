@@ -6,7 +6,6 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
-#include <QComboBox>
 #include <QFile>
 #include <QFileDialog>
 #include <QFrame>

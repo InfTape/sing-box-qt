@@ -3,9 +3,9 @@
 
 #include <QDialog>
 #include <QString>
+#include "widgets/MenuComboBox.h"
 
 class QCheckBox;
-class QComboBox;
 class QLabel;
 class QLineEdit;
 class QTabWidget;
@@ -43,7 +43,7 @@ private:
     QTextEdit *m_manualEdit;
     QTextEdit *m_uriEdit;
     QCheckBox *m_useOriginalCheck;
-    QComboBox *m_autoUpdateCombo;
+    MenuComboBox *m_autoUpdateCombo;
     QLabel *m_hintLabel;
 };
 

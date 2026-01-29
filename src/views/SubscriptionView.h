@@ -11,7 +11,9 @@
 #include <QResizeEvent>
 #include <QTimer>
 
+class QScrollArea;
 class SubscriptionCard;
+class NodeEditDialog;
 class SubscriptionService;
 struct SubscriptionInfo;
 
@@ -41,6 +43,11 @@ private:
     void handleRollbackSubscription(const QString &id);
     void handleDeleteSubscription(const QString &id);
     void handleCopyLink(const QString &id);
+    
+    // New slots
+    void onAddNodeClicked();
+    void openSubscriptionDialog();
+
     bool getSubscriptionById(const QString &id, SubscriptionInfo *out) const;
 
 protected:
