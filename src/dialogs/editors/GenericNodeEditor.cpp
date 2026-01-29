@@ -41,7 +41,6 @@ void GenericNodeEditor::setupUI()
     m_alterIdEdit->setText("0");
     m_methodEdit = new QLineEdit;
     m_securityEdit = new QLineEdit;
-    m_flowEdit = new QLineEdit;
 
     if (m_type == "vmess" || m_type == "vless" || m_type == "tuic" || m_type == "hysteria2") {
        layout->addRow(m_type == "tuic" ? tr("UUID") : (m_type == "hysteria2" ? tr("Password") : tr("UUID")), m_type == "hysteria2" ? m_passwordEdit : m_uuidEdit);
@@ -57,11 +56,15 @@ void GenericNodeEditor::setupUI()
         layout->addRow(tr("AlterId"), m_alterIdEdit);
     }
     if (m_type == "vless") {
-        layout->addRow(tr("Flow"), m_flowEdit);
+        m_flowCombo = new MenuComboBox;
+        m_flowCombo->addItems({tr("None"), "xtls-rprx-vision", "xtls-rprx-direct"});
+        m_flowCombo->setCurrentIndex(0);
+        m_flowCombo->setWheelEnabled(false);
+        layout->addRow(tr("Flow"), m_flowCombo);
     }
 
     // Transport / Stream Settings
-    if (m_type == "vmess" || m_type == "vless" || m_type == "trojan" || m_type == "shadowsocks") {
+    if (m_type == "vmess" || m_type == "vless" || m_type == "trojan" || m_type == "shadowsocks" || m_type == "hysteria2") {
         QGroupBox *transportGroup = new QGroupBox(tr("Transport && Security"));
         QFormLayout *transportLayout = new QFormLayout(transportGroup);
 
@@ -204,7 +207,10 @@ QJsonObject GenericNodeEditor::getOutbound() const
         outbound["alter_id"] = m_alterIdEdit->text().toInt();
     } else if (m_type == "vless") {
         outbound["uuid"] = m_uuidEdit->text();
-        outbound["flow"] = m_flowEdit->text();
+        const QString flow = m_flowCombo ? m_flowCombo->currentText() : QString();
+        if (!flow.isEmpty() && flow.toLower() != tr("none").toLower()) {
+            outbound["flow"] = flow;
+        }
     } else if (m_type == "shadowsocks") {
         outbound["method"] = m_methodEdit->text();
         outbound["password"] = m_passwordEdit->text();
@@ -217,26 +223,41 @@ QJsonObject GenericNodeEditor::getOutbound() const
         outbound["password"] = m_passwordEdit->text();
     }
 
-    // Transport & TLS
-    if (m_networkCombo) {
-        QJsonObject transport;
-        QString net = m_networkCombo->currentText();
-        transport["type"] = net;
-        
-        if (net == "ws") {
-             transport["path"] = m_pathEdit->text();
-             if (!m_hostEdit->text().isEmpty()) {
-                 transport["headers"] = QJsonObject{{"Host", m_hostEdit->text()}};
-             }
-        } else if (net == "grpc") {
-             transport["service_name"] = m_serviceNameEdit->text();
-        } else if (net == "http") {
-             transport["path"] = m_pathEdit->text();
-             if (!m_hostEdit->text().isEmpty()) {
-                 transport["host"] = QJsonArray{m_hostEdit->text()};
-             }
+    // Hysteria2 强制启用 TLS，需提供 SNI
+    if (m_type == "hysteria2") {
+        QJsonObject tls;
+        tls["enabled"] = true;
+        const QString sni = m_serverNameEdit ? m_serverNameEdit->text().trimmed() : QString();
+        tls["server_name"] = sni.isEmpty() ? m_serverEdit->text().trimmed() : sni; // 空则回落到服务器域名
+        if (m_insecureCheck) {
+            tls["insecure"] = m_insecureCheck->isChecked();
         }
-        outbound["transport"] = transport;
+        outbound["tls"] = tls;
+    }
+
+    // Transport & TLS
+    if (m_networkCombo && m_type != "hysteria2") {
+        QString net = m_networkCombo->currentText().trimmed().toLower();
+        // 对于 tcp（默认），不写 transport，避免出现 unknown transport type: tcp
+        if (!net.isEmpty() && net != "tcp") {
+            QJsonObject transport;
+            transport["type"] = net;
+            
+            if (net == "ws") {
+                 transport["path"] = m_pathEdit->text();
+                 if (!m_hostEdit->text().isEmpty()) {
+                     transport["headers"] = QJsonObject{{"Host", m_hostEdit->text()}};
+                 }
+            } else if (net == "grpc") {
+                 transport["service_name"] = m_serviceNameEdit->text();
+            } else if (net == "http") {
+                 transport["path"] = m_pathEdit->text();
+                 if (!m_hostEdit->text().isEmpty()) {
+                     transport["host"] = QJsonArray{m_hostEdit->text()};
+                 }
+            }
+            outbound["transport"] = transport;
+        }
     }
 
     const QString vlessSecurity = m_securityCombo ? m_securityCombo->currentText() : QString();
@@ -280,7 +301,6 @@ QJsonObject GenericNodeEditor::getOutbound() const
              if (m_publicKeyEdit) reality["public_key"] = m_publicKeyEdit->text();
              if (m_shortIdEdit) reality["short_id"] = m_shortIdEdit->text();
              tls["reality"] = reality;
-             if (m_shortIdEdit) tls["utm"] = m_shortIdEdit->text(); // Specific field for some cores
         }
         if (m_fingerprintEdit && !m_fingerprintEdit->text().isEmpty()) {
              QJsonObject utls;
@@ -306,7 +326,13 @@ void GenericNodeEditor::setOutbound(const QJsonObject &outbound)
         m_alterIdEdit->setText(QString::number(outbound["alter_id"].toInt()));
     } else if (m_type == "vless") {
         m_uuidEdit->setText(outbound["uuid"].toString());
-        m_flowEdit->setText(outbound["flow"].toString());
+        if (m_flowCombo) {
+            const QString flow = outbound["flow"].toString();
+            if (!flow.isEmpty()) {
+                int idx = m_flowCombo->findText(flow);
+                if (idx >= 0) m_flowCombo->setCurrentIndex(idx);
+            }
+        }
     } else if (m_type == "shadowsocks") {
         m_methodEdit->setText(outbound["method"].toString());
         m_passwordEdit->setText(outbound["password"].toString());

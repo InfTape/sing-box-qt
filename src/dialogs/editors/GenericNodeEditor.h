@@ -33,7 +33,7 @@ private:
     // VMess/VLESS
     QLineEdit *m_uuidEdit = nullptr;
     QLineEdit *m_securityEdit = nullptr; // VMess security / VLESS flow? No, flow is flow.
-    QLineEdit *m_flowEdit = nullptr; // VLESS flow
+    MenuComboBox *m_flowCombo = nullptr; // VLESS flow
     QLineEdit *m_alterIdEdit = nullptr; // VMess alterId (deprecated but maybe needed?)
 
     // Shadowsocks / Trojan / Tuic / Hysteria
