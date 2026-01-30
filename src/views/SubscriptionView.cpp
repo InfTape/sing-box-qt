@@ -139,9 +139,21 @@ void SubscriptionView::openSubscriptionDialog()
 
     if (isManual) {
         const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
-        m_subscriptionService->addManualSubscription(content, dialog.name(), useOriginal, dialog.isUriList(), true);
+        m_subscriptionService->addManualSubscription(content,
+                                                     dialog.name(),
+                                                     useOriginal,
+                                                     dialog.isUriList(),
+                                                     true,
+                                                     dialog.sharedRulesEnabled(),
+                                                     dialog.ruleSets());
     } else {
-        m_subscriptionService->addUrlSubscription(dialog.url(), dialog.name(), useOriginal, interval, true);
+        m_subscriptionService->addUrlSubscription(dialog.url(),
+                                                 dialog.name(),
+                                                 useOriginal,
+                                                 interval,
+                                                 true,
+                                                 dialog.sharedRulesEnabled(),
+                                                 dialog.ruleSets());
     }
 }
 
@@ -156,7 +168,13 @@ void SubscriptionView::onAddNodeClicked()
         QString content = doc.toJson(QJsonDocument::Compact);
         
         QString name = node["tag"].toString();
-        m_subscriptionService->addManualSubscription(content, name, false, false, true);
+        m_subscriptionService->addManualSubscription(content,
+                                                     name,
+                                                     false,
+                                                     false,
+                                                     true,
+                                                     dialog.sharedRulesEnabled(),
+                                                     dialog.ruleSets());
     }
 }
 
@@ -248,6 +266,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
 
     if (isSingleNode) {
         NodeEditDialog dialog(this);
+        dialog.setRuleSets(target.ruleSets, target.enableSharedRules);
         dialog.setNodeData(singleNodeObj);
         if (dialog.exec() != QDialog::Accepted) return;
 
@@ -264,7 +283,9 @@ void SubscriptionView::handleEditSubscription(const QString &id)
             true, // isManual
             content,
             target.useOriginalConfig,
-            target.autoUpdateIntervalMinutes
+            target.autoUpdateIntervalMinutes,
+            dialog.sharedRulesEnabled(),
+            dialog.ruleSets()
         );
     } else {
         SubscriptionFormDialog dialog(this);
@@ -286,7 +307,9 @@ void SubscriptionView::handleEditSubscription(const QString &id)
             isManual,
             content,
             dialog.useOriginalConfig(),
-            dialog.autoUpdateIntervalMinutes()
+            dialog.autoUpdateIntervalMinutes(),
+            dialog.sharedRulesEnabled(),
+            dialog.ruleSets()
         );
     }
 }

@@ -58,6 +58,7 @@ set(SOURCES
     src/services/ConfigBuilder.cpp
     src/services/ConfigManager.cpp
     src/services/ConfigMutator.cpp
+    src/services/SharedRulesStore.cpp
     src/services/RuleConfigService.cpp
     src/storage/DatabaseService.cpp
     src/storage/ConfigIO.cpp
@@ -116,6 +117,7 @@ set(HEADERS
     src/services/ConfigBuilder.h
     src/services/ConfigManager.h
     src/services/ConfigMutator.h
+    src/services/SharedRulesStore.h
     src/services/RuleConfigService.h
     src/storage/DatabaseService.h
     src/dialogs/NodeEditDialog.h

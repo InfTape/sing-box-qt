@@ -7,6 +7,7 @@
 class QLabel;
 class QPlainTextEdit;
 class MenuComboBox;
+class QLineEdit;
 
 class RuleEditorDialog : public QDialog
 {
@@ -21,6 +22,7 @@ public:
     explicit RuleEditorDialog(Mode mode, QWidget *parent = nullptr);
 
     void setOutboundTags(const QStringList &tags);
+    void setRuleSetName(const QString &name);
     bool setEditRule(const RuleItem &rule, QString *error);
     RuleConfigService::RuleEditData editData() const;
 
@@ -36,6 +38,7 @@ private:
     MenuComboBox *m_typeCombo;
     QPlainTextEdit *m_valueEdit;
     MenuComboBox *m_outboundCombo;
+    QLineEdit *m_ruleSetEdit;
     QLabel *m_hintLabel;
     RuleConfigService::RuleEditData m_cachedData;
 };

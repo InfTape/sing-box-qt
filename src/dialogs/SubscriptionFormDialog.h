@@ -3,13 +3,40 @@
 
 #include <QDialog>
 #include <QString>
+#include <QStringList>
 #include "widgets/MenuComboBox.h"
 
 class QCheckBox;
 class QLabel;
-class QLineEdit;
 class QTabWidget;
 class QTextEdit;
+class QToolButton;
+class RoundedMenu;
+class QLineEdit;
+
+// 多选规则集下拉控件
+class MultiSelectMenuBox : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit MultiSelectMenuBox(QWidget *parent = nullptr);
+    void setOptions(const QStringList &options);
+    void setSelected(const QStringList &selected);
+    QStringList selected() const;
+
+signals:
+    void selectionChanged(const QStringList &list);
+
+private:
+    void rebuildMenu();
+    void updateButtonText();
+
+    QToolButton *m_button = nullptr;
+    RoundedMenu *m_menu = nullptr;
+    QStringList m_options;
+    QStringList m_selected;
+};
+
 struct SubscriptionInfo;
 
 class SubscriptionFormDialog : public QDialog
@@ -28,6 +55,8 @@ public:
     bool isManual() const;
     bool isUriList() const;
     bool useOriginalConfig() const;
+    bool sharedRulesEnabled() const;
+    QStringList ruleSets() const;
     int autoUpdateIntervalMinutes() const;
 
     bool validateInput(QString *error) const;
@@ -43,6 +72,8 @@ private:
     QTextEdit *m_manualEdit;
     QTextEdit *m_uriEdit;
     QCheckBox *m_useOriginalCheck;
+    QCheckBox *m_sharedRulesCheck;
+    MultiSelectMenuBox *m_ruleSetsBox;
     MenuComboBox *m_autoUpdateCombo;
     QLabel *m_hintLabel;
 };

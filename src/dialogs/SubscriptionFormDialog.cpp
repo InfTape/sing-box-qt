@@ -1,6 +1,9 @@
 #include "dialogs/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
 #include "widgets/MenuComboBox.h"
+#include "widgets/RoundedMenu.h"
+#include "utils/ThemeManager.h"
+#include "services/SharedRulesStore.h"
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QLabel>
@@ -12,6 +15,8 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QPushButton>
+#include <QToolButton>
+#include <QAction>
 
 namespace {
 bool isJsonText(const QString &text)
@@ -22,6 +27,85 @@ bool isJsonText(const QString &text)
 }
 } // namespace
 
+// ===== MultiSelectMenuBox =====
+MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent)
+    : QWidget(parent)
+{
+    m_button = new QToolButton(this);
+    m_button->setText(tr("default"));
+    m_button->setPopupMode(QToolButton::InstantPopup);
+    m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    m_button->setAutoRaise(true);
+    m_menu = new RoundedMenu(this);
+    m_menu->setObjectName("RuleSetMenu");
+
+    QHBoxLayout *layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_button);
+
+    connect(m_button, &QToolButton::clicked, this, [this]() {
+        rebuildMenu();
+        m_menu->popup(m_button->mapToGlobal(QPoint(0, m_button->height())));
+    });
+
+    ThemeManager &tm = ThemeManager::instance();
+    connect(&tm, &ThemeManager::themeChanged, this, [this]() {
+        m_menu->setThemeColors(ThemeManager::instance().getColor("bg-secondary"),
+                               ThemeManager::instance().getColor("primary"));
+    });
+    m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+}
+
+void MultiSelectMenuBox::setOptions(const QStringList &options)
+{
+    m_options = options;
+    m_options.removeDuplicates();
+    m_options.removeAll(QString());
+    m_options.sort();
+    if (!m_options.contains("default")) m_options.prepend("default");
+    rebuildMenu();
+}
+
+void MultiSelectMenuBox::setSelected(const QStringList &selected)
+{
+    m_selected = selected;
+    if (m_selected.isEmpty()) m_selected << "default";
+    m_selected.removeDuplicates();
+    updateButtonText();
+}
+
+QStringList MultiSelectMenuBox::selected() const
+{
+    return m_selected;
+}
+
+void MultiSelectMenuBox::rebuildMenu()
+{
+    m_menu->clear();
+    for (const QString &name : m_options) {
+        QAction *act = m_menu->addAction(name);
+        act->setCheckable(true);
+        act->setChecked(m_selected.contains(name));
+        connect(act, &QAction::triggered, this, [this, name, act]() {
+            if (act->isChecked()) {
+                if (!m_selected.contains(name)) m_selected << name;
+            } else {
+                m_selected.removeAll(name);
+            }
+            if (m_selected.isEmpty()) m_selected << "default";
+            updateButtonText();
+            emit selectionChanged(m_selected);
+        });
+    }
+}
+
+void MultiSelectMenuBox::updateButtonText()
+{
+    QString text = m_selected.join(", ");
+    if (text.isEmpty()) text = tr("default");
+    m_button->setText(text);
+}
+
 SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     : QDialog(parent)
     , m_nameEdit(new QLineEdit)
@@ -30,6 +114,8 @@ SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     , m_manualEdit(new QTextEdit)
     , m_uriEdit(new QTextEdit)
     , m_useOriginalCheck(new QCheckBox(tr("Use original config")))
+    , m_sharedRulesCheck(new QCheckBox(tr("Enable shared rule set")))
+    , m_ruleSetsBox(new MultiSelectMenuBox)
     , m_autoUpdateCombo(new MenuComboBox)
     , m_hintLabel(new QLabel)
 {
@@ -56,9 +142,20 @@ SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     m_hintLabel->setText(tr("Advanced templates are disabled when using the original config"));
     m_hintLabel->setVisible(false);
 
+    QStringList initialSets = SharedRulesStore::listRuleSets();
+    m_ruleSetsBox->setOptions(initialSets);
+    m_ruleSetsBox->setSelected(QStringList() << "default");
+
     layout->addLayout(formLayout);
     layout->addWidget(m_tabs);
     layout->addWidget(m_useOriginalCheck);
+    m_sharedRulesCheck->setChecked(true);
+    layout->addWidget(m_sharedRulesCheck);
+
+    QFormLayout *ruleSetForm = new QFormLayout;
+    ruleSetForm->setLabelAlignment(Qt::AlignRight);
+    ruleSetForm->addRow(tr("Rule sets"), m_ruleSetsBox);
+    layout->addLayout(ruleSetForm);
     layout->addWidget(m_hintLabel);
     QLabel *autoUpdateLabel = new QLabel(tr("Auto update"));
     layout->addWidget(autoUpdateLabel);
@@ -76,6 +173,8 @@ SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
     connect(m_tabs, &QTabWidget::currentChanged, this, &SubscriptionFormDialog::updateState);
     connect(m_useOriginalCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
+    connect(m_sharedRulesCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
+    connect(m_ruleSetsBox, &MultiSelectMenuBox::selectionChanged, this, &SubscriptionFormDialog::updateState);
 
     updateState();
 }
@@ -96,6 +195,11 @@ void SubscriptionFormDialog::setEditData(const SubscriptionInfo &info)
         m_urlEdit->setPlainText(info.url);
     }
     m_useOriginalCheck->setChecked(info.useOriginalConfig);
+    m_sharedRulesCheck->setChecked(info.enableSharedRules);
+    QStringList options = SharedRulesStore::listRuleSets();
+    for (const auto &name : info.ruleSets) if (!options.contains(name)) options << name;
+    m_ruleSetsBox->setOptions(options);
+    m_ruleSetsBox->setSelected(info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets);
     m_autoUpdateCombo->setCurrentIndex(indexForInterval(info.autoUpdateIntervalMinutes));
     updateState();
 }
@@ -107,6 +211,14 @@ QString SubscriptionFormDialog::uriContent() const { return m_uriEdit->toPlainTe
 bool SubscriptionFormDialog::isManual() const { return m_tabs->currentIndex() != 0; }
 bool SubscriptionFormDialog::isUriList() const { return m_tabs->currentIndex() == 2; }
 bool SubscriptionFormDialog::useOriginalConfig() const { return m_useOriginalCheck->isChecked(); }
+bool SubscriptionFormDialog::sharedRulesEnabled() const { return m_sharedRulesCheck->isChecked(); }
+QStringList SubscriptionFormDialog::ruleSets() const
+{
+    QStringList list = m_ruleSetsBox->selected();
+    if (list.isEmpty()) list << "default";
+    list.removeDuplicates();
+    return list;
+}
 int SubscriptionFormDialog::autoUpdateIntervalMinutes() const { return m_autoUpdateCombo->currentData().toInt(); }
 
 bool SubscriptionFormDialog::validateInput(QString *error) const
@@ -168,4 +280,7 @@ void SubscriptionFormDialog::updateState()
     }
     const bool showHint = m_useOriginalCheck->isChecked();
     m_hintLabel->setVisible(showHint);
+    m_ruleSetsBox->setEnabled(m_sharedRulesCheck->isChecked());
 }
+
+#include "SubscriptionFormDialog.moc"

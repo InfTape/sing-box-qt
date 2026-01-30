@@ -1,6 +1,9 @@
 #include "NodeEditDialog.h"
 #include "editors/GenericNodeEditor.h"
 #include "widgets/MenuComboBox.h"
+#include "widgets/RoundedMenu.h"
+#include "services/SharedRulesStore.h"
+#include "utils/ThemeManager.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -10,6 +13,10 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QScrollArea>
+#include <QCheckBox>
+#include <QToolButton>
+#include <QAction>
+#include <QMetaObject>
 
 NodeEditDialog::NodeEditDialog(QWidget *parent)
     : QDialog(parent)
@@ -39,8 +46,60 @@ void NodeEditDialog::setupUI()
     m_typeCombo->addItems({"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
     m_typeCombo->setWheelEnabled(false);
     typeLayout->addWidget(m_typeCombo);
+
+    // Rule set controls
+    m_sharedRulesCheck = new QCheckBox(tr("Enable shared rule set"));
+    m_sharedRulesCheck->setChecked(true);
+    typeLayout->addWidget(m_sharedRulesCheck);
+
+    m_ruleSetsBtn = new QToolButton(this);
+    m_ruleSetsBtn->setText(tr("default"));
+    m_ruleSetsBtn->setPopupMode(QToolButton::InstantPopup);
+    m_ruleSetsBtn->setAutoRaise(true);
+    typeLayout->addWidget(m_ruleSetsBtn);
+
     typeLayout->addStretch();
     mainLayout->addLayout(typeLayout);
+
+    // Build rule set menu
+    auto rebuildMenu = [this]() {
+        if (QMenu *old = m_ruleSetsBtn->menu()) {
+            old->deleteLater();
+        }
+
+        RoundedMenu *menu = new RoundedMenu(this);
+        ThemeManager &tm = ThemeManager::instance();
+        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+
+        QStringList options = SharedRulesStore::listRuleSets();
+        for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;
+        options.removeDuplicates();
+        options.removeAll(QString());
+        if (!options.contains("default")) options.prepend("default");
+
+        for (const QString &name : options) {
+            QAction *act = menu->addAction(name);
+            act->setCheckable(true);
+            act->setChecked(m_ruleSets.contains(name) || (m_ruleSets.isEmpty() && name == "default"));
+            connect(act, &QAction::triggered, this, [this, name, act]() {
+                if (act->isChecked()) {
+                    if (!m_ruleSets.contains(name)) m_ruleSets << name;
+                } else {
+                    m_ruleSets.removeAll(name);
+                }
+                if (m_ruleSets.isEmpty()) m_ruleSets << "default";
+                m_ruleSets.removeDuplicates();
+                m_ruleSetsBtn->setText(m_ruleSets.join(", "));
+            });
+        }
+        m_ruleSetsBtn->setMenu(menu);
+    };
+    m_ruleSets = QStringList{"default"};
+    rebuildMenu();
+    connect(m_ruleSetsBtn, &QToolButton::clicked, this, rebuildMenu);
+    connect(m_sharedRulesCheck, &QCheckBox::toggled, this, [this](bool on) {
+        m_ruleSetsBtn->setEnabled(on);
+    });
 
     // Tabs
     m_tabs = new QTabWidget;
@@ -138,6 +197,49 @@ void NodeEditDialog::setNodeData(const QJsonObject &node)
     if (m_currentEditor) {
         m_currentEditor->setOutbound(node);
     }
+
+    // restore rule set selections if provided in node comment/tag? not present, keep current
+}
+
+void NodeEditDialog::setRuleSets(const QStringList &sets, bool enableShared)
+{
+    m_sharedRulesCheck->setChecked(enableShared);
+    m_ruleSets = sets;
+    if (m_ruleSets.isEmpty()) m_ruleSets << "default";
+    m_ruleSets.removeDuplicates();
+    m_ruleSetsBtn->setText(m_ruleSets.join(", "));
+    // rebuild menu to reflect selections
+    QMetaObject::invokeMethod(m_ruleSetsBtn, [this, enableShared]() {
+        if (m_ruleSetsBtn->menu()) m_ruleSetsBtn->menu()->deleteLater();
+        // rebuild
+        RoundedMenu *menu = new RoundedMenu(this);
+        ThemeManager &tm = ThemeManager::instance();
+        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+
+        QStringList options = SharedRulesStore::listRuleSets();
+        for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;
+        options.removeDuplicates();
+        options.removeAll(QString());
+        if (!options.contains("default")) options.prepend("default");
+
+        for (const QString &name : options) {
+            QAction *act = menu->addAction(name);
+            act->setCheckable(true);
+            act->setChecked(m_ruleSets.contains(name));
+            connect(act, &QAction::triggered, this, [this, name, act]() {
+                if (act->isChecked()) {
+                    if (!m_ruleSets.contains(name)) m_ruleSets << name;
+                } else {
+                    m_ruleSets.removeAll(name);
+                }
+                if (m_ruleSets.isEmpty()) m_ruleSets << "default";
+                m_ruleSets.removeDuplicates();
+                m_ruleSetsBtn->setText(m_ruleSets.join(", "));
+            });
+        }
+        m_ruleSetsBtn->setMenu(menu);
+        m_ruleSetsBtn->setEnabled(enableShared);
+    }, Qt::QueuedConnection);
 }
 
 QJsonObject NodeEditDialog::nodeData() const
@@ -146,4 +248,15 @@ QJsonObject NodeEditDialog::nodeData() const
         return m_currentEditor->getOutbound();
     }
     return QJsonObject();
+}
+
+QStringList NodeEditDialog::ruleSets() const
+{
+    if (m_ruleSets.isEmpty()) return {"default"};
+    return m_ruleSets;
+}
+
+bool NodeEditDialog::sharedRulesEnabled() const
+{
+    return m_sharedRulesCheck && m_sharedRulesCheck->isChecked();
 }

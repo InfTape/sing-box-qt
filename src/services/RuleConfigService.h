@@ -20,6 +20,7 @@ public:
         RuleFieldInfo field;
         QStringList values;
         QString outboundTag;
+        QString ruleSet; // 多规则集名称
     };
 
     static QList<RuleFieldInfo> fieldInfos();
@@ -29,6 +30,7 @@ public:
     static bool addRule(const RuleEditData &data, RuleItem *added, QString *error);
     static bool updateRule(const RuleItem &existing, const RuleEditData &data, RuleItem *updated, QString *error);
     static bool removeRule(const RuleItem &rule, QString *error);
+    static QString findRuleSet(const RuleItem &rule);
 
     static bool parseRulePayload(const QString &payload, QString *key, QStringList *values, QString *error = nullptr);
 };

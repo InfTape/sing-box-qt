@@ -11,6 +11,9 @@ class QTabWidget;
 class QTextEdit;
 class QScrollArea;
 class QWidget;
+class QCheckBox;
+class QLabel;
+class QToolButton;
 
 class NodeEditDialog : public QDialog
 {
@@ -21,6 +24,9 @@ public:
 
     void setNodeData(const QJsonObject &node);
     QJsonObject nodeData() const;
+    void setRuleSets(const QStringList &sets, bool enableShared = true);
+    QStringList ruleSets() const;
+    bool sharedRulesEnabled() const;
 
 private slots:
     void onTypeChanged(const QString &type);
@@ -37,6 +43,9 @@ private:
     QTextEdit *m_jsonPreview;
     QScrollArea *m_scrollArea;
     QWidget *m_editorPage;
+    QCheckBox *m_sharedRulesCheck;
+    QToolButton *m_ruleSetsBtn;
+    QStringList m_ruleSets;
 };
 
 #endif // NODEEDITDIALOG_H

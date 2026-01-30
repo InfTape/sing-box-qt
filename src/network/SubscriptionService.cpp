@@ -4,6 +4,8 @@
 #include "storage/DatabaseService.h"
 #include "storage/SubscriptionConfigStore.h"
 #include "services/ConfigManager.h"
+#include "services/ConfigMutator.h"
+#include "services/SharedRulesStore.h"
 #include "utils/Logger.h"
 #include "utils/SubscriptionUserinfo.h"
 #include <QJsonArray>
@@ -49,15 +51,28 @@ SubscriptionService::SubscriptionService(QObject *parent)
         info.subscriptionDownload = obj.value("subscription_download").toVariant().toLongLong();
         info.subscriptionTotal = obj.value("subscription_total").toVariant().toLongLong();
         info.subscriptionExpire = obj.value("subscription_expire").toVariant().toLongLong();
+        info.enableSharedRules = obj.value("enable_shared_rules").toBool(true);
+        if (obj.contains("rule_sets") && obj.value("rule_sets").isArray()) {
+            const QJsonArray arr = obj.value("rule_sets").toArray();
+            for (const auto &v : arr) {
+                const QString name = v.toString().trimmed();
+                if (!name.isEmpty()) info.ruleSets.append(name);
+            }
+        }
         if (!obj.contains("subscription_upload")) info.subscriptionUpload = kUnsetValue;
         if (!obj.contains("subscription_download")) info.subscriptionDownload = kUnsetValue;
         if (!obj.contains("subscription_total")) info.subscriptionTotal = kUnsetValue;
         if (!obj.contains("subscription_expire")) info.subscriptionExpire = kUnsetValue;
+        if (info.ruleSets.isEmpty()) info.ruleSets << "default";
         m_subscriptions.append(info);
     }
 
     m_activeIndex = DatabaseService::instance().getActiveSubscriptionIndex();
     m_activeConfigPath = DatabaseService::instance().getActiveConfigPath();
+
+    if (m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count()) {
+        syncSharedRulesToConfig(m_subscriptions[m_activeIndex]);
+    }
 }
 
 SubscriptionService::~SubscriptionService() = default;
@@ -83,6 +98,12 @@ void SubscriptionService::saveToDatabase()
         if (info.subscriptionDownload >= 0) obj["subscription_download"] = info.subscriptionDownload;
         if (info.subscriptionTotal >= 0) obj["subscription_total"] = info.subscriptionTotal;
         if (info.subscriptionExpire >= 0) obj["subscription_expire"] = info.subscriptionExpire;
+        obj["enable_shared_rules"] = info.enableSharedRules;
+        QJsonArray rs;
+        for (const auto &name : info.ruleSets) {
+            if (!name.trimmed().isEmpty()) rs.append(name.trimmed());
+        }
+        obj["rule_sets"] = rs;
         array.append(obj);
     }
     DatabaseService::instance().saveSubscriptions(array);
@@ -127,11 +148,31 @@ void SubscriptionService::updateSubscriptionUserinfoFromHeader(SubscriptionInfo 
 {
     updateSubscriptionUserinfo(info, SubscriptionUserinfo::parseUserinfoHeader(header));
 }
+
+void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo &info)
+{
+    if (info.configPath.isEmpty()) return;
+    QJsonObject config = ConfigManager::instance().loadConfig(info.configPath);
+    if (config.isEmpty()) return;
+
+    QJsonArray merged;
+    if (info.enableSharedRules) {
+        const QStringList setNames = info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets;
+        for (const auto &name : setNames) {
+            const QJsonArray rules = SharedRulesStore::loadRules(name);
+            for (const auto &r : rules) merged.append(r);
+        }
+    }
+    ConfigMutator::applySharedRules(config, merged, info.enableSharedRules && !merged.isEmpty());
+    ConfigManager::instance().saveConfig(info.configPath, config);
+}
 void SubscriptionService::addUrlSubscription(const QString &url,
                                              const QString &name,
                                              bool useOriginalConfig,
                                              int autoUpdateIntervalMinutes,
-                                             bool applyRuntime)
+                                             bool applyRuntime,
+                                             bool enableSharedRules,
+                                             const QStringList &ruleSets)
 {
     const QString trimmedUrl = url.trimmed();
     if (trimmedUrl.isEmpty()) {
@@ -173,6 +214,8 @@ void SubscriptionService::addUrlSubscription(const QString &url,
         info.autoUpdateIntervalMinutes = autoUpdateIntervalMinutes;
         info.configPath = configPath;
         info.backupPath = configPath + ".bak";
+        info.enableSharedRules = enableSharedRules;
+        info.ruleSets = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
 
         bool saved = false;
         if (useOriginalConfig) {
@@ -206,6 +249,8 @@ void SubscriptionService::addUrlSubscription(const QString &url,
         info.lastUpdate = QDateTime::currentMSecsSinceEpoch();
         updateSubscriptionUserinfoFromHeader(info, userinfoHeader);
 
+        syncSharedRulesToConfig(info);
+
         m_subscriptions.append(info);
         m_activeIndex = m_subscriptions.count() - 1;
         m_activeConfigPath = configPath;
@@ -223,7 +268,9 @@ void SubscriptionService::addManualSubscription(const QString &content,
                                                 const QString &name,
                                                 bool useOriginalConfig,
                                                 bool isUriList,
-                                                bool applyRuntime)
+                                                bool applyRuntime,
+                                                bool enableSharedRules,
+                                                const QStringList &ruleSets)
 {
     Q_UNUSED(isUriList)
 
@@ -254,6 +301,8 @@ void SubscriptionService::addManualSubscription(const QString &content,
     info.autoUpdateIntervalMinutes = 0;
     info.configPath = configPath;
     info.backupPath = configPath + ".bak";
+    info.enableSharedRules = enableSharedRules;
+    info.ruleSets = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
 
     bool saved = false;
     if (useOriginalConfig) {
@@ -284,6 +333,8 @@ void SubscriptionService::addManualSubscription(const QString &content,
     info.subscriptionDownload = kUnsetValue;
     info.subscriptionTotal = kUnsetValue;
     info.subscriptionExpire = kUnsetValue;
+
+    syncSharedRulesToConfig(info);
 
     m_subscriptions.append(info);
     m_activeIndex = m_subscriptions.count() - 1;
@@ -364,6 +415,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
         sub->subscriptionDownload = kUnsetValue;
         sub->subscriptionTotal = kUnsetValue;
         sub->subscriptionExpire = kUnsetValue;
+        syncSharedRulesToConfig(*sub);
         saveToDatabase();
         emit subscriptionUpdated(sub->id);
         if (applyRuntime) {
@@ -422,6 +474,7 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
 
         sub->lastUpdate = QDateTime::currentMSecsSinceEpoch();
         updateSubscriptionUserinfoFromHeader(*sub, userinfoHeader);
+        syncSharedRulesToConfig(*sub);
         saveToDatabase();
         emit subscriptionUpdated(sub->id);
         if (applyRuntime) {
@@ -445,7 +498,9 @@ void SubscriptionService::updateSubscriptionMeta(const QString &id,
                                                  bool isManual,
                                                  const QString &manualContent,
                                                  bool useOriginalConfig,
-                                                 int autoUpdateIntervalMinutes)
+                                                 int autoUpdateIntervalMinutes,
+                                                 bool enableSharedRules,
+                                                 const QStringList &ruleSets)
 {
     SubscriptionInfo *sub = findSubscription(id);
     if (!sub) {
@@ -459,7 +514,10 @@ void SubscriptionService::updateSubscriptionMeta(const QString &id,
     sub->manualContent = manualContent;
     sub->useOriginalConfig = useOriginalConfig;
     sub->autoUpdateIntervalMinutes = autoUpdateIntervalMinutes;
+    sub->enableSharedRules = enableSharedRules;
+    sub->ruleSets = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
     saveToDatabase();
+    syncSharedRulesToConfig(*sub);
     emit subscriptionUpdated(id);
 }
 
@@ -469,6 +527,7 @@ void SubscriptionService::setActiveSubscription(const QString &id, bool applyRun
         if (m_subscriptions[i].id == id) {
             m_activeIndex = i;
             m_activeConfigPath = m_subscriptions[i].configPath;
+            syncSharedRulesToConfig(m_subscriptions[i]);
             saveToDatabase();
             emit activeSubscriptionChanged(id, m_activeConfigPath);
             if (applyRuntime && !m_activeConfigPath.isEmpty()) {

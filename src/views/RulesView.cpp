@@ -429,6 +429,7 @@ void RulesView::handleEditRule(const RuleItem &rule)
 
     RuleEditorDialog dialog(RuleEditorDialog::Mode::Edit, this);
     dialog.setOutboundTags(outboundTags);
+    dialog.setRuleSetName(RuleConfigService::findRuleSet(rule));
     if (!dialog.setEditRule(rule, &error)) {
         QMessageBox::warning(this, tr("Edit Match Type"), error);
         return;

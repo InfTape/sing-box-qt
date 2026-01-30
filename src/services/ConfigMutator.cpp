@@ -109,6 +109,27 @@ void updateAppGroupSelectors(QJsonArray &outbounds, const QStringList &nodeTags)
         outbounds[idx] = group;
     }
 }
+
+int findInsertIndex(const QJsonArray &rules)
+{
+    auto findIndex = [&rules](const QString &mode) -> int {
+        for (int i = 0; i < rules.size(); ++i) {
+            if (!rules[i].isObject()) continue;
+            const QJsonObject obj = rules[i].toObject();
+            if (obj.value("clash_mode").toString() == mode) return i;
+        }
+        return -1;
+    };
+
+    const int directIndex = findIndex("direct");
+    const int globalIndex = findIndex("global");
+    int insertIndex = rules.size();
+    if (directIndex >= 0 && globalIndex >= 0) insertIndex = qMax(directIndex, globalIndex) + 1;
+    else if (directIndex >= 0) insertIndex = directIndex + 1;
+    else if (globalIndex >= 0) insertIndex = globalIndex + 1;
+    else if (!rules.isEmpty()) insertIndex = 0;
+    return insertIndex;
+}
 } // namespace
 
 bool ConfigMutator::injectNodes(QJsonObject &config, const QJsonArray &nodes)
@@ -499,4 +520,65 @@ QString ConfigMutator::readClashDefaultMode(const QJsonObject &config)
         return "global";
     }
     return "rule";
+}
+
+void ConfigMutator::applySharedRules(QJsonObject &config, const QJsonArray &sharedRules, bool enabled)
+{
+    if (!config.contains("route") || !config["route"].isObject()) {
+        return;
+    }
+
+    QJsonObject route = config.value("route").toObject();
+    QJsonArray rules = route.value("rules").toArray();
+
+    // helper: normalize rule for comparison (strip shared/source markers)
+    auto normalize = [](QJsonObject obj) {
+        obj.remove("shared");
+        obj.remove("source");
+        return obj;
+    };
+
+    // 移除与任何共享规则相同的现有规则（避免重复）
+    QSet<QString> sharedSig;
+    for (const auto &rv : sharedRules) {
+        if (!rv.isObject()) continue;
+        sharedSig.insert(QString::fromUtf8(QJsonDocument(normalize(rv.toObject())).toJson(QJsonDocument::Compact)));
+    }
+
+    if (!sharedSig.isEmpty()) {
+        QJsonArray filtered;
+        for (const auto &ruleVal : rules) {
+            if (!ruleVal.isObject()) {
+                filtered.append(ruleVal);
+                continue;
+            }
+            const QString sig = QString::fromUtf8(QJsonDocument(normalize(ruleVal.toObject())).toJson(QJsonDocument::Compact));
+            if (sharedSig.contains(sig)) {
+                continue; // drop old injected copy
+            }
+            filtered.append(ruleVal);
+        }
+        rules = filtered;
+    }
+
+    if (enabled && !sharedRules.isEmpty()) {
+        int insertIndex = findInsertIndex(rules);
+        QSet<QString> dedup;
+        for (const auto &ruleVal : sharedRules) {
+            if (!ruleVal.isObject()) continue;
+            QJsonObject obj = normalize(ruleVal.toObject());
+            const QString sig = QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
+            if (dedup.contains(sig)) continue;
+            dedup.insert(sig);
+            if (insertIndex < 0 || insertIndex > rules.size()) {
+                rules.append(obj);
+            } else {
+                rules.insert(insertIndex, obj);
+                insertIndex += 1;
+            }
+        }
+    }
+
+    route["rules"] = rules;
+    config["route"] = route;
 }

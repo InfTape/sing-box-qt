@@ -1,6 +1,7 @@
 #include "services/RuleConfigService.h"
 #include "services/ConfigManager.h"
 #include "storage/DatabaseService.h"
+#include "services/SharedRulesStore.h"
 #include "utils/RuleUtils.h"
 #include <QJsonArray>
 #include <QJsonObject>
@@ -146,6 +147,28 @@ bool removeRuleFromArray(QJsonArray *rules, const RuleItem &rule, QString *error
     }
     return removed;
 }
+
+QJsonObject buildRouteRuleFromItem(const RuleItem &rule, QString *error)
+{
+    QString key;
+    QStringList values;
+    if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, error)) {
+        return QJsonObject();
+    }
+
+    RuleConfigService::RuleEditData data;
+    data.field.key = key;
+    data.field.numeric = (key.contains("port"));
+    data.values = values;
+    data.outboundTag = RuleUtils::normalizeProxyValue(rule.proxy);
+    data.ruleSet = "default";
+
+    QJsonObject obj;
+    if (!buildRouteRule(data, &obj, error)) {
+        return QJsonObject();
+    }
+    return obj;
+}
 } // namespace
 
 QList<RuleConfigService::RuleFieldInfo> RuleConfigService::fieldInfos()
@@ -174,6 +197,12 @@ QString RuleConfigService::activeConfigPath()
     const QString subPath = DatabaseService::instance().getActiveConfigPath();
     if (!subPath.isEmpty()) return subPath;
     return ConfigManager::instance().getActiveConfigPath();
+}
+
+QString RuleConfigService::findRuleSet(const RuleItem &rule)
+{
+    const QJsonObject obj = buildRouteRuleFromItem(rule, nullptr);
+    return SharedRulesStore::findSetOfRule(obj);
 }
 
 QStringList RuleConfigService::loadOutboundTags(const QString &extraTag, QString *error)
@@ -224,7 +253,6 @@ bool RuleConfigService::addRule(const RuleEditData &data, RuleItem *added, QStri
     if (!buildRouteRule(data, &routeRule, error)) {
         return false;
     }
-
     QJsonObject route = config.value("route").toObject();
     QJsonArray rules = route.value("rules").toArray();
 
@@ -265,6 +293,9 @@ bool RuleConfigService::addRule(const RuleEditData &data, RuleItem *added, QStri
         item.isCustom = true;
         *added = item;
     }
+
+    const QString setName = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
+    SharedRulesStore::addRule(setName, routeRule);
     return true;
 }
 
@@ -311,6 +342,14 @@ bool RuleConfigService::updateRule(const RuleItem &existing, const RuleEditData 
         item.isCustom = true;
         *updated = item;
     }
+
+    const QJsonObject oldRouteRule = buildRouteRuleFromItem(existing, nullptr);
+    const QString oldSet = SharedRulesStore::findSetOfRule(oldRouteRule);
+    const QString targetSet = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
+    if (!oldSet.isEmpty() && oldSet != targetSet) {
+        SharedRulesStore::removeRule(oldSet, oldRouteRule);
+    }
+    SharedRulesStore::replaceRule(targetSet, oldRouteRule, routeRule);
     return true;
 }
 
@@ -339,6 +378,14 @@ bool RuleConfigService::removeRule(const RuleItem &rule, QString *error)
     if (!ConfigManager::instance().saveConfig(path, config)) {
         if (error) *error = QObject::tr("Failed to save config: %1").arg(path);
         return false;
+    }
+
+    const QJsonObject oldRouteRule = buildRouteRuleFromItem(rule, nullptr);
+    const QString set = SharedRulesStore::findSetOfRule(oldRouteRule);
+    if (!set.isEmpty()) {
+        SharedRulesStore::removeRule(set, oldRouteRule);
+    } else {
+        SharedRulesStore::removeRuleFromAll(oldRouteRule);
     }
     return true;
 }

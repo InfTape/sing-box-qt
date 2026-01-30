@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QJsonObject>
 
 struct SubscriptionInfo {
@@ -22,6 +23,8 @@ struct SubscriptionInfo {
     qint64 subscriptionDownload;
     qint64 subscriptionTotal;
     qint64 subscriptionExpire;
+    bool enableSharedRules = true;
+    QStringList ruleSets;
 };
 
 class SubscriptionService : public QObject
@@ -37,12 +40,16 @@ public:
                             const QString &name,
                             bool useOriginalConfig,
                             int autoUpdateIntervalMinutes,
-                            bool applyRuntime);
+                            bool applyRuntime,
+                            bool enableSharedRules = true,
+                            const QStringList &ruleSets = {});
     void addManualSubscription(const QString &content,
                                const QString &name,
                                bool useOriginalConfig,
                                bool isUriList,
-                               bool applyRuntime);
+                               bool applyRuntime,
+                               bool enableSharedRules = true,
+                               const QStringList &ruleSets = {});
     void removeSubscription(const QString &id);
     void refreshSubscription(const QString &id, bool applyRuntime);
     void updateAllSubscriptions(bool applyRuntime);
@@ -52,7 +59,9 @@ public:
                                 bool isManual,
                                 const QString &manualContent,
                                 bool useOriginalConfig,
-                                int autoUpdateIntervalMinutes);
+                                int autoUpdateIntervalMinutes,
+                                bool enableSharedRules,
+                                const QStringList &ruleSets);
     void setActiveSubscription(const QString &id, bool applyRuntime);
     void clearActiveSubscription();
 
@@ -81,6 +90,7 @@ private:
     bool isJsonContent(const QString &content) const;
     void updateSubscriptionUserinfo(SubscriptionInfo &info, const QJsonObject &headers);
     void updateSubscriptionUserinfoFromHeader(SubscriptionInfo &info, const QByteArray &header);
+    void syncSharedRulesToConfig(const SubscriptionInfo &info);
 
     QString generateId() const;
 

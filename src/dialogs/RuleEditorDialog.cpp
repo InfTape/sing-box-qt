@@ -4,6 +4,7 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -17,6 +18,7 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget *parent)
     , m_typeCombo(new MenuComboBox(this))
     , m_valueEdit(new QPlainTextEdit(this))
     , m_outboundCombo(new MenuComboBox(this))
+    , m_ruleSetEdit(new QLineEdit(this))
     , m_hintLabel(new QLabel(this))
 {
     setModal(true);
@@ -42,6 +44,8 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget *parent)
     form->addRow(tr("Match Type:"), m_typeCombo);
     form->addRow(tr("Match Value:"), m_valueEdit);
     form->addRow(tr("Outbound:"), m_outboundCombo);
+    m_ruleSetEdit->setPlaceholderText("default");
+    form->addRow(tr("Rule Set:"), m_ruleSetEdit);
 
     m_hintLabel->setWordWrap(true);
     m_hintLabel->setObjectName("RuleHint");
@@ -66,6 +70,11 @@ void RuleEditorDialog::setOutboundTags(const QStringList &tags)
 {
     m_outboundCombo->clear();
     m_outboundCombo->addItems(tags);
+}
+
+void RuleEditorDialog::setRuleSetName(const QString &name)
+{
+    m_ruleSetEdit->setText(name.isEmpty() ? QStringLiteral("default") : name);
 }
 
 bool RuleEditorDialog::setEditRule(const RuleItem &rule, QString *error)
@@ -179,5 +188,7 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData *out, QStri
     out->field = field;
     out->values = values;
     out->outboundTag = outboundTag;
+    const QString rs = m_ruleSetEdit->text().trimmed();
+    out->ruleSet = rs.isEmpty() ? QStringLiteral("default") : rs;
     return true;
 }
