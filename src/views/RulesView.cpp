@@ -1,6 +1,7 @@
 ﻿#include "RulesView.h"
 #include "core/ProxyService.h"
 #include "dialogs/RuleEditorDialog.h"
+#include "dialogs/ManageRuleSetsDialog.h"
 #include "services/RuleConfigService.h"
 #include "utils/RuleUtils.h"
 #include "utils/ThemeManager.h"
@@ -61,6 +62,11 @@ void RulesView::setupUI()
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     m_refreshBtn->setMinimumSize(110, 36);
 
+    m_ruleSetBtn = new QPushButton(tr("Rule Sets"));
+    m_ruleSetBtn->setObjectName("PrimaryActionBtn");
+    m_ruleSetBtn->setCursor(Qt::PointingHandCursor);
+    m_ruleSetBtn->setMinimumSize(110, 36);
+
     m_addBtn = new QPushButton(tr("Add Rule"));
     m_addBtn->setObjectName("PrimaryActionBtn");
     m_addBtn->setCursor(Qt::PointingHandCursor);
@@ -68,6 +74,7 @@ void RulesView::setupUI()
 
     headerLayout->addLayout(titleLayout);
     headerLayout->addStretch();
+    headerLayout->addWidget(m_ruleSetBtn);
     headerLayout->addWidget(m_addBtn);
     headerLayout->addWidget(m_refreshBtn);
 
@@ -141,6 +148,14 @@ void RulesView::setupUI()
 
     connect(m_refreshBtn, &QPushButton::clicked, this, &RulesView::onRefreshClicked);
     connect(m_addBtn, &QPushButton::clicked, this, &RulesView::onAddRuleClicked);
+    connect(m_ruleSetBtn, &QPushButton::clicked, this, [this]() {
+        ManageRuleSetsDialog dlg(this);
+        connect(&dlg, &ManageRuleSetsDialog::ruleSetsChanged, this, [this]() {
+            // refresh filters to include new sets via /rules fetch
+            this->refresh();
+        });
+        dlg.exec();
+    });
     connect(m_emptyAction, &QPushButton::clicked, this, &RulesView::onEmptyActionClicked);
     connect(m_searchEdit, &QLineEdit::textChanged, this, &RulesView::onSearchChanged);
     connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);

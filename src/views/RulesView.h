@@ -51,6 +51,7 @@ private:
     QLabel *m_subtitleLabel = nullptr;
     QPushButton *m_refreshBtn = nullptr;
     QPushButton *m_addBtn = nullptr;
+    QPushButton *m_ruleSetBtn = nullptr;
     QLineEdit *m_searchEdit = nullptr;
     MenuComboBox *m_typeFilter = nullptr;
     MenuComboBox *m_proxyFilter = nullptr;

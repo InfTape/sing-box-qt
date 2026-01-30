@@ -4,6 +4,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <QJsonObject>
 #include "models/RuleItem.h"
 
 class RuleConfigService
@@ -33,6 +34,8 @@ public:
     static QString findRuleSet(const RuleItem &rule);
 
     static bool parseRulePayload(const QString &payload, QString *key, QStringList *values, QString *error = nullptr);
+    // 公共构建接口（供规则集管理对话框使用）
+    static bool buildRouteRulePublic(const RuleEditData &data, QJsonObject *out, QString *error = nullptr);
 };
 
 #endif // RULECONFIGSERVICE_H

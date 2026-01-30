@@ -3,9 +3,9 @@
 
 #include <QDialog>
 #include <QStringList>
+#include "services/RuleConfigService.h"
 
 class QListWidget;
-class QPushButton;
 
 class ManageRuleSetsDialog : public QDialog
 {
@@ -17,19 +17,25 @@ signals:
     void ruleSetsChanged();
 
 private slots:
-    void onAdd();
-    void onRename();
-    void onDelete();
+    void onSetAdd();
+    void onSetRename();
+    void onSetDelete();
+    void onRuleAdd();
+    void onRuleDelete();
+    void onSetChanged();
+    void onSetContextMenu(const QPoint &pos);
+    void onRuleContextMenu(const QPoint &pos);
 
 private:
     void reload();
     QString selectedName() const;
+    void reloadRules();
     bool confirmDelete(const QString &name);
+    void addRuleToSet(const QString &setName, const RuleConfigService::RuleEditData &data);
+    void updateMenus();
 
     QListWidget *m_list;
-    QPushButton *m_addBtn;
-    QPushButton *m_renameBtn;
-    QPushButton *m_deleteBtn;
+    QListWidget *m_ruleList;
 };
 
 #endif // MANAGERULESETSDIALOG_H

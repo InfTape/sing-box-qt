@@ -171,6 +171,11 @@ QJsonObject buildRouteRuleFromItem(const RuleItem &rule, QString *error)
 }
 } // namespace
 
+bool RuleConfigService::buildRouteRulePublic(const RuleEditData &data, QJsonObject *out, QString *error)
+{
+    return buildRouteRule(data, out, error);
+}
+
 QList<RuleConfigService::RuleFieldInfo> RuleConfigService::fieldInfos()
 {
     return {

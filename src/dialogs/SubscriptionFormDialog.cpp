@@ -282,5 +282,3 @@ void SubscriptionFormDialog::updateState()
     m_hintLabel->setVisible(showHint);
     m_ruleSetsBox->setEnabled(m_sharedRulesCheck->isChecked());
 }
-
-#include "SubscriptionFormDialog.moc"

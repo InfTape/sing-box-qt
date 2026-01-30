@@ -92,6 +92,75 @@ QStringList SharedRulesStore::listRuleSets()
     return names;
 }
 
+bool SharedRulesStore::ensureRuleSet(const QString &name)
+{
+    const QString target = name.trimmed().isEmpty() ? "default" : name.trimmed();
+    QJsonObject doc = loadDocument();
+    QJsonArray sets = doc.value("sets").toArray();
+    for (const auto &v : sets) {
+        if (v.isObject() && v.toObject().value("name").toString() == target) {
+            return true;
+        }
+    }
+    QJsonObject set;
+    set["name"] = target;
+    set["rules"] = QJsonArray();
+    sets.append(set);
+    doc["sets"] = sets;
+    return saveDocument(doc);
+}
+
+bool SharedRulesStore::removeRuleSet(const QString &name)
+{
+    const QString target = name.trimmed();
+    if (target.isEmpty() || target == "default") return false;
+
+    QJsonObject doc = loadDocument();
+    QJsonArray sets = doc.value("sets").toArray();
+    QJsonArray kept;
+    bool removed = false;
+    for (const auto &v : sets) {
+        if (!v.isObject()) {
+            kept.append(v);
+            continue;
+        }
+        const QJsonObject set = v.toObject();
+        if (set.value("name").toString() == target) {
+            removed = true;
+            continue;
+        }
+        kept.append(v);
+    }
+    if (!removed) return false;
+    doc["sets"] = kept;
+    return saveDocument(doc);
+}
+
+bool SharedRulesStore::renameRuleSet(const QString &from, const QString &to)
+{
+    const QString src = from.trimmed();
+    const QString dst = to.trimmed();
+    if (src.isEmpty() || dst.isEmpty() || src == "default") return false;
+
+    QJsonObject doc = loadDocument();
+    QJsonArray sets = doc.value("sets").toArray();
+    bool renamed = false;
+    for (int i = 0; i < sets.size(); ++i) {
+        if (!sets[i].isObject()) continue;
+        QJsonObject set = sets[i].toObject();
+        const QString name = set.value("name").toString();
+        if (name == dst) return false; // duplicate
+        if (name == src) {
+            set["name"] = dst;
+            sets[i] = set;
+            renamed = true;
+        }
+    }
+    if (!renamed) return false;
+    doc["sets"] = sets;
+    return saveDocument(doc);
+}
+
 QJsonArray SharedRulesStore::loadRules(const QString &setName)
 {
     const QString target = setName.isEmpty() ? "default" : setName;

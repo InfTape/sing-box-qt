@@ -51,6 +51,7 @@ set(SOURCES
     src/dialogs/SubscriptionFormDialog.cpp
     src/dialogs/ConfigEditDialog.cpp
     src/dialogs/RuleEditorDialog.cpp
+    src/dialogs/ManageRuleSetsDialog.cpp
     src/network/HttpClient.cpp
     src/network/WebSocketClient.cpp
     src/network/SubscriptionService.cpp
@@ -109,6 +110,7 @@ set(HEADERS
     src/dialogs/SubscriptionFormDialog.h
     src/dialogs/ConfigEditDialog.h
     src/dialogs/RuleEditorDialog.h
+    src/dialogs/ManageRuleSetsDialog.h
     src/models/RuleItem.h
     src/network/HttpClient.h
     src/network/WebSocketClient.h

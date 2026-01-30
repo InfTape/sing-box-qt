@@ -19,6 +19,9 @@ public:
     static bool removeRuleFromAll(const QJsonObject &rule);
 
     static QString findSetOfRule(const QJsonObject &rule);
+    static bool ensureRuleSet(const QString &name);
+    static bool removeRuleSet(const QString &name);
+    static bool renameRuleSet(const QString &from, const QString &to);
 
 private:
     static QString storagePath();
