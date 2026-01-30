@@ -68,6 +68,8 @@ void NodeEditDialog::setupUI()
         }
 
         RoundedMenu *menu = new RoundedMenu(this);
+        // 采用托盘菜单的样式，复用勾选外观
+        menu->setObjectName("TrayMenu");
         ThemeManager &tm = ThemeManager::instance();
         menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
 
@@ -213,6 +215,7 @@ void NodeEditDialog::setRuleSets(const QStringList &sets, bool enableShared)
         if (m_ruleSetsBtn->menu()) m_ruleSetsBtn->menu()->deleteLater();
         // rebuild
         RoundedMenu *menu = new RoundedMenu(this);
+        menu->setObjectName("TrayMenu");
         ThemeManager &tm = ThemeManager::instance();
         menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
 

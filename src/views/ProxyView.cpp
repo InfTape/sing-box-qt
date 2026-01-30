@@ -1,7 +1,11 @@
 #include "ProxyView.h"
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
+#include "services/RuleConfigService.h"
+#include "services/ConfigManager.h"
 #include "utils/ThemeManager.h"
+#include "dialogs/NodeEditDialog.h"
+#include "widgets/RoundedMenu.h"
 #include "storage/AppSettings.h"
 #include "widgets/ChevronToggle.h"
 #include <QVBoxLayout>
@@ -13,6 +17,8 @@
 #include <QTreeWidgetItemIterator>
 #include <QFrame>
 #include <QItemSelection>
+#include <QMenu>
+#include <QMessageBox>
 
 namespace {
 
@@ -100,9 +106,7 @@ void ProxyView::setupUI()
     m_searchEdit->setObjectName("SearchInput");
     m_searchEdit->setClearButtonEnabled(true);
     
-    m_testSelectedBtn = new QPushButton(tr("Test Selected"));
-    m_testSelectedBtn->setObjectName("TestSelectedBtn");
-    m_testSelectedBtn->setCursor(Qt::PointingHandCursor);
+    m_testSelectedBtn = nullptr;
     
     m_testAllBtn = new QPushButton(tr("Test All"));
     m_testAllBtn->setObjectName("TestAllBtn");
@@ -113,7 +117,6 @@ void ProxyView::setupUI()
     m_refreshBtn->setCursor(Qt::PointingHandCursor);
     
     toolbarLayout->addWidget(m_searchEdit, 1);
-    toolbarLayout->addWidget(m_testSelectedBtn);
     toolbarLayout->addWidget(m_testAllBtn);
     toolbarLayout->addWidget(m_refreshBtn);
     
@@ -162,11 +165,12 @@ void ProxyView::setupUI()
     
 
     connect(m_searchEdit, &QLineEdit::textChanged, this, &ProxyView::onSearchTextChanged);
-    connect(m_testSelectedBtn, &QPushButton::clicked, this, &ProxyView::onTestSelectedClicked);
     connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyView::onTestAllClicked);
     connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyView::refresh);
     connect(m_treeWidget, &QTreeWidget::itemClicked, this, &ProxyView::onItemClicked);
     connect(m_treeWidget, &QTreeWidget::itemDoubleClicked, this, &ProxyView::onItemDoubleClicked);
+    m_treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_treeWidget, &QTreeWidget::customContextMenuRequested, this, &ProxyView::onTreeContextMenu);
 }
 
 void ProxyView::updateStyle()
@@ -371,6 +375,76 @@ void ProxyView::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column)
     handleNodeActivation(item);
+}
+
+void ProxyView::onTreeContextMenu(const QPoint &pos)
+{
+    QTreeWidgetItem *item = m_treeWidget->itemAt(pos);
+    if (!item) return;
+    const QString role = item->data(0, Qt::UserRole).toString();
+    if (role != "node") return;
+
+    RoundedMenu menu(this);
+    menu.setObjectName("TrayMenu");
+    ThemeManager &tm = ThemeManager::instance();
+    menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    connect(&tm, &ThemeManager::themeChanged, &menu, [&menu, &tm]() {
+        menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    });
+
+    QAction *detailAct = menu.addAction(tr("Details"));
+    QAction *testAct = menu.addAction(tr("Test"));
+
+    QAction *chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
+    if (!chosen) return;
+    if (chosen == detailAct) {
+        QString nodeName = item->data(0, Qt::UserRole + 3).toString();
+        if (nodeName.isEmpty()) nodeName = item->text(0);
+        if (nodeName.startsWith("* ")) nodeName = nodeName.mid(2);
+
+        QJsonObject nodeObj = loadNodeOutbound(nodeName);
+        if (nodeObj.isEmpty()) {
+            nodeObj = m_cachedProxies.value(nodeName).toObject();
+        }
+        if (nodeObj.isEmpty()) {
+            QMessageBox::warning(this, tr("Node Details"), tr("Node data not found."));
+            return;
+        }
+
+        NodeEditDialog dialog(this);
+        dialog.setWindowTitle(tr("Node Details"));
+        dialog.setNodeData(nodeObj);
+        dialog.exec();
+    } else if (chosen == testAct) {
+        // trigger single node delay test
+        QString nodeName = item->data(0, Qt::UserRole + 3).toString();
+        if (nodeName.startsWith("* ")) nodeName = nodeName.mid(2);
+        if (!nodeName.isEmpty() && m_delayTestService) {
+            m_testingNodes.clear();
+            m_testingNodes.insert(nodeName);
+            m_singleTesting = true;
+            m_singleTestingTarget = nodeName;
+            m_delayTestService->testNodeDelay(nodeName, DelayTestOptions());
+            updateTestButtonStyle(true);
+        }
+    }
+}
+
+QJsonObject ProxyView::loadNodeOutbound(const QString &tag) const
+{
+    const QString path = RuleConfigService::activeConfigPath();
+    if (path.isEmpty()) return QJsonObject();
+    QJsonObject config = ConfigManager::instance().loadConfig(path);
+    if (config.isEmpty()) return QJsonObject();
+    const QJsonArray outbounds = config.value("outbounds").toArray();
+    for (const auto &v : outbounds) {
+        if (!v.isObject()) continue;
+        QJsonObject ob = v.toObject();
+        if (ob.value("tag").toString() == tag) {
+            return ob;
+        }
+    }
+    return QJsonObject();
 }
 
 void ProxyView::applyTreeItemColors()

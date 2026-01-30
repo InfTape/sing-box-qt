@@ -35,6 +35,24 @@ QPushButton:disabled {
     color: @text-tertiary@;
 }
 
+/* 弹窗按钮：改为半透明蓝底，突出轻量感且仅影响弹出窗口 */
+QDialog QPushButton {
+    background-color: @primary-20@;
+    color: @primary@;
+    border: 1px solid @primary-30@;
+}
+QDialog QPushButton:hover {
+    background-color: @primary-30@;
+}
+QDialog QPushButton:pressed {
+    background-color: @primary-40@;
+}
+QDialog QPushButton:disabled {
+    background-color: transparent;
+    border: 1px solid @border-solid@;
+    color: @text-tertiary@;
+}
+
 /* Inputs */
 QLineEdit, QSpinBox, QComboBox, QPlainTextEdit {
     background-color: @input-bg@;

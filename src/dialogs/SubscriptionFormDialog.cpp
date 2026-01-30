@@ -37,7 +37,8 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent)
     m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     m_button->setAutoRaise(true);
     m_menu = new RoundedMenu(this);
-    m_menu->setObjectName("RuleSetMenu");
+    // Use tray menu styling so the checklist matches the tray menu look
+    m_menu->setObjectName("TrayMenu");
 
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);

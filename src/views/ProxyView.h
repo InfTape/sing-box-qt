@@ -38,6 +38,7 @@ private slots:
     void onDelayResult(const ProxyDelayTestResult &result);
     void onTestProgress(int current, int total);
     void onTestCompleted();
+    void onTreeContextMenu(const QPoint &pos);
 
 private:
     void setupUI();
@@ -53,6 +54,7 @@ private:
     void applyTreeItemColors();
     void markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText = QString());
     void updateTestButtonStyle(bool testing);
+    QJsonObject loadNodeOutbound(const QString &tag) const;
 
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;
