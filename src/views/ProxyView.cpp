@@ -19,6 +19,15 @@
 #include <QItemSelection>
 #include <QMenu>
 #include <QMessageBox>
+#include <QUrl>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QNetworkProxy>
+#include <QElapsedTimer>
+#include <QEventLoop>
+#include <QTimer>
+#include <QtConcurrent>
 
 namespace {
 
@@ -394,6 +403,7 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
 
     QAction *detailAct = menu.addAction(tr("Details"));
     QAction *testAct = menu.addAction(tr("Test"));
+    QAction *speedAct = menu.addAction(tr("Speed Test"));
 
     QAction *chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
     if (!chosen) return;
@@ -427,6 +437,8 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
             m_delayTestService->testNodeDelay(nodeName, DelayTestOptions());
             updateTestButtonStyle(true);
         }
+    } else if (chosen == speedAct) {
+        startSpeedTest(item);
     }
 }
 
@@ -543,6 +555,31 @@ void ProxyView::onProxySelectFailed(const QString &group, const QString &proxy)
     if (m_pendingSelection.value(group) == proxy) {
         m_pendingSelection.remove(group);
     }
+}
+
+void ProxyView::startSpeedTest(QTreeWidgetItem *item)
+{
+    if (!item) return;
+    const QString nodeName = item->data(0, Qt::UserRole + 3).toString();
+    const QString groupName = item->data(0, Qt::UserRole + 1).toString();
+    if (nodeName.isEmpty()) return;
+
+    updateNodeRowDelay(item, tr("Testing..."), "testing");
+
+    if (m_proxyService && !groupName.isEmpty()) {
+        m_proxyService->selectProxy(groupName, nodeName);
+    }
+
+    QtConcurrent::run([this, nodeName, item]() {
+        const QString result = runBandwidthTest(nodeName);
+        QMetaObject::invokeMethod(this, [this, item, result]() {
+            if (result.isEmpty()) {
+                updateNodeRowDelay(item, tr("N/A"), "error");
+            } else {
+                updateNodeRowDelay(item, result, "ok");
+            }
+        }, Qt::QueuedConnection);
+    });
 }
 
 void ProxyView::onTestSelectedClicked()
@@ -844,6 +881,55 @@ QWidget* ProxyView::buildNodeRow(const QString &name, const QString &type, const
     layout->addWidget(delayLabel, 0, Qt::AlignRight);
 
     return card;
+}
+
+QString ProxyView::runBandwidthTest(const QString &nodeTag) const
+{
+    Q_UNUSED(nodeTag)
+    QNetworkAccessManager manager;
+    QNetworkProxy proxy(QNetworkProxy::Socks5Proxy, "127.0.0.1", AppSettings::instance().mixedPort());
+    manager.setProxy(proxy);
+
+    const QString testUrl = QStringLiteral("https://speed.cloudflare.com/__down?bytes=5000000");
+    const int timeoutMs = 15000;
+
+    const QUrl testQUrl(testUrl);
+    QNetworkRequest request(testQUrl);
+
+    QElapsedTimer timer;
+    timer.start();
+
+    QNetworkReply *reply = manager.get(request);
+    qint64 totalBytes = 0;
+    QObject::connect(reply, &QNetworkReply::readyRead, [&]() {
+        totalBytes += reply->bytesAvailable();
+        reply->readAll();
+    });
+
+    QEventLoop loop;
+    QTimer timeout;
+    timeout.setSingleShot(true);
+    QObject::connect(&timeout, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    timeout.start(timeoutMs + 2000);
+    loop.exec();
+
+    if (!reply->isFinished() || reply->error() != QNetworkReply::NoError) {
+        reply->abort();
+        reply->deleteLater();
+        return QString();
+    }
+    totalBytes += reply->bytesAvailable();
+    reply->readAll();
+    reply->deleteLater();
+
+    const qint64 ms = timer.elapsed();
+    if (ms <= 0) return QString();
+
+    const double bytesPerSec = (static_cast<double>(totalBytes) * 1000.0) / ms;
+    const double mbps = (bytesPerSec * 8.0) / (1024.0 * 1024.0);
+
+    return tr("%1 Mbps").arg(QString::number(mbps, 'f', 1));
 }
 
 void ProxyView::updateNodeRowDelay(QTreeWidgetItem *item, const QString &delayText, const QString &state)

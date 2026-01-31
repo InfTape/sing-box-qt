@@ -39,6 +39,7 @@ private slots:
     void onTestProgress(int current, int total);
     void onTestCompleted();
     void onTreeContextMenu(const QPoint &pos);
+    void startSpeedTest(QTreeWidgetItem *item);
 
 private:
     void setupUI();
@@ -55,6 +56,7 @@ private:
     void markNodeState(QTreeWidgetItem *item, const QString &group, const QString &now, const QString &delayText = QString());
     void updateTestButtonStyle(bool testing);
     QJsonObject loadNodeOutbound(const QString &tag) const;
+    QString runBandwidthTest(const QString &nodeTag) const;
 
     QLineEdit *m_searchEdit;
     QTreeWidget *m_treeWidget;
