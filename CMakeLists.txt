@@ -15,6 +15,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     WebSockets
     Sql
     Concurrent
+    Svg
 )
 
 # Third-party libraries.
@@ -184,6 +185,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::WebSockets
     Qt6::Sql
     Qt6::Concurrent
+    Qt6::Svg
     nlohmann_json::nlohmann_json
     yaml-cpp::yaml-cpp
 )

@@ -4,6 +4,13 @@
         <file>icons/app.png</file>
         <file>icons/tray.png</file>
         <file>icons/check.svg</file>
+        <file>icons/network.svg</file>
+        <file>icons/checklist.svg</file>
+        <file>icons/logs.svg</file>
+        <file>icons/slider.svg</file>
+        <file>icons/house.svg</file>
+        <file>icons/connections.svg</file>
+        <file>icons/subscriptions.svg</file>
         <file>styles/home_view.qss</file>
         <file>styles/log_view.qss</file>
         <file>styles/main_window.qss</file>

@@ -11,6 +11,8 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QStyle>
+#include <QPainter>
+#include <QSvgRenderer>
 #include "views/HomeView.h"
 #include "views/ProxyView.h"
 #include "views/SubscriptionView.h"
@@ -28,6 +30,49 @@
 #include "services/ConfigManager.h"
 #include "network/SubscriptionService.h"
 #include "system/AdminHelper.h"
+
+namespace {
+QIcon svgIcon(const QString &resourcePath, int size, const QColor &color)
+{
+    const qreal dpr = qApp->devicePixelRatio();
+    const int box = static_cast<int>(size * dpr);
+
+    QSvgRenderer renderer(resourcePath);
+
+    QPixmap base(box, box);
+    base.fill(Qt::transparent);
+    {
+        QPainter p(&base);
+        p.setRenderHint(QPainter::Antialiasing);
+        QSizeF def = renderer.defaultSize();
+        qreal w = def.width() > 0 ? def.width() : size;
+        qreal h = def.height() > 0 ? def.height() : size;
+        qreal ratio = (h > 0) ? w / h : 1.0;
+        qreal renderW = box;
+        qreal renderH = box;
+        if (ratio > 1.0) {
+            renderH = renderH / ratio;
+        } else if (ratio < 1.0) {
+            renderW = renderW * ratio;
+        }
+        QRectF target((box - renderW) / 2.0, (box - renderH) / 2.0, renderW, renderH);
+        renderer.render(&p, target);
+    }
+
+    QPixmap tinted(box, box);
+    tinted.fill(Qt::transparent);
+    {
+        QPainter p(&tinted);
+        p.setCompositionMode(QPainter::CompositionMode_Source);
+        p.drawPixmap(0, 0, base);
+        p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        p.fillRect(tinted.rect(), color);
+    }
+
+    tinted.setDevicePixelRatio(dpr);
+    return QIcon(tinted);
+}
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_kernelService(new KernelService(this)), m_proxyService(new ProxyService(this)) // Initialize ProxyService
@@ -156,6 +201,8 @@ void MainWindow::setupNavigation()
     }
 
     m_navList->setCurrentRow(0);
+
+    updateNavIcons();
 }
 
 void MainWindow::setupStatusBar()
@@ -411,6 +458,7 @@ void MainWindow::updateStyle()
     ThemeManager &tm = ThemeManager::instance();
     setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
 
+    updateNavIcons();
     applyStartStopStyle();
 }
 
@@ -432,6 +480,48 @@ void MainWindow::applyStartStopStyle()
     // Qt will automatically update styles when properties change.
     // We only need to polish if the style doesn't update automatically.
     m_startStopBtn->style()->polish(m_startStopBtn);
+}
+
+void MainWindow::updateNavIcons()
+{
+    if (!m_navList || m_navList->count() <= 1)
+    {
+        return;
+    }
+
+    ThemeManager &tm = ThemeManager::instance();
+    const QColor iconColor = tm.getColor("text-primary");
+    const int iconSize = 20;
+
+    if (QListWidgetItem *homeItem = m_navList->item(0))
+    {
+        homeItem->setIcon(svgIcon(":/icons/house.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *proxyItem = m_navList->item(1))
+    {
+        proxyItem->setIcon(svgIcon(":/icons/network.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *subItem = m_navList->item(2))
+    {
+        subItem->setIcon(svgIcon(":/icons/subscriptions.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *connItem = m_navList->item(3))
+    {
+        connItem->setIcon(svgIcon(":/icons/connections.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *rulesItem = m_navList->item(4))
+    {
+        rulesItem->setIcon(svgIcon(":/icons/checklist.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *logsItem = m_navList->item(5))
+    {
+        logsItem->setIcon(svgIcon(":/icons/logs.svg", iconSize, iconColor));
+    }
+    if (QListWidgetItem *settingsItem = m_navList->item(6))
+    {
+        settingsItem->setIcon(svgIcon(":/icons/slider.svg", iconSize, iconColor));
+    }
+    m_navList->setIconSize(QSize(iconSize, iconSize));
 }
 
 

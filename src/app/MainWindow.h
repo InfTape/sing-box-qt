@@ -56,6 +56,7 @@ private:
     void loadSettings();
     void saveSettings();
     void updateStyle();
+    void updateNavIcons();
     void applyStartStopStyle();
 
     // UI components.
