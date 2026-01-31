@@ -116,17 +116,17 @@
 #ModeCard:hover { border: 1px solid @border-solid@; }
 #ModeCard[active="true"] {
     border: 1px solid @primary@;
-    background-color: @primary-12@;
+    background-color: @panel-bg@;
 }
 #ModeIcon {
     background-color: @bg-tertiary@;
-    color: @text-secondary@;
+    color: @primary@;
     border-radius: 10px;
 }
 #ModeIconLabel {
     font-size: 11px;
     font-weight: 600;
-    color: @text-secondary@;
+    color: @primary@;
 }
 #ModeCard[active="true"] #ModeIconLabel { color: white; }
 #ModeCard[active="true"] #ModeIcon {

@@ -2,6 +2,7 @@
 #include "utils/ThemeManager.h"
 #include "views/components/TrafficChart.h"
 #include "widgets/ToggleSwitch.h"
+#include <QApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
 #include <QFrame>
@@ -9,12 +10,54 @@
 #include <QHBoxLayout>
 #include <QMap>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QPixmap>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QSvgRenderer>
 #include <functional>
 
 namespace {
 
+QPixmap svgIconPixmap(const QString &resourcePath, int box, const QColor &color)
+{
+    const qreal dpr = qApp->devicePixelRatio();
+    const int size = static_cast<int>(box * dpr);
+
+    QSvgRenderer renderer(resourcePath);
+
+    QPixmap base(size, size);
+    base.fill(Qt::transparent);
+    {
+        QPainter p(&base);
+        p.setRenderHint(QPainter::Antialiasing);
+        QSizeF def = renderer.defaultSize();
+        qreal w = def.width() > 0 ? def.width() : box;
+        qreal h = def.height() > 0 ? def.height() : box;
+        qreal ratio = (h > 0) ? w / h : 1.0;
+        qreal renderW = size;
+        qreal renderH = size;
+        if (ratio > 1.0) {
+            renderH = renderH / ratio;
+        } else if (ratio < 1.0) {
+            renderW = renderW * ratio;
+        }
+        QRectF target((size - renderW) / 2.0, (size - renderH) / 2.0, renderW, renderH);
+        renderer.render(&p, target);
+    }
+
+    QPixmap tinted(size, size);
+    tinted.fill(Qt::transparent);
+    {
+        QPainter p(&tinted);
+        p.setCompositionMode(QPainter::CompositionMode_Source);
+        p.drawPixmap(0, 0, base);
+        p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        p.fillRect(tinted.rect(), color);
+    }
+    tinted.setDevicePixelRatio(dpr);
+    return tinted;
+}
 
 
 QString rgba(const QColor &color, double alpha)
@@ -38,7 +81,21 @@ void setCardActive(QWidget *card, bool active)
 {
     if (!card) return;
     card->setProperty("active", active);
+    // Recolor embedded svg icons if present.
+    const QString accent = card->property("accent").toString();
+    for (auto *label : card->findChildren<QLabel*>()) {
+        const QVariant pathVar = label->property("iconPath");
+        if (!pathVar.isValid()) continue;
+        const QString iconPath = pathVar.toString();
+        const int iconSize = label->property("iconSize").toInt();
+        ThemeManager &tm = ThemeManager::instance();
+        QColor color = active ? QColor(Qt::white) : tm.getColor("primary");
+        label->setPixmap(svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
+    }
     polishWidget(card);
+    for (auto *child : card->findChildren<QWidget*>()) {
+        polishWidget(child);
+    }
 }
 
 } // namespace
@@ -273,6 +330,26 @@ QWidget* HomeView::createStatCard(const QString &iconText, const QString &accent
     QLabel *iconLabel = new QLabel(iconText);
     iconLabel->setObjectName("StatIconLabel");
     iconLabel->setAlignment(Qt::AlignCenter);
+    QString iconPath;
+    if (iconText.compare("UP", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/arrowup.svg";
+    } else if (iconText.compare("DOWN", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/arrowdown.svg";
+    } else if (iconText.compare("CONN", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/connect.svg";
+    }
+    if (!iconPath.isEmpty()) {
+        ThemeManager &tm = ThemeManager::instance();
+        QColor iconColor = tm.getColor("text-primary");
+        if (accentKey == "success") iconColor = tm.getColor("success");
+        else if (accentKey == "primary") iconColor = tm.getColor("primary");
+        else if (accentKey == "warning") iconColor = tm.getColor("warning");
+        iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
+        iconLabel->setProperty("iconPath", iconPath);
+        iconLabel->setProperty("iconSize", 20);
+    } else {
+        iconLabel->setText(iconText);
+    }
     iconLayout->addWidget(iconLabel);
 
     QVBoxLayout *textLayout = new QVBoxLayout;
@@ -324,6 +401,25 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
     QLabel *iconLabel = new QLabel(iconText);
     iconLabel->setAlignment(Qt::AlignCenter);
     iconLabel->setObjectName("ModeIconLabel");
+    QString iconPath;
+    if (iconText.compare("TUN", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/networktun.svg";
+    } else if (iconText.compare("RULE", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/arrowbranch.svg";
+    } else if (iconText.compare("SYS", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/network.svg";
+    } else if (iconText.compare("GLB", Qt::CaseInsensitive) == 0) {
+        iconPath = ":/icons/mappin.svg";
+    }
+    if (!iconPath.isEmpty()) {
+        ThemeManager &tm = ThemeManager::instance();
+        QColor iconColor = tm.getColor("primary");
+        iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
+        iconLabel->setProperty("iconPath", iconPath);
+        iconLabel->setProperty("iconSize", 20);
+    } else {
+        iconLabel->setText(iconText);
+    }
     iconLayout->addWidget(iconLabel);
 
     QVBoxLayout *textLayout = new QVBoxLayout;
