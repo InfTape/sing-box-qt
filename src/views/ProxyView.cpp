@@ -402,7 +402,7 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
     });
 
     QAction *detailAct = menu.addAction(tr("Details"));
-    QAction *testAct = menu.addAction(tr("Test"));
+    QAction *testAct = menu.addAction(tr("Latency Test"));
     QAction *speedAct = menu.addAction(tr("Speed Test"));
 
     QAction *chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
