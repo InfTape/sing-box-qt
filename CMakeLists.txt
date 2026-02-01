@@ -46,6 +46,9 @@ set(SOURCES
     src/app/AppContext.cpp
     src/app/impl/ConfigRepositoryAdapter.cpp
     src/app/impl/SettingsStoreAdapter.cpp
+    src/app/impl/ThemeServiceAdapter.cpp
+    src/app/impl/SystemProxyAdapter.cpp
+    src/app/impl/AdminActionsAdapter.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
     src/core/KernelService.cpp
@@ -81,6 +84,7 @@ set(SOURCES
     src/views/proxy/ProxyView.cpp
     src/views/subscription/SubscriptionView.cpp
     src/views/subscription/SubscriptionCard.cpp
+    src/views/subscription/SubscriptionController.cpp
     src/views/connections/ConnectionsView.cpp
     src/views/rules/RulesView.cpp
     src/views/logs/LogView.cpp
@@ -117,8 +121,14 @@ set(HEADERS
     src/app/AppContext.h
     src/app/interfaces/ConfigRepository.h
     src/app/interfaces/SettingsStore.h
+    src/app/interfaces/ThemeService.h
+    src/app/interfaces/SystemProxyGateway.h
+    src/app/interfaces/AdminActions.h
     src/app/impl/ConfigRepositoryAdapter.h
     src/app/impl/SettingsStoreAdapter.h
+    src/app/impl/ThemeServiceAdapter.h
+    src/app/impl/SystemProxyAdapter.h
+    src/app/impl/AdminActionsAdapter.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
     src/core/KernelService.h
@@ -156,6 +166,7 @@ set(HEADERS
     src/views/proxy/ProxyView.h
     src/views/subscription/SubscriptionView.h
     src/views/subscription/SubscriptionCard.h
+    src/views/subscription/SubscriptionController.h
     src/views/connections/ConnectionsView.h
     src/views/rules/RulesView.h
     src/views/logs/LogView.h

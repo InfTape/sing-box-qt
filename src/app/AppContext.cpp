@@ -6,6 +6,9 @@
 #include "network/SubscriptionService.h"
 #include "app/impl/ConfigRepositoryAdapter.h"
 #include "app/impl/SettingsStoreAdapter.h"
+#include "app/impl/ThemeServiceAdapter.h"
+#include "app/impl/SystemProxyAdapter.h"
+#include "app/impl/AdminActionsAdapter.h"
 
 AppContext::AppContext()
 {
@@ -14,10 +17,14 @@ AppContext::AppContext()
     m_subscriptionService = std::make_unique<SubscriptionService>();
     m_configRepository = std::make_unique<ConfigRepositoryAdapter>();
     m_settingsStore = std::make_unique<SettingsStoreAdapter>();
+    m_themeService = std::make_unique<ThemeServiceAdapter>();
+    m_systemProxyGateway = std::make_unique<SystemProxyAdapter>();
+    m_adminActions = std::make_unique<AdminActionsAdapter>();
     m_proxyController = std::make_unique<ProxyController>(m_kernelService.get(),
                                                           m_subscriptionService.get(),
                                                           m_configRepository.get(),
-                                                          m_settingsStore.get());
+                                                          m_settingsStore.get(),
+                                                          m_systemProxyGateway.get());
 }
 
 AppContext::~AppContext() = default;
@@ -50,4 +57,19 @@ ConfigRepository* AppContext::configRepository() const
 SettingsStore* AppContext::settingsStore() const
 {
     return m_settingsStore.get();
+}
+
+ThemeService* AppContext::themeService() const
+{
+    return m_themeService.get();
+}
+
+SystemProxyGateway* AppContext::systemProxy() const
+{
+    return m_systemProxyGateway.get();
+}
+
+AdminActions* AppContext::adminActions() const
+{
+    return m_adminActions.get();
 }

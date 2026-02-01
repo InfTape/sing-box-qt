@@ -32,6 +32,8 @@
 #include "system/AdminHelper.h"
 #include "app/AppContext.h"
 #include "app/interfaces/SettingsStore.h"
+#include "app/interfaces/ThemeService.h"
+#include "app/interfaces/AdminActions.h"
 
 namespace {
 QIcon svgIcon(const QString &resourcePath, int size, const QColor &color)
@@ -84,6 +86,8 @@ MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
       , m_proxyController(ctx.proxyController())
       , m_subscriptionService(ctx.subscriptionService())
       , m_settingsStore(ctx.settingsStore())
+      , m_themeService(ctx.themeService())
+      , m_adminActions(ctx.adminActions())
 {
     setupUI();
     if (m_proxyController) {
@@ -100,7 +104,11 @@ MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
         QString configPath = m_proxyController->activeConfigPath();
         if (!configPath.isEmpty())
         {
-            m_homeView->setProxyMode(ConfigManager::instance().readClashDefaultMode(configPath));
+            if (m_ctx.configRepository()) {
+                m_homeView->setProxyMode(m_ctx.configRepository()->readClashDefaultMode(configPath));
+            } else {
+                m_homeView->setProxyMode(ConfigManager::instance().readClashDefaultMode(configPath));
+            }
         }
     }
     updateStyle();
@@ -285,8 +293,13 @@ void MainWindow::setupKernelConnections()
 
 void MainWindow::setupThemeConnections()
 {
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &MainWindow::updateStyle);
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
+                this, &MainWindow::updateStyle);
+    } else {
+        connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
+                this, &MainWindow::updateStyle);
+    }
 }
 
 void MainWindow::setupSubscriptionConnections()
@@ -339,7 +352,8 @@ void MainWindow::setupHomeViewConnections()
 
     connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled)
             {
-        if (enabled && !AdminHelper::isAdmin()) {
+        const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : AdminHelper::isAdmin();
+        if (enabled && !isAdmin) {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
             box.setWindowTitle(tr("Administrator permission required"));
@@ -357,7 +371,9 @@ void MainWindow::setupHomeViewConnections()
                     AppSettings::instance().setSystemProxyEnabled(false);
                     AppSettings::instance().setTunEnabled(true);
                 }
-                if (!AdminHelper::restartAsAdmin()) {
+                const bool restarted = m_adminActions ? m_adminActions->restartAsAdmin()
+                                                      : AdminHelper::restartAsAdmin();
+                if (!restarted) {
                     if (m_settingsStore) {
                         m_settingsStore->setTunEnabled(false);
                     } else {
@@ -480,8 +496,12 @@ void MainWindow::onStartStopClicked()
 
 void MainWindow::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
+    if (m_themeService) {
+        setStyleSheet(m_themeService->loadStyleSheet(":/styles/main_window.qss"));
+    } else {
+        ThemeManager &tm = ThemeManager::instance();
+        setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
+    }
 
     updateNavIcons();
     applyStartStopStyle();
@@ -514,8 +534,13 @@ void MainWindow::updateNavIcons()
         return;
     }
 
-    ThemeManager &tm = ThemeManager::instance();
-    const QColor iconColor = tm.getColor("text-primary");
+    QColor iconColor;
+    if (m_themeService) {
+        iconColor = m_themeService->color("text-primary");
+    } else {
+        ThemeManager &tm = ThemeManager::instance();
+        iconColor = tm.getColor("text-primary");
+    }
     const int iconSize = 20;
 
     if (QListWidgetItem *homeItem = m_navList->item(0))

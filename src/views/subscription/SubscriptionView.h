@@ -60,6 +60,7 @@ protected:
     QList<SubscriptionCard*> m_cards;
     int m_columnCount = 0;
     SubscriptionService *m_subscriptionService;
+    class SubscriptionController *m_subscriptionController;
     QTimer *m_autoUpdateTimer;
 };
 

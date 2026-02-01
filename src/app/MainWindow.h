@@ -19,6 +19,8 @@ class KernelService;
 class ProxyService;
 class ProxyController;
 class SettingsStore;
+class ThemeService;
+class AdminActions;
 
 class AppContext;
 
@@ -87,6 +89,8 @@ private:
     ProxyController *m_proxyController;
     SubscriptionService *m_subscriptionService;
     SettingsStore *m_settingsStore;
+    ThemeService *m_themeService;
+    AdminActions *m_adminActions;
 };
 
 #endif // MAINWINDOW_H

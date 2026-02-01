@@ -12,17 +12,20 @@
 
 #include "app/interfaces/ConfigRepository.h"
 #include "app/interfaces/SettingsStore.h"
+#include "app/interfaces/SystemProxyGateway.h"
 
 ProxyController::ProxyController(KernelService *kernel,
                                  SubscriptionService *subscription,
                                  ConfigRepository *configRepo,
                                  SettingsStore *settings,
+                                 SystemProxyGateway *systemProxy,
                                  QObject *parent)
     : QObject(parent)
     , m_kernel(kernel)
     , m_subscription(subscription)
     , m_configRepo(configRepo)
     , m_settings(settings)
+    , m_systemProxy(systemProxy)
 {
 }
 
@@ -152,8 +155,13 @@ bool ProxyController::setSystemProxyEnabled(bool enabled)
 {
     SettingsStore *settings = m_settings;
     if (enabled) {
-        int port = ConfigManager::instance().getMixedPort();
-        SystemProxy::setProxy("127.0.0.1", port);
+        const int port = m_configRepo ? m_configRepo->mixedPort()
+                                      : ConfigManager::instance().getMixedPort();
+        if (m_systemProxy) {
+            m_systemProxy->setProxy("127.0.0.1", port);
+        } else {
+            SystemProxy::setProxy("127.0.0.1", port);
+        }
         if (settings) {
             settings->setSystemProxyEnabled(true);
             settings->setTunEnabled(false);
@@ -162,7 +170,11 @@ bool ProxyController::setSystemProxyEnabled(bool enabled)
             AppSettings::instance().setTunEnabled(false);
         }
     } else {
-        SystemProxy::clearProxy();
+        if (m_systemProxy) {
+            m_systemProxy->clearProxy();
+        } else {
+            SystemProxy::clearProxy();
+        }
         if (settings) {
             settings->setSystemProxyEnabled(false);
         } else {
@@ -175,7 +187,11 @@ bool ProxyController::setSystemProxyEnabled(bool enabled)
 bool ProxyController::setTunModeEnabled(bool enabled)
 {
     if (enabled) {
-        SystemProxy::clearProxy();
+        if (m_systemProxy) {
+            m_systemProxy->clearProxy();
+        } else {
+            SystemProxy::clearProxy();
+        }
         if (m_settings) {
             m_settings->setSystemProxyEnabled(false);
         } else {
@@ -195,11 +211,18 @@ bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning)
     QString configPath = activeConfigPath();
     if (configPath.isEmpty()) return false;
 
-    QJsonObject config = ConfigManager::instance().loadConfig(configPath);
+    QJsonObject config = m_configRepo
+                             ? m_configRepo->loadConfig(configPath)
+                             : ConfigManager::instance().loadConfig(configPath);
     if (config.isEmpty()) return false;
 
-    ConfigManager::instance().applySettingsToConfig(config);
-    ConfigManager::instance().saveConfig(configPath, config);
+    if (m_configRepo) {
+        m_configRepo->applySettingsToConfig(config);
+        m_configRepo->saveConfig(configPath, config);
+    } else {
+        ConfigManager::instance().applySettingsToConfig(config);
+        ConfigManager::instance().saveConfig(configPath, config);
+    }
 
     if (restartIfRunning && m_kernel && m_kernel->isRunning()) {
         m_kernel->restartWithConfig(configPath);
@@ -213,14 +236,27 @@ void ProxyController::updateSystemProxyForKernelState(bool running)
                                         ? m_settings->systemProxyEnabled()
                                         : AppSettings::instance().systemProxyEnabled();
     if (!systemProxyEnabled) {
-        SystemProxy::clearProxy();
+        if (m_systemProxy) {
+            m_systemProxy->clearProxy();
+        } else {
+            SystemProxy::clearProxy();
+        }
         return;
     }
 
     if (running) {
-        int port = ConfigManager::instance().getMixedPort();
-        SystemProxy::setProxy("127.0.0.1", port);
+        const int port = m_configRepo ? m_configRepo->mixedPort()
+                                      : ConfigManager::instance().getMixedPort();
+        if (m_systemProxy) {
+            m_systemProxy->setProxy("127.0.0.1", port);
+        } else {
+            SystemProxy::setProxy("127.0.0.1", port);
+        }
     } else {
-        SystemProxy::clearProxy();
+        if (m_systemProxy) {
+            m_systemProxy->clearProxy();
+        } else {
+            SystemProxy::clearProxy();
+        }
     }
 }

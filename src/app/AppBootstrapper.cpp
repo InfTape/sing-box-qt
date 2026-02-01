@@ -33,12 +33,18 @@ bool AppBootstrapper::initialize()
     if (!setupDatabase()) {
         return false;
     }
-    setupTheme();
-    loadTranslations();
 
     if (!m_context) {
         m_context = std::make_unique<AppContext>();
     }
+
+    if (m_context->themeService()) {
+        m_context->themeService()->init();
+    } else {
+        setupTheme();
+    }
+    loadTranslations();
+
     return true;
 }
 

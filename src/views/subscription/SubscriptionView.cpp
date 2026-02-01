@@ -3,6 +3,7 @@
 #include "dialogs/subscription/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
 #include "utils/ThemeManager.h"
+#include "views/subscription/SubscriptionController.h"
 #include "views/subscription/SubscriptionCard.h"
 #include "dialogs/subscription/NodeEditDialog.h"
 #include <QApplication>
@@ -26,6 +27,7 @@
 SubscriptionView::SubscriptionView(SubscriptionService *service, QWidget *parent)
     : QWidget(parent)
     , m_subscriptionService(service)
+    , m_subscriptionController(new SubscriptionController(service))
     , m_autoUpdateTimer(new QTimer(this))
 {
     Q_ASSERT(m_subscriptionService);
@@ -146,21 +148,21 @@ void SubscriptionView::openSubscriptionDialog()
 
     if (isManual) {
         const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
-        m_subscriptionService->addManualSubscription(content,
-                                                     dialog.name(),
-                                                     useOriginal,
-                                                     dialog.isUriList(),
-                                                     true,
-                                                     dialog.sharedRulesEnabled(),
-                                                     dialog.ruleSets());
+        m_subscriptionController->addManual(content,
+                                            dialog.name(),
+                                            useOriginal,
+                                            dialog.isUriList(),
+                                            true,
+                                            dialog.sharedRulesEnabled(),
+                                            dialog.ruleSets());
     } else {
-        m_subscriptionService->addUrlSubscription(dialog.url(),
-                                                 dialog.name(),
-                                                 useOriginal,
-                                                 interval,
-                                                 true,
-                                                 dialog.sharedRulesEnabled(),
-                                                 dialog.ruleSets());
+        m_subscriptionController->addUrl(dialog.url(),
+                                         dialog.name(),
+                                         useOriginal,
+                                         interval,
+                                         true,
+                                         dialog.sharedRulesEnabled(),
+                                         dialog.ruleSets());
     }
 }
 
@@ -175,20 +177,20 @@ void SubscriptionView::onAddNodeClicked()
         QString content = doc.toJson(QJsonDocument::Compact);
         
         QString name = node["tag"].toString();
-        m_subscriptionService->addManualSubscription(content,
-                                                     name,
-                                                     false,
-                                                     false,
-                                                     true,
-                                                     dialog.sharedRulesEnabled(),
-                                                     dialog.ruleSets());
+        m_subscriptionController->addManual(content,
+                                            name,
+                                            false,
+                                            false,
+                                            true,
+                                            dialog.sharedRulesEnabled(),
+                                            dialog.ruleSets());
     }
 }
 
 void SubscriptionView::onAutoUpdateTimer()
 {
-    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
-    const int activeIndex = m_subscriptionService->getActiveIndex();
+    const QList<SubscriptionInfo> subs = m_subscriptionController->subscriptions();
+    const int activeIndex = m_subscriptionController->activeIndex();
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
 
     for (int i = 0; i < subs.count(); ++i) {
@@ -198,7 +200,7 @@ void SubscriptionView::onAutoUpdateTimer()
         if (interval <= 0) continue;
         if (item.lastUpdate <= 0) continue;
         if (now - item.lastUpdate >= static_cast<qint64>(interval) * 60 * 1000) {
-            m_subscriptionService->refreshSubscription(item.id, i == activeIndex);
+            m_subscriptionController->refresh(item.id, i == activeIndex);
         }
     }
 }
@@ -223,7 +225,7 @@ void SubscriptionView::wireCardSignals(SubscriptionCard *card)
 
 void SubscriptionView::handleUseSubscription(const QString &id)
 {
-    SubscriptionActions::useSubscription(m_subscriptionService, id);
+    SubscriptionActions::useSubscription(m_subscriptionController->service(), id);
 }
 
 void SubscriptionView::handleEditSubscription(const QString &id)
@@ -246,7 +248,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
         QString content = QJsonDocument(arr).toJson(QJsonDocument::Compact);
         QString name = newNode["tag"].toString();
 
-        m_subscriptionService->updateSubscriptionMeta(
+        m_subscriptionController->service()->updateSubscriptionMeta(
             id,
             name,
             target.url,
@@ -270,7 +272,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
 
         const bool isManual = dialog.isManual();
         const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
-        m_subscriptionService->updateSubscriptionMeta(
+        m_subscriptionController->service()->updateSubscriptionMeta(
             id,
             dialog.name(),
             dialog.url(),
@@ -287,7 +289,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
 void SubscriptionView::handleEditConfig(const QString &id)
 {
     Q_UNUSED(id)
-    const QString current = m_subscriptionService->getCurrentConfig();
+    const QString current = m_subscriptionController->currentConfig();
     if (current.isEmpty()) {
         QMessageBox::warning(this, tr("Notice"), tr("Current config not found"));
         return;
@@ -295,7 +297,7 @@ void SubscriptionView::handleEditConfig(const QString &id)
     ConfigEditDialog dialog(this);
     dialog.setContent(current);
     if (dialog.exec() == QDialog::Accepted) {
-        if (!m_subscriptionService->saveCurrentConfig(dialog.content(), true)) {
+        if (!m_subscriptionController->saveCurrentConfig(dialog.content(), true)) {
             QMessageBox::warning(this, tr("Notice"), tr("Failed to save config"));
         }
     }
@@ -303,12 +305,12 @@ void SubscriptionView::handleEditConfig(const QString &id)
 
 void SubscriptionView::handleRefreshSubscription(const QString &id, bool applyRuntime)
 {
-    SubscriptionActions::refreshSubscription(m_subscriptionService, id, applyRuntime);
+    SubscriptionActions::refreshSubscription(m_subscriptionController->service(), id, applyRuntime);
 }
 
 void SubscriptionView::handleRollbackSubscription(const QString &id)
 {
-    if (!SubscriptionActions::rollbackSubscription(m_subscriptionService, id)) {
+    if (!SubscriptionActions::rollbackSubscription(m_subscriptionController->service(), id)) {
         QMessageBox::warning(this, tr("Notice"), tr("No config available to roll back"));
     }
 }
@@ -317,7 +319,7 @@ void SubscriptionView::handleDeleteSubscription(const QString &id)
 {
     if (QMessageBox::question(this, tr("Confirm"),
                               tr("Are you sure you want to delete this subscription?")) == QMessageBox::Yes) {
-        m_subscriptionService->removeSubscription(id);
+        m_subscriptionController->remove(id);
     }
 }
 
@@ -330,7 +332,7 @@ void SubscriptionView::handleCopyLink(const QString &id)
 
 bool SubscriptionView::getSubscriptionById(const QString &id, SubscriptionInfo *out) const
 {
-    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
+    const QList<SubscriptionInfo> subs = m_subscriptionController->subscriptions();
     for (const auto &sub : subs) {
         if (sub.id == id) {
             if (out) *out = sub;
@@ -355,8 +357,8 @@ void SubscriptionView::refreshList()
     }
     m_cards.clear();
 
-    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
-    const int activeIndex = m_subscriptionService->getActiveIndex();
+    const QList<SubscriptionInfo> subs = m_subscriptionController->subscriptions();
+    const int activeIndex = m_subscriptionController->activeIndex();
     for (int i = 0; i < subs.count(); ++i) {
         SubscriptionCard *card = createSubscriptionCard(subs[i], i == activeIndex);
         m_cards.append(card);

@@ -5,6 +5,9 @@
 
 #include "app/interfaces/ConfigRepository.h"
 #include "app/interfaces/SettingsStore.h"
+#include "app/interfaces/ThemeService.h"
+#include "app/interfaces/SystemProxyGateway.h"
+#include "app/interfaces/AdminActions.h"
 
 class KernelService;
 class ProxyService;
@@ -26,6 +29,9 @@ public:
     SubscriptionService* subscriptionService() const;
     ConfigRepository* configRepository() const;
     SettingsStore* settingsStore() const;
+    ThemeService* themeService() const;
+    SystemProxyGateway* systemProxy() const;
+    AdminActions* adminActions() const;
 
 private:
     std::unique_ptr<KernelService> m_kernelService;
@@ -34,6 +40,9 @@ private:
     std::unique_ptr<ProxyController> m_proxyController;
     std::unique_ptr<ConfigRepository> m_configRepository;
     std::unique_ptr<SettingsStore> m_settingsStore;
+    std::unique_ptr<ThemeService> m_themeService;
+    std::unique_ptr<SystemProxyGateway> m_systemProxyGateway;
+    std::unique_ptr<AdminActions> m_adminActions;
 };
 
 #endif // APPCONTEXT_H

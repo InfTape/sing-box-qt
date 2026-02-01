@@ -10,6 +10,10 @@ public:
     bool generateConfigWithNodes(const QJsonArray &nodes, const QString &targetPath = QString()) override;
     bool updateClashDefaultMode(const QString &configPath, const QString &mode, QString *error = nullptr) override;
     QString readClashDefaultMode(const QString &configPath) const override;
+    QJsonObject loadConfig(const QString &path) override;
+    bool saveConfig(const QString &path, const QJsonObject &config) override;
+    void applySettingsToConfig(QJsonObject &config) override;
+    int mixedPort() const override;
 };
 
 #endif // CONFIGREPOSITORYADAPTER_H
