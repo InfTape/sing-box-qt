@@ -5,8 +5,8 @@
 #include "utils/Logger.h"
 
 #ifdef Q_OS_WIN
-#include <windows.h>
 #include <shellapi.h>
+#include <windows.h>
 #endif
 AdminHelper::AdminHelper(QObject* parent) : QObject(parent) {}
 bool AdminHelper::isAdmin() {

@@ -6,9 +6,9 @@
 #include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QThreadPool>
 #include <QTimer>
 #include <QtConcurrent>
-#include <QThreadPool>
 
 #include "app/interfaces/ConfigRepository.h"
 #include "core/DelayTestService.h"

@@ -982,8 +982,6 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult& result)
     }
   }
 
-  // ����ѡ��̬����ͼЧ����������Խ�������ʽ��ʧ
-
   if (QTreeWidgetItem* current = m_treeWidget->currentItem()) {
     updateNodeRowSelected(current, current->isSelected());
   }
