@@ -1,4 +1,4 @@
-#ifndef NODEEDITDIALOG_H
+﻿#ifndef NODEEDITDIALOG_H
 #define NODEEDITDIALOG_H
 
 #include <QDialog>
@@ -14,12 +14,13 @@ class QWidget;
 class QCheckBox;
 class QLabel;
 class QToolButton;
+class ThemeService;
 
 class NodeEditDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit NodeEditDialog(QWidget *parent = nullptr);
+    explicit NodeEditDialog(ThemeService *themeService, QWidget *parent = nullptr);
     ~NodeEditDialog();
 
     void setNodeData(const QJsonObject &node);
@@ -46,6 +47,7 @@ private:
     QCheckBox *m_sharedRulesCheck;
     QToolButton *m_ruleSetsBtn;
     QStringList m_ruleSets;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // NODEEDITDIALOG_H

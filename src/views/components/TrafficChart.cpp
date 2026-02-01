@@ -1,11 +1,12 @@
-#include "TrafficChart.h"
-#include "app/ThemeProvider.h"
+﻿#include "TrafficChart.h"
+#include "app/interfaces/ThemeService.h"
 #include <QPainterPath>
 #include <QDateTime>
 #include <cmath>
 
-TrafficChart::TrafficChart(QWidget *parent)
+TrafficChart::TrafficChart(ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
+    , m_themeService(themeService)
     , m_updateTimer(new QTimer(this))
 {
     setMinimumHeight(180);
@@ -37,8 +38,8 @@ TrafficChart::TrafficChart(QWidget *parent)
     updateStyle();
     
     // Connect to theme changes
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &TrafficChart::updateStyle);
     }
 }
@@ -66,7 +67,7 @@ void TrafficChart::clear()
 
 void TrafficChart::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (!ts) return;
     m_uploadColor = ts->color("success");
     m_downloadColor = ts->color("primary");

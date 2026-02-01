@@ -57,7 +57,7 @@ bool AppBootstrapper::createUI()
     m_mainWindow = std::make_unique<MainWindow>(*m_context);
     m_mainWindow->setWindowIcon(QIcon(":/icons/app.png"));
 
-    m_trayIcon = std::make_unique<TrayIcon>(m_mainWindow.get());
+    m_trayIcon = std::make_unique<TrayIcon>(m_mainWindow.get(), m_context ? m_context->themeService() : nullptr);
     m_trayIcon->show();
 
     Logger::info("Application initialized, UI ready");

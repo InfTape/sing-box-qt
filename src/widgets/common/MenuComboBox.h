@@ -4,6 +4,7 @@
 #include <QComboBox>
 
 class QWheelEvent;
+class ThemeService;
 
 class RoundedMenu;
 
@@ -12,9 +13,10 @@ class MenuComboBox : public QComboBox
     Q_OBJECT
 
 public:
-    explicit MenuComboBox(QWidget *parent = nullptr);
+    explicit MenuComboBox(QWidget *parent = nullptr, ThemeService *themeService = nullptr);
     void setWheelEnabled(bool enabled);
     bool isWheelEnabled() const { return m_wheelEnabled; }
+    void setThemeService(ThemeService *themeService);
 
 protected:
     void showPopup() override;
@@ -26,6 +28,7 @@ private:
 
     RoundedMenu *m_menu = nullptr;
     bool m_wheelEnabled = true;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // MENUCOMBOBOX_H

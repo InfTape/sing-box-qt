@@ -3,7 +3,7 @@
 #include "services/subscription/SubscriptionParser.h"
 #include "storage/DatabaseService.h"
 #include "storage/SubscriptionConfigStore.h"
-#include "app/ConfigProvider.h"
+#include "app/interfaces/ConfigRepository.h"
 #include "services/config/ConfigMutator.h"
 #include "services/rules/SharedRulesStore.h"
 #include "utils/Logger.h"
@@ -24,9 +24,10 @@ namespace {
 constexpr qint64 kUnsetValue = -1;
 } // namespace
 
-SubscriptionService::SubscriptionService(QObject *parent)
+SubscriptionService::SubscriptionService(ConfigRepository *configRepo, QObject *parent)
     : QObject(parent)
     , m_activeIndex(-1)
+    , m_configRepo(configRepo)
 {
     QJsonArray subs = DatabaseService::instance().getSubscriptions();
     for (const auto &val : subs) {
@@ -152,9 +153,8 @@ void SubscriptionService::updateSubscriptionUserinfoFromHeader(SubscriptionInfo 
 void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo &info)
 {
     if (info.configPath.isEmpty()) return;
-    ConfigRepository *cfg = ConfigProvider::instance();
-    if (!cfg) return;
-    QJsonObject config = cfg->loadConfig(info.configPath);
+    if (!m_configRepo) return;
+    QJsonObject config = m_configRepo->loadConfig(info.configPath);
     if (config.isEmpty()) return;
 
     QJsonArray merged;
@@ -166,7 +166,7 @@ void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo &info)
         }
     }
     ConfigMutator::applySharedRules(config, merged, info.enableSharedRules && !merged.isEmpty());
-    cfg->saveConfig(info.configPath, config);
+    m_configRepo->saveConfig(info.configPath, config);
 }
 void SubscriptionService::addUrlSubscription(const QString &url,
                                              const QString &name,
@@ -185,8 +185,7 @@ void SubscriptionService::addUrlSubscription(const QString &url,
     QString subName = name.trimmed().isEmpty() ? QUrl(trimmedUrl).host() : name.trimmed();
     QString id = generateId();
     const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
-    ConfigRepository *cfg = ConfigProvider::instance();
-    const QString configPath = cfg ? cfg->getConfigDir() + "/" + configName : QString();
+    const QString configPath = m_configRepo ? m_configRepo->getConfigDir() + "/" + configName : QString();
     if (configPath.isEmpty()) {
         emit errorOccurred(tr("Config directory not available"));
         return;
@@ -230,20 +229,20 @@ void SubscriptionService::addUrlSubscription(const QString &url,
                 emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
                 return;
             }
-            saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), configPath);
+            saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, QString::fromUtf8(data), configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(QString::fromUtf8(data));
             if (nodes.isEmpty() && isJsonContent(QString::fromUtf8(data))) {
                 // Fall back to saving original config when JSON is a full config.
                 info.useOriginalConfig = true;
-                saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), configPath);
+                saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, QString::fromUtf8(data), configPath);
             } else {
                 if (nodes.isEmpty()) {
                     emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                     return;
                 }
                 info.nodeCount = nodes.count();
-                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
+                saved = SubscriptionConfigStore::saveConfigWithNodes(m_configRepo, nodes, configPath);
                 DatabaseService::instance().saveSubscriptionNodes(id, nodes);
             }
         }
@@ -295,8 +294,7 @@ void SubscriptionService::addManualSubscription(const QString &content,
     QString subName = name.trimmed().isEmpty() ? tr("Manual subscription") : name.trimmed();
     QString id = generateId();
     const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
-    ConfigRepository *cfgRepo = ConfigProvider::instance();
-    const QString configPath = cfgRepo ? cfgRepo->getConfigDir() + "/" + configName : QString();
+    const QString configPath = m_configRepo ? m_configRepo->getConfigDir() + "/" + configName : QString();
     if (configPath.isEmpty()) {
         emit errorOccurred(tr("Config directory not available"));
         return;
@@ -318,19 +316,19 @@ void SubscriptionService::addManualSubscription(const QString &content,
 
     bool saved = false;
     if (useOriginalConfig) {
-        saved = SubscriptionConfigStore::saveOriginalConfig(trimmed, configPath);
+        saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, trimmed, configPath);
     } else {
         QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(trimmed);
         if (nodes.isEmpty() && isJsonContent(trimmed)) {
             info.useOriginalConfig = true;
-            saved = SubscriptionConfigStore::saveOriginalConfig(trimmed, configPath);
+            saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, trimmed, configPath);
         } else {
             if (nodes.isEmpty()) {
                 emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                 return;
             }
             info.nodeCount = nodes.count();
-            saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, configPath);
+            saved = SubscriptionConfigStore::saveConfigWithNodes(m_configRepo, nodes, configPath);
             DatabaseService::instance().saveSubscriptionNodes(id, nodes);
         }
     }
@@ -402,19 +400,19 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
 
         bool saved = false;
         if (sub->useOriginalConfig) {
-            saved = SubscriptionConfigStore::saveOriginalConfig(sub->manualContent, sub->configPath);
+            saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, sub->manualContent, sub->configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(sub->manualContent);
             if (nodes.isEmpty() && isJsonContent(sub->manualContent)) {
                 sub->useOriginalConfig = true;
-                saved = SubscriptionConfigStore::saveOriginalConfig(sub->manualContent, sub->configPath);
+                saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, sub->manualContent, sub->configPath);
             } else {
                 if (nodes.isEmpty()) {
                     emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                     return;
                 }
                 sub->nodeCount = nodes.count();
-                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
+                saved = SubscriptionConfigStore::saveConfigWithNodes(m_configRepo, nodes, sub->configPath);
                 DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
             }
         }
@@ -462,19 +460,19 @@ void SubscriptionService::refreshSubscription(const QString &id, bool applyRunti
                 emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
                 return;
             }
-            saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), sub->configPath);
+            saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, QString::fromUtf8(data), sub->configPath);
         } else {
             QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(QString::fromUtf8(data));
             if (nodes.isEmpty() && isJsonContent(QString::fromUtf8(data))) {
                 sub->useOriginalConfig = true;
-                saved = SubscriptionConfigStore::saveOriginalConfig(QString::fromUtf8(data), sub->configPath);
+                saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, QString::fromUtf8(data), sub->configPath);
             } else {
                 if (nodes.isEmpty()) {
                     emit errorOccurred(tr("Failed to extract nodes from subscription content; check format"));
                     return;
                 }
                 sub->nodeCount = nodes.count();
-                saved = SubscriptionConfigStore::saveConfigWithNodes(nodes, sub->configPath);
+                saved = SubscriptionConfigStore::saveConfigWithNodes(m_configRepo, nodes, sub->configPath);
                 DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
             }
         }
@@ -560,9 +558,8 @@ void SubscriptionService::clearActiveSubscription()
 }
 QString SubscriptionService::getCurrentConfig() const
 {
-    ConfigRepository *cfg = ConfigProvider::instance();
     const QString path = m_activeConfigPath.isEmpty()
-        ? (cfg ? cfg->getActiveConfigPath() : QString())
+        ? (m_configRepo ? m_configRepo->getActiveConfigPath() : QString())
         : m_activeConfigPath;
     if (path.isEmpty()) {
         return QString();
@@ -579,10 +576,9 @@ QString SubscriptionService::getCurrentConfig() const
 
 bool SubscriptionService::saveCurrentConfig(const QString &content, bool applyRuntime)
 {
-    ConfigRepository *cfg = ConfigProvider::instance();
     QString targetPath = m_activeConfigPath;
-    if (targetPath.isEmpty() && cfg) {
-        targetPath = cfg->getActiveConfigPath();
+    if (targetPath.isEmpty() && m_configRepo) {
+        targetPath = m_configRepo->getActiveConfigPath();
     }
     if (targetPath.isEmpty()) {
         return false;
@@ -594,7 +590,7 @@ bool SubscriptionService::saveCurrentConfig(const QString &content, bool applyRu
         return false;
     }
 
-    if (!cfg || !cfg->saveConfig(targetPath, doc.object())) {
+    if (!m_configRepo || !m_configRepo->saveConfig(targetPath, doc.object())) {
         return false;
     }
 

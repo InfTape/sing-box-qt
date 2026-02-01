@@ -7,6 +7,7 @@
 class QAction;
 class QLabel;
 class QPushButton;
+class ThemeService;
 struct SubscriptionInfo;
 
 class SubscriptionCard : public QFrame
@@ -14,7 +15,7 @@ class SubscriptionCard : public QFrame
     Q_OBJECT
 
 public:
-    explicit SubscriptionCard(const SubscriptionInfo &info, bool active, QWidget *parent = nullptr);
+    explicit SubscriptionCard(const SubscriptionInfo &info, bool active, ThemeService *themeService, QWidget *parent = nullptr);
     QString subscriptionId() const { return m_subId; }
     void setActive(bool active);
 
@@ -37,6 +38,7 @@ private:
     QLabel *m_statusTag = nullptr;
     QPushButton *m_useBtn = nullptr;
     QAction *m_editConfigAction = nullptr;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // SUBSCRIPTIONCARD_H

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+﻿cmake_minimum_required(VERSION 3.20)
 project(sing-box-qt VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -51,8 +51,6 @@ set(SOURCES
     src/app/impl/AdminActionsAdapter.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
-    src/app/ThemeProvider.cpp
-    src/app/ConfigProvider.cpp
     src/core/KernelService.cpp
     src/core/ProcessManager.cpp
     src/core/ProxyService.cpp
@@ -133,8 +131,6 @@ set(HEADERS
     src/app/impl/AdminActionsAdapter.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
-    src/app/ThemeProvider.h
-    src/app/ConfigProvider.h
     src/core/KernelService.h
     src/core/ProcessManager.h
     src/core/ProxyService.h

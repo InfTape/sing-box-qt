@@ -6,12 +6,14 @@
 #include "services/rules/RuleConfigService.h"
 
 class QListWidget;
+class ThemeService;
+class ConfigRepository;
 
 class ManageRuleSetsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit ManageRuleSetsDialog(QWidget *parent = nullptr);
+    explicit ManageRuleSetsDialog(ConfigRepository *configRepo, ThemeService *themeService, QWidget *parent = nullptr);
 
 signals:
     void ruleSetsChanged();
@@ -36,6 +38,8 @@ private:
 
     QListWidget *m_list;
     QListWidget *m_ruleList;
+    ConfigRepository *m_configRepo = nullptr;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // MANAGERULESETSDIALOG_H

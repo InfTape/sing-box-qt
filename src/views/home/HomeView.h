@@ -10,13 +10,14 @@
 class QCheckBox;
 class TrafficChart;
 class ToggleSwitch;
+class ThemeService;
 
 class HomeView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit HomeView(QWidget *parent = nullptr);
+    explicit HomeView(ThemeService *themeService, QWidget *parent = nullptr);
     bool isSystemProxyEnabled() const;
     void setSystemProxyEnabled(bool enabled);
     bool isTunModeEnabled() const;
@@ -45,6 +46,7 @@ private slots:
 
 private:
     void setupUI();
+    void setCardActive(QWidget *card, bool active);
     QString formatDuration(int seconds) const;
     QWidget* createStatCard(const QString &iconText, const QString &accentKey,
                             const QString &title, QLabel **valueLabel, QLabel **subLabel);
@@ -78,6 +80,7 @@ private:
     qint64 m_totalUpload = 0;
     qint64 m_totalDownload = 0;
     QElapsedTimer m_trafficTimer;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // HOMEVIEW_H

@@ -1,4 +1,4 @@
-#ifndef SUBSCRIPTIONFORMDIALOG_H
+﻿#ifndef SUBSCRIPTIONFORMDIALOG_H
 #define SUBSCRIPTIONFORMDIALOG_H
 
 #include <QDialog>
@@ -13,13 +13,14 @@ class QTextEdit;
 class QToolButton;
 class RoundedMenu;
 class QLineEdit;
+class ThemeService;
 
-// 多选规则集下拉控件
+// 澶氶€夎鍒欓泦涓嬫媺鎺т欢
 class MultiSelectMenuBox : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MultiSelectMenuBox(QWidget *parent = nullptr);
+    explicit MultiSelectMenuBox(QWidget *parent = nullptr, ThemeService *themeService = nullptr);
     void setOptions(const QStringList &options);
     void setSelected(const QStringList &selected);
     QStringList selected() const;
@@ -35,6 +36,7 @@ private:
     RoundedMenu *m_menu = nullptr;
     QStringList m_options;
     QStringList m_selected;
+    ThemeService *m_themeService = nullptr;
 };
 
 struct SubscriptionInfo;
@@ -44,7 +46,7 @@ class SubscriptionFormDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit SubscriptionFormDialog(QWidget *parent = nullptr);
+    explicit SubscriptionFormDialog(ThemeService *themeService, QWidget *parent = nullptr);
 
     void setEditData(const SubscriptionInfo &info);
 
@@ -76,6 +78,7 @@ private:
     MultiSelectMenuBox *m_ruleSetsBox;
     MenuComboBox *m_autoUpdateCombo;
     QLabel *m_hintLabel;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // SUBSCRIPTIONFORMDIALOG_H

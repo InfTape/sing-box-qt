@@ -1,6 +1,6 @@
-#include "widgets/rules/RuleCard.h"
+﻿#include "widgets/rules/RuleCard.h"
 #include "utils/rule/RuleUtils.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAction>
 #include <QHBoxLayout>
@@ -12,16 +12,17 @@
 #include <QSizePolicy>
 #include <QVBoxLayout>
 
-RuleCard::RuleCard(const RuleItem &rule, int index, QWidget *parent)
+RuleCard::RuleCard(const RuleItem &rule, int index, ThemeService *themeService, QWidget *parent)
     : QFrame(parent)
     , m_rule(rule)
     , m_index(index)
+    , m_themeService(themeService)
 {
     setupUI();
     updateStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &RuleCard::updateStyle);
     }
 }
@@ -57,8 +58,8 @@ void RuleCard::setupUI()
         m_menu = new RoundedMenu(this);
         m_menu->setObjectName("RuleMenu");
         updateMenuTheme();
-        if (ThemeProvider::instance()) {
-            connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, &RuleCard::updateMenuTheme);
+        if (m_themeService) {
+            connect(m_themeService, &ThemeService::themeChanged, this, &RuleCard::updateMenuTheme);
         }
 
         QAction *editTypeAct = m_menu->addAction(tr("Edit Match Type"));
@@ -114,7 +115,7 @@ void RuleCard::setupUI()
 
 void RuleCard::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (!ts) return;
     QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
     if (qss.isEmpty()) {
@@ -126,7 +127,7 @@ void RuleCard::updateStyle()
 void RuleCard::updateMenuTheme()
 {
     if (!m_menu) return;
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) {
         m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
     }

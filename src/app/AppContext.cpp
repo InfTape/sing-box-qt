@@ -9,15 +9,13 @@
 #include "app/impl/ThemeServiceAdapter.h"
 #include "app/impl/SystemProxyAdapter.h"
 #include "app/impl/AdminActionsAdapter.h"
-#include "app/ThemeProvider.h"
-#include "app/ConfigProvider.h"
 
 AppContext::AppContext()
 {
+    m_configRepository = std::make_unique<ConfigRepositoryAdapter>();
     m_kernelService = std::make_unique<KernelService>();
     m_proxyService = std::make_unique<ProxyService>();
-    m_subscriptionService = std::make_unique<SubscriptionService>();
-    m_configRepository = std::make_unique<ConfigRepositoryAdapter>();
+    m_subscriptionService = std::make_unique<SubscriptionService>(m_configRepository.get());
     m_settingsStore = std::make_unique<SettingsStoreAdapter>();
     m_themeService = std::make_unique<ThemeServiceAdapter>();
     m_systemProxyGateway = std::make_unique<SystemProxyAdapter>();
@@ -27,10 +25,6 @@ AppContext::AppContext()
                                                           m_configRepository.get(),
                                                           m_settingsStore.get(),
                                                           m_systemProxyGateway.get());
-    
-    // Set global providers for UI components
-    ThemeProvider::setInstance(m_themeService.get());
-    ConfigProvider::setInstance(m_configRepository.get());
 }
 
 AppContext::~AppContext() = default;

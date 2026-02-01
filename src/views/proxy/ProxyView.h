@@ -13,6 +13,8 @@
 
 class ProxyService;
 class DelayTestService;
+class ThemeService;
+class ConfigRepository;
 struct ProxyDelayTestResult;
 
 class ProxyView : public QWidget
@@ -20,7 +22,7 @@ class ProxyView : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProxyView(QWidget *parent = nullptr);
+    explicit ProxyView(ThemeService *themeService, ConfigRepository *configRepository, QWidget *parent = nullptr);
 
     void setProxyService(ProxyService *service);
     void refresh();
@@ -71,6 +73,8 @@ private:
     QHash<QString, QString> m_pendingSelection; // group -> proxy
     bool m_singleTesting{false};
     QString m_singleTestingTarget;
+    ThemeService *m_themeService = nullptr;
+    ConfigRepository *m_configRepository = nullptr;
 };
 
 #endif // PROXYVIEW_H

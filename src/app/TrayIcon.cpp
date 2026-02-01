@@ -1,8 +1,8 @@
-#include "TrayIcon.h"
+﻿#include "TrayIcon.h"
 #include "MainWindow.h"
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "services/config/ConfigManager.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QMessageBox>
@@ -10,9 +10,10 @@
 #include <QPainter>
 #include <QPainterPath>
 
-TrayIcon::TrayIcon(MainWindow *mainWindow, QObject *parent)
+TrayIcon::TrayIcon(MainWindow *mainWindow, ThemeService *themeService, QObject *parent)
     : QSystemTrayIcon(parent)
     , m_mainWindow(mainWindow)
+    , m_themeService(themeService)
 {
     setIcon(QIcon(":/icons/app.png"));
     setToolTip(tr("Sing-Box - Stopped"));
@@ -37,7 +38,7 @@ void TrayIcon::setupMenu()
 {
     auto *menu = new RoundedMenu;
     menu->setObjectName("TrayMenu");
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) {
         menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
         connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {

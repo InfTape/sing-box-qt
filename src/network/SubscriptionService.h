@@ -6,6 +6,8 @@
 #include <QStringList>
 #include <QJsonObject>
 
+class ConfigRepository;
+
 struct SubscriptionInfo {
     QString id;
     QString name;
@@ -32,7 +34,7 @@ class SubscriptionService : public QObject
     Q_OBJECT
 
 public:
-    explicit SubscriptionService(QObject *parent = nullptr);
+    explicit SubscriptionService(ConfigRepository *configRepo, QObject *parent = nullptr);
     ~SubscriptionService();
 
     // Subscription management.
@@ -97,6 +99,7 @@ private:
     QList<SubscriptionInfo> m_subscriptions;
     int m_activeIndex;
     QString m_activeConfigPath;
+    ConfigRepository *m_configRepo = nullptr;
 };
 
 #endif // SUBSCRIPTIONSERVICE_H

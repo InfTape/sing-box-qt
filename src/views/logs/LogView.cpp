@@ -1,6 +1,6 @@
-﻿#include "LogView.h"
+#include "LogView.h"
 #include "utils/LogParser.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "widgets/logs/LogRowWidget.h"
 #include "widgets/common/MenuComboBox.h"
 #include <QApplication>
@@ -26,14 +26,15 @@ namespace {
 constexpr int kMaxLogEntries = 20;
 } // namespace
 
-LogView::LogView(QWidget *parent)
+LogView::LogView(ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
+    , m_themeService(themeService)
 {
     setupUI();
     updateStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &LogView::updateStyle);
     }
 }
@@ -119,7 +120,7 @@ void LogView::setupUI()
     m_searchEdit->setPlaceholderText(tr("Search logs..."));
     m_searchEdit->setClearButtonEnabled(true);
 
-    m_typeFilter = new MenuComboBox;
+    m_typeFilter = new MenuComboBox(this, m_themeService);
     m_typeFilter->setObjectName("FilterSelect");
     m_typeFilter->addItem(tr("Type"), QString());
     m_typeFilter->addItem("TRACE", "trace");
@@ -398,6 +399,6 @@ void LogView::updateEmptyState()
 
 void LogView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/log_view.qss"));
 }

@@ -13,13 +13,14 @@ class QLineEdit;
 class QPushButton;
 class QScrollArea;
 class QVBoxLayout;
+class ThemeService;
 
 class LogView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit LogView(QWidget *parent = nullptr);
+    explicit LogView(ThemeService *themeService, QWidget *parent = nullptr);
 
     void appendLog(const QString &message);
     void clear();
@@ -65,6 +66,7 @@ private:
 
     QVector<LogParser::LogEntry> m_logs;
     QVector<LogParser::LogEntry> m_filtered;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // LOGVIEW_H

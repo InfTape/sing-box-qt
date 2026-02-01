@@ -1,7 +1,7 @@
-#include "views/subscription/SubscriptionCard.h"
+﻿#include "views/subscription/SubscriptionCard.h"
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAction>
 #include <QHBoxLayout>
@@ -14,17 +14,18 @@
 #include <QStyle>
 #include <QtMath>
 
-SubscriptionCard::SubscriptionCard(const SubscriptionInfo &info, bool active, QWidget *parent)
+SubscriptionCard::SubscriptionCard(const SubscriptionInfo &info, bool active, ThemeService *themeService, QWidget *parent)
     : QFrame(parent)
     , m_subId(info.id)
     , m_active(active)
+    , m_themeService(themeService)
 {
     setupUI(info);
     applyActiveState();
     updateStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &SubscriptionCard::updateStyle);
     }
 }
@@ -82,7 +83,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 
     RoundedMenu *menu = new RoundedMenu(this);
     menu->setObjectName("SubscriptionMenu");
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) {
         menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
         connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {
@@ -196,12 +197,12 @@ void SubscriptionCard::applyActiveState()
 
 void SubscriptionCard::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (!ts) return;
 
     QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
     if (qss.isEmpty()) {
-        qss = ts->loadStyleSheet(":/styles/subscription_card.qss"); // 兜底
+        qss = ts->loadStyleSheet(":/styles/subscription_card.qss"); // 鍏滃簳
     }
     setStyleSheet(qss);
 }

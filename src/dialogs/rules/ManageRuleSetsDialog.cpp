@@ -1,8 +1,8 @@
-#include "dialogs/rules/ManageRuleSetsDialog.h"
+﻿#include "dialogs/rules/ManageRuleSetsDialog.h"
 #include "dialogs/rules/RuleEditorDialog.h"
 #include "services/rules/SharedRulesStore.h"
 #include "services/rules/RuleConfigService.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAbstractItemView>
 #include <QHBoxLayout>
@@ -14,10 +14,12 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-ManageRuleSetsDialog::ManageRuleSetsDialog(QWidget *parent)
+ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository *configRepo, ThemeService *themeService, QWidget *parent)
     : QDialog(parent)
     , m_list(new QListWidget(this))
     , m_ruleList(new QListWidget(this))
+    , m_configRepo(configRepo)
+    , m_themeService(themeService)
 {
     setWindowTitle(tr("Manage Rule Sets"));
     setModal(true);
@@ -179,7 +181,7 @@ void ManageRuleSetsDialog::onRuleAdd()
     const QString set = selectedName();
     if (set.isEmpty()) return;
     QString error;
-    QStringList outboundTags = RuleConfigService::loadOutboundTags("direct", &error);
+    QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, "direct", &error);
     if (!error.isEmpty()) {
         QMessageBox::warning(this, tr("Add Rule"), error);
         return;
@@ -219,7 +221,7 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) {
         menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
         connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
@@ -248,7 +250,7 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) {
         menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
         connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {

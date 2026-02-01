@@ -1,4 +1,4 @@
-#ifndef SETTINGSVIEW_H
+﻿#ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
 
 #include <QWidget>
@@ -18,13 +18,14 @@
 class ToggleSwitch;
 class MenuComboBox;
 class KernelManager;
+class ThemeService;
 
 class SettingsView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SettingsView(QWidget *parent = nullptr);
+    explicit SettingsView(ThemeService *themeService, QWidget *parent = nullptr);
 
 protected:
     void showEvent(QShowEvent *event) override;
@@ -107,6 +108,7 @@ private:
     QString m_comboStyle;
 
     QPushButton *m_saveBtn;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // SETTINGSVIEW_H

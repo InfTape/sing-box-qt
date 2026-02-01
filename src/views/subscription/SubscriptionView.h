@@ -15,6 +15,7 @@ class QScrollArea;
 class SubscriptionCard;
 class NodeEditDialog;
 class SubscriptionService;
+class ThemeService;
 struct SubscriptionInfo;
 
 class SubscriptionView : public QWidget
@@ -22,7 +23,7 @@ class SubscriptionView : public QWidget
     Q_OBJECT
 
 public:
-    explicit SubscriptionView(SubscriptionService *service, QWidget *parent = nullptr);
+    explicit SubscriptionView(SubscriptionService *service, ThemeService *themeService, QWidget *parent = nullptr);
     SubscriptionService* getService() const;
 
 private slots:
@@ -62,6 +63,7 @@ protected:
     SubscriptionService *m_subscriptionService;
     class SubscriptionController *m_subscriptionController;
     QTimer *m_autoUpdateTimer;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // SUBSCRIPTIONVIEW_H

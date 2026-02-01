@@ -4,7 +4,8 @@
 #include "dialogs/rules/ManageRuleSetsDialog.h"
 #include "services/rules/RuleConfigService.h"
 #include "utils/rule/RuleUtils.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
+#include "app/interfaces/ConfigRepository.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/rules/RuleCard.h"
 #include "utils/layout/CardGridLayoutHelper.h"
@@ -31,14 +32,16 @@
 #include <utility>
 
 
-RulesView::RulesView(QWidget *parent)
+RulesView::RulesView(ConfigRepository *configRepo, ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
+    , m_configRepo(configRepo)
+    , m_themeService(themeService)
 {
     setupUI();
     updateStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &RulesView::updateStyle);
     }
 
@@ -98,10 +101,10 @@ void RulesView::setupUI()
     m_searchEdit->setPlaceholderText(tr("Search rules or proxies..."));
     m_searchEdit->setClearButtonEnabled(true);
 
-    m_typeFilter = new MenuComboBox;
+    m_typeFilter = new MenuComboBox(this, m_themeService);
     m_typeFilter->setObjectName("FilterSelect");
 
-    m_proxyFilter = new MenuComboBox;
+    m_proxyFilter = new MenuComboBox(this, m_themeService);
     m_proxyFilter->setObjectName("FilterSelect");
 
     filterLayout->addWidget(m_searchEdit, 2);
@@ -155,7 +158,7 @@ void RulesView::setupUI()
     connect(m_refreshBtn, &QPushButton::clicked, this, &RulesView::onRefreshClicked);
     connect(m_addBtn, &QPushButton::clicked, this, &RulesView::onAddRuleClicked);
     connect(m_ruleSetBtn, &QPushButton::clicked, this, [this]() {
-        ManageRuleSetsDialog dlg(this);
+        ManageRuleSetsDialog dlg(m_configRepo, m_themeService, this);
         connect(&dlg, &ManageRuleSetsDialog::ruleSetsChanged, this, [this]() {
             // refresh filters to include new sets via /rules fetch
             this->refresh();
@@ -235,7 +238,7 @@ void RulesView::onEmptyActionClicked()
 void RulesView::onAddRuleClicked()
 {
     QString error;
-    const QStringList outboundTags = RuleConfigService::loadOutboundTags(QString(), &error);
+    const QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, QString(), &error);
     if (!error.isEmpty()) {
         QMessageBox::warning(this, tr("Add Rule"), error);
         return;
@@ -249,7 +252,7 @@ void RulesView::onAddRuleClicked()
 
     RuleConfigService::RuleEditData data = dialog.editData();
     RuleItem added;
-    if (!RuleConfigService::addRule(data, &added, &error)) {
+    if (!RuleConfigService::addRule(m_configRepo, data, &added, &error)) {
         QMessageBox::warning(this, tr("Add Rule"), error);
         return;
     }
@@ -377,7 +380,7 @@ void RulesView::rebuildGrid()
 
     const int previousColumns = m_columnCount;
 
-    // 停止并清理尚未结束的动画，避免目标控件被删除后动画仍然运行。
+    // 停止并清理尚未结束的动画，避免目标控件被删除后动画仍然运行�?
     const auto runningAnimations = m_gridContainer->findChildren<QAbstractAnimation*>();
     for (QAbstractAnimation *anim : runningAnimations) {
         if (!anim) continue;
@@ -399,7 +402,7 @@ void RulesView::rebuildGrid()
         QLayoutItem *item = m_gridLayout->takeAt(0);
         if (item) {
             if (QWidget *w = item->widget()) {
-                // 清理旧卡片，避免残留导致叠层。
+                // 清理旧卡片，避免残留导致叠层�?
                 w->deleteLater();
             }
             delete item;
@@ -423,7 +426,7 @@ void RulesView::rebuildGrid()
     QList<QWidget*> widgets;
     widgets.reserve(m_filteredRules.size());
     for (int i = 0; i < m_filteredRules.size(); ++i) {
-        RuleCard *card = new RuleCard(m_filteredRules[i], i + 1, m_gridContainer);
+        RuleCard *card = new RuleCard(m_filteredRules[i], i + 1, m_themeService, m_gridContainer);
         connect(card, &RuleCard::editRequested, this, &RulesView::handleEditRule);
         connect(card, &RuleCard::deleteRequested, this, &RulesView::handleDeleteRule);
         card->setFixedSize(CardGridLayoutHelper::kCardWidth,
@@ -462,7 +465,7 @@ void RulesView::handleEditRule(const RuleItem &rule)
 {
     QString error;
     const QString outbound = RuleUtils::normalizeProxyValue(rule.proxy);
-    const QStringList outboundTags = RuleConfigService::loadOutboundTags(outbound, &error);
+    const QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, outbound, &error);
     if (!error.isEmpty()) {
         QMessageBox::warning(this, tr("Edit Match Type"), error);
         return;
@@ -470,7 +473,7 @@ void RulesView::handleEditRule(const RuleItem &rule)
 
     RuleEditorDialog dialog(RuleEditorDialog::Mode::Edit, this);
     dialog.setOutboundTags(outboundTags);
-    dialog.setRuleSetName(RuleConfigService::findRuleSet(rule));
+    dialog.setRuleSetName(RuleConfigService::findRuleSet(m_configRepo, rule));
     if (!dialog.setEditRule(rule, &error)) {
         QMessageBox::warning(this, tr("Edit Match Type"), error);
         return;
@@ -481,7 +484,7 @@ void RulesView::handleEditRule(const RuleItem &rule)
 
     RuleConfigService::RuleEditData data = dialog.editData();
     RuleItem updated;
-    if (!RuleConfigService::updateRule(rule, data, &updated, &error)) {
+    if (!RuleConfigService::updateRule(m_configRepo, rule, data, &updated, &error)) {
         QMessageBox::warning(this, tr("Edit Match Type"), error);
         return;
     }
@@ -503,7 +506,7 @@ void RulesView::handleDeleteRule(const RuleItem &rule)
     if (btn != QMessageBox::Yes) return;
 
     QString error;
-    if (!RuleConfigService::removeRule(rule, &error)) {
+    if (!RuleConfigService::removeRule(m_configRepo, rule, &error)) {
         QMessageBox::warning(this, tr("Delete Rule"), error);
         return;
     }
@@ -518,7 +521,7 @@ void RulesView::handleDeleteRule(const RuleItem &rule)
 
 void RulesView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/rules_view.qss"));
 }
 

@@ -1,5 +1,5 @@
 #include "HomeView.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "utils/home/HomeFormat.h"
 #include "views/components/TrafficChart.h"
 #include "widgets/common/ToggleSwitch.h"
@@ -78,37 +78,17 @@ void polishWidget(QWidget *widget)
     widget->update();
 }
 
-void setCardActive(QWidget *card, bool active)
-{
-    if (!card) return;
-    card->setProperty("active", active);
-    // Recolor embedded svg icons if present.
-    const QString accent = card->property("accent").toString();
-    for (auto *label : card->findChildren<QLabel*>()) {
-        const QVariant pathVar = label->property("iconPath");
-        if (!pathVar.isValid()) continue;
-        const QString iconPath = pathVar.toString();
-        const int iconSize = label->property("iconSize").toInt();
-        ThemeService *ts = ThemeProvider::instance();
-        QColor color = active ? QColor(Qt::white) : (ts ? ts->color("primary") : QColor());
-        label->setPixmap(svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
-    }
-    polishWidget(card);
-    for (auto *child : card->findChildren<QWidget*>()) {
-        polishWidget(child);
-    }
-}
-
 } // namespace
 
-HomeView::HomeView(QWidget *parent)
+HomeView::HomeView(ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
+    , m_themeService(themeService)
 {
     setupUI();
     updateStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &HomeView::updateStyle);
     }
 }
@@ -206,7 +186,7 @@ void HomeView::setupUI()
     chartLayout->setContentsMargins(12, 12, 12, 12);
     chartLayout->setSpacing(0);
 
-    m_trafficChart = new TrafficChart;
+    m_trafficChart = new TrafficChart(m_themeService, this);
     chartLayout->addWidget(m_trafficChart);
     statsLayout->addWidget(chartCard);
 
@@ -222,12 +202,12 @@ void HomeView::setupUI()
     flowTitle->setObjectName("SectionTitle");
     flowLayout->addWidget(flowTitle);
 
-    m_systemProxySwitch = new ToggleSwitch;
+    m_systemProxySwitch = new ToggleSwitch(this, m_themeService);
     m_systemProxySwitch->setObjectName("ModeSwitch");
     m_systemProxySwitch->setCursor(Qt::PointingHandCursor);
     m_systemProxySwitch->setFixedSize(m_systemProxySwitch->sizeHint());
 
-    m_tunModeSwitch = new ToggleSwitch;
+    m_tunModeSwitch = new ToggleSwitch(this, m_themeService);
     m_tunModeSwitch->setObjectName("ModeSwitch");
     m_tunModeSwitch->setCursor(Qt::PointingHandCursor);
     m_tunModeSwitch->setFixedSize(m_tunModeSwitch->sizeHint());
@@ -256,13 +236,13 @@ void HomeView::setupUI()
     nodeTitle->setObjectName("SectionTitle");
     nodeLayout->addWidget(nodeTitle);
 
-    m_globalModeSwitch = new ToggleSwitch;
+    m_globalModeSwitch = new ToggleSwitch(this, m_themeService);
     m_globalModeSwitch->setObjectName("ModeSwitch");
     m_globalModeSwitch->setCursor(Qt::PointingHandCursor);
     m_globalModeSwitch->setProperty("exclusiveSwitch", true);
     m_globalModeSwitch->setFixedSize(m_globalModeSwitch->sizeHint());
 
-    m_ruleModeSwitch = new ToggleSwitch;
+    m_ruleModeSwitch = new ToggleSwitch(this, m_themeService);
     m_ruleModeSwitch->setObjectName("ModeSwitch");
     m_ruleModeSwitch->setCursor(Qt::PointingHandCursor);
     m_ruleModeSwitch->setProperty("exclusiveSwitch", true);
@@ -342,11 +322,10 @@ QWidget* HomeView::createStatCard(const QString &iconText, const QString &accent
         iconPath = ":/icons/connect.svg";
     }
     if (!iconPath.isEmpty()) {
-        ThemeService *ts = ThemeProvider::instance();
-        QColor iconColor = ts ? ts->color("text-primary") : QColor();
-        if (accentKey == "success") iconColor = ts ? ts->color("success") : QColor();
-        else if (accentKey == "primary") iconColor = ts ? ts->color("primary") : QColor();
-        else if (accentKey == "warning") iconColor = ts ? ts->color("warning") : QColor();
+        QColor iconColor = m_themeService ? m_themeService->color("text-primary") : QColor();
+        if (accentKey == "success") iconColor = m_themeService ? m_themeService->color("success") : QColor();
+        else if (accentKey == "primary") iconColor = m_themeService ? m_themeService->color("primary") : QColor();
+        else if (accentKey == "warning") iconColor = m_themeService ? m_themeService->color("warning") : QColor();
         iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
         iconLabel->setProperty("iconPath", iconPath);
         iconLabel->setProperty("iconSize", 20);
@@ -415,8 +394,7 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
         iconPath = ":/icons/mappin.svg";
     }
     if (!iconPath.isEmpty()) {
-        ThemeService *ts = ThemeProvider::instance();
-        QColor iconColor = ts ? ts->color("primary") : QColor();
+        QColor iconColor = m_themeService ? m_themeService->color("primary") : QColor();
         iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
         iconLabel->setProperty("iconPath", iconPath);
         iconLabel->setProperty("iconSize", 20);
@@ -447,7 +425,7 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
     }
 
     if (auto toggle = qobject_cast<ToggleSwitch*>(control)) {
-        connect(toggle, &ToggleSwitch::toggled, card, [card](bool checked) {
+        connect(toggle, &ToggleSwitch::toggled, card, [this, card](bool checked) {
             setCardActive(card, checked);
         });
     }
@@ -457,13 +435,12 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
 
 void HomeView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
-    if (!ts) return;
+    if (!m_themeService) return;
 
-    QColor primary = ts->color("primary");
-    QColor success = ts->color("success");
-    QColor warning = ts->color("warning");
-    QColor error = ts->color("error");
+    QColor primary = m_themeService->color("primary");
+    QColor success = m_themeService->color("success");
+    QColor warning = m_themeService->color("warning");
+    QColor error = m_themeService->color("error");
 
     QMap<QString, QString> extra;
     extra.insert("success-12", rgba(success, 0.12));
@@ -474,7 +451,7 @@ void HomeView::updateStyle()
     extra.insert("warning-18", rgba(warning, 0.18));
     extra.insert("primary-06", rgba(primary, 0.06));
 
-    setStyleSheet(ts->loadStyleSheet(":/styles/home_view.qss", extra));
+    setStyleSheet(m_themeService->loadStyleSheet(":/styles/home_view.qss", extra));
 
 
 
@@ -654,4 +631,23 @@ QString HomeView::formatBytes(qint64 bytes) const
 QString HomeView::formatDuration(int seconds) const
 {
     return HomeFormat::duration(seconds);
+}
+
+void HomeView::setCardActive(QWidget *card, bool active)
+{
+    if (!card) return;
+    card->setProperty("active", active);
+    // Recolor embedded svg icons if present.
+    for (auto *label : card->findChildren<QLabel*>()) {
+        const QVariant pathVar = label->property("iconPath");
+        if (!pathVar.isValid()) continue;
+        const QString iconPath = pathVar.toString();
+        const int iconSize = label->property("iconSize").toInt();
+        QColor color = active ? QColor(Qt::white) : (m_themeService ? m_themeService->color("primary") : QColor());
+        label->setPixmap(svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
+    }
+    polishWidget(card);
+    for (auto *child : card->findChildren<QWidget*>()) {
+        polishWidget(child);
+    }
 }

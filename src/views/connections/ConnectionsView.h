@@ -7,13 +7,14 @@
 #include <QTimer>
 
 class ProxyService;
+class ThemeService;
 
 class ConnectionsView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit ConnectionsView(QWidget *parent = nullptr);
+    explicit ConnectionsView(ThemeService *themeService, QWidget *parent = nullptr);
     void setProxyService(ProxyService *service);
     void setAutoRefreshEnabled(bool enabled);
 
@@ -32,6 +33,7 @@ private:
     QTimer *m_refreshTimer;
     ProxyService *m_proxyService;
     bool m_autoRefreshEnabled = false;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // CONNECTIONSVIEW_H

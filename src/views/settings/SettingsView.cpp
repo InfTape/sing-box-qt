@@ -19,7 +19,7 @@
 #include <QShowEvent>
 #include <algorithm>
 #include "utils/ThemeManager.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
 
@@ -44,15 +44,16 @@ protected:
 };
 } // namespace
 
-SettingsView::SettingsView(QWidget *parent)
+SettingsView::SettingsView(ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
     , m_kernelManager(new KernelManager(this))
+    , m_themeService(themeService)
 {
     setupUI();
     loadSettings();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, &SettingsView::updateStyle);
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged, this, &SettingsView::updateStyle);
     }
 
     // Kernel signals
@@ -170,7 +171,7 @@ QWidget* SettingsView::buildProxySection()
 
 QWidget* SettingsView::buildProxyAdvancedSection()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *proxyAdvancedSection = new QWidget;
@@ -213,7 +214,7 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
     m_tunMtuSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-    m_tunStackCombo = new MenuComboBox;
+    m_tunStackCombo = new MenuComboBox(this, m_themeService);
     m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
     m_tunStackCombo->setWheelEnabled(false);
     m_tunStackCombo->setFixedHeight(kSpinBoxHeight);
@@ -235,13 +236,13 @@ QWidget* SettingsView::buildProxyAdvancedSection()
     toggleLayout->setContentsMargins(16, 10, 16, 10);
     toggleLayout->setSpacing(30);
 
-    auto addToggle = [toggleLayout](const QString &text, ToggleSwitch *&toggle) {
+    auto addToggle = [this, toggleLayout](const QString &text, ToggleSwitch *&toggle) {
         QWidget *item = new QWidget;
         QHBoxLayout *itemLayout = new QHBoxLayout(item);
         itemLayout->setContentsMargins(0, 0, 0, 0);
         itemLayout->setSpacing(10);
         QLabel *label = new QLabel(text);
-        toggle = new ToggleSwitch;
+        toggle = new ToggleSwitch(this, m_themeService);
         itemLayout->addWidget(label);
         itemLayout->addWidget(toggle);
         itemLayout->addStretch();
@@ -264,7 +265,7 @@ QWidget* SettingsView::buildProxyAdvancedSection()
 
 QWidget* SettingsView::buildProfileSection()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *singboxProfileSection = new QWidget;
@@ -288,13 +289,13 @@ QWidget* SettingsView::buildProfileSection()
     routingGrid->setColumnStretch(1, 1);
     routingGrid->setColumnStretch(3, 1);
 
-    m_defaultOutboundCombo = new MenuComboBox;
+    m_defaultOutboundCombo = new MenuComboBox(this, m_themeService);
     m_defaultOutboundCombo->addItems({tr("Manual selector (recommended)"), tr("Auto select (URLTest)")});
     m_defaultOutboundCombo->setWheelEnabled(false);
     m_defaultOutboundCombo->setFixedHeight(kSpinBoxHeight);
     m_defaultOutboundCombo->setMinimumWidth(150);
 
-    m_downloadDetourCombo = new MenuComboBox;
+    m_downloadDetourCombo = new MenuComboBox(this, m_themeService);
     m_downloadDetourCombo->addItems({tr("Manual selector"), tr("Direct")});
     m_downloadDetourCombo->setWheelEnabled(false);
     m_downloadDetourCombo->setFixedHeight(kSpinBoxHeight);
@@ -317,13 +318,13 @@ QWidget* SettingsView::buildProfileSection()
     profileToggleLayout->setContentsMargins(16, 10, 16, 10);
     profileToggleLayout->setSpacing(30);
 
-    auto addProfileToggle = [profileToggleLayout](const QString &text, ToggleSwitch *&toggle) {
+    auto addProfileToggle = [this, profileToggleLayout](const QString &text, ToggleSwitch *&toggle) {
         QWidget *item = new QWidget;
         QHBoxLayout *itemLayout = new QHBoxLayout(item);
         itemLayout->setContentsMargins(0, 0, 0, 0);
         itemLayout->setSpacing(10);
         QLabel *label = new QLabel(text);
-        toggle = new ToggleSwitch;
+        toggle = new ToggleSwitch(this, m_themeService);
         itemLayout->addWidget(label);
         itemLayout->addWidget(toggle);
         itemLayout->addStretch();
@@ -409,14 +410,14 @@ QWidget* SettingsView::buildAppearanceSection()
     QLabel *languageLabel = createFormLabel(tr("Language:"));
     matchLabelWidth(themeLabel, languageLabel);
 
-    m_themeCombo = new MenuComboBox;
+    m_themeCombo = new MenuComboBox(this, m_themeService);
     m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
     m_themeCombo->setWheelEnabled(false);
     m_themeCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     m_themeCombo->setFixedHeight(kSpinBoxHeight);
     m_themeCombo->setMinimumWidth(150);
 
-    m_languageCombo = new MenuComboBox;
+    m_languageCombo = new MenuComboBox(this, m_themeService);
     m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
     m_languageCombo->setWheelEnabled(false);
     m_languageCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -434,7 +435,7 @@ QWidget* SettingsView::buildAppearanceSection()
 
 QWidget* SettingsView::buildKernelSection()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *kernelSection = new QWidget;
@@ -453,7 +454,7 @@ QWidget* SettingsView::buildKernelSection()
     m_kernelVersionLabel->setObjectName("KernelVersionLabel");
     m_kernelVersionLabel->setProperty("status", "error");
 
-    m_kernelVersionCombo = new MenuComboBox;
+    m_kernelVersionCombo = new MenuComboBox(this, m_themeService);
     m_kernelVersionCombo->addItem(tr("Latest version"));
     m_kernelVersionCombo->setWheelEnabled(false);
     m_kernelVersionCombo->setFixedHeight(kSpinBoxHeight);
@@ -503,7 +504,7 @@ QWidget* SettingsView::buildKernelSection()
 
 void SettingsView::setupUI()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     Q_UNUSED(ts); // Colors obtained via QSS
 
     // 使用全局 QSS，不再单独拼接控件样式。
@@ -578,7 +579,7 @@ void SettingsView::setupUI()
 
 void SettingsView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (!ts) return;
     setStyleSheet(ts->loadStyleSheet(":/styles/settings_view.qss"));
     {

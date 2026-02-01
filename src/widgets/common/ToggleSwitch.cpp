@@ -1,5 +1,5 @@
 ﻿#include "widgets/common/ToggleSwitch.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "utils/ThemeManager.h"
 
 #include <QPainter>
@@ -8,7 +8,7 @@
 #include <QtMath>
 #include <algorithm>
 
-ToggleSwitch::ToggleSwitch(QWidget* parent) : QWidget(parent) {
+ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService *themeService) : QWidget(parent), m_themeService(themeService) {
     setCursor(Qt::PointingHandCursor);
     setFocusPolicy(Qt::StrongFocus);
     setMinimumSize(sizeHint());
@@ -16,6 +16,10 @@ ToggleSwitch::ToggleSwitch(QWidget* parent) : QWidget(parent) {
     m_anim = new QPropertyAnimation(this, "offset", this);
     m_anim->setDuration(140);
     m_anim->setEasingCurve(QEasingCurve::InOutCubic);
+
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&ToggleSwitch::update));
+    }
 }
 
 void ToggleSwitch::setChecked(bool checked) {
@@ -72,7 +76,7 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
     const QRectF th = thumbRectForOffset(m_offset);
 
     // Colors from theme
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     const bool en = isEnabled();
     
     // 仅日间模式使用text-tertiary，夜间模式使用原来的灰色

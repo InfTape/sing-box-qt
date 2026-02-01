@@ -7,6 +7,8 @@
 #include <QJsonObject>
 #include "models/RuleItem.h"
 
+class ConfigRepository;
+
 class RuleConfigService
 {
 public:
@@ -25,13 +27,13 @@ public:
     };
 
     static QList<RuleFieldInfo> fieldInfos();
-    static QString activeConfigPath();
-    static QStringList loadOutboundTags(const QString &extraTag = QString(), QString *error = nullptr);
+    static QString activeConfigPath(ConfigRepository *cfgRepo);
+    static QStringList loadOutboundTags(ConfigRepository *cfgRepo, const QString &extraTag = QString(), QString *error = nullptr);
 
-    static bool addRule(const RuleEditData &data, RuleItem *added, QString *error);
-    static bool updateRule(const RuleItem &existing, const RuleEditData &data, RuleItem *updated, QString *error);
-    static bool removeRule(const RuleItem &rule, QString *error);
-    static QString findRuleSet(const RuleItem &rule);
+    static bool addRule(ConfigRepository *cfgRepo, const RuleEditData &data, RuleItem *added, QString *error);
+    static bool updateRule(ConfigRepository *cfgRepo, const RuleItem &existing, const RuleEditData &data, RuleItem *updated, QString *error);
+    static bool removeRule(ConfigRepository *cfgRepo, const RuleItem &rule, QString *error);
+    static QString findRuleSet(ConfigRepository *cfgRepo, const RuleItem &rule);
 
     static bool parseRulePayload(const QString &payload, QString *key, QStringList *values, QString *error = nullptr);
     // 公共构建接口（供规则集管理对话框使用）

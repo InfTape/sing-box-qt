@@ -1,4 +1,4 @@
-#ifndef RULESVIEW_H
+﻿#ifndef RULESVIEW_H
 #define RULESVIEW_H
 
 #include <QVector>
@@ -13,13 +13,15 @@ class QPushButton;
 class QScrollArea;
 class QFrame;
 class ProxyService;
+class ThemeService;
+class ConfigRepository;
 
 class RulesView : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit RulesView(QWidget *parent = nullptr);
+    explicit RulesView(ConfigRepository *configRepo, ThemeService *themeService, QWidget *parent = nullptr);
     void setProxyService(ProxyService *service);
     void refresh();
 
@@ -68,6 +70,8 @@ private:
     QVector<RuleItem> m_filteredRules;
     bool m_loading = false;
     int m_columnCount = 0;
+    ConfigRepository *m_configRepo = nullptr;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // RULESVIEW_H

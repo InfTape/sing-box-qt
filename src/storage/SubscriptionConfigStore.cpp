@@ -1,5 +1,5 @@
 #include "storage/SubscriptionConfigStore.h"
-#include "app/ConfigProvider.h"
+#include "app/interfaces/ConfigRepository.h"
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -30,13 +30,12 @@ QString generateConfigFileName(const QString &name)
     return QString("%1-%2.json").arg(safe).arg(QDateTime::currentMSecsSinceEpoch());
 }
 
-bool saveConfigWithNodes(const QJsonArray &nodes, const QString &targetPath)
+bool saveConfigWithNodes(ConfigRepository *cfg, const QJsonArray &nodes, const QString &targetPath)
 {
-    ConfigRepository *cfg = ConfigProvider::instance();
     return cfg ? cfg->generateConfigWithNodes(nodes, targetPath) : false;
 }
 
-bool saveOriginalConfig(const QString &content, const QString &targetPath)
+bool saveOriginalConfig(ConfigRepository *cfg, const QString &content, const QString &targetPath)
 {
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(content.toUtf8(), &err);
@@ -44,7 +43,6 @@ bool saveOriginalConfig(const QString &content, const QString &targetPath)
         return false;
     }
 
-    ConfigRepository *cfg = ConfigProvider::instance();
     if (!cfg) return false;
     QJsonObject config = doc.object();
     cfg->applyPortSettings(config);

@@ -6,13 +6,14 @@
 
 class QLabel;
 class RoundedMenu;
+class ThemeService;
 
 class RuleCard : public QFrame
 {
     Q_OBJECT
 
 public:
-    explicit RuleCard(const RuleItem &rule, int index, QWidget *parent = nullptr);
+    explicit RuleCard(const RuleItem &rule, int index, ThemeService *themeService, QWidget *parent = nullptr);
 
 signals:
     void editRequested(const RuleItem &rule);
@@ -26,6 +27,7 @@ private:
     RuleItem m_rule;
     int m_index = 0;
     RoundedMenu *m_menu = nullptr;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // RULECARD_H

@@ -6,12 +6,14 @@
 #include <QVector>
 #include <QPainter>
 
+class ThemeService;
+
 class TrafficChart : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TrafficChart(QWidget *parent = nullptr);
+    explicit TrafficChart(ThemeService *themeService = nullptr, QWidget *parent = nullptr);
     ~TrafficChart();
     
     void updateData(qint64 uploadSpeed, qint64 downloadSpeed);
@@ -41,6 +43,7 @@ private:
     QColor m_gridColor;
     QColor m_textColor;
     QColor m_bgColor;
+    ThemeService *m_themeService = nullptr;
     
     QTimer *m_updateTimer;
     qint64 m_lastUploadSpeed = 0;

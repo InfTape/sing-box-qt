@@ -1,9 +1,9 @@
-#include "dialogs/subscription/NodeEditDialog.h"
+﻿#include "dialogs/subscription/NodeEditDialog.h"
 #include "dialogs/editors/GenericNodeEditor.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
 #include "services/rules/SharedRulesStore.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -18,11 +18,12 @@
 #include <QAction>
 #include <QMetaObject>
 
-NodeEditDialog::NodeEditDialog(QWidget *parent)
+NodeEditDialog::NodeEditDialog(ThemeService *themeService, QWidget *parent)
     : QDialog(parent)
     , m_currentEditor(nullptr)
     , m_scrollArea(nullptr)
     , m_editorPage(nullptr)
+    , m_themeService(themeService)
 {
     setupUI();
 }
@@ -42,7 +43,7 @@ void NodeEditDialog::setupUI()
     // Type selection
     QHBoxLayout *typeLayout = new QHBoxLayout;
     typeLayout->addWidget(new QLabel(tr("Type:")));
-    m_typeCombo = new MenuComboBox;
+    m_typeCombo = new MenuComboBox(this, m_themeService);
     m_typeCombo->addItems({"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
     m_typeCombo->setWheelEnabled(false);
     typeLayout->addWidget(m_typeCombo);
@@ -68,10 +69,9 @@ void NodeEditDialog::setupUI()
         }
 
         RoundedMenu *menu = new RoundedMenu(this);
-        // 采用托盘菜单的样式，复用勾选外观
+        // 閲囩敤鎵樼洏鑿滃崟鐨勬牱寮忥紝澶嶇敤鍕鹃€夊瑙?
         menu->setObjectName("TrayMenu");
-        ThemeService *ts = ThemeProvider::instance();
-        if (ts) menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        if (m_themeService) menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
 
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;
@@ -166,7 +166,7 @@ void NodeEditDialog::onTypeChanged(const QString &type)
 
     m_currentEditor = createEditor(type);
     if (m_currentEditor) {
-        // 插入到 stretch 之前，保持底部留白
+        // 将编辑器插入到底部 stretch 之前，保持底部留白
         int stretchIndex = m_editorContainer->count() - 1;
         if (stretchIndex < 0) stretchIndex = 0;
         m_editorContainer->insertWidget(stretchIndex, m_currentEditor);
@@ -216,8 +216,7 @@ void NodeEditDialog::setRuleSets(const QStringList &sets, bool enableShared)
         // rebuild
         RoundedMenu *menu = new RoundedMenu(this);
         menu->setObjectName("TrayMenu");
-        ThemeService *ts = ThemeProvider::instance();
-        if (ts) menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        if (m_themeService) menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
 
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;

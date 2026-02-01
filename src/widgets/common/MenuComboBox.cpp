@@ -1,6 +1,6 @@
-#include "widgets/common/MenuComboBox.h"
+﻿#include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include <QAction>
 #include <QPainter>
 #include <QPainterPath>
@@ -10,17 +10,16 @@
 #include <QWheelEvent>
 #include <QtMath>
 
-MenuComboBox::MenuComboBox(QWidget *parent)
+MenuComboBox::MenuComboBox(QWidget *parent, ThemeService *themeService)
     : QComboBox(parent)
+    , m_themeService(themeService)
 {
     m_menu = new RoundedMenu(this);
     m_menu->setObjectName("ComboMenu");
     updateMenuStyle();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, [this]() {
-            updateMenuStyle();
-        });
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
     }
 }
 
@@ -29,19 +28,32 @@ void MenuComboBox::setWheelEnabled(bool enabled)
     m_wheelEnabled = enabled;
 }
 
+void MenuComboBox::setThemeService(ThemeService *themeService)
+{
+    if (m_themeService == themeService) return;
+    if (m_themeService) {
+        disconnect(m_themeService, nullptr, this, nullptr);
+    }
+    m_themeService = themeService;
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
+    }
+    updateMenuStyle();
+}
+
 void MenuComboBox::showPopup()
 {
     if (!m_menu) return;
     m_menu->clear();
 
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     QColor checkColor = ts ? ts->color("primary") : QColor(0, 0, 200);
     
     for (int i = 0; i < count(); ++i) {
         QAction *action = m_menu->addAction(itemText(i));
         
         if (i == currentIndex()) {
-            // 为选中项创建勾号图标
+            // 涓洪€変腑椤瑰垱寤哄嬀鍙峰浘鏍?
             QPixmap pixmap(14, 14);
             pixmap.fill(Qt::transparent);
             QPainter painter(&pixmap);
@@ -52,7 +64,7 @@ void MenuComboBox::showPopup()
             pen.setJoinStyle(Qt::RoundJoin);
             painter.setPen(pen);
             
-            // 绘制勾号路径
+            // 缁樺埗鍕惧彿璺緞
             QPainterPath path;
             path.moveTo(1, 7);
             path.lineTo(5, 11);
@@ -91,6 +103,6 @@ void MenuComboBox::wheelEvent(QWheelEvent *event)
 void MenuComboBox::updateMenuStyle()
 {
     if (!m_menu) return;
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 }

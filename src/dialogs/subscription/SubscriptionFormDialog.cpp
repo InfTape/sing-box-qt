@@ -1,8 +1,8 @@
-#include "dialogs/subscription/SubscriptionFormDialog.h"
+﻿#include "dialogs/subscription/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "services/rules/SharedRulesStore.h"
 #include <QCheckBox>
 #include <QFormLayout>
@@ -28,8 +28,9 @@ bool isJsonText(const QString &text)
 } // namespace
 
 // ===== MultiSelectMenuBox =====
-MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent)
+MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent, ThemeService *themeService)
     : QWidget(parent)
+    , m_themeService(themeService)
 {
     m_button = new QToolButton(this);
     m_button->setText(tr("default"));
@@ -49,16 +50,14 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent)
         m_menu->popup(m_button->mapToGlobal(QPoint(0, m_button->height())));
     });
 
-    ThemeService *ts = ThemeProvider::instance();
-    if (ts) {
-        connect(ts, &ThemeService::themeChanged, this, [this]() {
-            ThemeService *tsp = ThemeProvider::instance();
-            if (tsp) {
-                m_menu->setThemeColors(tsp->color("bg-secondary"),
-                                       tsp->color("primary"));
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged, this, [this]() {
+            if (m_themeService) {
+                m_menu->setThemeColors(m_themeService->color("bg-secondary"),
+                                       m_themeService->color("primary"));
             }
         });
-        m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        m_menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
     }
 }
 
@@ -112,7 +111,7 @@ void MultiSelectMenuBox::updateButtonText()
     m_button->setText(text);
 }
 
-SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
+SubscriptionFormDialog::SubscriptionFormDialog(ThemeService *themeService, QWidget *parent)
     : QDialog(parent)
     , m_nameEdit(new QLineEdit)
     , m_tabs(new QTabWidget)
@@ -121,9 +120,10 @@ SubscriptionFormDialog::SubscriptionFormDialog(QWidget *parent)
     , m_uriEdit(new QTextEdit)
     , m_useOriginalCheck(new QCheckBox(tr("Use original config")))
     , m_sharedRulesCheck(new QCheckBox(tr("Enable shared rule set")))
-    , m_ruleSetsBox(new MultiSelectMenuBox)
-    , m_autoUpdateCombo(new MenuComboBox)
+    , m_ruleSetsBox(new MultiSelectMenuBox(this, themeService))
+    , m_autoUpdateCombo(new MenuComboBox(this, themeService))
     , m_hintLabel(new QLabel)
+    , m_themeService(themeService)
 {
     setWindowTitle(tr("Subscription Manager"));
     setModal(true);

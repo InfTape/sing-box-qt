@@ -158,13 +158,13 @@ void MainWindow::setupUI()
 
     m_stackedWidget = new QStackedWidget;
 
-    m_homeView = new HomeView;
-    m_proxyView = new ProxyView;
-    m_subscriptionView = new SubscriptionView(m_subscriptionService, this);
-    m_connectionsView = new ConnectionsView;
-    m_rulesView = new RulesView;
-    m_logView = new LogView;
-    m_settingsView = new SettingsView;
+    m_homeView = new HomeView(m_themeService);
+    m_proxyView = new ProxyView(m_themeService, m_ctx.configRepository(), this);
+    m_subscriptionView = new SubscriptionView(m_subscriptionService, m_themeService, this);
+    m_connectionsView = new ConnectionsView(m_themeService);
+    m_rulesView = new RulesView(m_ctx.configRepository(), m_themeService);
+    m_logView = new LogView(m_themeService);
+    m_settingsView = new SettingsView(m_themeService);
 
     m_proxyView->setProxyService(m_proxyService);
     m_connectionsView->setProxyService(m_proxyService);

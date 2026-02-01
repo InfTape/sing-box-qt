@@ -1,9 +1,9 @@
-ï»¿#include "ProxyView.h"
+#include "ProxyView.h"
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
 #include "services/rules/RuleConfigService.h"
-#include "app/ConfigProvider.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ConfigRepository.h"
+#include "app/interfaces/ThemeService.h"
 #include "dialogs/subscription/NodeEditDialog.h"
 #include "widgets/common/RoundedMenu.h"
 #include "storage/AppSettings.h"
@@ -36,47 +36,53 @@ namespace {
 class ProxyTreeDelegate : public QStyledItemDelegate
 {
 public:
-    using QStyledItemDelegate::QStyledItemDelegate;
+    explicit ProxyTreeDelegate(ThemeService *themeService, QObject *parent = nullptr)
+        : QStyledItemDelegate(parent)
+        , m_themeService(themeService)
+    {}
 
     void initStyleOption(QStyleOptionViewItem *option,
                          const QModelIndex &index) const override
     {
         QStyledItemDelegate::initStyleOption(option, index);
 
-        ThemeService *ts = ThemeProvider::instance();
-        if (!ts) return;
+        if (!m_themeService) return;
         const QString state = index.data(Qt::UserRole + 2).toString();
 
         if (index.column() == 0 && state == "active") {
-            option->palette.setColor(QPalette::Text, ts->color("success"));
+            option->palette.setColor(QPalette::Text, m_themeService->color("success"));
         }
 
         if (index.column() == 2) {
             if (state == "loading")
-                option->palette.setColor(QPalette::Text, ts->color("text-tertiary"));
+                option->palette.setColor(QPalette::Text, m_themeService->color("text-tertiary"));
             else if (state == "ok")
-                option->palette.setColor(QPalette::Text, ts->color("success"));
+                option->palette.setColor(QPalette::Text, m_themeService->color("success"));
             else if (state == "warn")
-                option->palette.setColor(QPalette::Text, ts->color("warning"));
+                option->palette.setColor(QPalette::Text, m_themeService->color("warning"));
             else if (state == "bad")
-                option->palette.setColor(QPalette::Text, ts->color("error"));
+                option->palette.setColor(QPalette::Text, m_themeService->color("error"));
         }
     }
+private:
+    ThemeService *m_themeService;
 };
 
 } // namespace
 
-ProxyView::ProxyView(QWidget *parent)
+ProxyView::ProxyView(ThemeService *themeService, ConfigRepository *configRepository, QWidget *parent)
     : QWidget(parent)
     , m_proxyService(nullptr)
     , m_delayTestService(nullptr)
     , m_testSelectedBtn(nullptr)
+    , m_themeService(themeService)
+    , m_configRepository(configRepository)
 {
     setupUI();
     updateStyle();
     
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &ProxyView::updateStyle);
     }
 }
@@ -170,7 +176,7 @@ void ProxyView::setupUI()
     m_treeWidget->header()->resizeSection(1, 100);
     m_treeWidget->header()->resizeSection(2, 100);
     m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_treeWidget->setItemDelegate(new ProxyTreeDelegate(m_treeWidget));
+    m_treeWidget->setItemDelegate(new ProxyTreeDelegate(m_themeService, m_treeWidget));
     connect(m_treeWidget->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, &ProxyView::onSelectionChanged);
     
@@ -189,10 +195,9 @@ void ProxyView::setupUI()
 
 void ProxyView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
-    if (!ts) return;
+    if (!m_themeService) return;
     
-    setStyleSheet(ts->loadStyleSheet(":/styles/proxy_view.qss"));
+    setStyleSheet(m_themeService->loadStyleSheet(":/styles/proxy_view.qss"));
 
     applyTreeItemColors();
     if (m_treeWidget && m_treeWidget->viewport()) {
@@ -264,7 +269,6 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
     
     m_treeWidget->clear();
     m_cachedProxies = proxies["proxies"].toObject();
-    ThemeService *ts = ThemeProvider::instance();
     
     for (auto it = m_cachedProxies.begin(); it != m_cachedProxies.end(); ++it) {
         QJsonObject proxy = it.value().toObject();
@@ -401,11 +405,10 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeService *ts = ThemeProvider::instance();
-    if (ts) {
-        menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-        connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
-            menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+    if (m_themeService) {
+        menu.setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
+        connect(m_themeService, &ThemeService::themeChanged, &menu, [&menu, this]() {
+            menu.setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
         });
     }
 
@@ -429,7 +432,7 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
             return;
         }
 
-        NodeEditDialog dialog(this);
+        NodeEditDialog dialog(m_themeService, this);
         dialog.setWindowTitle(tr("Node Details"));
         dialog.setNodeData(nodeObj);
         dialog.exec();
@@ -452,11 +455,10 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
 
 QJsonObject ProxyView::loadNodeOutbound(const QString &tag) const
 {
-    const QString path = RuleConfigService::activeConfigPath();
+    const QString path = RuleConfigService::activeConfigPath(m_configRepository);
     if (path.isEmpty()) return QJsonObject();
-    ConfigRepository *cfg = ConfigProvider::instance();
-    if (!cfg) return QJsonObject();
-    QJsonObject config = cfg->loadConfig(path);
+    if (!m_configRepository) return QJsonObject();
+    QJsonObject config = m_configRepository->loadConfig(path);
     if (config.isEmpty()) return QJsonObject();
     const QJsonArray outbounds = config.value("outbounds").toArray();
     for (const auto &v : outbounds) {
@@ -580,7 +582,7 @@ void ProxyView::onTestSelectedClicked()
 {
     if (!m_delayTestService || !m_treeWidget) return;
 
-    // é¿å…ä¸Žæ‰¹é‡æµ‹è¯•å¹¶å‘å†²çª
+    // ±ÜÃâÓëÅúÁ¿²âÊÔ²¢·¢³åÍ»
     if (m_delayTestService->isTesting() && !m_testingNodes.isEmpty()) {
         return;
     }
@@ -751,7 +753,7 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
         }
     }
 
-    // æ›´æ–°é€‰ä¸­æ€çš„è§†å›¾æ•ˆæžœï¼Œé¿å…æµ‹è¯•ç»“æŸåŽæ ·å¼ä¸¢å¤±
+    // ¸üÐÂÑ¡ÖÐÌ¬µÄÊÓÍ¼Ð§¹û£¬±ÜÃâ²âÊÔ½áÊøºóÑùÊ½¶ªÊ§
     if (QTreeWidgetItem *current = m_treeWidget->currentItem()) {
         updateNodeRowSelected(current, current->isSelected());
     }
@@ -985,4 +987,3 @@ void ProxyView::onSelectionChanged(const QItemSelection &selected, const QItemSe
         }
     }
 }
-

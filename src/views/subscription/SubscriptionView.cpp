@@ -2,7 +2,7 @@
 #include "dialogs/config/ConfigEditDialog.h"
 #include "dialogs/subscription/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
-#include "app/ThemeProvider.h"
+#include "app/interfaces/ThemeService.h"
 #include "views/subscription/SubscriptionController.h"
 #include "views/subscription/SubscriptionCard.h"
 #include "dialogs/subscription/NodeEditDialog.h"
@@ -24,17 +24,18 @@
 
 // ==================== SubscriptionView ====================
 
-SubscriptionView::SubscriptionView(SubscriptionService *service, QWidget *parent)
+SubscriptionView::SubscriptionView(SubscriptionService *service, ThemeService *themeService, QWidget *parent)
     : QWidget(parent)
     , m_subscriptionService(service)
     , m_subscriptionController(new SubscriptionController(service))
     , m_autoUpdateTimer(new QTimer(this))
+    , m_themeService(themeService)
 {
     Q_ASSERT(m_subscriptionService);
     setupUI();
 
-    if (ThemeProvider::instance()) {
-        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+    if (m_themeService) {
+        connect(m_themeService, &ThemeService::themeChanged,
                 this, &SubscriptionView::updateStyle);
     }
     updateStyle();
@@ -119,7 +120,7 @@ void SubscriptionView::setupUI()
 
 void SubscriptionView::updateStyle()
 {
-    ThemeService *ts = ThemeProvider::instance();
+    ThemeService *ts = m_themeService;
     if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/subscription_view.qss"));
 }
 
@@ -133,7 +134,7 @@ void SubscriptionView::onAddClicked()
 
 void SubscriptionView::openSubscriptionDialog()
 {
-    SubscriptionFormDialog dialog(this);
+    SubscriptionFormDialog dialog(m_themeService, this);
     if (dialog.exec() != QDialog::Accepted) {
         return;
     }
@@ -170,7 +171,7 @@ void SubscriptionView::openSubscriptionDialog()
 
 void SubscriptionView::onAddNodeClicked()
 {
-    NodeEditDialog dialog(this);
+    NodeEditDialog dialog(m_themeService, this);
     if (dialog.exec() == QDialog::Accepted) {
         QJsonObject node = dialog.nodeData();
         QJsonArray arr;
@@ -209,7 +210,7 @@ void SubscriptionView::onAutoUpdateTimer()
 
 SubscriptionCard* SubscriptionView::createSubscriptionCard(const SubscriptionInfo &info, bool active)
 {
-    SubscriptionCard *card = new SubscriptionCard(info, active, this);
+    SubscriptionCard *card = new SubscriptionCard(info, active, m_themeService, this);
     wireCardSignals(card);
     return card;
 }
@@ -239,7 +240,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
     const bool isSingleNode = SubscriptionHelpers::isSingleManualNode(target, &singleNodeObj);
 
     if (isSingleNode) {
-        NodeEditDialog dialog(this);
+        NodeEditDialog dialog(m_themeService, this);
         dialog.setRuleSets(target.ruleSets, target.enableSharedRules);
         dialog.setNodeData(singleNodeObj);
         if (dialog.exec() != QDialog::Accepted) return;
@@ -262,7 +263,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
             dialog.ruleSets()
         );
     } else {
-        SubscriptionFormDialog dialog(this);
+        SubscriptionFormDialog dialog(m_themeService, this);
         dialog.setEditData(target);
         if (dialog.exec() != QDialog::Accepted) return;
 

@@ -5,13 +5,14 @@
 #include <QMenu>
 
 class MainWindow;
+class ThemeService;
 
 class TrayIcon : public QSystemTrayIcon
 {
     Q_OBJECT
 
 public:
-    explicit TrayIcon(MainWindow *mainWindow, QObject *parent = nullptr);
+    explicit TrayIcon(MainWindow *mainWindow, ThemeService *themeService, QObject *parent = nullptr);
     ~TrayIcon();
 
 private slots:
@@ -33,6 +34,7 @@ private:
     QAction *m_ruleAction;
     QAction *m_showAction;
     QAction *m_quitAction;
+    ThemeService *m_themeService = nullptr;
 };
 
 #endif // TRAYICON_H
