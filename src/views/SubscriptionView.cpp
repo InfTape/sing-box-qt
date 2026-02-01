@@ -406,6 +406,8 @@ void SubscriptionView::layoutCards()
 {
     if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
 
+    static const int kCardWidth = 280;
+    static const int kCardHeight = 200;
     while (m_cardsLayout->count() > 0) {
         QLayoutItem *item = m_cardsLayout->takeAt(0);
         if (item) {
@@ -415,31 +417,25 @@ void SubscriptionView::layoutCards()
 
     if (m_cards.isEmpty()) return;
 
-    const int availableWidth = m_scrollArea->viewport()->width();
     const int spacing = m_cardsLayout->spacing();
-    const int minColumns = 2;
-    const int maxColumns = 5;          // allow more cards per row on wide screens
-    const int idealCardWidth = 260;    // shrink ideal width to fit更多列
-    int columns = availableWidth / idealCardWidth;
-    columns = qMax(minColumns, qMin(columns, maxColumns));
+    const int availableWidth = qMax(0, m_scrollArea->viewport()->width());
+    int columns = qMax(1, (availableWidth + spacing) / (kCardWidth + spacing));
     m_columnCount = columns;
-    const int totalSpacing = spacing * (columns - 1);
-    const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
-    const int cardHeight = qMax(200, qRound(cardWidth * 0.68));
+
+    const int totalWidth = columns * kCardWidth + (columns - 1) * spacing;
+    const int horizontalMargin = qMax(0, (availableWidth - totalWidth) / 2);
+    m_cardsLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
 
     int row = 0;
     int col = 0;
     for (SubscriptionCard *card : m_cards) {
-        card->setFixedSize(cardWidth, cardHeight);
-        m_cardsLayout->addWidget(card, row, col);
+        card->setFixedSize(kCardWidth, kCardHeight);
+        m_cardsLayout->addWidget(card, row, col, Qt::AlignLeft | Qt::AlignTop);
         ++col;
         if (col >= columns) {
             col = 0;
             ++row;
         }
-    }
-    for (int i = 0; i < columns; ++i) {
-        m_cardsLayout->setColumnStretch(i, 1);
     }
 }
 
@@ -448,26 +444,5 @@ void SubscriptionView::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (m_cards.isEmpty()) return;
 
-    const int availableWidth = m_scrollArea->viewport()->width();
-    const int spacing = m_cardsLayout->spacing();
-    const int minColumns = 2;
-    const int maxColumns = 5;
-    const int idealCardWidth = 260;
-    int columns = availableWidth / idealCardWidth;
-    columns = qMax(minColumns, qMin(columns, maxColumns));
-    if (columns != m_columnCount) {
-        layoutCards();
-        return;
-    }
-
-    const int totalSpacing = spacing * (columns - 1);
-    const int cardWidth = qMax(0, (availableWidth - totalSpacing) / columns);
-    const int cardHeight = qMax(200, qRound(cardWidth * 0.68));
-    for (int i = 0; i < m_cardsLayout->count(); ++i) {
-        if (QLayoutItem *item = m_cardsLayout->itemAt(i)) {
-            if (QWidget *widget = item->widget()) {
-                widget->setFixedSize(cardWidth, cardHeight);
-            }
-        }
-    }
+    layoutCards();
 }
