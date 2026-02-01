@@ -2,7 +2,7 @@
 #include "dialogs/config/ConfigEditDialog.h"
 #include "dialogs/subscription/SubscriptionFormDialog.h"
 #include "network/SubscriptionService.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "views/subscription/SubscriptionController.h"
 #include "views/subscription/SubscriptionCard.h"
 #include "dialogs/subscription/NodeEditDialog.h"
@@ -33,8 +33,10 @@ SubscriptionView::SubscriptionView(SubscriptionService *service, QWidget *parent
     Q_ASSERT(m_subscriptionService);
     setupUI();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &SubscriptionView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &SubscriptionView::updateStyle);
+    }
     updateStyle();
 
     m_autoUpdateTimer->setInterval(30 * 60 * 1000);
@@ -117,8 +119,8 @@ void SubscriptionView::setupUI()
 
 void SubscriptionView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/subscription_view.qss"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/subscription_view.qss"));
 }
 
 void SubscriptionView::onAddClicked()
@@ -248,7 +250,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
         QString content = QJsonDocument(arr).toJson(QJsonDocument::Compact);
         QString name = newNode["tag"].toString();
 
-        m_subscriptionController->service()->updateSubscriptionMeta(
+        m_subscriptionController->updateSubscription(
             id,
             name,
             target.url,
@@ -272,7 +274,7 @@ void SubscriptionView::handleEditSubscription(const QString &id)
 
         const bool isManual = dialog.isManual();
         const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
-        m_subscriptionController->service()->updateSubscriptionMeta(
+        m_subscriptionController->updateSubscription(
             id,
             dialog.name(),
             dialog.url(),

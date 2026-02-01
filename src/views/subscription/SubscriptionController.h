@@ -45,6 +45,16 @@ public:
     void remove(const QString &id);
     void removeSubscription(const QString &id) { remove(id); }
 
+    void updateSubscription(const QString &id,
+                            const QString &name,
+                            const QString &url,
+                            bool isManual,
+                            const QString &content,
+                            bool useOriginalConfig,
+                            int autoUpdateIntervalMinutes,
+                            bool enableSharedRules,
+                            const QStringList &ruleSets);
+
     bool saveCurrentConfig(const QString &content, bool applyRuntime);
 
 private:

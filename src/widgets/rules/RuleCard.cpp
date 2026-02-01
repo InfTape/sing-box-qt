@@ -1,6 +1,6 @@
 #include "widgets/rules/RuleCard.h"
 #include "utils/rule/RuleUtils.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAction>
 #include <QHBoxLayout>
@@ -20,8 +20,10 @@ RuleCard::RuleCard(const RuleItem &rule, int index, QWidget *parent)
     setupUI();
     updateStyle();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &RuleCard::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &RuleCard::updateStyle);
+    }
 }
 
 void RuleCard::setupUI()
@@ -55,8 +57,9 @@ void RuleCard::setupUI()
         m_menu = new RoundedMenu(this);
         m_menu->setObjectName("RuleMenu");
         updateMenuTheme();
-        ThemeManager &tm = ThemeManager::instance();
-        connect(&tm, &ThemeManager::themeChanged, this, &RuleCard::updateMenuTheme);
+        if (ThemeProvider::instance()) {
+            connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, &RuleCard::updateMenuTheme);
+        }
 
         QAction *editTypeAct = m_menu->addAction(tr("Edit Match Type"));
         QAction *removeAct = m_menu->addAction(tr("Delete Rule"));
@@ -111,10 +114,11 @@ void RuleCard::setupUI()
 
 void RuleCard::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    QString qss = tm.loadStyleSheet(":/styles/card_common.qss");
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
+    QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
     if (qss.isEmpty()) {
-        qss = tm.loadStyleSheet(":/styles/subscription_card.qss"); // 兜底，避免资源缺失时样式丢失
+        qss = ts->loadStyleSheet(":/styles/subscription_card.qss");
     }
     setStyleSheet(qss);
 }
@@ -122,6 +126,8 @@ void RuleCard::updateStyle()
 void RuleCard::updateMenuTheme()
 {
     if (!m_menu) return;
-    ThemeManager &tm = ThemeManager::instance();
-    m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+    }
 }

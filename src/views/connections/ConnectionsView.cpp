@@ -1,6 +1,6 @@
 #include "ConnectionsView.h"
 #include "core/ProxyService.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -39,8 +39,10 @@ ConnectionsView::ConnectionsView(QWidget *parent)
     m_refreshTimer->setInterval(1000);
     connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
     
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &ConnectionsView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &ConnectionsView::updateStyle);
+    }
 }
 
 void ConnectionsView::setupUI()
@@ -179,6 +181,6 @@ void ConnectionsView::onCloseAll()
 
 void ConnectionsView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/connections_view.qss"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/connections_view.qss"));
 }

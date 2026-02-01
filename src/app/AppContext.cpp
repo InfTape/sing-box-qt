@@ -9,6 +9,8 @@
 #include "app/impl/ThemeServiceAdapter.h"
 #include "app/impl/SystemProxyAdapter.h"
 #include "app/impl/AdminActionsAdapter.h"
+#include "app/ThemeProvider.h"
+#include "app/ConfigProvider.h"
 
 AppContext::AppContext()
 {
@@ -25,6 +27,10 @@ AppContext::AppContext()
                                                           m_configRepository.get(),
                                                           m_settingsStore.get(),
                                                           m_systemProxyGateway.get());
+    
+    // Set global providers for UI components
+    ThemeProvider::setInstance(m_themeService.get());
+    ConfigProvider::setInstance(m_configRepository.get());
 }
 
 AppContext::~AppContext() = default;

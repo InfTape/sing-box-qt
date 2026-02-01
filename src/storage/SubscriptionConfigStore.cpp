@@ -1,5 +1,5 @@
 #include "storage/SubscriptionConfigStore.h"
-#include "services/config/ConfigManager.h"
+#include "app/ConfigProvider.h"
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -32,7 +32,8 @@ QString generateConfigFileName(const QString &name)
 
 bool saveConfigWithNodes(const QJsonArray &nodes, const QString &targetPath)
 {
-    return ConfigManager::instance().generateConfigWithNodes(nodes, targetPath);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    return cfg ? cfg->generateConfigWithNodes(nodes, targetPath) : false;
 }
 
 bool saveOriginalConfig(const QString &content, const QString &targetPath)
@@ -43,10 +44,12 @@ bool saveOriginalConfig(const QString &content, const QString &targetPath)
         return false;
     }
 
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) return false;
     QJsonObject config = doc.object();
-    ConfigManager::instance().applyPortSettings(config);
+    cfg->applyPortSettings(config);
 
-    return ConfigManager::instance().saveConfig(targetPath, config);
+    return cfg->saveConfig(targetPath, config);
 }
 
 bool rollbackSubscriptionConfig(const QString &configPath)

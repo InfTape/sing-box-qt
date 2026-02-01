@@ -2,7 +2,7 @@
 #include "dialogs/rules/RuleEditorDialog.h"
 #include "services/rules/SharedRulesStore.h"
 #include "services/rules/RuleConfigService.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAbstractItemView>
 #include <QHBoxLayout>
@@ -219,11 +219,13 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeManager &tm = ThemeManager::instance();
-    menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    connect(&tm, &ThemeManager::themeChanged, &menu, [&menu, &tm]() {
-        menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    });
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
+            menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        });
+    }
 
     QAction *addAct = menu.addAction(tr("Add"));
     QAction *renameAct = menu.addAction(tr("Rename"));
@@ -246,11 +248,13 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeManager &tm = ThemeManager::instance();
-    menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    connect(&tm, &ThemeManager::themeChanged, &menu, [&menu, &tm]() {
-        menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    });
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
+            menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        });
+    }
 
     QAction *addAct = menu.addAction(tr("Add Rule"));
     QAction *delAct = menu.addAction(tr("Delete Rule"));

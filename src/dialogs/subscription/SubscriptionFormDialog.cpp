@@ -2,7 +2,7 @@
 #include "network/SubscriptionService.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "services/rules/SharedRulesStore.h"
 #include <QCheckBox>
 #include <QFormLayout>
@@ -49,12 +49,17 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget *parent)
         m_menu->popup(m_button->mapToGlobal(QPoint(0, m_button->height())));
     });
 
-    ThemeManager &tm = ThemeManager::instance();
-    connect(&tm, &ThemeManager::themeChanged, this, [this]() {
-        m_menu->setThemeColors(ThemeManager::instance().getColor("bg-secondary"),
-                               ThemeManager::instance().getColor("primary"));
-    });
-    m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        connect(ts, &ThemeService::themeChanged, this, [this]() {
+            ThemeService *tsp = ThemeProvider::instance();
+            if (tsp) {
+                m_menu->setThemeColors(tsp->color("bg-secondary"),
+                                       tsp->color("primary"));
+            }
+        });
+        m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+    }
 }
 
 void MultiSelectMenuBox::setOptions(const QStringList &options)

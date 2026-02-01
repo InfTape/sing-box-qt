@@ -97,18 +97,13 @@ MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
     loadSettings();
     if (m_homeView)
     {
-        const bool sysProxy = m_settingsStore ? m_settingsStore->systemProxyEnabled()
-                                              : AppSettings::instance().systemProxyEnabled();
+        const bool sysProxy = m_settingsStore ? m_settingsStore->systemProxyEnabled() : false;
         m_homeView->setSystemProxyEnabled(sysProxy);
         m_homeView->setTunModeEnabled(false);
         QString configPath = m_proxyController->activeConfigPath();
-        if (!configPath.isEmpty())
+        if (!configPath.isEmpty() && m_ctx.configRepository())
         {
-            if (m_ctx.configRepository()) {
-                m_homeView->setProxyMode(m_ctx.configRepository()->readClashDefaultMode(configPath));
-            } else {
-                m_homeView->setProxyMode(ConfigManager::instance().readClashDefaultMode(configPath));
-            }
+            m_homeView->setProxyMode(m_ctx.configRepository()->readClashDefaultMode(configPath));
         }
     }
     updateStyle();
@@ -296,9 +291,6 @@ void MainWindow::setupThemeConnections()
     if (m_themeService) {
         connect(m_themeService, &ThemeService::themeChanged,
                 this, &MainWindow::updateStyle);
-    } else {
-        connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-                this, &MainWindow::updateStyle);
     }
 }
 
@@ -352,7 +344,7 @@ void MainWindow::setupHomeViewConnections()
 
     connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled)
             {
-        const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : AdminHelper::isAdmin();
+        const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
         if (enabled && !isAdmin) {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
@@ -367,17 +359,11 @@ void MainWindow::setupHomeViewConnections()
                 if (m_settingsStore) {
                     m_settingsStore->setSystemProxyEnabled(false);
                     m_settingsStore->setTunEnabled(true);
-                } else {
-                    AppSettings::instance().setSystemProxyEnabled(false);
-                    AppSettings::instance().setTunEnabled(true);
                 }
-                const bool restarted = m_adminActions ? m_adminActions->restartAsAdmin()
-                                                      : AdminHelper::restartAsAdmin();
+                const bool restarted = m_adminActions ? m_adminActions->restartAsAdmin() : false;
                 if (!restarted) {
                     if (m_settingsStore) {
                         m_settingsStore->setTunEnabled(false);
-                    } else {
-                        AppSettings::instance().setTunEnabled(false);
                     }
                     if (m_homeView) {
                         m_homeView->setTunModeEnabled(false);
@@ -389,8 +375,6 @@ void MainWindow::setupHomeViewConnections()
                 }
                 if (m_settingsStore) {
                     m_settingsStore->setTunEnabled(false);
-                } else {
-                    AppSettings::instance().setTunEnabled(false);
                 }
             }
             return;
@@ -498,9 +482,6 @@ void MainWindow::updateStyle()
 {
     if (m_themeService) {
         setStyleSheet(m_themeService->loadStyleSheet(":/styles/main_window.qss"));
-    } else {
-        ThemeManager &tm = ThemeManager::instance();
-        setStyleSheet(tm.loadStyleSheet(":/styles/main_window.qss"));
     }
 
     updateNavIcons();
@@ -537,9 +518,6 @@ void MainWindow::updateNavIcons()
     QColor iconColor;
     if (m_themeService) {
         iconColor = m_themeService->color("text-primary");
-    } else {
-        ThemeManager &tm = ThemeManager::instance();
-        iconColor = tm.getColor("text-primary");
     }
     const int iconSize = 20;
 

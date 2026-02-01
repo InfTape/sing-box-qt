@@ -2,8 +2,8 @@
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
 #include "services/rules/RuleConfigService.h"
-#include "services/config/ConfigManager.h"
-#include "utils/ThemeManager.h"
+#include "app/ConfigProvider.h"
+#include "app/ThemeProvider.h"
 #include "dialogs/subscription/NodeEditDialog.h"
 #include "widgets/common/RoundedMenu.h"
 #include "storage/AppSettings.h"
@@ -43,22 +43,23 @@ public:
     {
         QStyledItemDelegate::initStyleOption(option, index);
 
-        ThemeManager &tm = ThemeManager::instance();
+        ThemeService *ts = ThemeProvider::instance();
+        if (!ts) return;
         const QString state = index.data(Qt::UserRole + 2).toString();
 
         if (index.column() == 0 && state == "active") {
-            option->palette.setColor(QPalette::Text, tm.getColor("success"));
+            option->palette.setColor(QPalette::Text, ts->color("success"));
         }
 
         if (index.column() == 2) {
             if (state == "loading")
-                option->palette.setColor(QPalette::Text, tm.getColor("text-tertiary"));
+                option->palette.setColor(QPalette::Text, ts->color("text-tertiary"));
             else if (state == "ok")
-                option->palette.setColor(QPalette::Text, tm.getColor("success"));
+                option->palette.setColor(QPalette::Text, ts->color("success"));
             else if (state == "warn")
-                option->palette.setColor(QPalette::Text, tm.getColor("warning"));
+                option->palette.setColor(QPalette::Text, ts->color("warning"));
             else if (state == "bad")
-                option->palette.setColor(QPalette::Text, tm.getColor("error"));
+                option->palette.setColor(QPalette::Text, ts->color("error"));
         }
     }
 };
@@ -74,8 +75,10 @@ ProxyView::ProxyView(QWidget *parent)
     setupUI();
     updateStyle();
     
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &ProxyView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &ProxyView::updateStyle);
+    }
 }
 
 void ProxyView::setupUI()
@@ -186,9 +189,10 @@ void ProxyView::setupUI()
 
 void ProxyView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
     
-    setStyleSheet(tm.loadStyleSheet(":/styles/proxy_view.qss"));
+    setStyleSheet(ts->loadStyleSheet(":/styles/proxy_view.qss"));
 
     applyTreeItemColors();
     if (m_treeWidget && m_treeWidget->viewport()) {
@@ -260,7 +264,7 @@ void ProxyView::renderProxies(const QJsonObject &proxies)
     
     m_treeWidget->clear();
     m_cachedProxies = proxies["proxies"].toObject();
-    ThemeManager &tm = ThemeManager::instance();
+    ThemeService *ts = ThemeProvider::instance();
     
     for (auto it = m_cachedProxies.begin(); it != m_cachedProxies.end(); ++it) {
         QJsonObject proxy = it.value().toObject();
@@ -397,11 +401,13 @@ void ProxyView::onTreeContextMenu(const QPoint &pos)
 
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
-    ThemeManager &tm = ThemeManager::instance();
-    menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    connect(&tm, &ThemeManager::themeChanged, &menu, [&menu, &tm]() {
-        menu.setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    });
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
+            menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        });
+    }
 
     QAction *detailAct = menu.addAction(tr("Details"));
     QAction *testAct = menu.addAction(tr("Latency Test"));
@@ -448,7 +454,9 @@ QJsonObject ProxyView::loadNodeOutbound(const QString &tag) const
 {
     const QString path = RuleConfigService::activeConfigPath();
     if (path.isEmpty()) return QJsonObject();
-    QJsonObject config = ConfigManager::instance().loadConfig(path);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) return QJsonObject();
+    QJsonObject config = cfg->loadConfig(path);
     if (config.isEmpty()) return QJsonObject();
     const QJsonArray outbounds = config.value("outbounds").toArray();
     for (const auto &v : outbounds) {

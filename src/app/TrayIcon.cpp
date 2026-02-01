@@ -2,7 +2,7 @@
 #include "MainWindow.h"
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "services/config/ConfigManager.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QMessageBox>
@@ -37,11 +37,13 @@ void TrayIcon::setupMenu()
 {
     auto *menu = new RoundedMenu;
     menu->setObjectName("TrayMenu");
-    ThemeManager &tm = ThemeManager::instance();
-    menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    connect(&tm, &ThemeManager::themeChanged, menu, [menu, &tm]() {
-        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    });
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {
+            menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        });
+    }
 
     m_menu = menu;
     

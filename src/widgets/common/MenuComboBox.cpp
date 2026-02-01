@@ -1,6 +1,6 @@
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include <QAction>
 #include <QPainter>
 #include <QPainterPath>
@@ -17,10 +17,11 @@ MenuComboBox::MenuComboBox(QWidget *parent)
     m_menu->setObjectName("ComboMenu");
     updateMenuStyle();
 
-    ThemeManager &tm = ThemeManager::instance();
-    connect(&tm, &ThemeManager::themeChanged, this, [this]() {
-        updateMenuStyle();
-    });
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, [this]() {
+            updateMenuStyle();
+        });
+    }
 }
 
 void MenuComboBox::setWheelEnabled(bool enabled)
@@ -33,8 +34,8 @@ void MenuComboBox::showPopup()
     if (!m_menu) return;
     m_menu->clear();
 
-    ThemeManager &tm = ThemeManager::instance();
-    QColor checkColor = tm.getColor("primary");
+    ThemeService *ts = ThemeProvider::instance();
+    QColor checkColor = ts ? ts->color("primary") : QColor(0, 0, 200);
     
     for (int i = 0; i < count(); ++i) {
         QAction *action = m_menu->addAction(itemText(i));
@@ -90,6 +91,6 @@ void MenuComboBox::wheelEvent(QWheelEvent *event)
 void MenuComboBox::updateMenuStyle()
 {
     if (!m_menu) return;
-    ThemeManager &tm = ThemeManager::instance();
-    m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 }

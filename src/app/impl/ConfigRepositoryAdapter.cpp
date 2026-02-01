@@ -2,6 +2,11 @@
 
 #include "services/config/ConfigManager.h"
 
+QString ConfigRepositoryAdapter::getConfigDir() const
+{
+    return ConfigManager::instance().getConfigDir();
+}
+
 QString ConfigRepositoryAdapter::getActiveConfigPath() const
 {
     return ConfigManager::instance().getActiveConfigPath();
@@ -37,7 +42,13 @@ void ConfigRepositoryAdapter::applySettingsToConfig(QJsonObject &config)
     ConfigManager::instance().applySettingsToConfig(config);
 }
 
+void ConfigRepositoryAdapter::applyPortSettings(QJsonObject &config)
+{
+    ConfigManager::instance().applyPortSettings(config);
+}
+
 int ConfigRepositoryAdapter::mixedPort() const
 {
     return ConfigManager::instance().getMixedPort();
 }
+

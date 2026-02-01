@@ -51,6 +51,8 @@ set(SOURCES
     src/app/impl/AdminActionsAdapter.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
+    src/app/ThemeProvider.cpp
+    src/app/ConfigProvider.cpp
     src/core/KernelService.cpp
     src/core/ProcessManager.cpp
     src/core/ProxyService.cpp
@@ -131,6 +133,8 @@ set(HEADERS
     src/app/impl/AdminActionsAdapter.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
+    src/app/ThemeProvider.h
+    src/app/ConfigProvider.h
     src/core/KernelService.h
     src/core/ProcessManager.h
     src/core/ProxyService.h

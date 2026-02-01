@@ -1,6 +1,6 @@
 #include "ProxyController.h"
 #include "KernelService.h"
-#include "services/config/ConfigManager.h"
+#include "app/ConfigProvider.h"
 #include "storage/AppSettings.h"
 #include "network/SubscriptionService.h"
 #include "system/SystemProxy.h"
@@ -41,11 +41,8 @@ QString ProxyController::activeConfigPath() const
         configPath = m_subscription->getActiveConfigPath();
     }
     if (configPath.isEmpty()) {
-        if (m_configRepo) {
-            configPath = m_configRepo->getActiveConfigPath();
-        } else {
-            configPath = ConfigManager::instance().getActiveConfigPath();
-        }
+        ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+        if (repo) configPath = repo->getActiveConfigPath();
     }
     return configPath;
 }
@@ -54,10 +51,8 @@ QString ProxyController::currentProxyMode() const
 {
     const QString path = activeConfigPath();
     if (path.isEmpty()) return "rule";
-    if (m_configRepo) {
-        return m_configRepo->readClashDefaultMode(path);
-    }
-    return ConfigManager::instance().readClashDefaultMode(path);
+    ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+    return repo ? repo->readClashDefaultMode(path) : "rule";
 }
 
 bool ProxyController::ensureConfigExists(QString *outPath)
@@ -68,23 +63,16 @@ bool ProxyController::ensureConfigExists(QString *outPath)
         return true;
     }
 
-    ConfigManager &cm = ConfigManager::instance();
-    if (m_configRepo) {
-        if (!m_configRepo->generateConfigWithNodes(QJsonArray())) {
-            Logger::error(QStringLiteral("Failed to generate default config"));
-            return false;
-        }
-        configPath = m_configRepo->getActiveConfigPath();
-        if (outPath) *outPath = configPath;
-        return QFile::exists(configPath);
+    ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+    if (!repo) {
+        Logger::error(QStringLiteral("Config repository not available"));
+        return false;
     }
-
-    if (!cm.generateConfigWithNodes(QJsonArray())) {
+    if (!repo->generateConfigWithNodes(QJsonArray())) {
         Logger::error(QStringLiteral("Failed to generate default config"));
         return false;
     }
-
-    configPath = cm.getActiveConfigPath();
+    configPath = repo->getActiveConfigPath();
     if (outPath) *outPath = configPath;
     return QFile::exists(configPath);
 }
@@ -127,12 +115,12 @@ bool ProxyController::setProxyMode(const QString &mode, bool restartIfRunning, Q
         return false;
     }
 
-    bool ok = false;
-    if (m_configRepo) {
-        ok = m_configRepo->updateClashDefaultMode(configPath, mode, error);
-    } else {
-        ok = ConfigManager::instance().updateClashDefaultMode(configPath, mode, error);
+    ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+    if (!repo) {
+        if (error) *error = QObject::tr("Config repository not available");
+        return false;
     }
+    bool ok = repo->updateClashDefaultMode(configPath, mode, error);
     if (ok && restartIfRunning && m_kernel && m_kernel->isRunning()) {
         m_kernel->restartWithConfig(configPath);
     }
@@ -155,8 +143,8 @@ bool ProxyController::setSystemProxyEnabled(bool enabled)
 {
     SettingsStore *settings = m_settings;
     if (enabled) {
-        const int port = m_configRepo ? m_configRepo->mixedPort()
-                                      : ConfigManager::instance().getMixedPort();
+        ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+        const int port = repo ? repo->mixedPort() : 1080;
         if (m_systemProxy) {
             m_systemProxy->setProxy("127.0.0.1", port);
         } else {
@@ -211,18 +199,13 @@ bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning)
     QString configPath = activeConfigPath();
     if (configPath.isEmpty()) return false;
 
-    QJsonObject config = m_configRepo
-                             ? m_configRepo->loadConfig(configPath)
-                             : ConfigManager::instance().loadConfig(configPath);
+    ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+    if (!repo) return false;
+    QJsonObject config = repo->loadConfig(configPath);
     if (config.isEmpty()) return false;
 
-    if (m_configRepo) {
-        m_configRepo->applySettingsToConfig(config);
-        m_configRepo->saveConfig(configPath, config);
-    } else {
-        ConfigManager::instance().applySettingsToConfig(config);
-        ConfigManager::instance().saveConfig(configPath, config);
-    }
+    repo->applySettingsToConfig(config);
+    repo->saveConfig(configPath, config);
 
     if (restartIfRunning && m_kernel && m_kernel->isRunning()) {
         m_kernel->restartWithConfig(configPath);
@@ -245,8 +228,8 @@ void ProxyController::updateSystemProxyForKernelState(bool running)
     }
 
     if (running) {
-        const int port = m_configRepo ? m_configRepo->mixedPort()
-                                      : ConfigManager::instance().getMixedPort();
+        ConfigRepository *repo = m_configRepo ? m_configRepo : ConfigProvider::instance();
+        const int port = repo ? repo->mixedPort() : 1080;
         if (m_systemProxy) {
             m_systemProxy->setProxy("127.0.0.1", port);
         } else {

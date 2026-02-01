@@ -1,6 +1,6 @@
 ﻿#include "LogView.h"
 #include "utils/LogParser.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/logs/LogRowWidget.h"
 #include "widgets/common/MenuComboBox.h"
 #include <QApplication>
@@ -32,8 +32,10 @@ LogView::LogView(QWidget *parent)
     setupUI();
     updateStyle();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &LogView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &LogView::updateStyle);
+    }
 }
 
 void LogView::setupUI()
@@ -396,6 +398,6 @@ void LogView::updateEmptyState()
 
 void LogView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/log_view.qss"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/log_view.qss"));
 }

@@ -1,5 +1,5 @@
 #include "HomeView.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "utils/home/HomeFormat.h"
 #include "views/components/TrafficChart.h"
 #include "widgets/common/ToggleSwitch.h"
@@ -89,8 +89,8 @@ void setCardActive(QWidget *card, bool active)
         if (!pathVar.isValid()) continue;
         const QString iconPath = pathVar.toString();
         const int iconSize = label->property("iconSize").toInt();
-        ThemeManager &tm = ThemeManager::instance();
-        QColor color = active ? QColor(Qt::white) : tm.getColor("primary");
+        ThemeService *ts = ThemeProvider::instance();
+        QColor color = active ? QColor(Qt::white) : (ts ? ts->color("primary") : QColor());
         label->setPixmap(svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
     }
     polishWidget(card);
@@ -107,8 +107,10 @@ HomeView::HomeView(QWidget *parent)
     setupUI();
     updateStyle();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &HomeView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &HomeView::updateStyle);
+    }
 }
 
 void HomeView::setupUI()
@@ -340,11 +342,11 @@ QWidget* HomeView::createStatCard(const QString &iconText, const QString &accent
         iconPath = ":/icons/connect.svg";
     }
     if (!iconPath.isEmpty()) {
-        ThemeManager &tm = ThemeManager::instance();
-        QColor iconColor = tm.getColor("text-primary");
-        if (accentKey == "success") iconColor = tm.getColor("success");
-        else if (accentKey == "primary") iconColor = tm.getColor("primary");
-        else if (accentKey == "warning") iconColor = tm.getColor("warning");
+        ThemeService *ts = ThemeProvider::instance();
+        QColor iconColor = ts ? ts->color("text-primary") : QColor();
+        if (accentKey == "success") iconColor = ts ? ts->color("success") : QColor();
+        else if (accentKey == "primary") iconColor = ts ? ts->color("primary") : QColor();
+        else if (accentKey == "warning") iconColor = ts ? ts->color("warning") : QColor();
         iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
         iconLabel->setProperty("iconPath", iconPath);
         iconLabel->setProperty("iconSize", 20);
@@ -413,8 +415,8 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
         iconPath = ":/icons/mappin.svg";
     }
     if (!iconPath.isEmpty()) {
-        ThemeManager &tm = ThemeManager::instance();
-        QColor iconColor = tm.getColor("primary");
+        ThemeService *ts = ThemeProvider::instance();
+        QColor iconColor = ts ? ts->color("primary") : QColor();
         iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
         iconLabel->setProperty("iconPath", iconPath);
         iconLabel->setProperty("iconSize", 20);
@@ -455,12 +457,13 @@ QWidget* HomeView::createModeItem(const QString &iconText, const QString &accent
 
 void HomeView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
 
-    QColor primary = tm.getColor("primary");
-    QColor success = tm.getColor("success");
-    QColor warning = tm.getColor("warning");
-    QColor error = tm.getColor("error");
+    QColor primary = ts->color("primary");
+    QColor success = ts->color("success");
+    QColor warning = ts->color("warning");
+    QColor error = ts->color("error");
 
     QMap<QString, QString> extra;
     extra.insert("success-12", rgba(success, 0.12));
@@ -471,7 +474,7 @@ void HomeView::updateStyle()
     extra.insert("warning-18", rgba(warning, 0.18));
     extra.insert("primary-06", rgba(primary, 0.06));
 
-    setStyleSheet(tm.loadStyleSheet(":/styles/home_view.qss", extra));
+    setStyleSheet(ts->loadStyleSheet(":/styles/home_view.qss", extra));
 
 
 

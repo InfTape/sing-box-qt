@@ -3,7 +3,7 @@
 #include "services/subscription/SubscriptionParser.h"
 #include "storage/DatabaseService.h"
 #include "storage/SubscriptionConfigStore.h"
-#include "services/config/ConfigManager.h"
+#include "app/ConfigProvider.h"
 #include "services/config/ConfigMutator.h"
 #include "services/rules/SharedRulesStore.h"
 #include "utils/Logger.h"
@@ -152,7 +152,9 @@ void SubscriptionService::updateSubscriptionUserinfoFromHeader(SubscriptionInfo 
 void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo &info)
 {
     if (info.configPath.isEmpty()) return;
-    QJsonObject config = ConfigManager::instance().loadConfig(info.configPath);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) return;
+    QJsonObject config = cfg->loadConfig(info.configPath);
     if (config.isEmpty()) return;
 
     QJsonArray merged;
@@ -164,7 +166,7 @@ void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo &info)
         }
     }
     ConfigMutator::applySharedRules(config, merged, info.enableSharedRules && !merged.isEmpty());
-    ConfigManager::instance().saveConfig(info.configPath, config);
+    cfg->saveConfig(info.configPath, config);
 }
 void SubscriptionService::addUrlSubscription(const QString &url,
                                              const QString &name,
@@ -183,7 +185,12 @@ void SubscriptionService::addUrlSubscription(const QString &url,
     QString subName = name.trimmed().isEmpty() ? QUrl(trimmedUrl).host() : name.trimmed();
     QString id = generateId();
     const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
-    const QString configPath = ConfigManager::instance().getConfigDir() + "/" + configName;
+    ConfigRepository *cfg = ConfigProvider::instance();
+    const QString configPath = cfg ? cfg->getConfigDir() + "/" + configName : QString();
+    if (configPath.isEmpty()) {
+        emit errorOccurred(tr("Config directory not available"));
+        return;
+    }
 
     Logger::info(QString("Add subscription: %1 (%2)").arg(subName, trimmedUrl));
 
@@ -288,7 +295,12 @@ void SubscriptionService::addManualSubscription(const QString &content,
     QString subName = name.trimmed().isEmpty() ? tr("Manual subscription") : name.trimmed();
     QString id = generateId();
     const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
-    const QString configPath = ConfigManager::instance().getConfigDir() + "/" + configName;
+    ConfigRepository *cfgRepo = ConfigProvider::instance();
+    const QString configPath = cfgRepo ? cfgRepo->getConfigDir() + "/" + configName : QString();
+    if (configPath.isEmpty()) {
+        emit errorOccurred(tr("Config directory not available"));
+        return;
+    }
 
     SubscriptionInfo info;
     info.id = id;
@@ -548,8 +560,9 @@ void SubscriptionService::clearActiveSubscription()
 }
 QString SubscriptionService::getCurrentConfig() const
 {
+    ConfigRepository *cfg = ConfigProvider::instance();
     const QString path = m_activeConfigPath.isEmpty()
-        ? ConfigManager::instance().getActiveConfigPath()
+        ? (cfg ? cfg->getActiveConfigPath() : QString())
         : m_activeConfigPath;
     if (path.isEmpty()) {
         return QString();
@@ -566,9 +579,10 @@ QString SubscriptionService::getCurrentConfig() const
 
 bool SubscriptionService::saveCurrentConfig(const QString &content, bool applyRuntime)
 {
+    ConfigRepository *cfg = ConfigProvider::instance();
     QString targetPath = m_activeConfigPath;
-    if (targetPath.isEmpty()) {
-        targetPath = ConfigManager::instance().getActiveConfigPath();
+    if (targetPath.isEmpty() && cfg) {
+        targetPath = cfg->getActiveConfigPath();
     }
     if (targetPath.isEmpty()) {
         return false;
@@ -580,7 +594,7 @@ bool SubscriptionService::saveCurrentConfig(const QString &content, bool applyRu
         return false;
     }
 
-    if (!ConfigManager::instance().saveConfig(targetPath, doc.object())) {
+    if (!cfg || !cfg->saveConfig(targetPath, doc.object())) {
         return false;
     }
 

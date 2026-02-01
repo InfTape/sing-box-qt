@@ -1,4 +1,5 @@
 ﻿#include "widgets/common/ToggleSwitch.h"
+#include "app/ThemeProvider.h"
 #include "utils/ThemeManager.h"
 
 #include <QPainter>
@@ -71,19 +72,20 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
     const QRectF th = thumbRectForOffset(m_offset);
 
     // Colors from theme
-    ThemeManager &tm = ThemeManager::instance();
+    ThemeService *ts = ThemeProvider::instance();
     const bool en = isEnabled();
     
     // 仅日间模式使用text-tertiary，夜间模式使用原来的灰色
     QColor trackOff;
-    if (tm.getThemeMode() == ThemeManager::Light || 
-        (tm.getThemeMode() == ThemeManager::Auto && tm.getColor("bg-primary") == QColor("#f8fafc"))) {
-        trackOff = tm.getColor("text-tertiary");
+    // Note: still using ThemeManager directly for getThemeMode() since it's not in ThemeService interface
+    if (ThemeManager::instance().getThemeMode() == ThemeManager::Light || 
+        (ThemeManager::instance().getThemeMode() == ThemeManager::Auto && ts && ts->color("bg-primary") == QColor("#f8fafc"))) {
+        trackOff = ts ? ts->color("text-tertiary") : QColor(120, 120, 120);
     } else {
         trackOff = QColor(120, 120, 120);
     }
     
-    QColor trackOn = tm.getColor("primary");
+    QColor trackOn = ts ? ts->color("primary") : QColor(0, 0, 200);
     QColor thumb(255, 255, 255);
 
     QColor track = m_checked ? trackOn : trackOff;

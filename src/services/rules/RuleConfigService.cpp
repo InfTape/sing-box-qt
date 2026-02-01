@@ -1,5 +1,5 @@
 #include "services/rules/RuleConfigService.h"
-#include "services/config/ConfigManager.h"
+#include "app/ConfigProvider.h"
 #include "storage/DatabaseService.h"
 #include "services/rules/SharedRulesStore.h"
 #include "utils/rule/RuleUtils.h"
@@ -201,7 +201,8 @@ QString RuleConfigService::activeConfigPath()
 {
     const QString subPath = DatabaseService::instance().getActiveConfigPath();
     if (!subPath.isEmpty()) return subPath;
-    return ConfigManager::instance().getActiveConfigPath();
+    ConfigRepository *cfg = ConfigProvider::instance();
+    return cfg ? cfg->getActiveConfigPath() : QString();
 }
 
 QString RuleConfigService::findRuleSet(const RuleItem &rule)
@@ -215,7 +216,8 @@ QStringList RuleConfigService::loadOutboundTags(const QString &extraTag, QString
     QSet<QString> tags;
     const QString path = activeConfigPath();
     if (!path.isEmpty()) {
-        const QJsonObject configOut = ConfigManager::instance().loadConfig(path);
+        ConfigRepository *cfg = ConfigProvider::instance();
+        const QJsonObject configOut = cfg ? cfg->loadConfig(path) : QJsonObject();
         if (configOut.isEmpty()) {
             if (error) {
                 *error = QObject::tr("Failed to read config file: %1").arg(path);
@@ -248,7 +250,12 @@ bool RuleConfigService::addRule(const RuleEditData &data, RuleItem *added, QStri
         return false;
     }
 
-    QJsonObject config = ConfigManager::instance().loadConfig(path);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) {
+        if (error) *error = QObject::tr("Config service not available.");
+        return false;
+    }
+    QJsonObject config = cfg->loadConfig(path);
     if (config.isEmpty()) {
         if (error) *error = QObject::tr("Failed to read config file: %1").arg(path);
         return false;
@@ -285,7 +292,7 @@ bool RuleConfigService::addRule(const RuleEditData &data, RuleItem *added, QStri
     route["rules"] = rules;
     config["route"] = route;
 
-    if (!ConfigManager::instance().saveConfig(path, config)) {
+    if (!cfg->saveConfig(path, config)) {
         if (error) *error = QObject::tr("Failed to save config: %1").arg(path);
         return false;
     }
@@ -312,7 +319,12 @@ bool RuleConfigService::updateRule(const RuleItem &existing, const RuleEditData 
         return false;
     }
 
-    QJsonObject config = ConfigManager::instance().loadConfig(path);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) {
+        if (error) *error = QObject::tr("Config service not available.");
+        return false;
+    }
+    QJsonObject config = cfg->loadConfig(path);
     if (config.isEmpty()) {
         if (error) *error = QObject::tr("Failed to read config file: %1").arg(path);
         return false;
@@ -334,7 +346,7 @@ bool RuleConfigService::updateRule(const RuleItem &existing, const RuleEditData 
     route["rules"] = rules;
     config["route"] = route;
 
-    if (!ConfigManager::instance().saveConfig(path, config)) {
+    if (!cfg->saveConfig(path, config)) {
         if (error) *error = QObject::tr("Failed to save config");
         return false;
     }
@@ -366,7 +378,12 @@ bool RuleConfigService::removeRule(const RuleItem &rule, QString *error)
         return false;
     }
 
-    QJsonObject config = ConfigManager::instance().loadConfig(path);
+    ConfigRepository *cfg = ConfigProvider::instance();
+    if (!cfg) {
+        if (error) *error = QObject::tr("Config service not available.");
+        return false;
+    }
+    QJsonObject config = cfg->loadConfig(path);
     if (config.isEmpty()) {
         if (error) *error = QObject::tr("Failed to read config file: %1").arg(path);
         return false;
@@ -380,7 +397,7 @@ bool RuleConfigService::removeRule(const RuleItem &rule, QString *error)
 
     route["rules"] = rules;
     config["route"] = route;
-    if (!ConfigManager::instance().saveConfig(path, config)) {
+    if (!cfg->saveConfig(path, config)) {
         if (error) *error = QObject::tr("Failed to save config: %1").arg(path);
         return false;
     }

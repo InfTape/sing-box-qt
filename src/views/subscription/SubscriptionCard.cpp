@@ -1,7 +1,7 @@
 #include "views/subscription/SubscriptionCard.h"
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAction>
 #include <QHBoxLayout>
@@ -23,8 +23,10 @@ SubscriptionCard::SubscriptionCard(const SubscriptionInfo &info, bool active, QW
     applyActiveState();
     updateStyle();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &SubscriptionCard::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &SubscriptionCard::updateStyle);
+    }
 }
 
 void SubscriptionCard::setActive(bool active)
@@ -80,11 +82,13 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 
     RoundedMenu *menu = new RoundedMenu(this);
     menu->setObjectName("SubscriptionMenu");
-    ThemeManager &tm = ThemeManager::instance();
-    menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    connect(&tm, &ThemeManager::themeChanged, menu, [menu, &tm]() {
-        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-    });
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) {
+        menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {
+            menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+        });
+    }
     QAction *copyAction = menu->addAction(tr("Copy Link"));
     QAction *editAction = menu->addAction(tr("Edit Subscription"));
     m_editConfigAction = menu->addAction(tr("Edit Current Config"));
@@ -192,11 +196,12 @@ void SubscriptionCard::applyActiveState()
 
 void SubscriptionCard::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
 
-    QString qss = tm.loadStyleSheet(":/styles/card_common.qss");
+    QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
     if (qss.isEmpty()) {
-        qss = tm.loadStyleSheet(":/styles/subscription_card.qss"); // 兜底
+        qss = ts->loadStyleSheet(":/styles/subscription_card.qss"); // 兜底
     }
     setStyleSheet(qss);
 }

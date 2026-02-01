@@ -3,7 +3,7 @@
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
 #include "services/rules/SharedRulesStore.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -70,8 +70,8 @@ void NodeEditDialog::setupUI()
         RoundedMenu *menu = new RoundedMenu(this);
         // 采用托盘菜单的样式，复用勾选外观
         menu->setObjectName("TrayMenu");
-        ThemeManager &tm = ThemeManager::instance();
-        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+        ThemeService *ts = ThemeProvider::instance();
+        if (ts) menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;
@@ -216,8 +216,8 @@ void NodeEditDialog::setRuleSets(const QStringList &sets, bool enableShared)
         // rebuild
         RoundedMenu *menu = new RoundedMenu(this);
         menu->setObjectName("TrayMenu");
-        ThemeManager &tm = ThemeManager::instance();
-        menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
+        ThemeService *ts = ThemeProvider::instance();
+        if (ts) menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto &name : m_ruleSets) if (!options.contains(name)) options << name;

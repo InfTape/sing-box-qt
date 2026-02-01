@@ -19,6 +19,7 @@
 #include <QShowEvent>
 #include <algorithm>
 #include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
 
@@ -50,7 +51,9 @@ SettingsView::SettingsView(QWidget *parent)
     setupUI();
     loadSettings();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &SettingsView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged, this, &SettingsView::updateStyle);
+    }
 
     // Kernel signals
     connect(m_kernelManager, &KernelManager::installedInfoReady, this, &SettingsView::onKernelInstalledReady);
@@ -167,10 +170,8 @@ QWidget* SettingsView::buildProxySection()
 
 QWidget* SettingsView::buildProxyAdvancedSection()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    const QString colorTextPrimary = tm.getColorString("text-primary");
-    const QString colorTextSecondary = tm.getColorString("text-secondary");
-    const QString colorTextTertiary = tm.getColorString("text-tertiary");
+    ThemeService *ts = ThemeProvider::instance();
+    Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *proxyAdvancedSection = new QWidget;
     QVBoxLayout *proxyAdvancedLayout = new QVBoxLayout(proxyAdvancedSection);
@@ -263,9 +264,8 @@ QWidget* SettingsView::buildProxyAdvancedSection()
 
 QWidget* SettingsView::buildProfileSection()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    const QString colorTextPrimary = tm.getColorString("text-primary");
-    const QString colorTextSecondary = tm.getColorString("text-secondary");
+    ThemeService *ts = ThemeProvider::instance();
+    Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *singboxProfileSection = new QWidget;
     QVBoxLayout *singboxProfileLayout = new QVBoxLayout(singboxProfileSection);
@@ -434,9 +434,8 @@ QWidget* SettingsView::buildAppearanceSection()
 
 QWidget* SettingsView::buildKernelSection()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    const QString colorTextPrimary = tm.getColorString("text-primary");
-    const QString colorTextSecondary = tm.getColorString("text-secondary");
+    ThemeService *ts = ThemeProvider::instance();
+    Q_UNUSED(ts); // Colors obtained via QSS
 
     QWidget *kernelSection = new QWidget;
     QVBoxLayout *kernelSectionLayout = new QVBoxLayout(kernelSection);
@@ -504,10 +503,8 @@ QWidget* SettingsView::buildKernelSection()
 
 void SettingsView::setupUI()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    const QString colorTextPrimary = tm.getColorString("text-primary");
-    const QString colorTextSecondary = tm.getColorString("text-secondary");
-    const QString colorTextTertiary = tm.getColorString("text-tertiary");
+    ThemeService *ts = ThemeProvider::instance();
+    Q_UNUSED(ts); // Colors obtained via QSS
 
     // 使用全局 QSS，不再单独拼接控件样式。
     m_inputStyleApplied.clear();
@@ -581,12 +578,13 @@ void SettingsView::setupUI()
 
 void SettingsView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/settings_view.qss"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
+    setStyleSheet(ts->loadStyleSheet(":/styles/settings_view.qss"));
     {
         QSignalBlocker blocker(m_themeCombo);
         if (m_themeCombo) {
-            m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(tm.getThemeMode()));
+            m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(ThemeManager::instance().getThemeMode()));
         }
     }
 }

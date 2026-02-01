@@ -73,6 +73,22 @@ void SubscriptionController::remove(const QString &id)
     m_service->removeSubscription(id);
 }
 
+void SubscriptionController::updateSubscription(const QString &id,
+                                                const QString &name,
+                                                const QString &url,
+                                                bool isManual,
+                                                const QString &content,
+                                                bool useOriginalConfig,
+                                                int autoUpdateIntervalMinutes,
+                                                bool enableSharedRules,
+                                                const QStringList &ruleSets)
+{
+    if (!m_service) return;
+    m_service->updateSubscriptionMeta(id, name, url, isManual, content,
+                                      useOriginalConfig, autoUpdateIntervalMinutes,
+                                      enableSharedRules, ruleSets);
+}
+
 bool SubscriptionController::saveCurrentConfig(const QString &content, bool applyRuntime)
 {
     if (!m_service) return false;

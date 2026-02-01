@@ -1,5 +1,5 @@
 #include "TrafficChart.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include <QPainterPath>
 #include <QDateTime>
 #include <cmath>
@@ -37,8 +37,10 @@ TrafficChart::TrafficChart(QWidget *parent)
     updateStyle();
     
     // Connect to theme changes
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &TrafficChart::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &TrafficChart::updateStyle);
+    }
 }
 
 TrafficChart::~TrafficChart()
@@ -64,12 +66,13 @@ void TrafficChart::clear()
 
 void TrafficChart::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    m_uploadColor = tm.getColor("success");
-    m_downloadColor = tm.getColor("primary");
-    m_gridColor = tm.getColor("border");
-    m_textColor = tm.getColor("text-secondary");
-    m_bgColor = tm.getColor("panel-bg");
+    ThemeService *ts = ThemeProvider::instance();
+    if (!ts) return;
+    m_uploadColor = ts->color("success");
+    m_downloadColor = ts->color("primary");
+    m_gridColor = ts->color("border");
+    m_textColor = ts->color("text-secondary");
+    m_bgColor = ts->color("panel-bg");
     update();
 }
 

@@ -4,7 +4,7 @@
 #include "dialogs/rules/ManageRuleSetsDialog.h"
 #include "services/rules/RuleConfigService.h"
 #include "utils/rule/RuleUtils.h"
-#include "utils/ThemeManager.h"
+#include "app/ThemeProvider.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/rules/RuleCard.h"
 #include "utils/layout/CardGridLayoutHelper.h"
@@ -37,8 +37,10 @@ RulesView::RulesView(QWidget *parent)
     setupUI();
     updateStyle();
 
-    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
-            this, &RulesView::updateStyle);
+    if (ThemeProvider::instance()) {
+        connect(ThemeProvider::instance(), &ThemeService::themeChanged,
+                this, &RulesView::updateStyle);
+    }
 
 }
 
@@ -516,8 +518,8 @@ void RulesView::handleDeleteRule(const RuleItem &rule)
 
 void RulesView::updateStyle()
 {
-    ThemeManager &tm = ThemeManager::instance();
-    setStyleSheet(tm.loadStyleSheet(":/styles/rules_view.qss"));
+    ThemeService *ts = ThemeProvider::instance();
+    if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/rules_view.qss"));
 }
 
 void RulesView::resizeEvent(QResizeEvent *event)
