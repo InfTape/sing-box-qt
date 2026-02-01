@@ -3,22 +3,20 @@
 
 #include <QObject>
 #include <QString>
+class AdminHelper : public QObject {
+  Q_OBJECT
 
-class AdminHelper : public QObject
-{
-    Q_OBJECT
+ public:
+  explicit AdminHelper(QObject* parent = nullptr);
 
-public:
-    explicit AdminHelper(QObject *parent = nullptr);
+  // Check admin privileges.
+  static bool isAdmin();
 
-    // Check admin privileges.
-    static bool isAdmin();
+  // Restart the app as admin.
+  static bool restartAsAdmin();
 
-    // Restart the app as admin.
-    static bool restartAsAdmin();
-
-    // Request UAC elevation to run a command.
-    static bool runAsAdmin(const QString &program, const QStringList &arguments = QStringList());
+  // Request UAC elevation to run a command.
+  static bool runAsAdmin(const QString&     program,
+                         const QStringList& arguments = QStringList());
 };
-
-#endif // ADMINHELPER_H
+#endif  // ADMINHELPER_H

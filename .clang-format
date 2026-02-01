@@ -1,0 +1,75 @@
+# .clang-format — Strict Google Style
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++17
+
+# === 行宽（Google 官方就是 80）===
+ColumnLimit: 80
+
+# === 缩进 / 括号 ===
+IndentWidth: 2
+TabWidth: 8
+UseTab: Never
+BreakBeforeBraces: Attach   # K&R / Google 标准
+
+# === 指针 / 引用（Google：靠类型）===
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# === 参数与调用（允许 formatter 自由重排）===
+BinPackArguments: true
+BinPackParameters: true
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+# === 对齐（这里是 diff 爆炸的主要来源）===
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignOperands: Align
+AlignTrailingComments: true
+
+# === 短语句（Google 允许较多单行）===
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+
+# === include：严格排序 + 分块 ===
+SortIncludes: true
+IncludeBlocks: Regroup
+
+# Google 风格的 include 分类（系统 / 三方 / 本地）
+IncludeCategories:
+  - Regex: '^<.*>'
+    Priority: 1
+  - Regex: '^".*"'
+    Priority: 2
+
+# === 空格规则（完全交给 Google 规范）===
+SpaceBeforeParens: ControlStatements
+SpacesInAngles: false
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+
+# === 注释 / 命名空间 ===
+FixNamespaceComments: true
+ReflowComments: true
+
+# === 宏（即使 strict，也建议保留 Qt 识别，避免格式器误伤）===
+StatementMacros:
+  - Q_OBJECT
+  - Q_PROPERTY
+  - Q_DECLARE_METATYPE
+  - Q_DECLARE_FLAGS
+  - Q_NAMESPACE
+  - Q_GADGET
+  - signals
+  - slots
+  - Q_SIGNALS
+  - Q_SLOTS
+
+#其他
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: NextLine

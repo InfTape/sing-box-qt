@@ -5,39 +5,35 @@
 #include <QString>
 
 class HttpClient;
-
 struct UpdateInfo {
-    QString version;
-    QString downloadUrl;
-    QString changelog;
-    qint64 fileSize;
-    bool hasUpdate;
+  QString version;
+  QString downloadUrl;
+  QString changelog;
+  qint64  fileSize;
+  bool    hasUpdate;
 };
+class UpdateService : public QObject {
+  Q_OBJECT
 
-class UpdateService : public QObject
-{
-    Q_OBJECT
+ public:
+  explicit UpdateService(QObject* parent = nullptr);
+  ~UpdateService();
 
-public:
-    explicit UpdateService(QObject *parent = nullptr);
-    ~UpdateService();
-    
-    void checkForUpdate();
-    void downloadUpdate(const QString &url, const QString &savePath);
-    
-    QString getCurrentVersion() const;
+  void checkForUpdate();
+  void downloadUpdate(const QString& url, const QString& savePath);
 
-signals:
-    void updateAvailable(const UpdateInfo &info);
-    void noUpdateAvailable();
-    void downloadProgress(qint64 received, qint64 total);
-    void downloadFinished(const QString &filePath);
-    void errorOccurred(const QString &error);
+  QString getCurrentVersion() const;
 
-private:
-    HttpClient *m_httpClient;
-    QString m_currentVersion;
-    QString m_updateUrl;
+ signals:
+  void updateAvailable(const UpdateInfo& info);
+  void noUpdateAvailable();
+  void downloadProgress(qint64 received, qint64 total);
+  void downloadFinished(const QString& filePath);
+  void errorOccurred(const QString& error);
+
+ private:
+  HttpClient* m_httpClient;
+  QString     m_currentVersion;
+  QString     m_updateUrl;
 };
-
-#endif // UPDATESERVICE_H
+#endif  // UPDATESERVICE_H

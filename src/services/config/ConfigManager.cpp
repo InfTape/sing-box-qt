@@ -1,115 +1,84 @@
 #include "services/config/ConfigManager.h"
+
 #include "services/config/ConfigBuilder.h"
 #include "services/config/ConfigMutator.h"
 #include "storage/AppSettings.h"
 #include "storage/ConfigIO.h"
-
-ConfigManager &ConfigManager::instance()
-{
-    static ConfigManager instance;
-    return instance;
+ConfigManager& ConfigManager::instance() {
+  static ConfigManager instance;
+  return instance;
 }
-
-ConfigManager::ConfigManager(QObject *parent)
-    : QObject(parent)
-{
+ConfigManager::ConfigManager(QObject* parent) : QObject(parent) {}
+QString ConfigManager::getConfigDir() const { return ConfigIO::getConfigDir(); }
+QString ConfigManager::getActiveConfigPath() const {
+  return ConfigIO::getActiveConfigPath();
 }
-
-QString ConfigManager::getConfigDir() const
-{
-    return ConfigIO::getConfigDir();
+QJsonObject ConfigManager::generateBaseConfig() {
+  QJsonObject config = ConfigBuilder::buildBaseConfig();
+  ConfigMutator::applySettings(config);
+  return config;
 }
+bool ConfigManager::generateConfigWithNodes(const QJsonArray& nodes,
+                                            const QString&    targetPath) {
+  QJsonObject config = generateBaseConfig();
+  if (!ConfigMutator::injectNodes(config, nodes)) {
+    return false;
+  }
 
-QString ConfigManager::getActiveConfigPath() const
-{
-    return ConfigIO::getActiveConfigPath();
+  const QString path =
+      targetPath.isEmpty() ? getActiveConfigPath() : targetPath;
+  return ConfigIO::saveConfig(path, config);
 }
-
-QJsonObject ConfigManager::generateBaseConfig()
-{
-    QJsonObject config = ConfigBuilder::buildBaseConfig();
-    ConfigMutator::applySettings(config);
-    return config;
+bool ConfigManager::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
+  return ConfigMutator::injectNodes(config, nodes);
 }
-
-bool ConfigManager::generateConfigWithNodes(const QJsonArray &nodes, const QString &targetPath)
-{
-    QJsonObject config = generateBaseConfig();
-    if (!ConfigMutator::injectNodes(config, nodes)) {
-        return false;
-    }
-
-    const QString path = targetPath.isEmpty() ? getActiveConfigPath() : targetPath;
-    return ConfigIO::saveConfig(path, config);
+void ConfigManager::applySettingsToConfig(QJsonObject& config) {
+  ConfigMutator::applySettings(config);
 }
-
-bool ConfigManager::injectNodes(QJsonObject &config, const QJsonArray &nodes)
-{
-    return ConfigMutator::injectNodes(config, nodes);
+void ConfigManager::applyPortSettings(QJsonObject& config) {
+  ConfigMutator::applyPortSettings(config);
 }
-
-void ConfigManager::applySettingsToConfig(QJsonObject &config)
-{
-    ConfigMutator::applySettings(config);
+QJsonObject ConfigManager::loadConfig(const QString& path) {
+  return ConfigIO::loadConfig(path);
 }
-
-void ConfigManager::applyPortSettings(QJsonObject &config)
-{
-    ConfigMutator::applyPortSettings(config);
+bool ConfigManager::saveConfig(const QString& path, const QJsonObject& config) {
+  return ConfigIO::saveConfig(path, config);
 }
-
-QJsonObject ConfigManager::loadConfig(const QString &path)
-{
-    return ConfigIO::loadConfig(path);
+int ConfigManager::getMixedPort() const {
+  return AppSettings::instance().mixedPort();
 }
-
-bool ConfigManager::saveConfig(const QString &path, const QJsonObject &config)
-{
-    return ConfigIO::saveConfig(path, config);
+int ConfigManager::getApiPort() const {
+  return AppSettings::instance().apiPort();
 }
-
-int ConfigManager::getMixedPort() const
-{
-    return AppSettings::instance().mixedPort();
+void ConfigManager::setMixedPort(int port) {
+  AppSettings::instance().setMixedPort(port);
 }
-
-int ConfigManager::getApiPort() const
-{
-    return AppSettings::instance().apiPort();
+void ConfigManager::setApiPort(int port) {
+  AppSettings::instance().setApiPort(port);
 }
+bool ConfigManager::updateClashDefaultMode(const QString& configPath,
+                                           const QString& mode,
+                                           QString*       error) {
+  QJsonObject config = ConfigIO::loadConfig(configPath);
+  if (config.isEmpty()) {
+    if (error)
+      *error = QString("Failed to load config file: %1").arg(configPath);
+    return false;
+  }
 
-void ConfigManager::setMixedPort(int port)
-{
-    AppSettings::instance().setMixedPort(port);
+  if (!ConfigMutator::updateClashDefaultMode(config, mode, error)) {
+    return false;
+  }
+
+  if (!ConfigIO::saveConfig(configPath, config)) {
+    if (error)
+      *error = QString("Failed to save config file: %1").arg(configPath);
+    return false;
+  }
+
+  return true;
 }
-
-void ConfigManager::setApiPort(int port)
-{
-    AppSettings::instance().setApiPort(port);
-}
-
-bool ConfigManager::updateClashDefaultMode(const QString &configPath, const QString &mode, QString *error)
-{
-    QJsonObject config = ConfigIO::loadConfig(configPath);
-    if (config.isEmpty()) {
-        if (error) *error = QString("Failed to load config file: %1").arg(configPath);
-        return false;
-    }
-
-    if (!ConfigMutator::updateClashDefaultMode(config, mode, error)) {
-        return false;
-    }
-
-    if (!ConfigIO::saveConfig(configPath, config)) {
-        if (error) *error = QString("Failed to save config file: %1").arg(configPath);
-        return false;
-    }
-
-    return true;
-}
-
-QString ConfigManager::readClashDefaultMode(const QString &configPath) const
-{
-    const QJsonObject config = ConfigIO::loadConfig(configPath);
-    return ConfigMutator::readClashDefaultMode(config);
+QString ConfigManager::readClashDefaultMode(const QString& configPath) const {
+  const QJsonObject config = ConfigIO::loadConfig(configPath);
+  return ConfigMutator::readClashDefaultMode(config);
 }

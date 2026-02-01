@@ -9,36 +9,35 @@ class QLabel;
 class QPushButton;
 class ThemeService;
 struct SubscriptionInfo;
+class SubscriptionCard : public QFrame {
+  Q_OBJECT
 
-class SubscriptionCard : public QFrame
-{
-    Q_OBJECT
+ public:
+  explicit SubscriptionCard(const SubscriptionInfo& info, bool active,
+                            ThemeService* themeService,
+                            QWidget*      parent = nullptr);
+  QString subscriptionId() const { return m_subId; }
+  void    setActive(bool active);
 
-public:
-    explicit SubscriptionCard(const SubscriptionInfo &info, bool active, ThemeService *themeService, QWidget *parent = nullptr);
-    QString subscriptionId() const { return m_subId; }
-    void setActive(bool active);
+ signals:
+  void useClicked(const QString& id);
+  void editClicked(const QString& id);
+  void editConfigClicked(const QString& id);
+  void refreshClicked(const QString& id, bool applyRuntime);
+  void rollbackClicked(const QString& id);
+  void deleteClicked(const QString& id);
+  void copyLinkClicked(const QString& id);
 
-signals:
-    void useClicked(const QString &id);
-    void editClicked(const QString &id);
-    void editConfigClicked(const QString &id);
-    void refreshClicked(const QString &id, bool applyRuntime);
-    void rollbackClicked(const QString &id);
-    void deleteClicked(const QString &id);
-    void copyLinkClicked(const QString &id);
+ private:
+  void setupUI(const SubscriptionInfo& info);
+  void applyActiveState();
+  void updateStyle();
 
-private:
-    void setupUI(const SubscriptionInfo &info);
-    void applyActiveState();
-    void updateStyle();
-
-    QString m_subId;
-    bool m_active = false;
-    QLabel *m_statusTag = nullptr;
-    QPushButton *m_useBtn = nullptr;
-    QAction *m_editConfigAction = nullptr;
-    ThemeService *m_themeService = nullptr;
+  QString       m_subId;
+  bool          m_active           = false;
+  QLabel*       m_statusTag        = nullptr;
+  QPushButton*  m_useBtn           = nullptr;
+  QAction*      m_editConfigAction = nullptr;
+  ThemeService* m_themeService     = nullptr;
 };
-
-#endif // SUBSCRIPTIONCARD_H
+#endif  // SUBSCRIPTIONCARD_H

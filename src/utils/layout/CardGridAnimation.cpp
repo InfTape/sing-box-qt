@@ -1,52 +1,49 @@
 #include "utils/layout/CardGridAnimation.h"
+
+#include <QAbstractAnimation>
+#include <QEasingCurve>
+#include <QObject>
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
-#include <QEasingCurve>
-#include <QAbstractAnimation>
-#include <QObject>
 #include <QWidget>
-
 namespace CardGridAnimation {
+void animateReflow(QWidget* container, const QList<QWidget*>& widgets,
+                   const QHash<QWidget*, QRect>& oldGeometries,
+                   int previousColumns, int newColumns) {
+  if (!container) return;
 
-void animateReflow(QWidget *container,
-                   const QList<QWidget*> &widgets,
-                   const QHash<QWidget*, QRect> &oldGeometries,
-                   int previousColumns,
-                   int newColumns)
-{
-    if (!container) return;
+  const bool columnChanged =
+      previousColumns > 0 && previousColumns != newColumns;
+  auto* group = new QParallelAnimationGroup(static_cast<QObject*>(container));
 
-    const bool columnChanged = previousColumns > 0 && previousColumns != newColumns;
-    auto *group = new QParallelAnimationGroup(static_cast<QObject*>(container));
+  for (QWidget* w : widgets) {
+    if (!w) continue;
+    const QRect endRect   = w->geometry();
+    QRect       startRect = oldGeometries.value(w, endRect);
 
-    for (QWidget *w : widgets) {
-        if (!w) continue;
-        const QRect endRect = w->geometry();
-        QRect startRect = oldGeometries.value(w, endRect);
-
-        if (startRect == endRect && columnChanged) {
-            const int offsetX = newColumns > previousColumns ? 18 : -18;
-            startRect.translate(offsetX, 12);
-        }
-        if (startRect == endRect) continue;
-
-        w->setGeometry(startRect);
-        auto *anim = new QPropertyAnimation(static_cast<QObject*>(w), "geometry", group);
-        anim->setDuration(320);
-        anim->setEasingCurve(QEasingCurve::OutBack);
-        anim->setStartValue(startRect);
-        anim->setEndValue(endRect);
-        QObject::connect(w, &QObject::destroyed, anim, [anim]() {
-            if (anim->state() != QAbstractAnimation::Stopped) anim->stop();
-        });
-        group->addAnimation(anim);
+    if (startRect == endRect && columnChanged) {
+      const int offsetX = newColumns > previousColumns ? 18 : -18;
+      startRect.translate(offsetX, 12);
     }
+    if (startRect == endRect) continue;
 
-    if (group->animationCount() > 0) {
-        group->start(QAbstractAnimation::DeleteWhenStopped);
-    } else {
-        group->deleteLater();
-    }
+    w->setGeometry(startRect);
+    auto* anim =
+        new QPropertyAnimation(static_cast<QObject*>(w), "geometry", group);
+    anim->setDuration(320);
+    anim->setEasingCurve(QEasingCurve::OutBack);
+    anim->setStartValue(startRect);
+    anim->setEndValue(endRect);
+    QObject::connect(w, &QObject::destroyed, anim, [anim]() {
+      if (anim->state() != QAbstractAnimation::Stopped) anim->stop();
+    });
+    group->addAnimation(anim);
+  }
+
+  if (group->animationCount() > 0) {
+    group->start(QAbstractAnimation::DeleteWhenStopped);
+  } else {
+    group->deleteLater();
+  }
 }
-
-} // namespace CardGridAnimation
+}  // namespace CardGridAnimation

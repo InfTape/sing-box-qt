@@ -3,7 +3,6 @@
 #include <QJsonObject>
 
 struct SubscriptionInfo;
-
 namespace SubscriptionHelpers {
-bool isSingleManualNode(const SubscriptionInfo &info, QJsonObject *outNode);
+bool isSingleManualNode(const SubscriptionInfo& info, QJsonObject* outNode);
 }

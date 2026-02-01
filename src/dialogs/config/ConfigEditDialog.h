@@ -5,19 +5,16 @@
 #include <QString>
 
 class QTextEdit;
+class ConfigEditDialog : public QDialog {
+  Q_OBJECT
 
-class ConfigEditDialog : public QDialog
-{
-    Q_OBJECT
+ public:
+  explicit ConfigEditDialog(QWidget* parent = nullptr);
 
-public:
-    explicit ConfigEditDialog(QWidget *parent = nullptr);
+  void    setContent(const QString& content);
+  QString content() const;
 
-    void setContent(const QString &content);
-    QString content() const;
-
-private:
-    QTextEdit *m_editor;
+ private:
+  QTextEdit* m_editor;
 };
-
-#endif // CONFIGEDITDIALOG_H
+#endif  // CONFIGEDITDIALOG_H

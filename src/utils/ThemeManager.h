@@ -1,52 +1,45 @@
 #ifndef THEMEMANAGER_H
 #define THEMEMANAGER_H
 
-#include <QObject>
-#include <QString>
 #include <QColor>
 #include <QMap>
+#include <QObject>
+#include <QString>
+class ThemeManager : public QObject {
+  Q_OBJECT
 
-class ThemeManager : public QObject
-{
-    Q_OBJECT
+ public:
+  enum ThemeMode { Light, Dark, Auto };
+  static ThemeManager& instance();
 
-public:
-    enum ThemeMode {
-        Light,
-        Dark,
-        Auto
-    };
+  void      init();
+  void      setThemeMode(ThemeMode mode);
+  ThemeMode getThemeMode() const;
 
-    static ThemeManager& instance();
+  // Get colors.
+  QColor  getColor(const QString& key) const;
+  QString getColorString(const QString& key) const;
 
-    void init();
-    void setThemeMode(ThemeMode mode);
-    ThemeMode getThemeMode() const;
+  // Get global stylesheet.
+  QString getGlobalStyleSheet() const;
 
-    // Get colors.
-    QColor getColor(const QString &key) const;
-    QString getColorString(const QString &key) const;
+  QString getLogViewStyle() const;
+  QString loadStyleSheet(
+      const QString&                resourcePath,
+      const QMap<QString, QString>& extra = QMap<QString, QString>()) const;
 
-    // Get global stylesheet.
-    QString getGlobalStyleSheet() const;
+ signals:
+  void themeChanged();
 
-    QString getLogViewStyle() const;
-    QString loadStyleSheet(const QString &resourcePath,
-                           const QMap<QString, QString> &extra = QMap<QString, QString>()) const;
+ private:
+  ThemeManager(QObject* parent = nullptr);
+  ~ThemeManager();
 
-signals:
-    void themeChanged();
+  void      loadThemeColors();
+  void      updateApplicationStyle();
+  ThemeMode resolveModeForColors() const;
 
-private:
-    ThemeManager(QObject *parent = nullptr);
-    ~ThemeManager();
-
-    void loadThemeColors();
-    void updateApplicationStyle();
-    ThemeMode resolveModeForColors() const;
-
-    ThemeMode m_currentMode;
-    QMap<QString, QString> m_colors;
+  ThemeMode              m_currentMode;
+  QMap<QString, QString> m_colors;
 };
-
-#endif // THEMEMANAGER_H
+#endif  // THEMEMANAGER_H

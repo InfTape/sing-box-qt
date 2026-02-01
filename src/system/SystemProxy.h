@@ -3,28 +3,25 @@
 
 #include <QObject>
 #include <QString>
+class SystemProxy : public QObject {
+  Q_OBJECT
 
-class SystemProxy : public QObject
-{
-    Q_OBJECT
+ public:
+  explicit SystemProxy(QObject* parent = nullptr);
 
-public:
-    explicit SystemProxy(QObject *parent = nullptr);
+  // Set system proxy.
+  static bool setProxy(const QString& host, int port);
+  static bool clearProxy();
 
-    // Set system proxy.
-    static bool setProxy(const QString &host, int port);
-    static bool clearProxy();
+  // Get current proxy status.
+  static bool    isProxyEnabled();
+  static QString getProxyHost();
+  static int     getProxyPort();
 
-    // Get current proxy status.
-    static bool isProxyEnabled();
-    static QString getProxyHost();
-    static int getProxyPort();
+  // PAC proxy.
+  static bool setPacProxy(const QString& pacUrl);
 
-    // PAC proxy.
-    static bool setPacProxy(const QString &pacUrl);
-
-    // Refresh system proxy settings.
-    static void refreshSettings();
+  // Refresh system proxy settings.
+  static void refreshSettings();
 };
-
-#endif // SYSTEMPROXY_H
+#endif  // SYSTEMPROXY_H

@@ -3,9 +3,7 @@
 
 #include <QByteArray>
 #include <QJsonObject>
-
 namespace SubscriptionUserinfo {
-QJsonObject parseUserinfoHeader(const QByteArray &header);
+QJsonObject parseUserinfoHeader(const QByteArray& header);
 }
-
-#endif // SUBSCRIPTIONUSERINFO_H
+#endif  // SUBSCRIPTIONUSERINFO_H

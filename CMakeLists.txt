@@ -50,6 +50,7 @@ set(SOURCES
     src/app/impl/SystemProxyAdapter.cpp
     src/app/impl/AdminActionsAdapter.cpp
     src/app/ProxyUiController.cpp
+    src/app/ProxyRuntimeController.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
     src/core/KernelService.cpp
@@ -83,6 +84,7 @@ set(SOURCES
     src/views/home/HomeView.cpp
     src/views/components/TrafficChart.cpp
     src/views/proxy/ProxyView.cpp
+    src/views/proxy/ProxyViewController.cpp
     src/views/subscription/SubscriptionView.cpp
     src/views/subscription/SubscriptionCard.cpp
     src/views/subscription/SubscriptionController.cpp
@@ -131,6 +133,7 @@ set(HEADERS
     src/app/impl/SystemProxyAdapter.h
     src/app/impl/AdminActionsAdapter.h
     src/app/ProxyUiController.h
+    src/app/ProxyRuntimeController.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
     src/core/KernelService.h
@@ -166,6 +169,7 @@ set(HEADERS
     src/views/home/HomeView.h
     src/views/components/TrafficChart.h
     src/views/proxy/ProxyView.h
+    src/views/proxy/ProxyViewController.h
     src/views/subscription/SubscriptionView.h
     src/views/subscription/SubscriptionCard.h
     src/views/subscription/SubscriptionController.h

@@ -7,28 +7,26 @@ class QWheelEvent;
 class ThemeService;
 
 class RoundedMenu;
+class MenuComboBox : public QComboBox {
+  Q_OBJECT
 
-class MenuComboBox : public QComboBox
-{
-    Q_OBJECT
+ public:
+  explicit MenuComboBox(QWidget*      parent       = nullptr,
+                        ThemeService* themeService = nullptr);
+  void setWheelEnabled(bool enabled);
+  bool isWheelEnabled() const { return m_wheelEnabled; }
+  void setThemeService(ThemeService* themeService);
 
-public:
-    explicit MenuComboBox(QWidget *parent = nullptr, ThemeService *themeService = nullptr);
-    void setWheelEnabled(bool enabled);
-    bool isWheelEnabled() const { return m_wheelEnabled; }
-    void setThemeService(ThemeService *themeService);
+ protected:
+  void showPopup() override;
+  void hidePopup() override;
+  void wheelEvent(QWheelEvent* event) override;
 
-protected:
-    void showPopup() override;
-    void hidePopup() override;
-    void wheelEvent(QWheelEvent *event) override;
+ private:
+  void updateMenuStyle();
 
-private:
-    void updateMenuStyle();
-
-    RoundedMenu *m_menu = nullptr;
-    bool m_wheelEnabled = true;
-    ThemeService *m_themeService = nullptr;
+  RoundedMenu*  m_menu         = nullptr;
+  bool          m_wheelEnabled = true;
+  ThemeService* m_themeService = nullptr;
 };
-
-#endif // MENUCOMBOBOX_H
+#endif  // MENUCOMBOBOX_H

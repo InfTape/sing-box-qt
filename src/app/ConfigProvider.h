@@ -2,15 +2,12 @@
 #define CONFIGPROVIDER_H
 
 #include "app/interfaces/ConfigRepository.h"
+class ConfigProvider {
+ public:
+  static void              setInstance(ConfigRepository* repo);
+  static ConfigRepository* instance();
 
-class ConfigProvider
-{
-public:
-    static void setInstance(ConfigRepository *repo);
-    static ConfigRepository *instance();
-
-private:
-    static ConfigRepository *s_instance;
+ private:
+  static ConfigRepository* s_instance;
 };
-
-#endif // CONFIGPROVIDER_H
+#endif  // CONFIGPROVIDER_H

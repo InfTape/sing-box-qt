@@ -1,11 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QStackedWidget>
-#include <QListWidget>
 #include <QLabel>
+#include <QListWidget>
+#include <QMainWindow>
 #include <QPushButton>
+#include <QStackedWidget>
 
 class HomeView;
 class ProxyView;
@@ -15,85 +15,80 @@ class RulesView;
 class LogView;
 class SettingsView;
 class SubscriptionService;
-class KernelService;
-class ProxyService;
 class ProxyController;
 class ProxyUiController;
+class ProxyRuntimeController;
 class SettingsStore;
 class ThemeService;
 class AdminActions;
 
 class AppContext;
+class MainWindow : public QMainWindow {
+  Q_OBJECT
 
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+ public:
+  explicit MainWindow(AppContext& ctx, QWidget* parent = nullptr);
+  ~MainWindow();
 
-public:
-    explicit MainWindow(AppContext &ctx, QWidget *parent = nullptr);
-    ~MainWindow();
+  void             showAndActivate();
+  bool             isKernelRunning() const;
+  QString          currentProxyMode() const;
+  QString          activeConfigPath() const;
+  ProxyController* proxyController() const { return m_proxyController; }
+  void             setProxyModeUI(const QString& mode);
 
-    void showAndActivate();
-    bool isKernelRunning() const;
-    QString currentProxyMode() const;
-    QString activeConfigPath() const;
-    KernelService* kernelService() const { return m_kernelService; }
-    ProxyController* proxyController() const { return m_proxyController; }
-    void setProxyModeUI(const QString &mode);
+ protected:
+  void closeEvent(QCloseEvent* event) override;
 
-protected:
-    void closeEvent(QCloseEvent *event) override;
+ private slots:
+  void onNavigationItemClicked(QListWidgetItem* item);
+  void onKernelStatusChanged(bool running);
+  void onStartStopClicked();
 
-private slots:
-    void onNavigationItemClicked(QListWidgetItem *item);
-    void onKernelStatusChanged(bool running);
-    void onStartStopClicked();
+ private:
+  void setupUI();
+  void setupNavigation();
+  void setupStatusBar();
+  void setupConnections();
+  void setupNavigationConnections();
+  void setupKernelConnections();
+  void setupThemeConnections();
+  void setupSubscriptionConnections();
+  void setupProxyServiceConnections();
+  void setupHomeViewConnections();
+  void setupProxyUiBindings();
+  void setupRuntimeConnections();
+  void loadSettings();
+  void saveSettings();
+  void updateStyle();
+  void updateNavIcons();
+  void applyStartStopStyle();
 
-private:
-    void setupUI();
-    void setupNavigation();
-    void setupStatusBar();
-    void setupConnections();
-    void setupNavigationConnections();
-    void setupKernelConnections();
-    void setupThemeConnections();
-    void setupSubscriptionConnections();
-    void setupProxyServiceConnections();
-    void setupHomeViewConnections();
-    void setupProxyUiBindings();
-    void loadSettings();
-    void saveSettings();
-    void updateStyle();
-    void updateNavIcons();
-    void applyStartStopStyle();
+  // UI components.
+  QWidget*        m_centralWidget;
+  QListWidget*    m_navList;
+  QStackedWidget* m_stackedWidget;
 
-    // UI components.
-    QWidget *m_centralWidget;
-    QListWidget *m_navList;
-    QStackedWidget *m_stackedWidget;
+  // Status bar components.
+  QPushButton* m_startStopBtn;
 
-    // Status bar components.
-    QPushButton *m_startStopBtn;
+  // Views.
+  HomeView*         m_homeView;
+  ProxyView*        m_proxyView;
+  SubscriptionView* m_subscriptionView;
+  ConnectionsView*  m_connectionsView;
+  RulesView*        m_rulesView;
+  LogView*          m_logView;
+  SettingsView*     m_settingsView;
 
-    // Views.
-    HomeView *m_homeView;
-    ProxyView *m_proxyView;
-    SubscriptionView *m_subscriptionView;
-    ConnectionsView *m_connectionsView;
-    RulesView *m_rulesView;
-    LogView *m_logView;
-    SettingsView *m_settingsView;
-
-    // Services.
-    AppContext &m_ctx;
-    KernelService *m_kernelService;
-    ProxyService *m_proxyService;
-    ProxyController *m_proxyController;
-    ProxyUiController *m_proxyUiController;
-    SubscriptionService *m_subscriptionService;
-    SettingsStore *m_settingsStore;
-    ThemeService *m_themeService;
-    AdminActions *m_adminActions;
+  // Services.
+  AppContext&             m_ctx;
+  ProxyController*        m_proxyController;
+  ProxyUiController*      m_proxyUiController;
+  ProxyRuntimeController* m_proxyRuntimeController;
+  SubscriptionService*    m_subscriptionService;
+  SettingsStore*          m_settingsStore;
+  ThemeService*           m_themeService;
+  AdminActions*           m_adminActions;
 };
-
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H
