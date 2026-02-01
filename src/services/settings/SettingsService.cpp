@@ -9,7 +9,7 @@
 SettingsModel::Data SettingsService::loadSettings() {
   SettingsModel::Data data = SettingsModel::load();
 
-  // 同步系统自启动状态，确保显示与实际一致。
+  // Sync system auto-start status, ensuring display matches reality.
   if (AutoStart::isSupported()) {
     if (data.autoStart != AutoStart::isEnabled()) {
       AutoStart::setEnabled(data.autoStart);
@@ -24,7 +24,7 @@ bool SettingsService::saveSettings(const SettingsModel::Data& data,
                                    QString* errorMessage) {
   SettingsModel::Data mutableData = data;
 
-  // 处理自启动（系统副作用集中于此）。
+  // Handle auto-start (system side effects concentrated here).
   if (AutoStart::isSupported()) {
     if (!AutoStart::setEnabled(mutableData.autoStart)) {
       mutableData.autoStart = AutoStart::isEnabled();
@@ -36,12 +36,12 @@ bool SettingsService::saveSettings(const SettingsModel::Data& data,
     mutableData.autoStart = AutoStart::isEnabled();
   }
 
-  // 保存通用设置。
+  // Save general settings.
   if (!SettingsModel::save(mutableData, errorMessage)) {
     return false;
   }
 
-  // 主题保存。
+  // Save theme.
   QJsonObject theme;
   switch (themeIndex) {
     case 1:
@@ -56,7 +56,7 @@ bool SettingsService::saveSettings(const SettingsModel::Data& data,
   }
   DatabaseService::instance().saveThemeConfig(theme);
 
-  // 语言保存。
+  // Save language.
   const QString locales[] = {"zh_CN", "en", "ja", "ru"};
   const int     safeIndex =
       (languageIndex >= 0 && languageIndex < 4) ? languageIndex : 0;

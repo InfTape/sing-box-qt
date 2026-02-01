@@ -497,7 +497,7 @@ void SettingsView::setupUI() {
   ThemeService* ts = m_themeService;
   Q_UNUSED(ts);  // Colors obtained via QSS
 
-  // 使用全局 QSS，不再单独拼接控件样式。
+  // Use global QSS, no longer splicing control styles individually.
   m_inputStyleApplied.clear();
   m_comboStyle.clear();
 
@@ -567,7 +567,7 @@ void SettingsView::setupUI() {
             if (index == kLanguageDefaultIndex) {
               return;
             }
-            QMessageBox::information(this, tr("提示"), tr("正在适配中"));
+            QMessageBox::information(this, tr("Info"), tr("Adapting..."));
             QSignalBlocker blocker(m_languageCombo);
             m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
           });

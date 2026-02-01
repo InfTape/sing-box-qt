@@ -362,7 +362,7 @@ void RulesView::rebuildGrid() {
 
   const int previousColumns = m_columnCount;
 
-  // 鍋滄骞舵竻鐞嗗皻鏈粨鏉熺殑鍔ㄧ敾锛岄伩鍏嶇洰鏍囨帶浠惰鍒犻櫎鍚庡姩鐢讳粛鐒惰繍琛屻€?
+  // Stop and clean up unfinished animations to avoid running them after the target control is deleted.
   const auto runningAnimations =
       m_gridContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
@@ -385,7 +385,7 @@ void RulesView::rebuildGrid() {
     QLayoutItem* item = m_gridLayout->takeAt(0);
     if (item) {
       if (QWidget* w = item->widget()) {
-        // 娓呯悊鏃у崱鐗囷紝閬垮厤娈嬬暀瀵艰嚧鍙犲眰銆?
+        // Clean up old cards to avoid residues causing stacking.
         w->deleteLater();
       }
       delete item;

@@ -4,7 +4,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QStringList>
-// 支持多规则集：文件结构 { "sets": [ { "name": "default", "rules": [ ... ] },
+// Support multiple rule sets: file structure { "sets": [ { "name": "default", "rules": [ ... ] },
 // ... ] }
 class SharedRulesStore {
  public:

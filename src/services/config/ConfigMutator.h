@@ -12,7 +12,7 @@ class ConfigMutator {
   static bool updateClashDefaultMode(QJsonObject& config, const QString& mode,
                                      QString* error = nullptr);
   static QString readClashDefaultMode(const QJsonObject& config);
-  // 将共享规则写入/移除当前配置（route.rules 中 shared=true 的条目）
+  // Write/Remove shared rules to/from current config (entries with shared=true in route.rules)
   static void applySharedRules(QJsonObject&      config,
                                const QJsonArray& sharedRules, bool enabled);
 };

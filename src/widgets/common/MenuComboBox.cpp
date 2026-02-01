@@ -46,7 +46,7 @@ void MenuComboBox::showPopup() {
     QAction* action = m_menu->addAction(itemText(i));
 
     if (i == currentIndex()) {
-      // 涓洪€変腑椤瑰垱寤哄嬀鍙峰浘鏍?
+      // Create checkmark icon for selected item
       QPixmap pixmap(14, 14);
       pixmap.fill(Qt::transparent);
       QPainter painter(&pixmap);
@@ -57,7 +57,7 @@ void MenuComboBox::showPopup() {
       pen.setJoinStyle(Qt::RoundJoin);
       painter.setPen(pen);
 
-      // 缁樺埗鍕惧彿璺緞
+      // Draw checkmark path
       QPainterPath path;
       path.moveTo(1, 7);
       path.lineTo(5, 11);

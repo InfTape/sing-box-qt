@@ -707,8 +707,8 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
   const QString sid      = query.queryItemValue("sid");
   const bool    insecure = query.queryItemValue("allowInsecure") == "1";
 
-  // 许多订阅/手填链接省略 security=tls，但依然带有 SNI/指纹/公钥或使用典型 TLS
-  // 端口，这里自动补全。
+  // Many subscription/hand-filled links omit security=tls, but still contain SNI/Fingerprint/PublicKey or use typical TLS
+  // ports, so here we auto-complete it.
   const bool hasTlsHints = security == "tls" || security == "reality" ||
                            !sni.isEmpty() || !fp.isEmpty() || !pbk.isEmpty() ||
                            !alpn.isEmpty() || port == 443 || port == 8443 ||
@@ -753,8 +753,8 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
     node["tls"] = tls;
   }
 
-  // 仅当订阅显式指定 packetEncoding/pe 时才开启，避免对不支持 XUDP
-  // 的节点造成问题
+  // Only enable when subscription explicitly specifies packetEncoding/pe, to avoid issues with nodes
+  // that do not support XUDP
   QString packetEncoding = query.queryItemValue("packetEncoding");
   if (packetEncoding.isEmpty()) {
     packetEncoding = query.queryItemValue("packetencoding");

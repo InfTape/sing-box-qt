@@ -9,8 +9,8 @@ class ProxyController;
 class QJsonObject;
 /**
  * @brief ProxyRuntimeController
- * 监听 Kernel/Proxy 服务运行态，将状态、流量、连接等信号分发给 UI，
- * 同时在内核启动/停止时负责与业务层的配合（系统代理同步、流量监控启停）。
+ * Listens to Kernel/Proxy service runtime state, dispatching status/traffic/connection signals to UI,
+ * and coordinates with business layer during kernel start/stop (system proxy sync, traffic monitor toggle).
  */
 class ProxyRuntimeController : public QObject {
   Q_OBJECT

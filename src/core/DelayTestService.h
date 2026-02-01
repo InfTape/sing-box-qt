@@ -10,10 +10,10 @@
 #include <atomic>
 // Delay test options.
 struct DelayTestOptions {
-  int     timeoutMs = 3000;  // Timeout in ms (Throne-dev 默认 3s).
+  int     timeoutMs = 3000;  // Timeout in ms (Throne-dev default 3s).
   QString url;               // Test URL; empty uses AppSettings::urltestUrl().
-  int     samples     = 2;   // Sample count (Throne-dev 复测用 2 次).
-  int     concurrency = 10;  // Concurrency (Throne-dev 默认 10，内部再限 100).
+  int     samples     = 2;   // Sample count (Throne-dev uses 2 samples for re-test).
+  int     concurrency = 10;  // Concurrency (Throne-dev default 10, internal limit 100).
 };
 // Delay test result.
 struct ProxyDelayTestResult {

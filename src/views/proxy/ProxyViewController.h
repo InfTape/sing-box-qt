@@ -14,7 +14,7 @@ class ConfigRepository;
 struct ProxyDelayTestResult;
 /**
  * @brief ProxyViewController
- * 负责代理节点选择、延迟/测速等业务逻辑，避免 ProxyView 直接触碰核心服务。
+ * Responsible for proxy node selection, latency/speed test logic, preventing ProxyView from touching core services directly.
  */
 class ProxyViewController : public QObject {
   Q_OBJECT

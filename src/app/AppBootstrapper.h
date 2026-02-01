@@ -9,8 +9,8 @@ class MainWindow;
 class TrayIcon;
 class AppContext;
 /**
- * @brief AppBootstrapper 负责应用级初始化（基础设施、翻译、上下文组装与 UI
- * 创建）。
+ * @brief AppBootstrapper (Infrastructure, Translation, Context assembly, and UI
+ * Creation).
  */
 class AppBootstrapper {
  public:

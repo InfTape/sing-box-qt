@@ -17,7 +17,7 @@ class ProxyRuntimeController;
 class ProxyViewController;
 class SubscriptionService;
 /**
- * @brief AppContext 聚合应用运行期所需的核心服务，统一管理生命周期并便于注入。
+ * @brief AppContext aggregates core services required during runtime, managing lifecycle and injection.
  */
 class AppContext {
  public:

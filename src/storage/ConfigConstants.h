@@ -82,7 +82,7 @@ const int     DEFAULT_API_PORT     = 9090;
 const QString DEFAULT_DNS_PROXY    = "https://1.1.1.1/dns-query";
 const QString DEFAULT_DNS_CN       = "h3://dns.alidns.com/dns-query";
 const QString DEFAULT_DNS_RESOLVER = "114.114.114.114";
-// 与 Throne-dev 保持一致的默认延迟测试地址
+// Default delay test address consistent with Throne-dev
 const QString DEFAULT_URLTEST_URL = "http://cp.cloudflare.com/";
 const QString DEFAULT_SYSTEM_PROXY_BYPASS =
     "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*"
@@ -94,7 +94,7 @@ const QString DEFAULT_TUN_STACK = "mixed";
 const int     DEFAULT_TUN_MTU   = 1500;
 
 // ==================== URL test defaults ====================
-// Throne-dev 默认值：3s 超时、10 并发、双次采样
+// Throne-dev default values: 3s timeout, 10 concurrency, double sampling
 const int DEFAULT_URLTEST_TIMEOUT_MS  = 3000;
 const int DEFAULT_URLTEST_CONCURRENCY = 10;
 const int DEFAULT_URLTEST_SAMPLES     = 2;

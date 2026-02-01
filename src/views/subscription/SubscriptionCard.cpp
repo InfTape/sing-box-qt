@@ -210,7 +210,7 @@ void SubscriptionCard::updateStyle() {
 
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   if (qss.isEmpty()) {
-    qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // 鍏滃簳
+    qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // Fallback
   }
   setStyleSheet(qss);
 }

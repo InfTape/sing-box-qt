@@ -26,7 +26,7 @@ QJsonObject SharedRulesStore::loadDocument() {
   QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
   file.close();
 
-  // 兼容旧版：若根是数组则视为默认规则集
+  // Compatible with old version: if root is array, treat as default rule set
   if (doc.isArray()) {
     QJsonObject obj;
     QJsonObject set;

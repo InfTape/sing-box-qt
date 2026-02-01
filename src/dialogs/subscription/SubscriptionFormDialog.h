@@ -15,7 +15,7 @@ class QToolButton;
 class RoundedMenu;
 class QLineEdit;
 class ThemeService;
-// 澶氶€夎鍒欓泦涓嬫媺鎺т欢
+// Multi-select rule set dropdown widget
 class MultiSelectMenuBox : public QWidget {
   Q_OBJECT
  public:

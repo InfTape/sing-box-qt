@@ -534,7 +534,7 @@ void ConfigMutator::applySharedRules(QJsonObject&      config,
     return obj;
   };
 
-  // 移除与任何共享规则相同的现有规则（避免重复）
+  // Remove existing rules that are identical to any shared rules (avoid duplication)
   QSet<QString> sharedSig;
   for (const auto& rv : sharedRules) {
     if (!rv.isObject()) continue;

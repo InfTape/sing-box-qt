@@ -65,7 +65,7 @@ void NodeEditDialog::setupUI() {
     }
 
     RoundedMenu* menu = new RoundedMenu(this);
-    // 閲囩敤鎵樼洏鑿滃崟鐨勬牱寮忥紝澶嶇敤鍕鹃€夊瑙?
+    // Use tray menu style, reusing checkmark appearance
     menu->setObjectName("TrayMenu");
     if (m_themeService)
       menu->setThemeColors(m_themeService->color("bg-secondary"),
@@ -162,7 +162,7 @@ void NodeEditDialog::onTypeChanged(const QString& type) {
 
   m_currentEditor = createEditor(type);
   if (m_currentEditor) {
-    // 将编辑器插入到底部 stretch 之前，保持底部留白
+    // Insert editor before bottom stretch to keep bottom spacing
     int stretchIndex = m_editorContainer->count() - 1;
     if (stretchIndex < 0) stretchIndex = 0;
     m_editorContainer->insertWidget(stretchIndex, m_currentEditor);

@@ -173,7 +173,7 @@ void GenericNodeEditor::updateVisibility() {
       safeSetVisible(m_hostEdit, isWs || isHttp);
       safeSetVisible(m_serviceNameEdit, isGrpc);
 
-      // Reality fields只在 security=reality 时显示
+      // Reality fields only shown when security=reality
       const bool isReality =
           m_securityCombo && m_securityCombo->currentText() == "reality";
       safeSetVisible(m_publicKeyEdit, isReality);
@@ -182,7 +182,7 @@ void GenericNodeEditor::updateVisibility() {
     }
   }
 
-  // security=none 时自动取消 TLS 选项
+  // When security=none, automatically uncheck TLS
   if (m_securityCombo && m_tlsCheck) {
     const QString sec = m_securityCombo->currentText();
     if (sec == "none") {
@@ -205,7 +205,7 @@ QJsonObject GenericNodeEditor::getOutbound() const {
 
   if (m_type == "vmess") {
     outbound["uuid"] = m_uuidEdit->text();
-    // VMess security 默认 auto，避免空字符串导致配置无效
+    // VMess security defaults to auto, avoiding invalid config due to empty string
     const QString sec    = m_securityEdit->text().trimmed();
     outbound["security"] = sec.isEmpty() ? "auto" : sec;
     outbound["alter_id"] = m_alterIdEdit->text().toInt();
@@ -227,14 +227,14 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     outbound["password"] = m_passwordEdit->text();
   }
 
-  // Hysteria2 强制启用 TLS，需提供 SNI
+  // Hysteria2 enforces TLS, SNI required
   if (m_type == "hysteria2") {
     QJsonObject tls;
     tls["enabled"] = true;
     const QString sni =
         m_serverNameEdit ? m_serverNameEdit->text().trimmed() : QString();
     tls["server_name"] = sni.isEmpty() ? m_serverEdit->text().trimmed()
-                                       : sni;  // 空则回落到服务器域名
+                                       : sni;  // Empty falls back to server domain
     if (m_insecureCheck) {
       tls["insecure"] = m_insecureCheck->isChecked();
     }
@@ -244,7 +244,7 @@ QJsonObject GenericNodeEditor::getOutbound() const {
   // Transport & TLS
   if (m_networkCombo && m_type != "hysteria2") {
     QString net = m_networkCombo->currentText().trimmed().toLower();
-    // 对于 tcp（默认），不写 transport，避免出现 unknown transport type: tcp
+    // For tcp (default), omit transport to avoid 'unknown transport type: tcp'
     if (!net.isEmpty() && net != "tcp") {
       QJsonObject transport;
       transport["type"] = net;
@@ -276,7 +276,7 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     return c ? c->currentText() : QString();
   };
 
-  // 启用 TLS 的条件：勾选、明确 security=tls/reality，或 Reality 字段非空
+  // Enable TLS condition: Checked, explicit security=tls/reality, or Reality fields non-empty
   const bool hasRealityField =
       m_publicKeyEdit && !m_publicKeyEdit->text().isEmpty();
   const bool shouldEnableTls = (m_tlsCheck && m_tlsCheck->isChecked()) ||

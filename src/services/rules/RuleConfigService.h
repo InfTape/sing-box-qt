@@ -21,7 +21,7 @@ class RuleConfigService {
     RuleFieldInfo field;
     QStringList   values;
     QString       outboundTag;
-    QString       ruleSet;  // 多规则集名称
+    QString       ruleSet;  // Multiple rule set name
   };
   static QList<RuleFieldInfo> fieldInfos();
   static QString              activeConfigPath(ConfigRepository* cfgRepo);
@@ -40,7 +40,7 @@ class RuleConfigService {
 
   static bool parseRulePayload(const QString& payload, QString* key,
                                QStringList* values, QString* error = nullptr);
-  // 公共构建接口（供规则集管理对话框使用）
+  // Public build interface (for use by rule set management dialog)
   static bool buildRouteRulePublic(const RuleEditData& data, QJsonObject* out,
                                    QString* error = nullptr);
 };

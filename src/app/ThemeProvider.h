@@ -3,12 +3,12 @@
 
 #include "app/interfaces/ThemeService.h"
 /**
- * @brief ThemeProvider 提供全局 ThemeService 访问点，替代直接依赖 ThemeManager
- * 单例。
+ * @brief ThemeProvider provides global ThemeService access point, replacing direct dependency on ThemeManager
+ * Singleton.
  *
- * 使用方式：
- * - 在 AppContext 初始化时调用 ThemeProvider::setInstance(themeService)
- * - UI 组件使用 ThemeProvider::instance()->color("key") 等方法
+ * Usage:
+ * - Call ThemeProvider::setInstance(themeService) when initializing AppContext
+ * - UI components use ThemeProvider::instance()->color("key") methods
  */
 class ThemeProvider {
  public:

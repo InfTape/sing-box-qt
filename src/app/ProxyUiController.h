@@ -10,8 +10,8 @@ class SettingsStore;
 class AdminActions;
 /**
  * @brief ProxyUiController
- * 负责 UI 层触发的代理相关动作与业务服务之间的协调，
- * 将系统代理 / TUN / 代理模式切换等流程从视图中抽离。
+ * Coordinates proxy-related actions triggered by UI with business services,
+ * abstracting system proxy / TUN / mode switching flows from the view.
  */
 class ProxyUiController : public QObject {
   Q_OBJECT

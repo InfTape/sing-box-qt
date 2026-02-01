@@ -74,7 +74,7 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
   ThemeService* ts = m_themeService;
   const bool    en = isEnabled();
 
-  // 仅日间模式使用text-tertiary，夜间模式使用原来的灰色
+  // Use text-tertiary for day mode only, use original gray for night mode
   QColor trackOff;
   // Note: still using ThemeManager directly for getThemeMode() since it's not
   // in ThemeService interface

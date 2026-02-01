@@ -9,7 +9,7 @@
 class SubscriptionService;
 struct SubscriptionInfo;
 /**
- * @brief SubscriptionController 封装订阅业务操作，减少 View 直接触碰 Service。
+ * @brief SubscriptionController encapsulates subscription business logic, reducing direct Service access from View.
  */
 class SubscriptionController {
  public:

@@ -82,7 +82,7 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
   const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
   if (!isAdmin) {
     if (confirmRestartAdmin && confirmRestartAdmin()) {
-      // 用户同意以管理员重启
+      // User agreed to restart as admin
       m_settings->setSystemProxyEnabled(false);
       m_settings->setTunEnabled(true);
       const bool restarted =

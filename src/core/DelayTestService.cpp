@@ -204,7 +204,7 @@ void DelayTestService::testNodesDelay(const QStringList&      proxies,
     m_stopping = false;
   }
 
-  // 并发数量与 Throne-dev 一致：默认 10，最大 100，最小 1。
+  // Concurrency consistent with Throne-dev: default 10, max 100, min 1.
   const int maxConcurrency = std::clamp(options.concurrency, 1, 100);
 
   // Create semaphore for concurrency control.
