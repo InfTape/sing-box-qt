@@ -3,6 +3,7 @@
 #include "utils/Logger.h"
 #include "services/KernelManager.h"
 #include "services/SettingsService.h"
+#include "utils/settings/SettingsHelpers.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFrame>
@@ -13,7 +14,6 @@
 #include <QProgressBar>
 #include <QScrollArea>
 #include <QSizePolicy>
-#include <QRegularExpression>
 #include <QWheelEvent>
 #include <QSignalBlocker>
 #include <QShowEvent>
@@ -26,24 +26,6 @@ namespace {
 
 constexpr int kLanguageDefaultIndex = 1;
 constexpr int kSpinBoxHeight = 34;
-
-int themeIndexFromMode(ThemeManager::ThemeMode mode)
-{
-    switch (mode) {
-        case ThemeManager::Light: return 1;
-        case ThemeManager::Auto: return 2;
-        default: return 0;
-    }
-}
-
-ThemeManager::ThemeMode themeModeFromIndex(int index)
-{
-    switch (index) {
-        case 1: return ThemeManager::Light;
-        case 2: return ThemeManager::Auto;
-        default: return ThemeManager::Dark;
-    }
-}
 
 class NoWheelSpinBox : public QSpinBox
 {
@@ -585,7 +567,7 @@ void SettingsView::setupUI()
     connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
 
     connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
-        ThemeManager::instance().setThemeMode(themeModeFromIndex(index));
+        ThemeManager::instance().setThemeMode(SettingsHelpers::themeModeFromIndex(index));
     });
     connect(m_languageCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
         if (index == kLanguageDefaultIndex) {
@@ -604,16 +586,14 @@ void SettingsView::updateStyle()
     {
         QSignalBlocker blocker(m_themeCombo);
         if (m_themeCombo) {
-            m_themeCombo->setCurrentIndex(themeIndexFromMode(tm.getThemeMode()));
+            m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(tm.getThemeMode()));
         }
     }
 }
 
 QString SettingsView::normalizeBypassText(const QString &text) const
 {
-    QString bypass = text;
-    bypass.replace(QRegularExpression("[\\r\\n]+"), ";");
-    return bypass.trimmed();
+    return SettingsHelpers::normalizeBypassText(text);
 }
 
 void SettingsView::fillGeneralFromUi(SettingsModel::Data &data) const
@@ -646,16 +626,10 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data &data) const
     data.dnsHijack = m_dnsHijackSwitch->isChecked();
     data.enableAppGroups = m_enableAppGroupsSwitch->isChecked();
 
-    auto resolveText = [](const QLineEdit *edit, const QString &fallback) {
-        if (!edit) return fallback;
-        const QString value = edit->text().trimmed();
-        return value.isEmpty() ? fallback : value;
-    };
-
-    data.dnsProxy = resolveText(m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
-    data.dnsCn = resolveText(m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
-    data.dnsResolver = resolveText(m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
-    data.urltestUrl = resolveText(m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
+    data.dnsProxy = SettingsHelpers::resolveTextOrDefault(m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
+    data.dnsCn = SettingsHelpers::resolveTextOrDefault(m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
+    data.dnsResolver = SettingsHelpers::resolveTextOrDefault(m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
+    data.urltestUrl = SettingsHelpers::resolveTextOrDefault(m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
 }
 
 void SettingsView::applySettingsToUi(const SettingsModel::Data &data)
@@ -692,7 +666,7 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data &data)
     {
         QSignalBlocker blocker(m_themeCombo);
         if (m_themeCombo) {
-            m_themeCombo->setCurrentIndex(themeIndexFromMode(ThemeManager::instance().getThemeMode()));
+            m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(ThemeManager::instance().getThemeMode()));
         }
     }
     {

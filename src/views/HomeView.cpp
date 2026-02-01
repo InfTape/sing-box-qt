@@ -1,5 +1,6 @@
 #include "HomeView.h"
 #include "utils/ThemeManager.h"
+#include "utils/home/HomeFormat.h"
 #include "views/components/TrafficChart.h"
 #include "widgets/ToggleSwitch.h"
 #include <QApplication>
@@ -644,32 +645,10 @@ void HomeView::onRuleModeClicked()
 
 QString HomeView::formatBytes(qint64 bytes) const
 {
-    if (bytes <= 0) return "0 B";
-    const char *units[] = {"B", "KB", "MB", "GB", "TB"};
-    int unitIndex = 0;
-    double size = bytes;
-
-    while (size >= 1024 && unitIndex < 4) {
-        size /= 1024;
-        unitIndex++;
-    }
-
-    return QString::number(size, 'f', unitIndex > 0 ? 2 : 0) + " " + units[unitIndex];
+    return HomeFormat::bytes(bytes);
 }
 
 QString HomeView::formatDuration(int seconds) const
 {
-    int hours = seconds / 3600;
-    int minutes = (seconds % 3600) / 60;
-    int secs = seconds % 60;
-
-    if (hours > 0) {
-        return QString("%1:%2:%3")
-            .arg(hours)
-            .arg(minutes, 2, 10, QChar('0'))
-            .arg(secs, 2, 10, QChar('0'));
-    }
-    return QString("%1:%2")
-        .arg(minutes, 2, 10, QChar('0'))
-        .arg(secs, 2, 10, QChar('0'));
+    return HomeFormat::duration(seconds);
 }

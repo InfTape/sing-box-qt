@@ -95,7 +95,15 @@ set(SOURCES
     src/utils/Crypto.cpp
     src/utils/LogParser.cpp
     src/utils/SubscriptionUserinfo.cpp
+    src/utils/subscription/SubscriptionLayoutHelper.cpp
+    src/utils/subscription/SubscriptionAnimation.cpp
+    src/utils/subscription/SubscriptionHelpers.cpp
+    src/utils/subscription/SubscriptionActions.cpp
     src/utils/SubscriptionFormat.cpp
+    src/utils/proxy/ProxyActions.cpp
+    src/utils/proxy/ProxyNodeHelper.cpp
+    src/utils/home/HomeFormat.cpp
+    src/utils/settings/SettingsHelpers.cpp
     src/utils/RuleUtils.cpp
     src/utils/ThemeManager.cpp
 )
@@ -156,6 +164,14 @@ set(HEADERS
     src/utils/Crypto.h
     src/utils/LogParser.h
     src/utils/SubscriptionUserinfo.h
+    src/utils/subscription/SubscriptionLayoutHelper.h
+    src/utils/subscription/SubscriptionAnimation.h
+    src/utils/subscription/SubscriptionHelpers.h
+    src/utils/subscription/SubscriptionActions.h
+    src/utils/proxy/ProxyActions.h
+    src/utils/proxy/ProxyNodeHelper.h
+    src/utils/home/HomeFormat.h
+    src/utils/settings/SettingsHelpers.h
     src/utils/SubscriptionFormat.h
     src/utils/RuleUtils.h
     src/utils/ThemeManager.h

@@ -1,4 +1,4 @@
-#include "ProxyView.h"
+﻿#include "ProxyView.h"
 #include "core/ProxyService.h"
 #include "core/DelayTestService.h"
 #include "services/RuleConfigService.h"
@@ -8,6 +8,8 @@
 #include "widgets/RoundedMenu.h"
 #include "storage/AppSettings.h"
 #include "widgets/ChevronToggle.h"
+#include "utils/proxy/ProxyActions.h"
+#include "utils/proxy/ProxyNodeHelper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -498,21 +500,7 @@ void ProxyView::markNodeState(QTreeWidgetItem *item, const QString &group, const
     QString displayName = isActive ? "* " + baseName : baseName;
 
     // delay state marker
-    QString state = "loading";
-    if (!delayText.isEmpty() && delayText != "...") {
-        QString delayStr = delayText;
-        delayStr.remove(" ms");
-        bool ok = false;
-        const int delay = delayStr.toInt(&ok);
-        if (ok) {
-            if (delay <= 0) state = "bad";
-            else if (delay < 100) state = "ok";
-            else if (delay < 300) state = "warn";
-            else state = "bad";
-        } else {
-            state.clear();
-        }
-    }
+    QString state = ProxyNodeHelper::delayStateFromText(delayText);
     item->setData(2, Qt::UserRole + 2, state);
     if (QWidget *row = m_treeWidget->itemWidget(item, 0)) {
         if (auto *nameLabel = row->findChild<QLabel*>("ProxyNodeName")) {
@@ -537,7 +525,7 @@ void ProxyView::handleNodeActivation(QTreeWidgetItem *item)
     if (nodeName.startsWith("* ")) nodeName = nodeName.mid(2);
 
     m_pendingSelection.insert(group, nodeName);
-    m_proxyService->selectProxy(group, nodeName);
+    ProxyActions::selectProxy(m_proxyService, group, nodeName);
 }
 
 void ProxyView::onProxySelected(const QString &group, const QString &proxy)
@@ -566,9 +554,7 @@ void ProxyView::startSpeedTest(QTreeWidgetItem *item)
 
     updateNodeRowDelay(item, tr("Testing..."), "testing");
 
-    if (m_proxyService && !groupName.isEmpty()) {
-        m_proxyService->selectProxy(groupName, nodeName);
-    }
+    ProxyActions::selectProxy(m_proxyService, groupName, nodeName);
 
     QtConcurrent::run([this, nodeName, item]() {
         const QString result = runBandwidthTest(nodeName);
@@ -586,7 +572,7 @@ void ProxyView::onTestSelectedClicked()
 {
     if (!m_delayTestService || !m_treeWidget) return;
 
-    // 避免与批量测试并行冲突。
+    // 避免与批量测试并发冲突
     if (m_delayTestService->isTesting() && !m_testingNodes.isEmpty()) {
         return;
     }
@@ -626,7 +612,7 @@ void ProxyView::onTestSelectedClicked()
     options.url = AppSettings::instance().urltestUrl();
     options.samples = AppSettings::instance().urltestSamples();
     options.concurrency = 1;
-    m_delayTestService->testNodeDelay(name, options);
+    ProxyActions::startNodeDelayTest(m_delayTestService, name, options);
 }
 
 void ProxyView::onTestAllClicked()
@@ -635,7 +621,7 @@ void ProxyView::onTestAllClicked()
     if (m_singleTesting) return;
     
     if (m_delayTestService->isTesting()) {
-        m_delayTestService->stopAllTests();
+        ProxyActions::stopAllTests(m_delayTestService);
         m_testAllBtn->setText(tr("Test All"));
         updateTestButtonStyle(false);
         return;
@@ -684,7 +670,7 @@ void ProxyView::onTestAllClicked()
     options.samples = AppSettings::instance().urltestSamples();
     options.concurrency = AppSettings::instance().urltestConcurrency();
     
-    m_delayTestService->testNodesDelay(nodesToTest, options);
+    ProxyActions::startNodesDelayTests(m_delayTestService, nodesToTest, options);
 }
 
 void ProxyView::onSearchTextChanged(const QString &text)
@@ -757,7 +743,7 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult &result)
         }
     }
 
-    // 更新选中态的视觉效果（防止延迟更新后样式丢失）
+    // 更新选中态的视图效果，避免测试结束后样式丢失
     if (QTreeWidgetItem *current = m_treeWidget->currentItem()) {
         updateNodeRowSelected(current, current->isSelected());
     }
@@ -991,3 +977,4 @@ void ProxyView::onSelectionChanged(const QItemSelection &selected, const QItemSe
         }
     }
 }
+

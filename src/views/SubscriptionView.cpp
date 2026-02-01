@@ -14,6 +14,11 @@
 #include <QMenu>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QHash>
+#include "utils/subscription/SubscriptionActions.h"
+#include "utils/subscription/SubscriptionHelpers.h"
+#include "utils/subscription/SubscriptionLayoutHelper.h"
+#include "utils/subscription/SubscriptionAnimation.h"
 
 // ==================== SubscriptionView ====================
 
@@ -216,25 +221,7 @@ void SubscriptionView::wireCardSignals(SubscriptionCard *card)
 
 void SubscriptionView::handleUseSubscription(const QString &id)
 {
-    const QList<SubscriptionInfo> subs = m_subscriptionService->getSubscriptions();
-    const int activeIndex = m_subscriptionService->getActiveIndex();
-
-    int clickedIndex = -1;
-    for (int i = 0; i < subs.size(); ++i) {
-        if (subs[i].id == id) {
-            clickedIndex = i;
-            break;
-        }
-    }
-    if (clickedIndex < 0) return;
-
-    if (clickedIndex == activeIndex) {
-        // 当前已选中的订阅：执行刷新并应用
-        m_subscriptionService->refreshSubscription(id, true);
-    } else {
-        // 未选中的订阅：切换为当前并应用
-        m_subscriptionService->setActiveSubscription(id, true);
-    }
+    SubscriptionActions::useSubscription(m_subscriptionService, id);
 }
 
 void SubscriptionView::handleEditSubscription(const QString &id)
@@ -242,27 +229,8 @@ void SubscriptionView::handleEditSubscription(const QString &id)
     SubscriptionInfo target;
     if (!getSubscriptionById(id, &target)) return;
 
-    // Check if it looks like a single manual node
-    bool isSingleNode = false;
     QJsonObject singleNodeObj;
-    if (target.isManual && !target.useOriginalConfig) {
-        QJsonDocument doc = QJsonDocument::fromJson(target.manualContent.toUtf8());
-        if (doc.isArray()) {
-            QJsonArray arr = doc.array();
-            if (arr.count() == 1 && arr[0].isObject()) {
-                isSingleNode = true;
-                singleNodeObj = arr[0].toObject();
-            }
-        } else if (doc.isObject()) {
-             // Some parsers might allow single object? strict JSON requires root to be object or array
-             // but if it has "type" and "server", it's likely a node. 
-             QJsonObject obj = doc.object();
-             if (obj.contains("type") && obj.contains("server")) {
-                 isSingleNode = true;
-                 singleNodeObj = obj;
-             }
-        }
-    }
+    const bool isSingleNode = SubscriptionHelpers::isSingleManualNode(target, &singleNodeObj);
 
     if (isSingleNode) {
         NodeEditDialog dialog(this);
@@ -333,20 +301,13 @@ void SubscriptionView::handleEditConfig(const QString &id)
 
 void SubscriptionView::handleRefreshSubscription(const QString &id, bool applyRuntime)
 {
-    m_subscriptionService->refreshSubscription(id, applyRuntime);
+    SubscriptionActions::refreshSubscription(m_subscriptionService, id, applyRuntime);
 }
 
 void SubscriptionView::handleRollbackSubscription(const QString &id)
 {
-    SubscriptionInfo target;
-    if (!getSubscriptionById(id, &target)) return;
-
-    if (!m_subscriptionService->rollbackSubscriptionConfig(target.configPath)) {
+    if (!SubscriptionActions::rollbackSubscription(m_subscriptionService, id)) {
         QMessageBox::warning(this, tr("Notice"), tr("No config available to roll back"));
-        return;
-    }
-    if (m_subscriptionService->getActiveIndex() >= 0) {
-        m_subscriptionService->setActiveSubscription(id, true);
     }
 }
 
@@ -406,8 +367,14 @@ void SubscriptionView::layoutCards()
 {
     if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
 
-    static const int kCardWidth = 280;
-    static const int kCardHeight = 200;
+    const int previousColumns = m_columnCount;
+
+    QHash<SubscriptionCard*, QRect> oldGeometries;
+    oldGeometries.reserve(m_cards.size());
+    for (SubscriptionCard *card : std::as_const(m_cards)) {
+        oldGeometries.insert(card, card->geometry());
+    }
+
     while (m_cardsLayout->count() > 0) {
         QLayoutItem *item = m_cardsLayout->takeAt(0);
         if (item) {
@@ -419,17 +386,16 @@ void SubscriptionView::layoutCards()
 
     const int spacing = m_cardsLayout->spacing();
     const int availableWidth = qMax(0, m_scrollArea->viewport()->width());
-    int columns = qMax(1, (availableWidth + spacing) / (kCardWidth + spacing));
+    const int columns = SubscriptionLayoutHelper::computeColumns(availableWidth, spacing);
     m_columnCount = columns;
-
-    const int totalWidth = columns * kCardWidth + (columns - 1) * spacing;
-    const int horizontalMargin = qMax(0, (availableWidth - totalWidth) / 2);
+    const int horizontalMargin = SubscriptionLayoutHelper::computeHorizontalMargin(availableWidth, spacing, columns);
     m_cardsLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
 
     int row = 0;
     int col = 0;
     for (SubscriptionCard *card : m_cards) {
-        card->setFixedSize(kCardWidth, kCardHeight);
+        card->setFixedSize(SubscriptionLayoutHelper::kCardWidth,
+                           SubscriptionLayoutHelper::kCardHeight);
         m_cardsLayout->addWidget(card, row, col, Qt::AlignLeft | Qt::AlignTop);
         ++col;
         if (col >= columns) {
@@ -437,6 +403,10 @@ void SubscriptionView::layoutCards()
             ++row;
         }
     }
+
+    m_cardsLayout->activate();
+
+    SubscriptionAnimation::animateReflow(m_cardsContainer, m_cards, oldGeometries, previousColumns, columns);
 }
 
 void SubscriptionView::resizeEvent(QResizeEvent *event)
