@@ -1,4 +1,4 @@
-#include "RulesView.h"
+﻿#include "RulesView.h"
 
 #include <QAbstractAnimation>
 #include <QDialog>
@@ -362,7 +362,7 @@ void RulesView::rebuildGrid() {
 
   const int previousColumns = m_columnCount;
 
-  // 停止并清理尚未结束的动画，避免目标控件被删除后动画仍然运行�?
+  // 鍋滄骞舵竻鐞嗗皻鏈粨鏉熺殑鍔ㄧ敾锛岄伩鍏嶇洰鏍囨帶浠惰鍒犻櫎鍚庡姩鐢讳粛鐒惰繍琛屻€?
   const auto runningAnimations =
       m_gridContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
@@ -385,7 +385,7 @@ void RulesView::rebuildGrid() {
     QLayoutItem* item = m_gridLayout->takeAt(0);
     if (item) {
       if (QWidget* w = item->widget()) {
-        // 清理旧卡片，避免残留导致叠层�?
+        // 娓呯悊鏃у崱鐗囷紝閬垮厤娈嬬暀瀵艰嚧鍙犲眰銆?
         w->deleteLater();
       }
       delete item;

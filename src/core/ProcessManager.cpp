@@ -1,13 +1,11 @@
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
+
 #include "ProcessManager.h"
 #include "utils/Logger.h"
 
 #ifdef Q_OS_WIN
+#include <windows.h>  // must be first for Windows types/macros
 #include <psapi.h>
 #include <tlhelp32.h>
-#include <windows.h>  // must be first for Windows types/macros
 #endif
 ProcessManager::ProcessManager(QObject* parent) : QObject(parent) {}
 QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {

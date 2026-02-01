@@ -5,8 +5,10 @@
 #include "utils/Logger.h"
 
 #ifdef Q_OS_WIN
-#include <shellapi.h>
+// clang-format off
 #include <windows.h>
+#include <shellapi.h>
+// clang-format on
 #endif
 AdminHelper::AdminHelper(QObject* parent) : QObject(parent) {}
 bool AdminHelper::isAdmin() {
