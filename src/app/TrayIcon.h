@@ -3,8 +3,10 @@
 
 #include <QSystemTrayIcon>
 #include <QMenu>
+#include <functional>
 
-class MainWindow;
+class KernelService;
+class ProxyUiController;
 class ThemeService;
 
 class TrayIcon : public QSystemTrayIcon
@@ -12,7 +14,11 @@ class TrayIcon : public QSystemTrayIcon
     Q_OBJECT
 
 public:
-    explicit TrayIcon(MainWindow *mainWindow, ThemeService *themeService, QObject *parent = nullptr);
+    explicit TrayIcon(ProxyUiController *proxyUiController,
+                      KernelService *kernelService,
+                      ThemeService *themeService,
+                      std::function<void()> showWindow,
+                      QObject *parent = nullptr);
     ~TrayIcon();
 
 private slots:
@@ -27,7 +33,9 @@ private:
     void setupMenu();
     void updateProxyStatus();
 
-    MainWindow *m_mainWindow;
+    ProxyUiController *m_proxyUiController = nullptr;
+    KernelService *m_kernelService = nullptr;
+    std::function<void()> m_showWindow;
     QMenu *m_menu;
     QAction *m_toggleAction;
     QAction *m_globalAction;

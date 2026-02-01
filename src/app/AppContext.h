@@ -12,6 +12,7 @@
 class KernelService;
 class ProxyService;
 class ProxyController;
+class ProxyUiController;
 class SubscriptionService;
 
 /**
@@ -26,6 +27,7 @@ public:
     KernelService* kernelService() const;
     ProxyService* proxyService() const;
     ProxyController* proxyController() const;
+    ProxyUiController* proxyUiController() const;
     SubscriptionService* subscriptionService() const;
     ConfigRepository* configRepository() const;
     SettingsStore* settingsStore() const;
@@ -38,6 +40,7 @@ private:
     std::unique_ptr<ProxyService> m_proxyService;
     std::unique_ptr<SubscriptionService> m_subscriptionService;
     std::unique_ptr<ProxyController> m_proxyController;
+    std::unique_ptr<ProxyUiController> m_proxyUiController;
     std::unique_ptr<ConfigRepository> m_configRepository;
     std::unique_ptr<SettingsStore> m_settingsStore;
     std::unique_ptr<ThemeService> m_themeService;

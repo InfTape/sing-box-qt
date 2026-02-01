@@ -10,6 +10,7 @@
 #include "app/AppContext.h"
 #include "app/MainWindow.h"
 #include "app/TrayIcon.h"
+#include "app/ProxyUiController.h"
 #include "utils/Logger.h"
 #include "storage/DatabaseService.h"
 #include "utils/ThemeManager.h"
@@ -57,8 +58,22 @@ bool AppBootstrapper::createUI()
     m_mainWindow = std::make_unique<MainWindow>(*m_context);
     m_mainWindow->setWindowIcon(QIcon(":/icons/app.png"));
 
-    m_trayIcon = std::make_unique<TrayIcon>(m_mainWindow.get(), m_context ? m_context->themeService() : nullptr);
+    auto showWindow = [this]() {
+        if (m_mainWindow) {
+            m_mainWindow->showAndActivate();
+        }
+    };
+    m_trayIcon = std::make_unique<TrayIcon>(
+        m_context ? m_context->proxyUiController() : nullptr,
+        m_context ? m_context->kernelService() : nullptr,
+        m_context ? m_context->themeService() : nullptr,
+        showWindow);
     m_trayIcon->show();
+
+    if (m_context && m_context->proxyUiController() && m_mainWindow) {
+        QObject::connect(m_context->proxyUiController(), &ProxyUiController::proxyModeChanged,
+                         m_mainWindow.get(), &MainWindow::setProxyModeUI);
+    }
 
     Logger::info("Application initialized, UI ready");
     return true;

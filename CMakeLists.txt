@@ -49,6 +49,7 @@ set(SOURCES
     src/app/impl/ThemeServiceAdapter.cpp
     src/app/impl/SystemProxyAdapter.cpp
     src/app/impl/AdminActionsAdapter.cpp
+    src/app/ProxyUiController.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
     src/core/KernelService.cpp
@@ -129,6 +130,7 @@ set(HEADERS
     src/app/impl/ThemeServiceAdapter.h
     src/app/impl/SystemProxyAdapter.h
     src/app/impl/AdminActionsAdapter.h
+    src/app/ProxyUiController.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
     src/core/KernelService.h

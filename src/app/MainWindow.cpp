@@ -34,6 +34,7 @@
 #include "app/interfaces/SettingsStore.h"
 #include "app/interfaces/ThemeService.h"
 #include "app/interfaces/AdminActions.h"
+#include "app/ProxyUiController.h"
 
 namespace {
 QIcon svgIcon(const QString &resourcePath, int size, const QColor &color)
@@ -84,6 +85,7 @@ MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
       , m_kernelService(ctx.kernelService())
       , m_proxyService(ctx.proxyService())
       , m_proxyController(ctx.proxyController())
+      , m_proxyUiController(ctx.proxyUiController())
       , m_subscriptionService(ctx.subscriptionService())
       , m_settingsStore(ctx.settingsStore())
       , m_themeService(ctx.themeService())
@@ -97,14 +99,13 @@ MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
     loadSettings();
     if (m_homeView)
     {
-        const bool sysProxy = m_settingsStore ? m_settingsStore->systemProxyEnabled() : false;
+        const bool sysProxy = m_proxyUiController ? m_proxyUiController->systemProxyEnabled()
+                                                  : (m_settingsStore ? m_settingsStore->systemProxyEnabled() : false);
+        const bool tunEnabled = m_proxyUiController ? m_proxyUiController->tunModeEnabled() : false;
         m_homeView->setSystemProxyEnabled(sysProxy);
-        m_homeView->setTunModeEnabled(false);
-        QString configPath = m_proxyController->activeConfigPath();
-        if (!configPath.isEmpty() && m_ctx.configRepository())
-        {
-            m_homeView->setProxyMode(m_ctx.configRepository()->readClashDefaultMode(configPath));
-        }
+        m_homeView->setTunModeEnabled(tunEnabled);
+        m_homeView->setProxyMode(m_proxyUiController ? m_proxyUiController->currentProxyMode()
+                                                     : QStringLiteral("rule"));
     }
     updateStyle();
     Logger::info(QStringLiteral("Main window initialized"));
@@ -253,6 +254,10 @@ void MainWindow::setupConnections()
     setupSubscriptionConnections();
     setupProxyServiceConnections();
     setupHomeViewConnections();
+    setupProxyUiBindings();
+    if (m_proxyUiController) {
+        m_proxyUiController->broadcastCurrentStates();
+    }
     
     // Initialize states.
     m_homeView->updateStatus(m_kernelService->isRunning());
@@ -331,21 +336,39 @@ void MainWindow::setupProxyServiceConnections()
             });
 }
 
+void MainWindow::setupProxyUiBindings()
+{
+    if (!m_proxyUiController || !m_homeView) return;
+
+    connect(m_proxyUiController, &ProxyUiController::systemProxyStateChanged,
+            m_homeView, &HomeView::setSystemProxyEnabled);
+    connect(m_proxyUiController, &ProxyUiController::tunModeStateChanged,
+            m_homeView, &HomeView::setTunModeEnabled);
+    connect(m_proxyUiController, &ProxyUiController::proxyModeChanged,
+            m_homeView, &HomeView::setProxyMode);
+}
+
 void MainWindow::setupHomeViewConnections()
 {
+    if (!m_homeView) return;
+
     connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled)
             {
-        if (m_proxyController) {
-            m_proxyController->setSystemProxyEnabled(enabled);
+        if (!m_proxyUiController) return;
+        QString error;
+        if (!m_proxyUiController->setSystemProxyEnabled(enabled, &error)) {
+            if (!error.isEmpty()) {
+                QMessageBox::warning(this, tr("System Proxy"), error);
+            }
+            m_homeView->setSystemProxyEnabled(m_proxyUiController->systemProxyEnabled());
+            m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
         }
-        if (enabled && m_homeView) {
-            m_homeView->setTunModeEnabled(false);
-        } });
+    });
 
     connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled)
             {
-        const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
-        if (enabled && !isAdmin) {
+        if (!m_proxyUiController) return;
+        const auto result = m_proxyUiController->setTunModeEnabled(enabled, [this]() {
             QMessageBox box(this);
             box.setIcon(QMessageBox::Warning);
             box.setWindowTitle(tr("Administrator permission required"));
@@ -354,44 +377,22 @@ void MainWindow::setupHomeViewConnections()
             auto *restartBtn = box.addButton(tr("Restart as administrator"), QMessageBox::AcceptRole);
             box.setDefaultButton(restartBtn);
             box.exec();
+            return box.clickedButton() == restartBtn;
+        });
 
-            if (box.clickedButton() == restartBtn) {
-                if (m_settingsStore) {
-                    m_settingsStore->setSystemProxyEnabled(false);
-                    m_settingsStore->setTunEnabled(true);
-                }
-                const bool restarted = m_adminActions ? m_adminActions->restartAsAdmin() : false;
-                if (!restarted) {
-                    if (m_settingsStore) {
-                        m_settingsStore->setTunEnabled(false);
-                    }
-                    if (m_homeView) {
-                        m_homeView->setTunModeEnabled(false);
-                    }
-                }
-            } else {
-                if (m_homeView) {
-                    m_homeView->setTunModeEnabled(false);
-                }
-                if (m_settingsStore) {
-                    m_settingsStore->setTunEnabled(false);
-                }
-            }
-            return;
+        if (result == ProxyUiController::TunResult::Failed ||
+            result == ProxyUiController::TunResult::Cancelled) {
+            m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
+            m_homeView->setSystemProxyEnabled(m_proxyUiController->systemProxyEnabled());
         }
-
-        if (m_proxyController) {
-            m_proxyController->setTunModeEnabled(enabled);
-        }
-        if (enabled && m_homeView) {
-            m_homeView->setSystemProxyEnabled(false);
-        } });
+    });
 
     connect(m_homeView, &HomeView::proxyModeChanged, this, [this](const QString &mode)
             {
+        if (!m_proxyUiController) return;
+
         QString error;
-        const bool restartKernel = m_kernelService && m_kernelService->isRunning();
-        if (m_proxyController && m_proxyController->setProxyMode(mode, restartKernel, &error)) {
+        if (m_proxyUiController->switchProxyMode(mode, &error)) {
             const QString msg = QStringLiteral("Proxy mode switched to: %1").arg(mode);
             Logger::info(msg);
             if (m_logView) {
@@ -403,6 +404,8 @@ void MainWindow::setupHomeViewConnections()
             if (m_logView) {
                 m_logView->appendLog(QString("[ERROR] %1").arg(msg));
             }
+            QMessageBox::warning(this, tr("Switch Mode Failed"), msg);
+            m_homeView->setProxyMode(m_proxyUiController->currentProxyMode());
         } });
 }
 
@@ -415,6 +418,9 @@ void MainWindow::onNavigationItemClicked(QListWidgetItem *item)
 
 bool MainWindow::isKernelRunning() const
 {
+    if (m_proxyUiController) {
+        return m_proxyUiController->isKernelRunning();
+    }
     return m_kernelService && m_kernelService->isRunning();
 }
 
@@ -425,7 +431,8 @@ QString MainWindow::activeConfigPath() const
 
 QString MainWindow::currentProxyMode() const
 {
-    return m_proxyController ? m_proxyController->currentProxyMode() : QString("rule");
+    return m_proxyUiController ? m_proxyUiController->currentProxyMode()
+                               : QStringLiteral("rule");
 }
 
 void MainWindow::setProxyModeUI(const QString &mode)
@@ -472,9 +479,13 @@ void MainWindow::onKernelStatusChanged(bool running)
 
 void MainWindow::onStartStopClicked()
 {
-    if (!m_proxyController || !m_proxyController->toggleKernel())
+    QString error;
+    if (!m_proxyUiController || !m_proxyUiController->toggleKernel(&error))
     {
-        QMessageBox::warning(this, tr("Start kernel"), tr("Config file not found at the expected location; startup failed."));
+        if (error.isEmpty()) {
+            error = tr("Config file not found at the expected location; startup failed.");
+        }
+        QMessageBox::warning(this, tr("Start kernel"), error);
     }
 }
 

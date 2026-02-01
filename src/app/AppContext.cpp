@@ -4,6 +4,7 @@
 #include "core/ProxyService.h"
 #include "core/ProxyController.h"
 #include "network/SubscriptionService.h"
+#include "app/ProxyUiController.h"
 #include "app/impl/ConfigRepositoryAdapter.h"
 #include "app/impl/SettingsStoreAdapter.h"
 #include "app/impl/ThemeServiceAdapter.h"
@@ -25,6 +26,10 @@ AppContext::AppContext()
                                                           m_configRepository.get(),
                                                           m_settingsStore.get(),
                                                           m_systemProxyGateway.get());
+    m_proxyUiController = std::make_unique<ProxyUiController>(m_proxyController.get(),
+                                                              m_kernelService.get(),
+                                                              m_settingsStore.get(),
+                                                              m_adminActions.get());
 }
 
 AppContext::~AppContext() = default;
@@ -42,6 +47,11 @@ ProxyService* AppContext::proxyService() const
 ProxyController* AppContext::proxyController() const
 {
     return m_proxyController.get();
+}
+
+ProxyUiController* AppContext::proxyUiController() const
+{
+    return m_proxyUiController.get();
 }
 
 SubscriptionService* AppContext::subscriptionService() const

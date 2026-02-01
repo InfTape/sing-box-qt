@@ -18,6 +18,7 @@ class SubscriptionService;
 class KernelService;
 class ProxyService;
 class ProxyController;
+class ProxyUiController;
 class SettingsStore;
 class ThemeService;
 class AdminActions;
@@ -59,6 +60,7 @@ private:
     void setupSubscriptionConnections();
     void setupProxyServiceConnections();
     void setupHomeViewConnections();
+    void setupProxyUiBindings();
     void loadSettings();
     void saveSettings();
     void updateStyle();
@@ -87,6 +89,7 @@ private:
     KernelService *m_kernelService;
     ProxyService *m_proxyService;
     ProxyController *m_proxyController;
+    ProxyUiController *m_proxyUiController;
     SubscriptionService *m_subscriptionService;
     SettingsStore *m_settingsStore;
     ThemeService *m_themeService;
