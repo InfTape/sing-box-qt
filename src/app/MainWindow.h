@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QPushButton>
 #include <QStackedWidget>
+#include <memory>
 
 class HomeView;
 class ProxyView;
@@ -21,6 +22,8 @@ class ProxyRuntimeController;
 class SettingsStore;
 class ThemeService;
 class AdminActions;
+class SettingsController;
+class RuntimeUiBinder;
 
 class AppContext;
 class MainWindow : public QMainWindow {
@@ -51,13 +54,10 @@ class MainWindow : public QMainWindow {
   void setupStatusBar();
   void setupConnections();
   void setupNavigationConnections();
-  void setupKernelConnections();
   void setupThemeConnections();
   void setupSubscriptionConnections();
-  void setupProxyServiceConnections();
   void setupHomeViewConnections();
   void setupProxyUiBindings();
-  void setupRuntimeConnections();
   void loadSettings();
   void saveSettings();
   void updateStyle();
@@ -90,5 +90,7 @@ class MainWindow : public QMainWindow {
   SettingsStore*          m_settingsStore;
   ThemeService*           m_themeService;
   AdminActions*           m_adminActions;
+  SettingsController*     m_settingsController;
+  std::unique_ptr<RuntimeUiBinder> m_runtimeBinder;
 };
 #endif  // MAINWINDOW_H

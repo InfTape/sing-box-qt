@@ -30,6 +30,8 @@
 #include "views/logs/LogView.h"
 #include "views/proxy/ProxyView.h"
 #include "views/rules/RulesView.h"
+#include "views/runtime/RuntimeUiBinder.h"
+#include "views/settings/SettingsController.h"
 #include "views/settings/SettingsView.h"
 #include "views/subscription/SubscriptionView.h"
 namespace {
@@ -83,7 +85,8 @@ MainWindow::MainWindow(AppContext& ctx, QWidget* parent)
       m_subscriptionService(ctx.subscriptionService()),
       m_settingsStore(ctx.settingsStore()),
       m_themeService(ctx.themeService()),
-      m_adminActions(ctx.adminActions()) {
+      m_adminActions(ctx.adminActions()),
+      m_settingsController(new SettingsController(this)) {
   setupUI();
   if (m_proxyController) {
     m_proxyController->setSubscriptionService(m_subscriptionService);
@@ -156,7 +159,7 @@ void MainWindow::setupUI() {
   m_connectionsView = new ConnectionsView(m_themeService);
   m_rulesView       = new RulesView(m_ctx.configRepository(), m_themeService);
   m_logView         = new LogView(m_themeService);
-  m_settingsView    = new SettingsView(m_themeService);
+  m_settingsView    = new SettingsView(m_themeService, m_settingsController);
 
   m_proxyView->setController(m_ctx.proxyViewController());
   if (m_ctx.proxyService()) {
@@ -229,21 +232,21 @@ void MainWindow::setupStatusBar() {
 }
 void MainWindow::setupConnections() {
   setupNavigationConnections();
-  setupKernelConnections();
   setupThemeConnections();
   setupSubscriptionConnections();
-  setupProxyServiceConnections();
   setupHomeViewConnections();
   setupProxyUiBindings();
-  setupRuntimeConnections();
-  if (m_proxyUiController) {
-    m_proxyUiController->broadcastCurrentStates();
-  }
-  if (m_proxyRuntimeController) {
-    m_proxyRuntimeController->broadcastStates();
+  if (!m_runtimeBinder && m_proxyRuntimeController) {
+    m_runtimeBinder = std::make_unique<RuntimeUiBinder>(
+        m_proxyRuntimeController, m_homeView, m_connectionsView, m_proxyView,
+        m_rulesView, m_logView, m_startStopBtn);
+    m_runtimeBinder->bind();
   } else {
     if (m_homeView) m_homeView->updateStatus(false);
     if (m_connectionsView) m_connectionsView->setAutoRefreshEnabled(false);
+  }
+  if (m_proxyUiController) {
+    m_proxyUiController->broadcastCurrentStates();
   }
 }
 void MainWindow::setupNavigationConnections() {
@@ -252,24 +255,6 @@ void MainWindow::setupNavigationConnections() {
 
   connect(m_startStopBtn, &QPushButton::clicked, this,
           &MainWindow::onStartStopClicked);
-}
-void MainWindow::setupKernelConnections() {
-  if (!m_proxyRuntimeController) return;
-
-  connect(m_proxyRuntimeController,
-          &ProxyRuntimeController::kernelRunningChanged, this,
-          &MainWindow::onKernelStatusChanged);
-
-  if (m_homeView) {
-    connect(m_proxyRuntimeController,
-            &ProxyRuntimeController::kernelRunningChanged, m_homeView,
-            &HomeView::updateStatus);
-  }
-  if (m_connectionsView) {
-    connect(m_proxyRuntimeController,
-            &ProxyRuntimeController::kernelRunningChanged, m_connectionsView,
-            &ConnectionsView::setAutoRefreshEnabled);
-  }
 }
 void MainWindow::setupThemeConnections() {
   if (m_themeService) {
@@ -291,21 +276,6 @@ void MainWindow::setupSubscriptionConnections() {
             }
           });
 }
-void MainWindow::setupProxyServiceConnections() {
-  if (!m_proxyRuntimeController) return;
-
-  if (m_homeView) {
-    connect(m_proxyRuntimeController, &ProxyRuntimeController::trafficUpdated,
-            m_homeView, &HomeView::updateTraffic);
-    connect(m_proxyRuntimeController,
-            &ProxyRuntimeController::connectionsUpdated, this,
-            [this](int count, qint64 memoryUsage) {
-              if (m_homeView) {
-                m_homeView->updateConnections(count, memoryUsage);
-              }
-            });
-  }
-}
 void MainWindow::setupProxyUiBindings() {
   if (!m_proxyUiController || !m_homeView) return;
 
@@ -315,25 +285,6 @@ void MainWindow::setupProxyUiBindings() {
           m_homeView, &HomeView::setTunModeEnabled);
   connect(m_proxyUiController, &ProxyUiController::proxyModeChanged, m_homeView,
           &HomeView::setProxyMode);
-}
-void MainWindow::setupRuntimeConnections() {
-  if (!m_proxyRuntimeController) return;
-
-  if (m_logView) {
-    connect(m_proxyRuntimeController, &ProxyRuntimeController::logMessage,
-            m_logView,
-            [this](const QString& msg, bool) { m_logView->appendLog(msg); });
-  }
-  if (m_proxyView) {
-    connect(m_proxyRuntimeController,
-            &ProxyRuntimeController::refreshProxyViewRequested, m_proxyView,
-            &ProxyView::refresh);
-  }
-  if (m_rulesView) {
-    connect(m_proxyRuntimeController,
-            &ProxyRuntimeController::refreshRulesViewRequested, m_rulesView,
-            &RulesView::refresh);
-  }
 }
 void MainWindow::setupHomeViewConnections() {
   if (!m_homeView) return;

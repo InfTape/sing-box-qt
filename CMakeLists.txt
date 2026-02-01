@@ -91,7 +91,9 @@ set(SOURCES
     src/views/connections/ConnectionsView.cpp
     src/views/rules/RulesView.cpp
     src/views/logs/LogView.cpp
+    src/views/runtime/RuntimeUiBinder.cpp
     src/views/settings/SettingsView.cpp
+    src/views/settings/SettingsController.cpp
     src/services/kernel/KernelManager.cpp
     src/services/kernel/KernelPlatform.cpp
     src/services/settings/SettingsService.cpp

@@ -13,17 +13,18 @@
 #include <QWidget>
 
 #include "models/SettingsModel.h"
-#include "services/settings/SettingsService.h"
 
 class ToggleSwitch;
 class MenuComboBox;
-class KernelManager;
+class SettingsController;
 class ThemeService;
 class SettingsView : public QWidget {
   Q_OBJECT
 
  public:
-  explicit SettingsView(ThemeService* themeService, QWidget* parent = nullptr);
+  explicit SettingsView(ThemeService* themeService,
+                        SettingsController* controller = nullptr,
+                        QWidget* parent                = nullptr);
 
  protected:
   void showEvent(QShowEvent* event) override;
@@ -99,12 +100,12 @@ class SettingsView : public QWidget {
   QPushButton*   m_downloadKernelBtn;
   QPushButton*   m_checkKernelBtn;
   QPushButton*   m_checkUpdateBtn;
-  bool           m_isDownloading   = false;
-  bool           m_checkingInstall = false;
-  KernelManager* m_kernelManager;
-  bool           m_kernelInfoLoaded = false;
-  QString        m_inputStyleApplied;
-  QString        m_comboStyle;
+  bool                m_isDownloading    = false;
+  bool                m_checkingInstall  = false;
+  SettingsController* m_settingsController = nullptr;
+  bool                m_kernelInfoLoaded   = false;
+  QString             m_inputStyleApplied;
+  QString             m_comboStyle;
 
   QPushButton*  m_saveBtn;
   ThemeService* m_themeService = nullptr;

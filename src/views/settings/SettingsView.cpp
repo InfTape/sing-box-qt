@@ -16,11 +16,10 @@
 #include <algorithm>
 
 #include "app/interfaces/ThemeService.h"
-#include "services/kernel/KernelManager.h"
-#include "services/settings/SettingsService.h"
 #include "storage/ConfigConstants.h"
 #include "utils/Logger.h"
 #include "utils/settings/SettingsHelpers.h"
+#include "views/settings/SettingsController.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
 namespace {
@@ -35,9 +34,11 @@ class NoWheelSpinBox : public QSpinBox {
   void wheelEvent(QWheelEvent* event) override { event->ignore(); }
 };
 }  // namespace
-SettingsView::SettingsView(ThemeService* themeService, QWidget* parent)
+SettingsView::SettingsView(ThemeService* themeService,
+                           SettingsController* controller, QWidget* parent)
     : QWidget(parent),
-      m_kernelManager(new KernelManager(this)),
+      m_settingsController(controller ? controller
+                                      : new SettingsController(this)),
       m_themeService(themeService) {
   setupUI();
   loadSettings();
@@ -48,18 +49,20 @@ SettingsView::SettingsView(ThemeService* themeService, QWidget* parent)
   }
 
   // Kernel signals
-  connect(m_kernelManager, &KernelManager::installedInfoReady, this,
-          &SettingsView::onKernelInstalledReady);
-  connect(m_kernelManager, &KernelManager::releasesReady, this,
-          &SettingsView::onKernelReleasesReady);
-  connect(m_kernelManager, &KernelManager::latestReady, this,
-          &SettingsView::onKernelLatestReady);
-  connect(m_kernelManager, &KernelManager::downloadProgress, this,
-          &SettingsView::onKernelDownloadProgress);
-  connect(m_kernelManager, &KernelManager::statusChanged, this,
-          &SettingsView::onKernelStatusChanged);
-  connect(m_kernelManager, &KernelManager::finished, this,
-          &SettingsView::onKernelFinished);
+  if (m_settingsController) {
+    connect(m_settingsController, &SettingsController::installedInfoReady, this,
+            &SettingsView::onKernelInstalledReady);
+    connect(m_settingsController, &SettingsController::releasesReady, this,
+            &SettingsView::onKernelReleasesReady);
+    connect(m_settingsController, &SettingsController::latestReady, this,
+            &SettingsView::onKernelLatestReady);
+    connect(m_settingsController, &SettingsController::downloadProgress, this,
+            &SettingsView::onKernelDownloadProgress);
+    connect(m_settingsController, &SettingsController::statusChanged, this,
+            &SettingsView::onKernelStatusChanged);
+    connect(m_settingsController, &SettingsController::finished, this,
+            &SettingsView::onKernelFinished);
+  }
 
   updateStyle();
 }
@@ -72,9 +75,9 @@ void SettingsView::ensureKernelInfoLoaded() {
     return;
   }
   m_kernelInfoLoaded = true;
-  if (m_kernelManager) {
-    m_kernelManager->refreshInstalledInfo();
-    m_kernelManager->fetchReleaseList();
+  if (m_settingsController) {
+    m_settingsController->refreshInstalledInfo();
+    m_settingsController->fetchReleaseList();
   }
 }
 QLabel* SettingsView::createSectionTitle(const QString& text) {
@@ -678,18 +681,22 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   }
 }
 void SettingsView::loadSettings() {
-  applySettingsToUi(SettingsService::loadSettings());
+  if (m_settingsController) {
+    applySettingsToUi(m_settingsController->loadSettings());
+  }
 }
 bool SettingsView::saveSettings() {
-  SettingsModel::Data data = SettingsService::loadSettings();
+  if (!m_settingsController) return false;
+
+  SettingsModel::Data data = m_settingsController->loadSettings();
   fillGeneralFromUi(data);
   fillAdvancedFromUi(data);
   fillProfileFromUi(data);
 
   QString errorMessage;
-  if (!SettingsService::saveSettings(data, m_themeCombo->currentIndex(),
-                                     m_languageCombo->currentIndex(),
-                                     &errorMessage)) {
+  if (!m_settingsController->saveSettings(
+          data, m_themeCombo->currentIndex(), m_languageCombo->currentIndex(),
+          &errorMessage)) {
     QMessageBox::warning(this, tr("Notice"), errorMessage);
     return false;
   }
@@ -701,7 +708,7 @@ void SettingsView::onSaveClicked() {
   }
 }
 void SettingsView::onDownloadKernelClicked() {
-  if (m_isDownloading || !m_kernelManager) {
+  if (m_isDownloading || !m_settingsController) {
     return;
   }
   QString version;
@@ -709,22 +716,22 @@ void SettingsView::onDownloadKernelClicked() {
     version = m_kernelVersionCombo->currentText().trimmed();
   }
   setDownloadUi(true, tr("Preparing to download kernel..."));
-  m_kernelManager->downloadAndInstall(version);
+  m_settingsController->downloadAndInstall(version);
 }
 void SettingsView::onCheckKernelClicked() {
-  if (m_kernelManager) {
+  if (m_settingsController) {
     m_checkingInstall = true;
     setDownloadUi(true, tr("Checking installation..."));
-    m_kernelManager->refreshInstalledInfo();
-    m_kernelManager->fetchReleaseList();
+    m_settingsController->refreshInstalledInfo();
+    m_settingsController->fetchReleaseList();
   } else {
     setDownloadUi(false, tr("Kernel manager unavailable"));
   }
 }
 void SettingsView::onCheckUpdateClicked() {
-  if (m_kernelManager) {
+  if (m_settingsController) {
     setDownloadUi(true, tr("Checking latest kernel version..."));
-    m_kernelManager->checkLatest();
+    m_settingsController->checkLatest();
   }
 }
 void SettingsView::onKernelInstalledReady(const QString& path,
