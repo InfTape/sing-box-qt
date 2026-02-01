@@ -29,7 +29,6 @@ class AppBootstrapper {
   void setupStyle();
   void setupFont();
   bool setupDatabase();
-  void setupTheme();
   void loadTranslations();
 
   QApplication&               m_app;

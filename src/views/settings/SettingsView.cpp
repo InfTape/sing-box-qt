@@ -20,7 +20,6 @@
 #include "services/settings/SettingsService.h"
 #include "storage/ConfigConstants.h"
 #include "utils/Logger.h"
-#include "utils/ThemeManager.h"
 #include "utils/settings/SettingsHelpers.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
@@ -559,8 +558,10 @@ void SettingsView::setupUI() {
 
   connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, [this](int index) {
-            ThemeManager::instance().setThemeMode(
-                SettingsHelpers::themeModeFromIndex(index));
+            if (m_themeService) {
+              m_themeService->setThemeMode(
+                  SettingsHelpers::themeModeFromIndex(index));
+            }
           });
   connect(m_languageCombo, QOverload<int>::of(&QComboBox::activated), this,
           [this](int index) {
@@ -579,8 +580,8 @@ void SettingsView::updateStyle() {
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
-      m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(
-          ThemeManager::instance().getThemeMode()));
+      m_themeCombo->setCurrentIndex(
+          SettingsHelpers::themeIndexFromMode(ts->themeMode()));
     }
   }
 }
@@ -665,8 +666,10 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
-      m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(
-          ThemeManager::instance().getThemeMode()));
+      const ThemeService::ThemeMode mode =
+          m_themeService ? m_themeService->themeMode()
+                         : ThemeService::ThemeMode::Dark;
+      m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(mode));
     }
   }
   {

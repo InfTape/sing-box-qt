@@ -13,7 +13,6 @@
 #include "app/TrayIcon.h"
 #include "storage/DatabaseService.h"
 #include "utils/Logger.h"
-#include "utils/ThemeManager.h"
 AppBootstrapper::AppBootstrapper(QApplication& app) : m_app(app) {}
 AppBootstrapper::~AppBootstrapper() = default;
 bool AppBootstrapper::initialize() {
@@ -34,8 +33,6 @@ bool AppBootstrapper::initialize() {
 
   if (m_context->themeService()) {
     m_context->themeService()->init();
-  } else {
-    setupTheme();
   }
   loadTranslations();
 
@@ -112,7 +109,6 @@ bool AppBootstrapper::setupDatabase() {
   }
   return true;
 }
-void AppBootstrapper::setupTheme() { ThemeManager::instance().init(); }
 void AppBootstrapper::loadTranslations() {
   const QStringList uiLanguages = QLocale::system().uiLanguages();
   for (const QString& locale : uiLanguages) {

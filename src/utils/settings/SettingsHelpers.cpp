@@ -3,24 +3,25 @@
 #include <QLineEdit>
 #include <QRegularExpression>
 namespace SettingsHelpers {
-int themeIndexFromMode(ThemeManager::ThemeMode mode) {
+int themeIndexFromMode(ThemeService::ThemeMode mode) {
   switch (mode) {
-    case ThemeManager::Light:
+    case ThemeService::ThemeMode::Light:
       return 1;
-    case ThemeManager::Auto:
+    case ThemeService::ThemeMode::Auto:
       return 2;
+    case ThemeService::ThemeMode::Dark:
     default:
       return 0;
   }
 }
-ThemeManager::ThemeMode themeModeFromIndex(int index) {
+ThemeService::ThemeMode themeModeFromIndex(int index) {
   switch (index) {
     case 1:
-      return ThemeManager::Light;
+      return ThemeService::ThemeMode::Light;
     case 2:
-      return ThemeManager::Auto;
+      return ThemeService::ThemeMode::Auto;
     default:
-      return ThemeManager::Dark;
+      return ThemeService::ThemeMode::Dark;
   }
 }
 QString normalizeBypassText(const QString& text) {

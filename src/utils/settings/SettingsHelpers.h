@@ -2,12 +2,12 @@
 
 #include <QString>
 
-#include "utils/ThemeManager.h"
+#include "app/interfaces/ThemeService.h"
 
 class QLineEdit;
 namespace SettingsHelpers {
-int                     themeIndexFromMode(ThemeManager::ThemeMode mode);
-ThemeManager::ThemeMode themeModeFromIndex(int index);
+int                     themeIndexFromMode(ThemeService::ThemeMode mode);
+ThemeService::ThemeMode themeModeFromIndex(int index);
 QString                 normalizeBypassText(const QString& text);
 QString resolveTextOrDefault(const QLineEdit* edit, const QString& fallback);
 }  // namespace SettingsHelpers

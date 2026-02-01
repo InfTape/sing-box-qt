@@ -25,7 +25,6 @@
 #include "storage/DatabaseService.h"
 #include "system/AdminHelper.h"
 #include "utils/Logger.h"
-#include "utils/ThemeManager.h"
 #include "views/connections/ConnectionsView.h"
 #include "views/home/HomeView.h"
 #include "views/logs/LogView.h"

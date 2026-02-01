@@ -7,7 +7,6 @@
 #include <algorithm>
 
 #include "app/interfaces/ThemeService.h"
-#include "utils/ThemeManager.h"
 ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   setCursor(Qt::PointingHandCursor);
@@ -74,17 +73,15 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
   ThemeService* ts = m_themeService;
   const bool    en = isEnabled();
 
-  // Use text-tertiary for day mode only, use original gray for night mode
-  QColor trackOff;
-  // Note: still using ThemeManager directly for getThemeMode() since it's not
-  // in ThemeService interface
-  if (ThemeManager::instance().getThemeMode() == ThemeManager::Light ||
-      (ThemeManager::instance().getThemeMode() == ThemeManager::Auto && ts &&
-       ts->color("bg-primary") == QColor("#f8fafc"))) {
-    trackOff = ts ? ts->color("text-tertiary") : QColor(120, 120, 120);
-  } else {
-    trackOff = QColor(120, 120, 120);
-  }
+  // Use text-tertiary for day mode only, fallback to gray for dark mode
+  const ThemeService::ThemeMode mode =
+      ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
+  const bool isLight =
+      mode == ThemeService::ThemeMode::Light ||
+      (mode == ThemeService::ThemeMode::Auto && ts &&
+       ts->color("bg-primary") == QColor("#f8fafc"));
+  QColor trackOff =
+      (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
 
   QColor trackOn = ts ? ts->color("primary") : QColor(0, 0, 200);
   QColor thumb(255, 255, 255);
