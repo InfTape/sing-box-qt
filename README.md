@@ -161,36 +161,45 @@ sing-box-qt/
 │   ├── app/                  # 应用层
 │   │   ├── MainWindow        # 主窗口
 │   │   └── TrayIcon          # 系统托盘
-│   ├── core/                 # 核心服务
-│   │   ├── KernelService     # 内核管理
+│   ├── core/                 # 核心逻辑
+│   │   ├── KernelService     # 内核服务
 │   │   ├── ProcessManager    # 进程管理
-│   │   ├── ProxyService      # 代理服务
-│   │   └── DelayTestService  # 延迟测试
+│   │   └── ProxyController   # 代理控制
+│   ├── dialogs/              # 对话框
+│   │   ├── config/           # 配置对话框
+│   │   ├── editors/          # 编辑对话框
+│   │   ├── rules/            # 规则对话框
+│   │   └── subscription/     # 订阅对话框
+│   ├── models/               # 数据模型
+│   │   └── SettingsModel     # 设置模型
 │   ├── network/              # 网络模块
 │   │   ├── HttpClient        # HTTP 客户端
 │   │   ├── WebSocketClient   # WebSocket 客户端
-│   │   └── SubscriptionService # 订阅管理
+│   │   └── SubscriptionService # 订阅服务
+│   ├── services/             # 业务服务
+│   │   ├── config/           # 配置服务
+│   │   ├── kernel/           # 内核服务实现
+│   │   ├── rules/            # 规则服务
+│   │   ├── settings/         # 设置服务
+│   │   └── subscription/     # 订阅服务实现
 │   ├── storage/              # 存储模块
-│   │   ├── DatabaseService   # SQLite 数据库
-│   │   ├── ConfigManager     # 配置管理
+│   │   ├── DatabaseService   # 数据库服务
 │   │   └── AppSettings       # 应用设置
-│   ├── system/               # 系统模块
+│   ├── system/               # 系统集成
 │   │   ├── SystemProxy       # 系统代理
-│   │   ├── AutoStart         # 开机启动
-│   │   ├── UpdateService     # 更新服务
-│   │   └── AdminHelper       # 管理员权限
+│   │   └── AutoStart         # 开机自启
+│   ├── utils/                # 工具库
+│   │   ├── Logger            # 日志管理
+│   │   ├── Crypto            # 加密工具
+│   │   └── ThemeManager      # 主题管理
 │   ├── views/                # 视图层
-│   │   ├── HomeView          # 仪表盘
-│   │   ├── ProxyView         # 代理管理
-│   │   ├── SubscriptionView  # 订阅管理
-│   │   ├── ConnectionsView   # 连接监控
-│   │   ├── RulesView         # 规则查看
-│   │   ├── LogView           # 日志输出
-│   │   └── SettingsView      # 设置页面
-│   └── utils/                # 工具类
-│       ├── Logger            # 日志工具
-│       ├── Crypto            # 加密工具
-│       └── ThemeManager      # 主题管理
+│   │   ├── home/             # 主页视图
+│   │   ├── proxy/            # 代理视图
+│   │   ├── subscription/     # 订阅视图
+│   │   └── settings/         # 设置视图
+│   └── widgets/              # 通用组件
+│       ├── common/           # 公共组件
+│       └── logs/             # 日志组件
 └── resources/                # 资源文件
     ├── icons/                # 图标资源
     └── translations/         # 翻译文件
