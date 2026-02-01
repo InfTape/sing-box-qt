@@ -37,7 +37,7 @@
 namespace {
 QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
   const qreal dpr = qApp->devicePixelRatio();
-  const int   box = static_cast<int>(size * dpr);
+  const int box = static_cast<int>(size * dpr);
 
   QSvgRenderer renderer(resourcePath);
 
@@ -46,12 +46,12 @@ QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
   {
     QPainter p(&base);
     p.setRenderHint(QPainter::Antialiasing);
-    QSizeF def     = renderer.defaultSize();
-    qreal  w       = def.width() > 0 ? def.width() : size;
-    qreal  h       = def.height() > 0 ? def.height() : size;
-    qreal  ratio   = (h > 0) ? w / h : 1.0;
-    qreal  renderW = box;
-    qreal  renderH = box;
+    QSizeF def = renderer.defaultSize();
+    qreal w = def.width() > 0 ? def.width() : size;
+    qreal h = def.height() > 0 ? def.height() : size;
+    qreal ratio = (h > 0) ? w / h : 1.0;
+    qreal renderW = box;
+    qreal renderH = box;
     if (ratio > 1.0) {
       renderH = renderH / ratio;
     } else if (ratio < 1.0) {
@@ -152,14 +152,14 @@ void MainWindow::setupUI() {
 
   m_stackedWidget = new QStackedWidget;
 
-  m_homeView  = new HomeView(m_themeService);
+  m_homeView = new HomeView(m_themeService);
   m_proxyView = new ProxyView(m_themeService, this);
   m_subscriptionView =
       new SubscriptionView(m_subscriptionService, m_themeService, this);
   m_connectionsView = new ConnectionsView(m_themeService);
-  m_rulesView       = new RulesView(m_ctx.configRepository(), m_themeService);
-  m_logView         = new LogView(m_themeService);
-  m_settingsView    = new SettingsView(m_themeService, m_settingsController);
+  m_rulesView = new RulesView(m_ctx.configRepository(), m_themeService);
+  m_logView = new LogView(m_themeService);
+  m_settingsView = new SettingsView(m_themeService, m_settingsController);
 
   m_proxyView->setController(m_ctx.proxyViewController());
   if (m_ctx.proxyService()) {
