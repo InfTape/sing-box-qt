@@ -42,6 +42,10 @@ FetchContent_MakeAvailable(yaml-cpp)
 # Source files.
 set(SOURCES
     src/main.cpp
+    src/app/AppBootstrapper.cpp
+    src/app/AppContext.cpp
+    src/app/impl/ConfigRepositoryAdapter.cpp
+    src/app/impl/SettingsStoreAdapter.cpp
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
     src/core/KernelService.cpp
@@ -109,6 +113,12 @@ set(SOURCES
 )
 
 set(HEADERS
+    src/app/AppBootstrapper.h
+    src/app/AppContext.h
+    src/app/interfaces/ConfigRepository.h
+    src/app/interfaces/SettingsStore.h
+    src/app/impl/ConfigRepositoryAdapter.h
+    src/app/impl/SettingsStoreAdapter.h
     src/app/MainWindow.h
     src/app/TrayIcon.h
     src/core/KernelService.h

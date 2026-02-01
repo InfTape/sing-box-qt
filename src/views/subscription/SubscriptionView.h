@@ -22,7 +22,7 @@ class SubscriptionView : public QWidget
     Q_OBJECT
 
 public:
-    explicit SubscriptionView(QWidget *parent = nullptr);
+    explicit SubscriptionView(SubscriptionService *service, QWidget *parent = nullptr);
     SubscriptionService* getService() const;
 
 private slots:

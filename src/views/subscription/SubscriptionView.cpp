@@ -15,6 +15,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QHash>
+#include <QtGlobal>
 #include "utils/subscription/SubscriptionActions.h"
 #include "utils/subscription/SubscriptionHelpers.h"
 #include "utils/layout/CardGridLayoutHelper.h"
@@ -22,11 +23,12 @@
 
 // ==================== SubscriptionView ====================
 
-SubscriptionView::SubscriptionView(QWidget *parent)
+SubscriptionView::SubscriptionView(SubscriptionService *service, QWidget *parent)
     : QWidget(parent)
-    , m_subscriptionService(new SubscriptionService(this))
+    , m_subscriptionService(service)
     , m_autoUpdateTimer(new QTimer(this))
 {
+    Q_ASSERT(m_subscriptionService);
     setupUI();
 
     connect(&ThemeManager::instance(), &ThemeManager::themeChanged,

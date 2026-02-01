@@ -6,6 +6,8 @@
 
 class KernelService;
 class SubscriptionService;
+class ConfigRepository;
+class SettingsStore;
 
 class ProxyController : public QObject
 {
@@ -13,6 +15,8 @@ class ProxyController : public QObject
 public:
     explicit ProxyController(KernelService *kernel,
                              SubscriptionService *subscription = nullptr,
+                             ConfigRepository *configRepo = nullptr,
+                             SettingsStore *settings = nullptr,
                              QObject *parent = nullptr);
 
     void setSubscriptionService(SubscriptionService *service);
@@ -37,6 +41,8 @@ private:
 
     KernelService *m_kernel;
     SubscriptionService *m_subscription;
+    ConfigRepository *m_configRepo;
+    SettingsStore *m_settings;
 };
 
 #endif // PROXYCONTROLLER_H

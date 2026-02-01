@@ -30,6 +30,8 @@
 #include "services/config/ConfigManager.h"
 #include "network/SubscriptionService.h"
 #include "system/AdminHelper.h"
+#include "app/AppContext.h"
+#include "app/interfaces/SettingsStore.h"
 
 namespace {
 QIcon svgIcon(const QString &resourcePath, int size, const QColor &color)
@@ -74,18 +76,26 @@ QIcon svgIcon(const QString &resourcePath, int size, const QColor &color)
 }
 } // namespace
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_kernelService(new KernelService(this)), m_proxyService(new ProxyService(this)) // Initialize ProxyService
-      ,
-      m_proxyController(new ProxyController(m_kernelService, nullptr, this))
+MainWindow::MainWindow(AppContext &ctx, QWidget *parent)
+    : QMainWindow(parent)
+      , m_ctx(ctx)
+      , m_kernelService(ctx.kernelService())
+      , m_proxyService(ctx.proxyService())
+      , m_proxyController(ctx.proxyController())
+      , m_subscriptionService(ctx.subscriptionService())
+      , m_settingsStore(ctx.settingsStore())
 {
     setupUI();
-    m_proxyController->setSubscriptionService(m_subscriptionView ? m_subscriptionView->getService() : nullptr);
+    if (m_proxyController) {
+        m_proxyController->setSubscriptionService(m_subscriptionService);
+    }
     setupConnections();
     loadSettings();
     if (m_homeView)
     {
-        m_homeView->setSystemProxyEnabled(AppSettings::instance().systemProxyEnabled());
+        const bool sysProxy = m_settingsStore ? m_settingsStore->systemProxyEnabled()
+                                              : AppSettings::instance().systemProxyEnabled();
+        m_homeView->setSystemProxyEnabled(sysProxy);
         m_homeView->setTunModeEnabled(false);
         QString configPath = m_proxyController->activeConfigPath();
         if (!configPath.isEmpty())
@@ -147,7 +157,7 @@ void MainWindow::setupUI()
 
     m_homeView = new HomeView;
     m_proxyView = new ProxyView;
-    m_subscriptionView = new SubscriptionView;
+    m_subscriptionView = new SubscriptionView(m_subscriptionService, this);
     m_connectionsView = new ConnectionsView;
     m_rulesView = new RulesView;
     m_logView = new LogView;
@@ -281,7 +291,9 @@ void MainWindow::setupThemeConnections()
 
 void MainWindow::setupSubscriptionConnections()
 {
-    connect(m_subscriptionView->getService(), &SubscriptionService::applyConfigRequested,
+    if (!m_subscriptionService) return;
+
+    connect(m_subscriptionService, &SubscriptionService::applyConfigRequested,
             this, [this](const QString &configPath, bool restart)
             {
                 if (configPath.isEmpty()) return;
@@ -338,10 +350,19 @@ void MainWindow::setupHomeViewConnections()
             box.exec();
 
             if (box.clickedButton() == restartBtn) {
-                AppSettings::instance().setSystemProxyEnabled(false);
-                AppSettings::instance().setTunEnabled(true);
+                if (m_settingsStore) {
+                    m_settingsStore->setSystemProxyEnabled(false);
+                    m_settingsStore->setTunEnabled(true);
+                } else {
+                    AppSettings::instance().setSystemProxyEnabled(false);
+                    AppSettings::instance().setTunEnabled(true);
+                }
                 if (!AdminHelper::restartAsAdmin()) {
-                    AppSettings::instance().setTunEnabled(false);
+                    if (m_settingsStore) {
+                        m_settingsStore->setTunEnabled(false);
+                    } else {
+                        AppSettings::instance().setTunEnabled(false);
+                    }
                     if (m_homeView) {
                         m_homeView->setTunModeEnabled(false);
                     }
@@ -350,7 +371,11 @@ void MainWindow::setupHomeViewConnections()
                 if (m_homeView) {
                     m_homeView->setTunModeEnabled(false);
                 }
-                AppSettings::instance().setTunEnabled(false);
+                if (m_settingsStore) {
+                    m_settingsStore->setTunEnabled(false);
+                } else {
+                    AppSettings::instance().setTunEnabled(false);
+                }
             }
             return;
         }

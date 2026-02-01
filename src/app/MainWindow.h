@@ -14,16 +14,20 @@ class ConnectionsView;
 class RulesView;
 class LogView;
 class SettingsView;
+class SubscriptionService;
 class KernelService;
 class ProxyService;
 class ProxyController;
+class SettingsStore;
+
+class AppContext;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(AppContext &ctx, QWidget *parent = nullptr);
     ~MainWindow();
 
     void showAndActivate();
@@ -77,9 +81,12 @@ private:
     SettingsView *m_settingsView;
 
     // Services.
+    AppContext &m_ctx;
     KernelService *m_kernelService;
     ProxyService *m_proxyService;
     ProxyController *m_proxyController;
+    SubscriptionService *m_subscriptionService;
+    SettingsStore *m_settingsStore;
 };
 
 #endif // MAINWINDOW_H
