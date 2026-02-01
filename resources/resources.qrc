@@ -23,6 +23,7 @@
         <file>styles/proxy_view.qss</file>
         <file>styles/rules_view.qss</file>
         <file>styles/subscription_card.qss</file>
+        <file>styles/card_common.qss</file>
         <file>styles/subscription_view.qss</file>
         <file>styles/global.qss</file>
         <file>styles/settings_view.qss</file>

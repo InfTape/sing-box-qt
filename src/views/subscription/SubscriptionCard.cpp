@@ -38,6 +38,7 @@ void SubscriptionCard::setActive(bool active)
 void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 {
     setObjectName("SubscriptionCard");
+    setAttribute(Qt::WA_StyledBackground, true);
     setFrameShape(QFrame::NoFrame);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
@@ -52,7 +53,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo &info)
 
     QLabel *typeTag = nullptr;
     if (info.isManual) {
-        typeTag = new QLabel(tr("Manual Config"), this);
+        typeTag = new QLabel(tr("Manual"), this);
         typeTag->setObjectName("CardTag");
     }
     m_statusTag = new QLabel(this);
@@ -177,7 +178,7 @@ void SubscriptionCard::applyActiveState()
     }
     if (m_useBtn) {
         if (m_active) {
-            m_useBtn->setText(tr("Refresh & Apply"));
+            m_useBtn->setText(tr("Refresh"));
             m_useBtn->setObjectName("CardActionBtnActive");
         } else {
             m_useBtn->setText(tr("Use"));
@@ -193,9 +194,9 @@ void SubscriptionCard::updateStyle()
 {
     ThemeManager &tm = ThemeManager::instance();
 
-    QMap<QString, QString> extra;
-    extra.insert("card-bg", m_active ? tm.getColorString("bg-tertiary") : tm.getColorString("bg-secondary"));
-    extra.insert("card-border", m_active ? tm.getColorString("primary") : tm.getColorString("border"));
-    extra.insert("card-radius", m_active ? "12px" : "10px");
-    setStyleSheet(tm.loadStyleSheet(":/styles/subscription_card.qss", extra));
+    QString qss = tm.loadStyleSheet(":/styles/card_common.qss");
+    if (qss.isEmpty()) {
+        qss = tm.loadStyleSheet(":/styles/subscription_card.qss"); // 兜底
+    }
+    setStyleSheet(qss);
 }

@@ -20,9 +20,8 @@ signals:
 
 private:
     void setupUI();
+    void updateStyle();
     void updateMenuTheme();
-    static QString ruleTagType(const RuleItem &rule);
-    static QString proxyTagType(const QString &proxy);
 
     RuleItem m_rule;
     int m_index = 0;

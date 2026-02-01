@@ -3,9 +3,10 @@
 #include "utils/ThemeManager.h"
 #include "widgets/common/RoundedMenu.h"
 #include <QAction>
-#include <QFontMetrics>
 #include <QHBoxLayout>
+#include <QMap>
 #include <QLabel>
+#include <QFrame>
 #include <QPoint>
 #include <QPushButton>
 #include <QSizePolicy>
@@ -17,35 +18,32 @@ RuleCard::RuleCard(const RuleItem &rule, int index, QWidget *parent)
     , m_index(index)
 {
     setupUI();
+    updateStyle();
+
+    connect(&ThemeManager::instance(), &ThemeManager::themeChanged,
+            this, &RuleCard::updateStyle);
 }
 
 void RuleCard::setupUI()
 {
     setObjectName("RuleCard");
+    setFrameShape(QFrame::NoFrame);
+    setAttribute(Qt::WA_StyledBackground, true);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(14, 14, 14, 14);
-    layout->setSpacing(10);
+    layout->setContentsMargins(18, 16, 18, 16);
+    layout->setSpacing(12);
 
     QHBoxLayout *headerLayout = new QHBoxLayout;
     headerLayout->setSpacing(6);
 
-    QLabel *typeTag = new QLabel(m_rule.isCustom ? tr("Custom Rule") : RuleUtils::displayRuleTypeLabel(m_rule.type));
-    typeTag->setObjectName("RuleTag");
-    typeTag->setProperty("tagType", ruleTagType(m_rule));
-    typeTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    typeTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    const int tagPaddingX = 6;
-    const int tagPaddingY = 2;
-    const QFontMetrics fm(typeTag->font());
-    const QSize textSize = fm.size(Qt::TextSingleLine, typeTag->text());
-    typeTag->setFixedSize(textSize.width() + tagPaddingX * 2,
-                          textSize.height() + tagPaddingY * 2);
+    QLabel *statusTag = new QLabel(m_rule.isCustom ? tr("Custom") : tr("Default"));
+    statusTag->setObjectName(m_rule.isCustom ? "CardTagActive" : "CardTag");
+    statusTag->setAttribute(Qt::WA_StyledBackground, true);
+    statusTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    statusTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
-    QLabel *indexLabel = new QLabel(QString("#%1").arg(m_index));
-    indexLabel->setObjectName("RuleIndex");
-
-    headerLayout->addWidget(typeTag);
+    headerLayout->addWidget(statusTag);
     headerLayout->addStretch();
     if (m_rule.isCustom) {
         QPushButton *menuBtn = new QPushButton("...");
@@ -76,24 +74,49 @@ void RuleCard::setupUI()
 
         headerLayout->addWidget(menuBtn);
     }
-    headerLayout->addWidget(indexLabel);
 
-    QVBoxLayout *bodyLayout = new QVBoxLayout;
-    bodyLayout->setSpacing(6);
+    QFrame *infoPanel = new QFrame(this);
+    infoPanel->setObjectName("CardInfoPanel");
+    QVBoxLayout *infoLayout = new QVBoxLayout(infoPanel);
+    infoLayout->setContentsMargins(12, 10, 12, 10);
+    infoLayout->setSpacing(6);
 
-    QLabel *contentValue = new QLabel(m_rule.payload);
-    contentValue->setObjectName("RuleValue");
-    contentValue->setWordWrap(true);
+    QLabel *payloadLabel = new QLabel(m_rule.payload, infoPanel);
+    payloadLabel->setObjectName("CardInfoText");
+    payloadLabel->setWordWrap(true);
 
-    QLabel *proxyValue = new QLabel(RuleUtils::displayProxyLabel(m_rule.proxy));
-    proxyValue->setObjectName("RuleProxyTag");
-    proxyValue->setProperty("tagType", proxyTagType(m_rule.proxy));
+    QString typeLabelText = RuleUtils::displayRuleTypeLabel(m_rule.type);
+    if (!typeLabelText.isEmpty()) typeLabelText[0] = typeLabelText[0].toUpper();
+    if (typeLabelText.isEmpty()) typeLabelText = tr("Default");
+    QLabel *typeLabel = new QLabel(tr("Type: %1").arg(typeLabelText), infoPanel);
+    typeLabel->setObjectName("CardInfoText");
 
-    bodyLayout->addWidget(contentValue);
-    bodyLayout->addWidget(proxyValue);
+    infoLayout->addWidget(payloadLabel);
+    infoLayout->addWidget(typeLabel);
+
+    QPushButton *proxyBtn = new QPushButton(RuleUtils::displayProxyLabel(m_rule.proxy), this);
+    const QString proxyKey = RuleUtils::normalizeProxyValue(m_rule.proxy);
+    const bool highlightProxy = proxyKey == "direct" || proxyKey == "manual";
+    proxyBtn->setObjectName(highlightProxy ? "CardActionBtnActive" : "CardActionBtn");
+    proxyBtn->setCursor(Qt::ArrowCursor);
+    proxyBtn->setFocusPolicy(Qt::NoFocus);
+    proxyBtn->setMinimumHeight(38);
+    proxyBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     layout->addLayout(headerLayout);
-    layout->addLayout(bodyLayout);
+    layout->addWidget(infoPanel);
+    layout->addStretch();
+    layout->addWidget(proxyBtn);
+}
+
+void RuleCard::updateStyle()
+{
+    ThemeManager &tm = ThemeManager::instance();
+    QString qss = tm.loadStyleSheet(":/styles/card_common.qss");
+    if (qss.isEmpty()) {
+        qss = tm.loadStyleSheet(":/styles/subscription_card.qss"); // 兜底，避免资源缺失时样式丢失
+    }
+    setStyleSheet(qss);
 }
 
 void RuleCard::updateMenuTheme()
@@ -101,23 +124,4 @@ void RuleCard::updateMenuTheme()
     if (!m_menu) return;
     ThemeManager &tm = ThemeManager::instance();
     m_menu->setThemeColors(tm.getColor("bg-secondary"), tm.getColor("primary"));
-}
-
-QString RuleCard::ruleTagType(const RuleItem &rule)
-{
-    if (rule.isCustom) return "info";
-    const QString lower = rule.type.toLower();
-    if (lower.contains("domain")) return "info";
-    if (lower.contains("ipcidr")) return "success";
-    if (lower.contains("source")) return "warning";
-    if (lower.contains("port")) return "error";
-    return "default";
-}
-
-QString RuleCard::proxyTagType(const QString &proxy)
-{
-    const QString value = RuleUtils::normalizeProxyValue(proxy);
-    if (value == "direct") return "success";
-    if (value == "reject") return "error";
-    return "info";
 }

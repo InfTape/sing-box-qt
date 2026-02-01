@@ -19,6 +19,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMap>
+#include <QAbstractAnimation>
 #include <QHash>
 #include <QPushButton>
 #include <QScrollArea>
@@ -374,6 +375,14 @@ void RulesView::rebuildGrid()
 
     const int previousColumns = m_columnCount;
 
+    // 停止并清理尚未结束的动画，避免目标控件被删除后动画仍然运行。
+    const auto runningAnimations = m_gridContainer->findChildren<QAbstractAnimation*>();
+    for (QAbstractAnimation *anim : runningAnimations) {
+        if (!anim) continue;
+        anim->stop();
+        anim->deleteLater();
+    }
+
     QHash<QWidget*, QRect> oldGeometries;
     oldGeometries.reserve(m_gridLayout->count());
     for (int i = 0; i < m_gridLayout->count(); ++i) {
@@ -386,7 +395,13 @@ void RulesView::rebuildGrid()
 
     while (m_gridLayout->count() > 0) {
         QLayoutItem *item = m_gridLayout->takeAt(0);
-        if (item) delete item;
+        if (item) {
+            if (QWidget *w = item->widget()) {
+                // 清理旧卡片，避免残留导致叠层。
+                w->deleteLater();
+            }
+            delete item;
+        }
     }
 
     if (m_filteredRules.isEmpty()) {

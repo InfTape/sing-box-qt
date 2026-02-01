@@ -2,6 +2,8 @@
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
 #include <QEasingCurve>
+#include <QAbstractAnimation>
+#include <QObject>
 #include <QWidget>
 
 namespace CardGridAnimation {
@@ -34,6 +36,9 @@ void animateReflow(QWidget *container,
         anim->setEasingCurve(QEasingCurve::OutBack);
         anim->setStartValue(startRect);
         anim->setEndValue(endRect);
+        QObject::connect(w, &QObject::destroyed, anim, [anim]() {
+            if (anim->state() != QAbstractAnimation::Stopped) anim->stop();
+        });
         group->addAnimation(anim);
     }
 
