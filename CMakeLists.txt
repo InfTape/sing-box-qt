@@ -49,62 +49,62 @@ set(SOURCES
     src/core/ProxyService.cpp
     src/core/ProxyController.cpp
     src/core/DelayTestService.cpp
-    src/dialogs/SubscriptionFormDialog.cpp
-    src/dialogs/ConfigEditDialog.cpp
-    src/dialogs/RuleEditorDialog.cpp
-    src/dialogs/ManageRuleSetsDialog.cpp
+    src/dialogs/subscription/SubscriptionFormDialog.cpp
+    src/dialogs/config/ConfigEditDialog.cpp
+    src/dialogs/rules/RuleEditorDialog.cpp
+    src/dialogs/rules/ManageRuleSetsDialog.cpp
     src/network/HttpClient.cpp
     src/network/WebSocketClient.cpp
     src/network/SubscriptionService.cpp
     src/services/subscription/SubscriptionParser.cpp
-    src/services/ConfigBuilder.cpp
-    src/services/ConfigManager.cpp
-    src/services/ConfigMutator.cpp
-    src/services/SharedRulesStore.cpp
-    src/services/RuleConfigService.cpp
+    src/services/config/ConfigBuilder.cpp
+    src/services/config/ConfigManager.cpp
+    src/services/config/ConfigMutator.cpp
+    src/services/rules/SharedRulesStore.cpp
+    src/services/rules/RuleConfigService.cpp
     src/storage/DatabaseService.cpp
     src/storage/ConfigIO.cpp
     src/storage/SubscriptionConfigStore.cpp
-    src/dialogs/NodeEditDialog.cpp
+    src/dialogs/subscription/NodeEditDialog.cpp
     src/dialogs/editors/GenericNodeEditor.cpp
     src/storage/AppSettings.cpp
     src/system/SystemProxy.cpp
     src/system/AutoStart.cpp
     src/system/UpdateService.cpp
     src/system/AdminHelper.cpp
-    src/views/HomeView.cpp
+    src/views/home/HomeView.cpp
     src/views/components/TrafficChart.cpp
-    src/views/ProxyView.cpp
-    src/views/SubscriptionView.cpp
+    src/views/proxy/ProxyView.cpp
+    src/views/subscription/SubscriptionView.cpp
     src/views/subscription/SubscriptionCard.cpp
-    src/views/ConnectionsView.cpp
-    src/views/RulesView.cpp
-    src/views/LogView.cpp
-    src/views/SettingsView.cpp
-    src/services/KernelManager.cpp
-    src/services/KernelPlatform.cpp
-    src/services/SettingsService.cpp
+    src/views/connections/ConnectionsView.cpp
+    src/views/rules/RulesView.cpp
+    src/views/logs/LogView.cpp
+    src/views/settings/SettingsView.cpp
+    src/services/kernel/KernelManager.cpp
+    src/services/kernel/KernelPlatform.cpp
+    src/services/settings/SettingsService.cpp
     src/models/SettingsModel.cpp
-    src/widgets/MenuComboBox.cpp
-    src/widgets/LogRowWidget.cpp
-    src/widgets/RuleCard.cpp
-    src/widgets/ToggleSwitch.cpp
-    src/widgets/ChevronToggle.cpp
-    src/widgets/RoundedMenu.cpp
+    src/widgets/common/MenuComboBox.cpp
+    src/widgets/logs/LogRowWidget.cpp
+    src/widgets/rules/RuleCard.cpp
+    src/widgets/common/ToggleSwitch.cpp
+    src/widgets/common/ChevronToggle.cpp
+    src/widgets/common/RoundedMenu.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
     src/utils/LogParser.cpp
-    src/utils/SubscriptionUserinfo.cpp
-    src/utils/subscription/SubscriptionLayoutHelper.cpp
-    src/utils/subscription/SubscriptionAnimation.cpp
+    src/utils/subscription/SubscriptionUserinfo.cpp
+    src/utils/layout/CardGridLayoutHelper.cpp
+    src/utils/layout/CardGridAnimation.cpp
     src/utils/subscription/SubscriptionHelpers.cpp
     src/utils/subscription/SubscriptionActions.cpp
-    src/utils/SubscriptionFormat.cpp
+    src/utils/subscription/SubscriptionFormat.cpp
     src/utils/proxy/ProxyActions.cpp
     src/utils/proxy/ProxyNodeHelper.cpp
     src/utils/home/HomeFormat.cpp
     src/utils/settings/SettingsHelpers.cpp
-    src/utils/RuleUtils.cpp
+    src/utils/rule/RuleUtils.cpp
     src/utils/ThemeManager.cpp
 )
 
@@ -116,22 +116,22 @@ set(HEADERS
     src/core/ProxyService.h
     src/core/ProxyController.h
     src/core/DelayTestService.h
-    src/dialogs/SubscriptionFormDialog.h
-    src/dialogs/ConfigEditDialog.h
-    src/dialogs/RuleEditorDialog.h
-    src/dialogs/ManageRuleSetsDialog.h
+    src/dialogs/subscription/SubscriptionFormDialog.h
+    src/dialogs/config/ConfigEditDialog.h
+    src/dialogs/rules/RuleEditorDialog.h
+    src/dialogs/rules/ManageRuleSetsDialog.h
     src/models/RuleItem.h
     src/network/HttpClient.h
     src/network/WebSocketClient.h
     src/network/SubscriptionService.h
     src/services/subscription/SubscriptionParser.h
-    src/services/ConfigBuilder.h
-    src/services/ConfigManager.h
-    src/services/ConfigMutator.h
-    src/services/SharedRulesStore.h
-    src/services/RuleConfigService.h
+    src/services/config/ConfigBuilder.h
+    src/services/config/ConfigManager.h
+    src/services/config/ConfigMutator.h
+    src/services/rules/SharedRulesStore.h
+    src/services/rules/RuleConfigService.h
     src/storage/DatabaseService.h
-    src/dialogs/NodeEditDialog.h
+    src/dialogs/subscription/NodeEditDialog.h
     src/dialogs/editors/NodeEditor.h
     src/dialogs/editors/GenericNodeEditor.h
     src/storage/ConfigIO.h
@@ -141,39 +141,39 @@ set(HEADERS
     src/system/AutoStart.h
     src/system/UpdateService.h
     src/system/AdminHelper.h
-    src/views/HomeView.h
+    src/views/home/HomeView.h
     src/views/components/TrafficChart.h
-    src/views/ProxyView.h
-    src/views/SubscriptionView.h
+    src/views/proxy/ProxyView.h
+    src/views/subscription/SubscriptionView.h
     src/views/subscription/SubscriptionCard.h
-    src/views/ConnectionsView.h
-    src/views/RulesView.h
-    src/views/LogView.h
-    src/views/SettingsView.h
-    src/services/KernelManager.h
-    src/services/KernelPlatform.h
-    src/services/SettingsService.h
+    src/views/connections/ConnectionsView.h
+    src/views/rules/RulesView.h
+    src/views/logs/LogView.h
+    src/views/settings/SettingsView.h
+    src/services/kernel/KernelManager.h
+    src/services/kernel/KernelPlatform.h
+    src/services/settings/SettingsService.h
     src/models/SettingsModel.h
-    src/widgets/MenuComboBox.h
-    src/widgets/LogRowWidget.h
-    src/widgets/RuleCard.h
-    src/widgets/ToggleSwitch.h
-    src/widgets/ChevronToggle.h
-    src/widgets/RoundedMenu.h
+    src/widgets/common/MenuComboBox.h
+    src/widgets/logs/LogRowWidget.h
+    src/widgets/rules/RuleCard.h
+    src/widgets/common/ToggleSwitch.h
+    src/widgets/common/ChevronToggle.h
+    src/widgets/common/RoundedMenu.h
     src/utils/Logger.h
     src/utils/Crypto.h
     src/utils/LogParser.h
-    src/utils/SubscriptionUserinfo.h
-    src/utils/subscription/SubscriptionLayoutHelper.h
-    src/utils/subscription/SubscriptionAnimation.h
+    src/utils/subscription/SubscriptionUserinfo.h
+    src/utils/layout/CardGridLayoutHelper.h
+    src/utils/layout/CardGridAnimation.h
     src/utils/subscription/SubscriptionHelpers.h
     src/utils/subscription/SubscriptionActions.h
+    src/utils/subscription/SubscriptionFormat.h
     src/utils/proxy/ProxyActions.h
     src/utils/proxy/ProxyNodeHelper.h
     src/utils/home/HomeFormat.h
     src/utils/settings/SettingsHelpers.h
-    src/utils/SubscriptionFormat.h
-    src/utils/RuleUtils.h
+    src/utils/rule/RuleUtils.h
     src/utils/ThemeManager.h
 )
 

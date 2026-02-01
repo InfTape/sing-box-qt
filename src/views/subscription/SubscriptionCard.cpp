@@ -1,8 +1,8 @@
 #include "views/subscription/SubscriptionCard.h"
 #include "network/SubscriptionService.h"
-#include "utils/SubscriptionFormat.h"
+#include "utils/subscription/SubscriptionFormat.h"
 #include "utils/ThemeManager.h"
-#include "widgets/RoundedMenu.h"
+#include "widgets/common/RoundedMenu.h"
 #include <QAction>
 #include <QHBoxLayout>
 #include <QLabel>

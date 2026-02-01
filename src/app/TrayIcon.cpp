@@ -3,8 +3,8 @@
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
 #include "utils/ThemeManager.h"
-#include "services/ConfigManager.h"
-#include "widgets/RoundedMenu.h"
+#include "services/config/ConfigManager.h"
+#include "widgets/common/RoundedMenu.h"
 #include <QMessageBox>
 #include <QApplication>
 #include <QPainter>

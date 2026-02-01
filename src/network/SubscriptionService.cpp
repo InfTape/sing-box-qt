@@ -1,13 +1,13 @@
-﻿
+
 #include "SubscriptionService.h"
 #include "services/subscription/SubscriptionParser.h"
 #include "storage/DatabaseService.h"
 #include "storage/SubscriptionConfigStore.h"
-#include "services/ConfigManager.h"
-#include "services/ConfigMutator.h"
-#include "services/SharedRulesStore.h"
+#include "services/config/ConfigManager.h"
+#include "services/config/ConfigMutator.h"
+#include "services/rules/SharedRulesStore.h"
 #include "utils/Logger.h"
-#include "utils/SubscriptionUserinfo.h"
+#include "utils/subscription/SubscriptionUserinfo.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>

@@ -2,7 +2,7 @@
 #define GENERICNODEEDITOR_H
 
 #include "NodeEditor.h"
-#include "widgets/MenuComboBox.h"
+#include "widgets/common/MenuComboBox.h"
 
 class QLineEdit;
 class QSpinBox;

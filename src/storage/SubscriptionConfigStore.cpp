@@ -1,5 +1,5 @@
 #include "storage/SubscriptionConfigStore.h"
-#include "services/ConfigManager.h"
+#include "services/config/ConfigManager.h"
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>

@@ -13,13 +13,13 @@
 #include <QStyle>
 #include <QPainter>
 #include <QSvgRenderer>
-#include "views/HomeView.h"
-#include "views/ProxyView.h"
-#include "views/SubscriptionView.h"
-#include "views/ConnectionsView.h"
-#include "views/RulesView.h"
-#include "views/LogView.h"
-#include "views/SettingsView.h"
+#include "views/home/HomeView.h"
+#include "views/proxy/ProxyView.h"
+#include "views/subscription/SubscriptionView.h"
+#include "views/connections/ConnectionsView.h"
+#include "views/rules/RulesView.h"
+#include "views/logs/LogView.h"
+#include "views/settings/SettingsView.h"
 #include "core/KernelService.h"
 #include "core/ProxyService.h"
 #include "core/ProxyController.h"
@@ -27,7 +27,7 @@
 #include "utils/ThemeManager.h"
 #include "storage/DatabaseService.h"
 #include "storage/AppSettings.h"
-#include "services/ConfigManager.h"
+#include "services/config/ConfigManager.h"
 #include "network/SubscriptionService.h"
 #include "system/AdminHelper.h"
 

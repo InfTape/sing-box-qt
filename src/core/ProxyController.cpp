@@ -1,6 +1,6 @@
 #include "ProxyController.h"
 #include "KernelService.h"
-#include "services/ConfigManager.h"
+#include "services/config/ConfigManager.h"
 #include "storage/AppSettings.h"
 #include "network/SubscriptionService.h"
 #include "system/SystemProxy.h"
