@@ -18,6 +18,7 @@ class SubscriptionCard : public QFrame {
                             QWidget*      parent = nullptr);
   QString subscriptionId() const { return m_subId; }
   void    setActive(bool active);
+  void    updateInfo(const SubscriptionInfo& info, bool active);
 
  signals:
   void useClicked(const QString& id);
@@ -35,7 +36,14 @@ class SubscriptionCard : public QFrame {
 
   QString       m_subId;
   bool          m_active           = false;
+  QLabel*       m_nameLabel        = nullptr;
+  QLabel*       m_typeTag          = nullptr;
   QLabel*       m_statusTag        = nullptr;
+  QLabel*       m_scheduleTag      = nullptr;
+  QLabel*       m_urlLabel         = nullptr;
+  QLabel*       m_timeLabel        = nullptr;
+  QLabel*       m_trafficLabel     = nullptr;
+  QLabel*       m_expireLabel      = nullptr;
   QPushButton*  m_useBtn           = nullptr;
   QAction*      m_editConfigAction = nullptr;
   ThemeService* m_themeService     = nullptr;

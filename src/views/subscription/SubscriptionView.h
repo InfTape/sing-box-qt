@@ -32,6 +32,9 @@ class SubscriptionView : public QWidget {
   void onAddClicked();
   void onAutoUpdateTimer();
   void updateStyle();
+  void handleSubscriptionUpdated(const QString& id);
+  void handleActiveSubscriptionChanged(const QString& id,
+                                       const QString& configPath);
 
  private:
   void              setupUI();
@@ -52,6 +55,8 @@ class SubscriptionView : public QWidget {
   void onAddNodeClicked();
   void openSubscriptionDialog();
 
+  SubscriptionCard* findCardById(const QString& id) const;
+  void              updateActiveCards(const QString& activeId);
   bool getSubscriptionById(const QString& id, SubscriptionInfo* out) const;
 
  protected:
@@ -65,6 +70,7 @@ class SubscriptionView : public QWidget {
   QGridLayout*                  m_cardsLayout;
   QList<SubscriptionCard*>      m_cards;
   int                           m_columnCount = 0;
+  bool                          m_skipNextAnimation = false;
   SubscriptionService*          m_subscriptionService;
   class SubscriptionController* m_subscriptionController;
   QTimer*                       m_autoUpdateTimer;

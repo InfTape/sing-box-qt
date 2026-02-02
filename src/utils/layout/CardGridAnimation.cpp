@@ -30,8 +30,8 @@ void animateReflow(QWidget* container, const QList<QWidget*>& widgets,
     w->setGeometry(startRect);
     auto* anim =
         new QPropertyAnimation(static_cast<QObject*>(w), "geometry", group);
-    anim->setDuration(320);
-    anim->setEasingCurve(QEasingCurve::OutBack);
+    anim->setDuration(220);
+    anim->setEasingCurve(QEasingCurve::OutSine);
     anim->setStartValue(startRect);
     anim->setEndValue(endRect);
     QObject::connect(w, &QObject::destroyed, anim, [anim]() {

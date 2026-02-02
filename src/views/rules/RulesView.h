@@ -79,6 +79,7 @@ class RulesView : public QWidget {
   QVector<RuleItem> m_filteredRules;
   bool              m_loading      = false;
   int               m_columnCount  = 0;
+  bool              m_skipNextAnimation = false;
   ConfigRepository* m_configRepo   = nullptr;
   ThemeService*     m_themeService = nullptr;
 };

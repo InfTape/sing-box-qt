@@ -462,8 +462,12 @@ void RulesView::layoutCards() {
   }
 
   m_gridLayout->activate();
-  CardGridAnimation::animateReflow(m_gridContainer, widgets, oldGeometries,
-                                   previousColumns, columns);
+  if (m_skipNextAnimation) {
+    m_skipNextAnimation = false;
+  } else {
+    CardGridAnimation::animateReflow(m_gridContainer, widgets, oldGeometries,
+                                     previousColumns, columns);
+  }
 }
 void RulesView::updateEmptyState() {
   const bool hasFilters = !m_searchEdit->text().trimmed().isEmpty() ||
@@ -563,6 +567,7 @@ bool RulesView::eventFilter(QObject* watched, QEvent* event) {
 void RulesView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
   if (m_cards.isEmpty()) return;
+  m_skipNextAnimation = true;
   QTimer::singleShot(0, this, [this]() {
     if (!m_cards.isEmpty()) layoutCards();
   });
