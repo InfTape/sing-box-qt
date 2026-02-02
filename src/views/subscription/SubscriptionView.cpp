@@ -3,7 +3,10 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDateTime>
+#include <QEvent>
 #include <QHBoxLayout>
+#include <QShowEvent>
+#include <QTimer>
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -93,6 +96,7 @@ void SubscriptionView::setupUI() {
   m_cardsLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
   m_scrollArea->setWidget(m_cardsContainer);
+  m_scrollArea->viewport()->installEventFilter(this);
 
   mainLayout->addWidget(m_scrollArea, 1);
 
@@ -389,4 +393,18 @@ void SubscriptionView::resizeEvent(QResizeEvent* event) {
   if (m_cards.isEmpty()) return;
 
   layoutCards();
+}
+bool SubscriptionView::eventFilter(QObject* watched, QEvent* event) {
+  if (m_scrollArea && watched == m_scrollArea->viewport() &&
+      event->type() == QEvent::Resize) {
+    if (!m_cards.isEmpty()) layoutCards();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+void SubscriptionView::showEvent(QShowEvent* event) {
+  QWidget::showEvent(event);
+  if (m_cards.isEmpty()) return;
+  QTimer::singleShot(0, this, [this]() {
+    if (!m_cards.isEmpty()) layoutCards();
+  });
 }

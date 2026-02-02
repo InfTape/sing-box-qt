@@ -2,6 +2,7 @@
 
 #include <QAbstractAnimation>
 #include <QDialog>
+#include <QEvent>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -16,7 +17,9 @@
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QSet>
+#include <QShowEvent>
 #include <QStringList>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <utility>
@@ -122,6 +125,7 @@ void RulesView::setupUI() {
   m_gridLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 
   m_scrollArea->setWidget(m_gridContainer);
+  m_scrollArea->viewport()->installEventFilter(this);
 
   m_emptyState = new QFrame;
   m_emptyState->setObjectName("EmptyState");
@@ -193,12 +197,8 @@ void RulesView::setProxyService(ProxyService* service) {
               m_rules.push_back(data);
             }
 
-            std::stable_sort(m_rules.begin(), m_rules.end(),
-                             [](const RuleItem& a, const RuleItem& b) {
-                               if (a.isCustom != b.isCustom)
-                                 return a.isCustom && !b.isCustom;
-                               return false;
-                             });
+            sortRules();
+            rebuildCards();
 
             m_loading = false;
             m_refreshBtn->setEnabled(true);
@@ -250,6 +250,8 @@ void RulesView::onAddRuleClicked() {
   }
 
   m_rules.push_back(added);
+  sortRules();
+  rebuildCards();
   updateFilterOptions();
   applyFilters();
 
@@ -265,9 +267,10 @@ void RulesView::applyFilters() {
   const QString proxyValue = m_proxyFilter->currentData().toString();
 
   m_filteredRules.clear();
-  for (const auto& rule : std::as_const(m_rules)) {
-    const QString typeLabel = RuleUtils::displayRuleTypeLabel(rule.type);
-    const bool    matchSearch =
+  for (int i = 0; i < m_rules.size(); ++i) {
+    const RuleItem& rule = m_rules[i];
+    const QString   typeLabel = RuleUtils::displayRuleTypeLabel(rule.type);
+    const bool      matchSearch =
         query.isEmpty() || rule.payload.contains(query, Qt::CaseInsensitive) ||
         rule.proxy.contains(query, Qt::CaseInsensitive) ||
         typeLabel.contains(query, Qt::CaseInsensitive);
@@ -279,9 +282,16 @@ void RulesView::applyFilters() {
     const bool matchProxy =
         proxyValue.isEmpty() ||
         RuleUtils::normalizeProxyValue(rule.proxy) == proxyValue;
+    const bool match = matchSearch && matchType && matchProxy;
 
-    if (matchSearch && matchType && matchProxy) {
+    if (match) {
       m_filteredRules.push_back(rule);
+    }
+    if (i < m_cards.size()) {
+      RuleCard* card = m_cards[i];
+      if (card) {
+        card->setVisible(match);
+      }
     }
   }
 
@@ -292,7 +302,7 @@ void RulesView::applyFilters() {
                      return false;
                    });
 
-  rebuildGrid();
+  layoutCards();
   if (m_scrollArea) {
     if (auto* vbar = m_scrollArea->verticalScrollBar()) vbar->setValue(0);
     if (auto* hbar = m_scrollArea->horizontalScrollBar()) hbar->setValue(0);
@@ -357,12 +367,49 @@ void RulesView::updateFilterOptions() {
   m_proxyFilter->setCurrentIndex(proxyIndex < 0 ? 0 : proxyIndex);
   m_proxyFilter->blockSignals(false);
 }
-void RulesView::rebuildGrid() {
+void RulesView::sortRules() {
+  std::stable_sort(m_rules.begin(), m_rules.end(),
+                   [](const RuleItem& a, const RuleItem& b) {
+                     if (a.isCustom != b.isCustom)
+                       return a.isCustom && !b.isCustom;
+                     return false;
+                   });
+}
+void RulesView::rebuildCards() {
+  if (!m_gridLayout || !m_gridContainer) return;
+
+  const auto runningAnimations =
+      m_gridContainer->findChildren<QAbstractAnimation*>();
+  for (QAbstractAnimation* anim : runningAnimations) {
+    if (!anim) continue;
+    anim->stop();
+    anim->deleteLater();
+  }
+
+  while (m_gridLayout->count() > 0) {
+    QLayoutItem* item = m_gridLayout->takeAt(0);
+    if (item) delete item;
+  }
+
+  for (RuleCard* card : std::as_const(m_cards)) {
+    if (card) card->deleteLater();
+  }
+  m_cards.clear();
+
+  for (int i = 0; i < m_rules.size(); ++i) {
+    RuleCard* card =
+        new RuleCard(m_rules[i], i + 1, m_themeService, m_gridContainer);
+    connect(card, &RuleCard::editRequested, this, &RulesView::handleEditRule);
+    connect(card, &RuleCard::deleteRequested, this,
+            &RulesView::handleDeleteRule);
+    m_cards.append(card);
+  }
+}
+void RulesView::layoutCards() {
   if (!m_gridLayout || !m_scrollArea || !m_gridContainer) return;
 
   const int previousColumns = m_columnCount;
 
-  // Stop and clean up unfinished animations to avoid running them after the target control is deleted.
   const auto runningAnimations =
       m_gridContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
@@ -372,27 +419,21 @@ void RulesView::rebuildGrid() {
   }
 
   QHash<QWidget*, QRect> oldGeometries;
-  oldGeometries.reserve(m_gridLayout->count());
-  for (int i = 0; i < m_gridLayout->count(); ++i) {
-    if (QLayoutItem* item = m_gridLayout->itemAt(i)) {
-      if (QWidget* w = item->widget()) {
-        oldGeometries.insert(w, w->geometry());
-      }
-    }
+  QList<QWidget*>        widgets;
+  oldGeometries.reserve(m_cards.size());
+  widgets.reserve(m_cards.size());
+  for (RuleCard* card : std::as_const(m_cards)) {
+    if (!card || card->isHidden()) continue;
+    widgets.append(card);
+    oldGeometries.insert(card, card->geometry());
   }
 
   while (m_gridLayout->count() > 0) {
     QLayoutItem* item = m_gridLayout->takeAt(0);
-    if (item) {
-      if (QWidget* w = item->widget()) {
-        // Clean up old cards to avoid residues causing stacking.
-        w->deleteLater();
-      }
-      delete item;
-    }
+    if (item) delete item;
   }
 
-  if (m_filteredRules.isEmpty()) {
+  if (widgets.isEmpty()) {
     m_gridContainer->update();
     return;
   }
@@ -406,20 +447,13 @@ void RulesView::rebuildGrid() {
       availableWidth, spacing, columns);
   m_gridLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
 
-  int             row = 0;
-  int             col = 0;
-  QList<QWidget*> widgets;
-  widgets.reserve(m_filteredRules.size());
-  for (int i = 0; i < m_filteredRules.size(); ++i) {
-    RuleCard* card = new RuleCard(m_filteredRules[i], i + 1, m_themeService,
-                                  m_gridContainer);
-    connect(card, &RuleCard::editRequested, this, &RulesView::handleEditRule);
-    connect(card, &RuleCard::deleteRequested, this,
-            &RulesView::handleDeleteRule);
-    card->setFixedSize(CardGridLayoutHelper::kCardWidth,
-                       CardGridLayoutHelper::kCardHeight);
-    m_gridLayout->addWidget(card, row, col, Qt::AlignLeft | Qt::AlignTop);
-    widgets.append(card);
+  int row = 0;
+  int col = 0;
+  for (QWidget* w : std::as_const(widgets)) {
+    if (!w) continue;
+    w->setFixedSize(CardGridLayoutHelper::kCardWidth,
+                    CardGridLayoutHelper::kCardHeight);
+    m_gridLayout->addWidget(w, row, col, Qt::AlignLeft | Qt::AlignTop);
     ++col;
     if (col >= columns) {
       col = 0;
@@ -484,6 +518,8 @@ void RulesView::handleEditRule(const RuleItem& rule) {
       break;
     }
   }
+  sortRules();
+  rebuildCards();
   updateFilterOptions();
   applyFilters();
 }
@@ -504,6 +540,8 @@ void RulesView::handleDeleteRule(const RuleItem& rule) {
                r.type == rule.type;
       });
   m_rules.erase(it, m_rules.end());
+  sortRules();
+  rebuildCards();
   updateFilterOptions();
   applyFilters();
 }
@@ -513,7 +551,19 @@ void RulesView::updateStyle() {
 }
 void RulesView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
-  if (!m_filteredRules.isEmpty()) {
-    rebuildGrid();
+  if (!m_cards.isEmpty()) layoutCards();
+}
+bool RulesView::eventFilter(QObject* watched, QEvent* event) {
+  if (m_scrollArea && watched == m_scrollArea->viewport() &&
+      event->type() == QEvent::Resize) {
+    if (!m_cards.isEmpty()) layoutCards();
   }
+  return QWidget::eventFilter(watched, event);
+}
+void RulesView::showEvent(QShowEvent* event) {
+  QWidget::showEvent(event);
+  if (m_cards.isEmpty()) return;
+  QTimer::singleShot(0, this, [this]() {
+    if (!m_cards.isEmpty()) layoutCards();
+  });
 }

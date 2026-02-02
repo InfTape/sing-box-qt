@@ -12,6 +12,8 @@
 #include <QWidget>
 
 class QScrollArea;
+class QEvent;
+class QShowEvent;
 class SubscriptionCard;
 class NodeEditDialog;
 class SubscriptionService;
@@ -54,6 +56,8 @@ class SubscriptionView : public QWidget {
 
  protected:
   void resizeEvent(QResizeEvent* event) override;
+  bool eventFilter(QObject* watched, QEvent* event) override;
+  void showEvent(QShowEvent* event) override;
 
   QPushButton*                  m_addBtn;
   QScrollArea*                  m_scrollArea;

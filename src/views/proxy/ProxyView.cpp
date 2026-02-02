@@ -27,7 +27,7 @@ class ProxyTreeDelegate : public QStyledItemDelegate
 {
  public:
   explicit ProxyTreeDelegate(ThemeService* themeService,
-                             QObject*      parent = nullptr)
+                             QObject* parent = nullptr)
 
       : QStyledItemDelegate(parent)
 
@@ -738,7 +738,7 @@ void ProxyView::onProxySelectFailed(const QString& group, const QString& proxy)
 void ProxyView::startSpeedTest(QTreeWidgetItem* item) {
   if (!item) return;
 
-  const QString nodeName  = item->data(0, Qt::UserRole + 3).toString();
+  const QString nodeName = item->data(0, Qt::UserRole + 3).toString();
   const QString groupName = item->data(0, Qt::UserRole + 1).toString();
   if (nodeName.isEmpty()) return;
 
@@ -776,8 +776,6 @@ void ProxyView::onTestSelectedClicked()
 
 {
   if (!m_controller || !m_treeWidget) return;
-
-  // �������������Բ�����ͻ
 
   if (isTesting() && !m_testingNodes.isEmpty()) {
     return;
@@ -1146,8 +1144,8 @@ QWidget* ProxyView::buildNodeRow(const QString& name, const QString& type,
   return card;
 }
 void ProxyView::updateNodeRowDelay(QTreeWidgetItem* item,
-                                   const QString&   delayText,
-                                   const QString&   state)
+                                   const QString& delayText,
+                                   const QString& state)
 
 {
   if (!item) return;

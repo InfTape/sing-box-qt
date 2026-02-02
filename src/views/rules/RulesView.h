@@ -1,6 +1,7 @@
 ﻿#ifndef RULESVIEW_H
 #define RULESVIEW_H
 
+#include <QList>
 #include <QVector>
 #include <QWidget>
 
@@ -10,12 +11,15 @@
 class QGridLayout;
 class QLabel;
 class QLineEdit;
+class QEvent;
+class QShowEvent;
 class QPushButton;
 class QScrollArea;
 class QFrame;
 class ProxyService;
 class ThemeService;
 class ConfigRepository;
+class RuleCard;
 class RulesView : public QWidget {
   Q_OBJECT
 
@@ -30,6 +34,8 @@ class RulesView : public QWidget {
 
  protected:
   void resizeEvent(QResizeEvent* event) override;
+  bool eventFilter(QObject* watched, QEvent* event) override;
+  void showEvent(QShowEvent* event) override;
 
  private slots:
   void onSearchChanged();
@@ -39,10 +45,12 @@ class RulesView : public QWidget {
   void onAddRuleClicked();
 
  private:
-  void setupUI();
+ void setupUI();
   void applyFilters();
   void updateFilterOptions();
-  void rebuildGrid();
+  void sortRules();
+  void rebuildCards();
+  void layoutCards();
   void updateEmptyState();
   void handleEditRule(const RuleItem& rule);
   void handleDeleteRule(const RuleItem& rule);
@@ -61,6 +69,7 @@ class RulesView : public QWidget {
   QScrollArea* m_scrollArea    = nullptr;
   QWidget*     m_gridContainer = nullptr;
   QGridLayout* m_gridLayout    = nullptr;
+  QList<RuleCard*> m_cards;
 
   QFrame*      m_emptyState  = nullptr;
   QLabel*      m_emptyTitle  = nullptr;
