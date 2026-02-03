@@ -249,15 +249,18 @@ void RulesView::onAddRuleClicked() {
     return;
   }
 
-  m_rules.push_back(added);
+  m_rules.prepend(added);
   sortRules();
   rebuildCards();
   updateFilterOptions();
   applyFilters();
 
-  QMessageBox::information(
-      this, tr("Add Rule"),
-      tr("Rules written to route.rules.\nRestart kernel or app to apply."));
+  auto* box = new QMessageBox(
+      QMessageBox::Information, tr("Add Rule"),
+      tr("Rules written to route.rules.\nRestart kernel or app to apply."),
+      QMessageBox::Ok, this);
+  box->setAttribute(Qt::WA_DeleteOnClose);
+  box->open();
 }
 void RulesView::onSearchChanged() { applyFilters(); }
 void RulesView::onFilterChanged() { applyFilters(); }
@@ -388,12 +391,14 @@ void RulesView::rebuildCards() {
 
   while (m_gridLayout->count() > 0) {
     QLayoutItem* item = m_gridLayout->takeAt(0);
-    if (item) delete item;
+    if (!item) continue;
+    if (QWidget* w = item->widget()) {
+      w->hide();
+      w->deleteLater();
+    }
+    delete item;
   }
 
-  for (RuleCard* card : std::as_const(m_cards)) {
-    if (card) card->deleteLater();
-  }
   m_cards.clear();
 
   for (int i = 0; i < m_rules.size(); ++i) {

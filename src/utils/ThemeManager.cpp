@@ -64,9 +64,12 @@ void ThemeManager::loadThemeColors() {
   m_colors["error"]   = "#ef4444";  // Red 500
   auto addAlpha       = [this](const QString& key, const QColor& color,
                          double alpha) {
-    QColor c = color;
-    c.setAlphaF(alpha);
-    m_colors[key] = c.name(QColor::HexArgb);
+    // 使用 rgba() 格式而不是 HexArgb，因为 Qt 样式表中 border 属性对 HexArgb 支持有问题
+    m_colors[key] = QString("rgba(%1, %2, %3, %4)")
+                        .arg(color.red())
+                        .arg(color.green())
+                        .arg(color.blue())
+                        .arg(alpha);
   };
   // Derived hover colors
   {

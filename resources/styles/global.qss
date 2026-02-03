@@ -36,18 +36,22 @@ QPushButton:disabled {
 }
 
 /* 弹窗按钮：改为半透明蓝底，突出轻量感且仅影响弹出窗口 */
-QDialog QPushButton {
+QDialog QPushButton,
+QMessageBox QPushButton {
     background-color: @primary-20@;
     color: @primary@;
-    border: 1px solid @primary-30@;
+    border: 1px solid @primary@;
 }
-QDialog QPushButton:hover {
+QDialog QPushButton:hover,
+QMessageBox QPushButton:hover {
     background-color: @primary-30@;
 }
-QDialog QPushButton:pressed {
+QDialog QPushButton:pressed,
+QMessageBox QPushButton:pressed {
     background-color: @primary-40@;
 }
-QDialog QPushButton:disabled {
+QDialog QPushButton:disabled,
+QMessageBox QPushButton:disabled {
     background-color: transparent;
     border: 1px solid @border-solid@;
     color: @text-tertiary@;

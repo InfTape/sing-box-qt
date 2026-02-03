@@ -134,9 +134,11 @@ void SubscriptionView::onAddClicked() {
       menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
     });
   }
-  menu.addAction(tr("Add url"), this,
+  menu.addAction(tr("Add subs url"), this,
                  &SubscriptionView::openSubscriptionDialog);
-  menu.addAction(tr("Manual"), this, &SubscriptionView::onAddNodeClicked);
+  menu.addAction(tr("Manual add node"), this,
+                 &SubscriptionView::onAddNodeClicked);
+  menu.setMinimumWidth(m_addBtn->width());
   menu.exec(m_addBtn->mapToGlobal(QPoint(0, m_addBtn->height())));
 }
 void SubscriptionView::openSubscriptionDialog() {
@@ -368,14 +370,12 @@ bool SubscriptionView::getSubscriptionById(const QString& id,
 void SubscriptionView::refreshList() {
   while (m_cardsLayout->count() > 0) {
     QLayoutItem* item = m_cardsLayout->takeAt(0);
-    if (item) {
-      delete item;
+    if (!item) continue;
+    if (QWidget* w = item->widget()) {
+      w->hide();
+      w->deleteLater();
     }
-  }
-  for (SubscriptionCard* card : m_cards) {
-    if (card) {
-      card->deleteLater();
-    }
+    delete item;
   }
   m_cards.clear();
 
@@ -387,7 +387,8 @@ void SubscriptionView::refreshList() {
     m_cards.append(card);
   }
 
-  layoutCards();
+  m_skipNextAnimation = true;
+  QTimer::singleShot(0, this, [this]() { layoutCards(); });
 }
 void SubscriptionView::layoutCards() {
   if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
