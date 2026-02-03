@@ -22,6 +22,8 @@
 #include <QStyledItemDelegate>
 #include <QSvgRenderer>
 #include <QTableWidget>
+#include <QtMath>
+#include <QHostAddress>
 #include <functional>
 
 #include "app/interfaces/ThemeService.h"
@@ -755,13 +757,39 @@ void HomeView::refreshDataUsageTable() {
       const qint64  download = readLongLong(entry.value("download"));
       const qint64  total = readLongLong(entry.value("total"));
 
-      QTableWidgetItem* nameItem = new QTableWidgetItem(label);
+      QString displayLabel = label;
+      if (typeKey == "host") {
+          QHostAddress addr;
+          if (!addr.setAddress(label)) {
+              const QStringList parts = label.split('.');
+              if (parts.size() > 2) {
+                  displayLabel = parts.at(parts.size() - 2) + "." + parts.at(parts.size() - 1);
+              }
+          }
+      }
+
+      QTableWidgetItem* nameItem = new QTableWidgetItem(displayLabel);
       nameItem->setToolTip(label);
       m_dataUsageTopTable->setItem(i, 0, nameItem);
 
       QProgressBar* bar = new QProgressBar;
       bar->setRange(0, 1000);
-      bar->setValue(static_cast<int>(total * 1000 / maxTotal));
+
+      double maxLog = 0;
+      if (maxTotal > 0) {
+          maxLog = qLn(static_cast<double>(maxTotal) + 1.0);
+      }
+      double currentLog = 0;
+      if (total > 0) {
+          currentLog = qLn(static_cast<double>(total) + 1.0);
+      }
+      
+      int progressValue = 0;
+      if (maxLog > 0) {
+          progressValue = static_cast<int>(currentLog * 1000.0 / maxLog);
+      }
+      bar->setValue(progressValue);
+      
       bar->setTextVisible(false);
       bar->setFixedHeight(10);
       bar->setToolTip(tr("Upload: %1\nDownload: %2")
