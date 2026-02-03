@@ -6,9 +6,11 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
+#include <QSystemTrayIcon>
 #include <QSplitter>
 #include <QStyle>
 #include <QSvgRenderer>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "app/AppContext.h"
@@ -386,6 +388,24 @@ void MainWindow::onKernelStatusChanged(bool running) {
 }
 void MainWindow::onStartStopClicked() {
   QString error;
+  const bool wasRunning =
+      m_proxyUiController && m_proxyUiController->isKernelRunning();
+  const int stopSeq = ++m_stopCheckSeq;
+  if (wasRunning) {
+    if (m_homeView) m_homeView->updateStatus(false);
+    if (m_connectionsView) m_connectionsView->setAutoRefreshEnabled(false);
+    if (m_startStopBtn) {
+      m_startStopBtn->setText(tr("Start"));
+      m_startStopBtn->setProperty("state", "start");
+      applyStartStopStyle();
+    }
+    QTimer::singleShot(5000, this, [this, stopSeq]() {
+      if (stopSeq != m_stopCheckSeq) return;
+      if (m_proxyUiController && m_proxyUiController->isKernelRunning()) {
+        showStopFailedToast();
+      }
+    });
+  }
   if (!m_proxyUiController || !m_proxyUiController->toggleKernel(&error)) {
     if (error.isEmpty()) {
       error =
@@ -415,6 +435,20 @@ void MainWindow::applyStartStopStyle() {
   // Qt will automatically update styles when properties change.
   // We only need to polish if the style doesn't update automatically.
   m_startStopBtn->style()->polish(m_startStopBtn);
+}
+void MainWindow::showStopFailedToast() {
+  const QString title = tr("Stop kernel");
+  const QString body =
+      tr("Kernel did not stop within 5 seconds. Please check logs.");
+  if (QSystemTrayIcon::isSystemTrayAvailable()) {
+    if (auto* tray = qApp->findChild<QSystemTrayIcon*>()) {
+      if (tray->supportsMessages()) {
+        tray->showMessage(title, body, QSystemTrayIcon::Warning, 5000);
+        return;
+      }
+    }
+  }
+  QMessageBox::warning(this, title, body);
 }
 void MainWindow::updateNavIcons() {
   if (!m_navList || m_navList->count() <= 1) {

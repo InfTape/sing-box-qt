@@ -54,7 +54,7 @@ bool AppBootstrapper::createUI() {
   m_trayIcon = std::make_unique<TrayIcon>(
       m_context ? m_context->proxyUiController() : nullptr,
       m_context ? m_context->kernelService() : nullptr,
-      m_context ? m_context->themeService() : nullptr, showWindow);
+      m_context ? m_context->themeService() : nullptr, showWindow, &m_app);
   m_trayIcon->show();
 
   if (m_context && m_context->proxyUiController() && m_mainWindow) {

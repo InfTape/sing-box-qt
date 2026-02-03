@@ -97,20 +97,7 @@ void KernelRunner::stop() {
 
   m_process->terminate();
 
-  QTimer::singleShot(3000, this, [this]() {
-    if (m_process && m_process->state() != QProcess::NotRunning) {
-#ifdef Q_OS_WIN
-      const qint64 pid = m_process->processId();
-      if (pid > 0) {
-        ProcessManager::killProcess(pid);
-      } else {
-        m_process->kill();
-      }
-#else
-      m_process->kill();
-#endif
-    }
-  });
+  // NOTE: kill fallback intentionally disabled for testing terminate() behavior.
 }
 
 void KernelRunner::restart() { restartWithConfig(m_configPath); }

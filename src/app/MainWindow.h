@@ -63,6 +63,7 @@ class MainWindow : public QMainWindow {
   void updateStyle();
   void updateNavIcons();
   void applyStartStopStyle();
+  void showStopFailedToast();
 
   // UI components.
   QWidget*        m_centralWidget;
@@ -92,5 +93,6 @@ class MainWindow : public QMainWindow {
   AdminActions*           m_adminActions;
   SettingsController*     m_settingsController;
   std::unique_ptr<RuntimeUiBinder> m_runtimeBinder;
+  int m_stopCheckSeq = 0;
 };
 #endif  // MAINWINDOW_H
