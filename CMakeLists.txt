@@ -56,6 +56,7 @@ set(SOURCES
     src/core/KernelService.cpp
     src/core/CoreManagerClient.cpp
     src/core/ProcessManager.cpp
+    src/core/DataUsageTracker.cpp
     src/core/ProxyService.cpp
     src/core/ProxyController.cpp
     src/core/DelayTestService.cpp
@@ -103,6 +104,7 @@ set(SOURCES
     src/widgets/logs/LogRowWidget.cpp
     src/widgets/rules/RuleCard.cpp
     src/widgets/common/ToggleSwitch.cpp
+    src/widgets/common/SegmentedControl.cpp
     src/widgets/common/ChevronToggle.cpp
     src/widgets/common/RoundedMenu.cpp
     src/utils/Logger.cpp
@@ -143,6 +145,7 @@ set(HEADERS
     src/core/CoreManagerClient.h
     src/core/CoreManagerProtocol.h
     src/core/ProcessManager.h
+    src/core/DataUsageTracker.h
     src/core/ProxyService.h
     src/core/ProxyController.h
     src/core/DelayTestService.h
@@ -190,6 +193,7 @@ set(HEADERS
     src/widgets/logs/LogRowWidget.h
     src/widgets/rules/RuleCard.h
     src/widgets/common/ToggleSwitch.h
+    src/widgets/common/SegmentedControl.h
     src/widgets/common/ChevronToggle.h
     src/widgets/common/RoundedMenu.h
     src/utils/Logger.h

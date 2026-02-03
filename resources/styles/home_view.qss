@@ -172,3 +172,60 @@
     image: none;
 }
 
+#DataUsageCard {
+    background-color: @panel-bg@;
+    border: 1px solid @border-solid@;
+    border-radius: 16px;
+}
+#DataUsageTopTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: @text-secondary@;
+}
+#DataUsageTopTable {
+    background-color: transparent;
+    border: none;
+    color: @text-primary@;
+}
+#DataUsageTopTable::item { padding: 4px; }
+#DataUsageTopTable QHeaderView::section {
+    background-color: @primary-06@;
+    color: @text-primary@;
+    padding: 4px;
+    border: none;
+}
+#DataUsageTopTable QProgressBar {
+    background-color: @bg-tertiary@;
+    border: none;
+    border-radius: 5px;
+}
+#DataUsageTopTable QProgressBar::chunk {
+    background-color: @primary@;
+    border-radius: 5px;
+}
+#DataUsageCombo {
+    background-color: @bg-tertiary@;
+    color: @text-primary@;
+    border: 1px solid @border-solid@;
+    border-radius: 8px;
+    padding: 4px 8px;
+    min-width: 120px;
+}
+#DataUsageClearBtn {
+    background-color: @error-12@;
+    color: @error@;
+    border: 1px solid @error@;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-weight: 600;
+}
+#DataUsageClearBtn:hover { background-color: @error-12@; }
+#DataUsageClearBtn:disabled {
+    color: @text-tertiary@;
+    border-color: @border-solid@;
+}
+#DataUsageEmpty {
+    color: @text-secondary@;
+    padding: 12px;
+}
+

@@ -175,3 +175,14 @@ bool DatabaseService::saveSubscriptionNodes(const QString&    id,
       QString::fromUtf8(QJsonDocument(nodes).toJson(QJsonDocument::Compact));
   return setValue(key, json);
 }
+
+QJsonObject DatabaseService::getDataUsage() {
+  QString json = getValue("data_usage_v1", "{}");
+  return QJsonDocument::fromJson(json.toUtf8()).object();
+}
+bool DatabaseService::saveDataUsage(const QJsonObject& payload) {
+  QString json =
+      QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
+  return setValue("data_usage_v1", json);
+}
+bool DatabaseService::clearDataUsage() { return setValue("data_usage_v1", "{}"); }

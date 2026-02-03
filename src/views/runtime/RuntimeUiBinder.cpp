@@ -54,6 +54,10 @@ void RuntimeUiBinder::bind() {
         [this](int count, qint64 memoryUsage) {
           if (m_home) m_home->updateConnections(count, memoryUsage);
         });
+    QObject::connect(m_runtime, &ProxyRuntimeController::dataUsageUpdated,
+                     m_home, &HomeView::updateDataUsage);
+    QObject::connect(m_home, &HomeView::dataUsageClearRequested, m_runtime,
+                     &ProxyRuntimeController::clearDataUsage);
   }
 
   // Refresh requests → corresponding views

@@ -1,23 +1,31 @@
 #include "HomeView.h"
 
+#include <QAbstractItemView>
 #include <QApplication>
 #include <QButtonGroup>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QDateTime>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QHeaderView>
+#include <QJsonArray>
 #include <QMap>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPixmap>
+#include <QProgressBar>
 #include <QSignalBlocker>
 #include <QStyle>
 #include <QSvgRenderer>
+#include <QTableWidget>
 #include <functional>
 
 #include "app/interfaces/ThemeService.h"
 #include "utils/home/HomeFormat.h"
 #include "views/components/TrafficChart.h"
+#include "widgets/common/SegmentedControl.h"
 #include "widgets/common/ToggleSwitch.h"
 namespace {
 QPixmap svgIconPixmap(const QString& resourcePath, int box,
@@ -172,6 +180,10 @@ void HomeView::setupUI() {
 
   statsLayout->addLayout(statsRow);
 
+  // Traffic chart + Data usage (same row)
+  QHBoxLayout* chartsRow = new QHBoxLayout;
+  chartsRow->setSpacing(24);
+
   QFrame* chartCard = new QFrame;
   chartCard->setObjectName("ChartCard");
   QVBoxLayout* chartLayout = new QVBoxLayout(chartCard);
@@ -180,7 +192,8 @@ void HomeView::setupUI() {
 
   m_trafficChart = new TrafficChart(m_themeService, this);
   chartLayout->addWidget(m_trafficChart);
-  statsLayout->addWidget(chartCard);
+
+  chartsRow->addWidget(chartCard, 1);
 
   gridLayout->addWidget(statsSection, 0, 0, 1, 2);
 
@@ -250,6 +263,61 @@ void HomeView::setupUI() {
 
   gridLayout->addWidget(nodeSection, 1, 1);
 
+  // Data usage section
+  QFrame* dataUsageCard = new QFrame;
+  dataUsageCard->setObjectName("DataUsageCard");
+  QVBoxLayout* dataUsageLayout = new QVBoxLayout(dataUsageCard);
+  dataUsageLayout->setContentsMargins(12, 10, 12, 12);
+  dataUsageLayout->setSpacing(6);
+
+  // Header with Ranking title and mode selector
+  QHBoxLayout* rankingHeader = new QHBoxLayout;
+  QLabel* rankingIcon = new QLabel;
+  rankingIcon->setObjectName("RankingIcon");
+  rankingIcon->setText(QString::fromUtf8("\xE2\x89\xA1")); // ≡ symbol
+  QLabel* rankingTitle = new QLabel(tr("Ranking"));
+  rankingTitle->setObjectName("SectionTitle");
+
+  m_rankingModeSelector = new SegmentedControl(this, m_themeService);
+  m_rankingModeSelector->setItems(
+      {tr("Proxy"), tr("Process"), tr("Interface"), tr("Hostname")},
+      {"outbound", "process", "sourceIP", "host"});
+  m_rankingModeSelector->setCurrentIndex(3); // Default to Hostname
+
+  rankingHeader->addWidget(rankingIcon);
+  rankingHeader->addWidget(rankingTitle);
+  rankingHeader->addStretch();
+  rankingHeader->addWidget(m_rankingModeSelector);
+  dataUsageLayout->addLayout(rankingHeader);
+
+  m_dataUsageTopTable = new QTableWidget;
+  m_dataUsageTopTable->setObjectName("DataUsageTopTable");
+  m_dataUsageTopTable->setColumnCount(3);
+  m_dataUsageTopTable->verticalHeader()->setVisible(false);
+  m_dataUsageTopTable->horizontalHeader()->setVisible(false);
+  m_dataUsageTopTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+  m_dataUsageTopTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  m_dataUsageTopTable->setShowGrid(false);
+  m_dataUsageTopTable->setSortingEnabled(false);
+  auto* topHeader = m_dataUsageTopTable->horizontalHeader();
+  topHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+  topHeader->setSectionResizeMode(1, QHeaderView::Stretch);
+  topHeader->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+  topHeader->setStretchLastSection(false);
+  dataUsageLayout->addWidget(m_dataUsageTopTable);
+
+  m_dataUsageEmpty = new QLabel(tr("No data usage yet"));
+  m_dataUsageEmpty->setObjectName("DataUsageEmpty");
+  m_dataUsageEmpty->setAlignment(Qt::AlignCenter);
+
+  dataUsageLayout->addWidget(m_dataUsageEmpty);
+
+  if (m_dataUsageTopTable) m_dataUsageTopTable->hide();
+  m_dataUsageEmpty->show();
+
+  chartsRow->addWidget(dataUsageCard, 1);
+  statsLayout->addLayout(chartsRow);
+
   mainLayout->addLayout(gridLayout);
   mainLayout->addStretch();
 
@@ -280,6 +348,11 @@ void HomeView::setupUI() {
       m_ruleModeSwitch->setChecked(true);
     }
   });
+
+  if (m_rankingModeSelector) {
+    connect(m_rankingModeSelector, &SegmentedControl::currentValueChanged,
+            this, [this]() { refreshDataUsageTable(); });
+  }
 }
 QWidget* HomeView::createStatCard(const QString& iconText,
                                   const QString& accentKey,
@@ -548,6 +621,10 @@ void HomeView::updateConnections(int count, qint64 memoryUsage) {
     m_memoryLabel->setText(
         tr("Memory usage: %1").arg(formatBytes(memoryUsage)));
 }
+void HomeView::updateDataUsage(const QJsonObject& snapshot) {
+  m_dataUsageSnapshot = snapshot;
+  refreshDataUsageTable();
+}
 void HomeView::onSystemProxyToggled(bool checked) {
   setCardActive(m_systemProxyCard, checked);
   emit systemProxyChanged(checked);
@@ -582,6 +659,14 @@ QString HomeView::formatBytes(qint64 bytes) const {
 QString HomeView::formatDuration(int seconds) const {
   return HomeFormat::duration(seconds);
 }
+QString HomeView::formatTimeRange(qint64 firstMs, qint64 lastMs) const {
+  if (firstMs <= 0 || lastMs <= 0 || lastMs < firstMs) return QString();
+  const QDateTime start = QDateTime::fromMSecsSinceEpoch(firstMs);
+  const QDateTime end   = QDateTime::fromMSecsSinceEpoch(lastMs);
+  return tr("%1 - %2")
+      .arg(start.toString("yyyy-MM-dd HH:mm:ss"))
+      .arg(end.toString("yyyy-MM-dd HH:mm:ss"));
+}
 void HomeView::setCardActive(QWidget* card, bool active) {
   if (!card) return;
   card->setProperty("active", active);
@@ -601,4 +686,75 @@ void HomeView::setCardActive(QWidget* card, bool active) {
   for (auto* child : card->findChildren<QWidget*>()) {
     polishWidget(child);
   }
+}
+
+void HomeView::refreshDataUsageTable() {
+  if (!m_dataUsageTopTable || !m_rankingModeSelector || !m_dataUsageEmpty) {
+    return;
+  }
+
+  const QString typeKey = m_rankingModeSelector->currentValue();
+  const QJsonObject typeObj = m_dataUsageSnapshot.value(typeKey).toObject();
+  const QJsonArray  entries = typeObj.value("entries").toArray();
+
+  auto readLongLong = [](const QJsonValue& value) -> qint64 {
+    if (value.isString()) {
+      return value.toString().toLongLong();
+    }
+    return value.toVariant().toLongLong();
+  };
+
+  const int topLimit = 5;
+  const int topCount = qMin(entries.size(), topLimit);
+  if (topCount <= 0) {
+    m_dataUsageTopTable->setRowCount(0);
+    m_dataUsageTopTable->hide();
+  } else {
+    m_dataUsageTopTable->setRowCount(topCount);
+    qint64 maxTotal = 0;
+    for (int i = 0; i < topCount; ++i) {
+      const QJsonObject entry = entries.at(i).toObject();
+      const qint64 total = readLongLong(entry.value("total"));
+      if (total > maxTotal) maxTotal = total;
+    }
+    if (maxTotal <= 0) maxTotal = 1;
+
+    for (int i = 0; i < topCount; ++i) {
+      const QJsonObject entry = entries.at(i).toObject();
+      const QString label = entry.value("label").toString();
+      const qint64  upload = readLongLong(entry.value("upload"));
+      const qint64  download = readLongLong(entry.value("download"));
+      const qint64  total = readLongLong(entry.value("total"));
+
+      QTableWidgetItem* nameItem = new QTableWidgetItem(label);
+      nameItem->setToolTip(label);
+      m_dataUsageTopTable->setItem(i, 0, nameItem);
+
+      QProgressBar* bar = new QProgressBar;
+      bar->setRange(0, 1000);
+      bar->setValue(static_cast<int>(total * 1000 / maxTotal));
+      bar->setTextVisible(false);
+      bar->setFixedHeight(10);
+      bar->setToolTip(tr("Upload: %1\nDownload: %2")
+                          .arg(formatBytes(upload))
+                          .arg(formatBytes(download)));
+      m_dataUsageTopTable->setCellWidget(i, 1, bar);
+
+      QTableWidgetItem* totalItem =
+          new QTableWidgetItem(formatBytes(total));
+      totalItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+      m_dataUsageTopTable->setItem(i, 2, totalItem);
+
+      m_dataUsageTopTable->setRowHeight(i, 20);
+    }
+    m_dataUsageTopTable->show();
+  }
+
+  if (entries.isEmpty()) {
+    m_dataUsageEmpty->show();
+    if (m_dataUsageTopTable) m_dataUsageTopTable->hide();
+    return;
+  }
+
+  m_dataUsageEmpty->hide();
 }

@@ -6,7 +6,9 @@
 class KernelService;
 class ProxyService;
 class ProxyController;
+class DataUsageTracker;
 class QJsonObject;
+class QTimer;
 /**
  * @brief ProxyRuntimeController
  * Listens to Kernel/Proxy service runtime state, dispatching status/traffic/connection signals to UI,
@@ -27,9 +29,13 @@ class ProxyRuntimeController : public QObject {
   void kernelRunningChanged(bool running);
   void trafficUpdated(qint64 upload, qint64 download);
   void connectionsUpdated(int count, qint64 memoryUsage);
+  void dataUsageUpdated(const QJsonObject& snapshot);
   void logMessage(const QString& message, bool isError);
   void refreshProxyViewRequested();
   void refreshRulesViewRequested();
+
+ public slots:
+  void clearDataUsage();
 
  private slots:
   void onKernelStatusChanged(bool running);
@@ -39,5 +45,7 @@ class ProxyRuntimeController : public QObject {
   KernelService*   m_kernelService   = nullptr;
   ProxyService*    m_proxyService    = nullptr;
   ProxyController* m_proxyController = nullptr;
+  DataUsageTracker* m_dataUsageTracker = nullptr;
+  QTimer*           m_connectionsTimer = nullptr;
 };
 #endif  // PROXYRUNTIMECONTROLLER_H
