@@ -540,6 +540,16 @@ void HomeView::updateStyle() {
   QColor error   = m_themeService->color("error");
 
   QMap<QString, QString> extra;
+  
+  // Determine correct trash icon based on text brightness
+  // If text is dark (light theme), use dark icon. Otherwise use white icon.
+  QColor textPrimary = m_themeService->color("text-primary");
+  QString trashIconUrl = ":/icons/trash.svg";
+  if (textPrimary.lightness() < 128) {
+      trashIconUrl = ":/icons/trash-dark.svg";
+  }
+  extra.insert("trash-icon-url", trashIconUrl);
+
   extra.insert("success-12", rgba(success, 0.12));
   extra.insert("warning-12", rgba(warning, 0.12));
   extra.insert("error-12", rgba(error, 0.12));

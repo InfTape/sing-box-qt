@@ -18,6 +18,7 @@
         <file>icons/connect.svg</file>
         <file>icons/mappin.svg</file>
         <file>icons/trash.svg</file>
+        <file>icons/trash-dark.svg</file>
         <file>icons/trash-red.svg</file>
         <file>styles/home_view.qss</file>
         <file>styles/log_view.qss</file>
