@@ -9,6 +9,7 @@
 #include <QWidget>
 
 class QCheckBox;
+class QPushButton;
 class TrafficChart;
 class ToggleSwitch;
 class SegmentedControl;
@@ -84,6 +85,7 @@ class HomeView : public QWidget {
 
 
   SegmentedControl*  m_rankingModeSelector  = nullptr;
+  QPushButton*       m_dataUsageClearBtn    = nullptr;
   QTableWidget*      m_dataUsageTopTable    = nullptr;
   QLabel*            m_dataUsageEmpty       = nullptr;
   QJsonObject   m_dataUsageSnapshot;

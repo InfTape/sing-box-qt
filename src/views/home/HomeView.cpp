@@ -16,8 +16,10 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QProgressBar>
+#include <QPushButton>
 #include <QSignalBlocker>
 #include <QStyle>
+#include <QStyledItemDelegate>
 #include <QSvgRenderer>
 #include <QTableWidget>
 #include <functional>
@@ -28,6 +30,17 @@
 #include "widgets/common/SegmentedControl.h"
 #include "widgets/common/ToggleSwitch.h"
 namespace {
+class NoFocusDelegate : public QStyledItemDelegate {
+ public:
+  explicit NoFocusDelegate(QObject* parent = nullptr)
+      : QStyledItemDelegate(parent) {}
+  void paint(QPainter* painter, const QStyleOptionViewItem& option,
+             const QModelIndex& index) const override {
+    QStyleOptionViewItem opt(option);
+    opt.state &= ~QStyle::State_HasFocus;
+    QStyledItemDelegate::paint(painter, opt, index);
+  }
+};
 QPixmap svgIconPixmap(const QString& resourcePath, int box,
                       const QColor& color) {
   const qreal dpr  = qApp->devicePixelRatio();
@@ -191,6 +204,7 @@ void HomeView::setupUI() {
   chartLayout->setSpacing(0);
 
   m_trafficChart = new TrafficChart(m_themeService, this);
+  m_trafficChart->setFixedHeight(150);
   chartLayout->addWidget(m_trafficChart);
 
   chartsRow->addWidget(chartCard, 1);
@@ -269,6 +283,7 @@ void HomeView::setupUI() {
   QVBoxLayout* dataUsageLayout = new QVBoxLayout(dataUsageCard);
   dataUsageLayout->setContentsMargins(12, 10, 12, 12);
   dataUsageLayout->setSpacing(6);
+  dataUsageCard->setFixedHeight(180);
 
   // Header with Ranking title and mode selector
   QHBoxLayout* rankingHeader = new QHBoxLayout;
@@ -286,6 +301,18 @@ void HomeView::setupUI() {
 
   rankingHeader->addWidget(rankingIcon);
   rankingHeader->addWidget(rankingTitle);
+  
+  // Create clear button with trash icon
+  m_dataUsageClearBtn = new QPushButton;
+  m_dataUsageClearBtn->setObjectName("DataUsageClearBtn");
+  m_dataUsageClearBtn->setFixedSize(20, 20);
+  m_dataUsageClearBtn->setCursor(Qt::PointingHandCursor);
+  m_dataUsageClearBtn->setToolTip(tr("Clear statistics"));
+  connect(m_dataUsageClearBtn, &QPushButton::clicked, this, [this]() {
+    emit dataUsageClearRequested();
+  });
+  
+  rankingHeader->addWidget(m_dataUsageClearBtn);
   rankingHeader->addStretch();
   rankingHeader->addWidget(m_rankingModeSelector);
   dataUsageLayout->addLayout(rankingHeader);
@@ -295,10 +322,12 @@ void HomeView::setupUI() {
   m_dataUsageTopTable->setColumnCount(3);
   m_dataUsageTopTable->verticalHeader()->setVisible(false);
   m_dataUsageTopTable->horizontalHeader()->setVisible(false);
-  m_dataUsageTopTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+  m_dataUsageTopTable->setSelectionMode(QAbstractItemView::NoSelection);
   m_dataUsageTopTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
   m_dataUsageTopTable->setShowGrid(false);
   m_dataUsageTopTable->setSortingEnabled(false);
+  m_dataUsageTopTable->verticalHeader()->setDefaultSectionSize(24);
+  m_dataUsageTopTable->setItemDelegate(new NoFocusDelegate(m_dataUsageTopTable));
   auto* topHeader = m_dataUsageTopTable->horizontalHeader();
   topHeader->setSectionResizeMode(0, QHeaderView::Stretch);
   topHeader->setSectionResizeMode(1, QHeaderView::Stretch);

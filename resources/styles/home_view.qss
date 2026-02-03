@@ -194,8 +194,16 @@
     padding: 4px;
     border: none;
 }
+#DataUsageTopTable::item:selected {
+    background-color: transparent;
+}
+#DataUsageTopTable::item:focus,
+#DataUsageTopTable::item:selected:focus {
+    background-color: transparent;
+    outline: none;
+}
 #DataUsageTopTable QProgressBar {
-    background-color: @bg-tertiary@;
+    background-color: transparent;
     border: none;
     border-radius: 5px;
 }
@@ -212,17 +220,15 @@
     min-width: 120px;
 }
 #DataUsageClearBtn {
-    background-color: @error-12@;
-    color: @error@;
-    border: 1px solid @error@;
-    border-radius: 8px;
-    padding: 4px 12px;
-    font-weight: 600;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 0px;
+    image: url(:/icons/trash.svg);
 }
-#DataUsageClearBtn:hover { background-color: @error-12@; }
-#DataUsageClearBtn:disabled {
-    color: @text-tertiary@;
-    border-color: @border-solid@;
+#DataUsageClearBtn:hover {
+    background-color: transparent;
+    image: url(:/icons/trash-red.svg);
 }
 #DataUsageEmpty {
     color: @text-secondary@;

@@ -12,6 +12,7 @@ SegmentedControl::SegmentedControl(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   setCursor(Qt::PointingHandCursor);
   setFocusPolicy(Qt::StrongFocus);
+  setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   m_anim = new QPropertyAnimation(this, "selectionOffset", this);
   m_anim->setDuration(150);
@@ -169,7 +170,7 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
 
     // Selection background
     p.setBrush(selColor);
-    p.setPen(QPen(borderColor, 0.5));
+    p.setPen(Qt::NoPen);
     p.drawRoundedRect(sel, selRadius, selRadius);
   }
 

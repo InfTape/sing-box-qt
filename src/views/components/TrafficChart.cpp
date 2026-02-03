@@ -9,7 +9,7 @@ TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
     : QWidget(parent),
       m_themeService(themeService),
       m_updateTimer(new QTimer(this)) {
-  setMinimumHeight(180);
+  setMinimumHeight(150);
 
   // Initialize data arrays
   m_uploadData.fill(0, MAX_DATA_POINTS);
@@ -216,7 +216,7 @@ void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect,
 }
 void TrafficChart::drawLegend(QPainter& painter) {
   const int legendWidth  = 135;
-  const int legendHeight = 28;
+  const int legendHeight = 22;
   const int margin       = 12;
 
   QRect legendRect(width() - legendWidth - margin, margin, legendWidth,
@@ -227,11 +227,6 @@ void TrafficChart::drawLegend(QPainter& painter) {
   QColor legendBg = m_bgColor;
   legendBg.setAlpha(220);
   painter.setBrush(legendBg);
-  painter.drawRoundedRect(legendRect, 8, 8);
-
-  // Border
-  painter.setPen(QPen(m_gridColor, 1));
-  painter.setBrush(Qt::NoBrush);
   painter.drawRoundedRect(legendRect, 8, 8);
 
   // Legend items
