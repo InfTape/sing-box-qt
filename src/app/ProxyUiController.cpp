@@ -83,7 +83,6 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
   if (!isAdmin) {
     if (confirmRestartAdmin && confirmRestartAdmin()) {
       // User agreed to restart as admin
-      m_settings->setSystemProxyEnabled(false);
       m_settings->setTunEnabled(true);
       const bool restarted =
           m_adminActions ? m_adminActions->restartAsAdmin() : false;
@@ -111,6 +110,16 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
 }
 void ProxyUiController::broadcastCurrentStates() {
   if (m_settings) {
+    const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
+    if (!isAdmin && m_settings->tunEnabled()) {
+      m_settings->setTunEnabled(false);
+      if (m_proxyController) {
+        m_proxyController->setSystemProxyEnabled(true);
+      } else {
+        m_settings->setSystemProxyEnabled(true);
+      }
+    }
+
     emit systemProxyStateChanged(m_settings->systemProxyEnabled());
     emit tunModeStateChanged(m_settings->tunEnabled());
   }

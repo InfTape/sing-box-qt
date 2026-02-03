@@ -37,7 +37,7 @@ AppSettings::AppSettings(QObject* parent)
       m_enableAppGroups(true),
       m_preferIpv6(false),
       m_dnsHijack(true),
-      m_systemProxyEnabled(false),
+      m_systemProxyEnabled(true),
       m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS)
       // URL test.
       ,
@@ -85,9 +85,9 @@ void AppSettings::load() {
   m_preferIpv6      = config.value("preferIpv6").toBool(false);
   m_dnsHijack       = config.value("dnsHijack").toBool(true);
   if (config.contains("systemProxyEnabled")) {
-    m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
+    m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
   } else {
-    m_systemProxyEnabled = config.value("systemProxy").toBool(false);
+    m_systemProxyEnabled = config.value("systemProxy").toBool(true);
   }
   m_systemProxyBypass =
       config.value("systemProxyBypass")

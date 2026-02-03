@@ -20,7 +20,9 @@ if (Test-Path $cmake) {
 $buildDir = "build"
 $distDir = "dist"
 $exeName = "sing-box-qt.exe"
+$coreManagerName = "sing-box-core-manager.exe"
 $exePath = Join-Path $buildDir "Release\$exeName"
+$coreManagerPath = Join-Path $buildDir "Release\$coreManagerName"
 $zipName = "sing-box-qt-portable.zip"
 $desktopPath = [Environment]::GetFolderPath('Desktop')
 $desktopExePath = Join-Path $desktopPath $exeName
@@ -46,11 +48,15 @@ Write-Host "Building (Release)..." -ForegroundColor Cyan
 if (!(Test-Path $exePath)) {
     throw "Release exe not found: $exePath"
 }
+if (!(Test-Path $coreManagerPath)) {
+    throw "Core manager exe not found: $coreManagerPath"
+}
 
 # Prepare dist
 if (Test-Path $distDir) { Remove-Item $distDir -Recurse -Force }
 New-Item -ItemType Directory $distDir | Out-Null
 Copy-Item $exePath $distDir
+Copy-Item $coreManagerPath $distDir
 
 # Deploy Qt runtime
 Write-Host "Deploying Qt runtime..." -ForegroundColor Cyan

@@ -17,6 +17,7 @@ if ($LASTEXITCODE -eq 0) {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`nBuild SUCCESS!" -ForegroundColor Green
         Write-Host "Executable: .\build\Release\sing-box-qt.exe" -ForegroundColor Green
+        Write-Host "Executable: .\build\Release\sing-box-core-manager.exe" -ForegroundColor Green
         
         # Try to run
         Write-Host "`nLaunching..."

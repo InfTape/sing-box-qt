@@ -54,6 +54,7 @@ set(SOURCES
     src/app/MainWindow.cpp
     src/app/TrayIcon.cpp
     src/core/KernelService.cpp
+    src/core/CoreManagerClient.cpp
     src/core/ProcessManager.cpp
     src/core/ProxyService.cpp
     src/core/ProxyController.cpp
@@ -139,6 +140,8 @@ set(HEADERS
     src/app/MainWindow.h
     src/app/TrayIcon.h
     src/core/KernelService.h
+    src/core/CoreManagerClient.h
+    src/core/CoreManagerProtocol.h
     src/core/ProcessManager.h
     src/core/ProxyService.h
     src/core/ProxyController.h
@@ -222,6 +225,29 @@ add_executable(${PROJECT_NAME} WIN32
     ${RESOURCES}
 )
 
+# Core manager (helper process).
+set(CORE_MANAGER_SOURCES
+    src/coremanager/CoreManagerMain.cpp
+    src/coremanager/CoreManagerServer.cpp
+    src/coremanager/KernelRunner.cpp
+    src/core/ProcessManager.cpp
+    src/utils/Logger.cpp
+)
+
+set(CORE_MANAGER_HEADERS
+    src/coremanager/CoreManagerServer.h
+    src/coremanager/KernelRunner.h
+    src/core/CoreManagerProtocol.h
+    src/core/ProcessManager.h
+    src/utils/Logger.h
+    src/utils/AppPaths.h
+)
+
+add_executable(sing-box-core-manager
+    ${CORE_MANAGER_SOURCES}
+    ${CORE_MANAGER_HEADERS}
+)
+
 # Link libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
@@ -233,6 +259,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Svg
     nlohmann_json::nlohmann_json
     yaml-cpp::yaml-cpp
+)
+
+target_link_libraries(sing-box-core-manager PRIVATE
+    Qt6::Core
+    Qt6::Network
 )
 
 # Windows-specific configuration.
@@ -255,7 +286,15 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+target_include_directories(sing-box-core-manager PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # Install configuration.
 install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+)
+
+install(TARGETS sing-box-core-manager
     RUNTIME DESTINATION bin
 )

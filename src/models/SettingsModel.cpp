@@ -14,9 +14,9 @@ SettingsModel::Data SettingsModel::load() {
   d.apiPort = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
   d.autoStart = config.value("autoStart").toBool(false);
   if (config.contains("systemProxyEnabled")) {
-    d.systemProxyEnabled = config.value("systemProxyEnabled").toBool(false);
+    d.systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
   } else {
-    d.systemProxyEnabled = config.value("systemProxy").toBool(false);
+    d.systemProxyEnabled = config.value("systemProxy").toBool(true);
   }
   d.systemProxyBypass =
       config.value("systemProxyBypass")

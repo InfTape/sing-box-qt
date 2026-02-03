@@ -121,7 +121,6 @@ bool ProxyController::setSystemProxyEnabled(bool enabled) {
     const int port = m_configRepo ? m_configRepo->mixedPort() : 1080;
     m_systemProxy->setProxy("127.0.0.1", port);
     m_settings->setSystemProxyEnabled(true);
-    m_settings->setTunEnabled(false);
   } else {
     m_systemProxy->clearProxy();
     m_settings->setSystemProxyEnabled(false);
@@ -129,10 +128,6 @@ bool ProxyController::setSystemProxyEnabled(bool enabled) {
   return applySettingsToActiveConfig(true);
 }
 bool ProxyController::setTunModeEnabled(bool enabled) {
-  if (enabled) {
-    m_systemProxy->clearProxy();
-    m_settings->setSystemProxyEnabled(false);
-  }
   m_settings->setTunEnabled(enabled);
   return applySettingsToActiveConfig(true);
 }

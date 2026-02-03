@@ -2,8 +2,11 @@
 #define KERNELSERVICE_H
 
 #include <QObject>
-#include <QProcess>
 #include <QString>
+#include <QJsonObject>
+
+class QProcess;
+class CoreManagerClient;
 class KernelService : public QObject {
   Q_OBJECT
 
@@ -28,21 +31,26 @@ class KernelService : public QObject {
   void errorOccurred(const QString& error);
 
  private slots:
-  void onProcessStarted();
-  void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
-  void onProcessError(QProcess::ProcessError error);
-  void onReadyReadStandardOutput();
-  void onReadyReadStandardError();
+  void onManagerStatus(bool running);
+  void onManagerLog(const QString& stream, const QString& message);
+  void onManagerError(const QString& error);
+  void onManagerDisconnected();
 
  private:
+  bool    ensureManagerReady(QString* error = nullptr);
+  bool    sendRequestAndWait(const QString& method, const QJsonObject& params,
+                             QJsonObject* result, QString* error);
   QString findKernelPath() const;
   QString getDefaultConfigPath() const;
+  QString findCoreManagerPath() const;
 
-  QProcess* m_process;
-  QString   m_kernelPath;
-  QString   m_configPath;
-  bool      m_running;
-  bool      m_stopRequested  = false;
-  bool      m_restartPending = false;
+  CoreManagerClient* m_client;
+  QProcess*          m_managerProcess;
+  QString            m_serverName;
+  QString            m_kernelPath;
+  QString            m_configPath;
+  bool               m_running;
+  bool               m_spawnedManager = false;
+  int                m_nextRequestId  = 1;
 };
 #endif  // KERNELSERVICE_H

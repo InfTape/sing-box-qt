@@ -2,37 +2,56 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
+#include <QEventLoop>
 #include <QFile>
+#include <QProcess>
 #include <QRegularExpression>
-#include <QStandardPaths>
 #include <QTimer>
 
-#include "core/ProcessManager.h"
+#include "core/CoreManagerClient.h"
+#include "core/CoreManagerProtocol.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
 KernelService::KernelService(QObject* parent)
-    : QObject(parent), m_process(nullptr), m_running(false) {}
+    : QObject(parent),
+      m_client(new CoreManagerClient(this)),
+      m_managerProcess(nullptr),
+      m_running(false) {
+  connect(m_client, &CoreManagerClient::statusEvent, this,
+          &KernelService::onManagerStatus);
+  connect(m_client, &CoreManagerClient::logEvent, this,
+          &KernelService::onManagerLog);
+  connect(m_client, &CoreManagerClient::errorEvent, this,
+          &KernelService::onManagerError);
+  connect(m_client, &CoreManagerClient::disconnected, this,
+          &KernelService::onManagerDisconnected);
+}
+
 KernelService::~KernelService() {
-  if (m_process) {
-    if (m_process->state() != QProcess::NotRunning) {
-      m_process->kill();
+  const bool managerRunning =
+      (m_managerProcess &&
+       m_managerProcess->state() != QProcess::NotRunning) ||
+      m_client->isConnected();
+  if (m_spawnedManager && managerRunning) {
+    QJsonObject result;
+    QString     error;
+    sendRequestAndWait("shutdown", QJsonObject(), &result, &error);
+  }
+
+  if (m_managerProcess) {
+    if (m_managerProcess->state() != QProcess::NotRunning) {
+      m_managerProcess->waitForFinished(2000);
+      if (m_managerProcess->state() != QProcess::NotRunning) {
+        m_managerProcess->kill();
+      }
     }
-    m_process->deleteLater();
+    m_managerProcess->deleteLater();
   }
 }
+
 bool KernelService::start(const QString& configPath) {
-  if (m_process && m_process->state() != QProcess::NotRunning) {
-    Logger::warn(tr("Kernel is already running"));
-    return false;
-  }
-
-  m_kernelPath = findKernelPath();
-  if (m_kernelPath.isEmpty()) {
-    Logger::error(tr("sing-box kernel not found"));
-    emit errorOccurred(tr("sing-box kernel not found"));
-    return false;
-  }
-
   if (!configPath.isEmpty()) {
     m_configPath = configPath;
   }
@@ -41,88 +60,62 @@ bool KernelService::start(const QString& configPath) {
   }
 
   if (!QFile::exists(m_configPath)) {
-    Logger::error(tr("Config file not found"));
-    emit errorOccurred(tr("Config file not found"));
+    const QString msg = tr("Config file not found");
+    Logger::error(msg);
+    emit errorOccurred(msg);
     return false;
   }
 
-  if (m_process) {
-    m_process->deleteLater();
-  }
-
-  m_process       = new QProcess(this);
-  m_stopRequested = false;
-
-  connect(m_process, &QProcess::started, this,
-          &KernelService::onProcessStarted);
-  connect(m_process, &QProcess::finished, this,
-          &KernelService::onProcessFinished);
-  connect(m_process, &QProcess::errorOccurred, this,
-          &KernelService::onProcessError);
-  connect(m_process, &QProcess::readyReadStandardOutput, this,
-          &KernelService::onReadyReadStandardOutput);
-  connect(m_process, &QProcess::readyReadStandardError, this,
-          &KernelService::onReadyReadStandardError);
-
-  QStringList args;
-  args << "run" << "-c" << m_configPath;
-
-  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert("ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS", "true");
-  m_process->setProcessEnvironment(env);
-
-  Logger::info(tr("Starting kernel: %1").arg(m_kernelPath));
-  m_process->start(m_kernelPath, args);
-
-  if (!m_process->waitForStarted(5000)) {
-    Logger::error(tr("Kernel failed to start"));
-    emit errorOccurred(tr("Kernel failed to start"));
+  QString error;
+  QJsonObject result;
+  if (!sendRequestAndWait("start", QJsonObject{{"configPath", m_configPath}},
+                          &result, &error)) {
+    if (!error.isEmpty()) {
+      emit errorOccurred(error);
+    }
     return false;
   }
-
   return true;
 }
+
 void KernelService::stop() {
-  if (!m_process || m_process->state() == QProcess::NotRunning) {
-    Logger::warn(tr("Kernel is not running"));
-    return;
-  }
-
-  m_stopRequested = true;
-  Logger::info(tr("Stopping kernel..."));
-
-  m_process->terminate();
-
-  QTimer::singleShot(3000, this, [this]() {
-    if (m_process && m_process->state() != QProcess::NotRunning) {
-#ifdef Q_OS_WIN
-      const qint64 pid = m_process->processId();
-      if (pid > 0) {
-        ProcessManager::killProcess(pid);
-      } else {
-        m_process->kill();
-      }
-#else
-            m_process->kill();
-#endif
+  QJsonObject result;
+  QString     error;
+  if (!sendRequestAndWait("stop", QJsonObject(), &result, &error)) {
+    if (!error.isEmpty()) {
+      emit errorOccurred(error);
     }
-  });
-}
-void KernelService::restart() { restartWithConfig(m_configPath); }
-void KernelService::restartWithConfig(const QString& configPath) {
-  setConfigPath(configPath);
-  if (m_process && m_process->state() != QProcess::NotRunning) {
-    m_restartPending = true;
-    stop();
-    return;
   }
-  start(m_configPath);
 }
+
+void KernelService::restart() { restartWithConfig(m_configPath); }
+
+void KernelService::restartWithConfig(const QString& configPath) {
+  if (!configPath.isEmpty()) {
+    m_configPath = configPath;
+  }
+
+  QJsonObject result;
+  QString     error;
+  QJsonObject params;
+  if (!m_configPath.isEmpty()) {
+    params["configPath"] = m_configPath;
+  }
+  if (!sendRequestAndWait("restart", params, &result, &error)) {
+    if (!error.isEmpty()) {
+      emit errorOccurred(error);
+    }
+  }
+}
+
 void KernelService::setConfigPath(const QString& configPath) {
   m_configPath = configPath;
 }
+
 QString KernelService::getConfigPath() const { return m_configPath; }
-bool    KernelService::isRunning() const { return m_running; }
+
+bool KernelService::isRunning() const { return m_running; }
+
 QString KernelService::getVersion() const {
   QString kernelPath = m_kernelPath;
   if (kernelPath.isEmpty()) {
@@ -148,59 +141,137 @@ QString KernelService::getVersion() const {
   }
   return output;
 }
+
 QString KernelService::getKernelPath() const {
   return m_kernelPath.isEmpty() ? findKernelPath() : m_kernelPath;
 }
-void KernelService::onProcessStarted() {
-  m_running = true;
-  emit statusChanged(true);
-}
-void KernelService::onProcessFinished(int                  exitCode,
-                                      QProcess::ExitStatus exitStatus) {
-  Q_UNUSED(exitCode)
-  Q_UNUSED(exitStatus)
-  m_running = false;
-  emit statusChanged(false);
 
-  if (m_restartPending) {
-    m_restartPending = false;
-    start(m_configPath);
+void KernelService::onManagerStatus(bool running) {
+  if (m_running == running) return;
+  m_running = running;
+  emit statusChanged(running);
+}
+
+void KernelService::onManagerLog(const QString& stream,
+                                 const QString& message) {
+  Q_UNUSED(stream)
+  emit outputReceived(message);
+}
+
+void KernelService::onManagerError(const QString& error) {
+  if (!error.isEmpty()) {
+    emit errorOccurred(error);
   }
 }
-void KernelService::onProcessError(QProcess::ProcessError error) {
-  QString errorMsg;
-  switch (error) {
-    case QProcess::FailedToStart:
-      errorMsg = tr("Kernel failed to start");
-      break;
-    case QProcess::Crashed:
-      if (m_stopRequested) {
-        Logger::info(tr("Kernel stopped"));
-        return;
+
+void KernelService::onManagerDisconnected() {
+  if (m_running) {
+    m_running = false;
+    emit statusChanged(false);
+  }
+}
+
+bool KernelService::ensureManagerReady(QString* error) {
+  if (m_serverName.isEmpty()) {
+    m_serverName = coreManagerServerName();
+  }
+
+  if (m_client->isConnected()) return true;
+
+  m_client->connectToServer(m_serverName);
+  if (m_client->waitForConnected(300)) {
+    return true;
+  }
+  m_client->abort();
+
+  if (!m_managerProcess || m_managerProcess->state() == QProcess::NotRunning) {
+    const QString exePath = findCoreManagerPath();
+    if (exePath.isEmpty() || !QFile::exists(exePath)) {
+      if (error) {
+        *error = tr("Core manager not found");
       }
-      errorMsg = tr("Kernel crashed");
-      break;
-    case QProcess::Timedout:
-      errorMsg = tr("Kernel response timed out");
-      break;
-    default:
-      errorMsg = tr("Unknown kernel error");
-      break;
+      return false;
+    }
+
+    if (!m_managerProcess) {
+      m_managerProcess = new QProcess(this);
+    }
+    QStringList args;
+    args << "--control-name" << m_serverName;
+    m_managerProcess->start(exePath, args);
+    if (!m_managerProcess->waitForStarted(3000)) {
+      if (error) {
+        *error = tr("Failed to start core manager");
+      }
+      return false;
+    }
+    m_spawnedManager = true;
   }
 
-  Logger::error(errorMsg);
-  emit errorOccurred(errorMsg);
+  QElapsedTimer timer;
+  timer.start();
+  while (timer.elapsed() < 3000) {
+    m_client->connectToServer(m_serverName);
+    if (m_client->waitForConnected(300)) {
+      return true;
+    }
+    m_client->abort();
+  }
+
+  if (error) {
+    *error = tr("Failed to connect to core manager");
+  }
+  return false;
 }
-void KernelService::onReadyReadStandardOutput() {
-  QString output = QString::fromUtf8(m_process->readAllStandardOutput());
-  Logger::info(QString("[Kernel] %1").arg(output.trimmed()));
-  emit outputReceived(output);
+
+bool KernelService::sendRequestAndWait(const QString& method,
+                                       const QJsonObject& params,
+                                       QJsonObject* result, QString* error) {
+  QString err;
+  if (!ensureManagerReady(&err)) {
+    if (error) *error = err;
+    return false;
+  }
+
+  const int id = m_nextRequestId++;
+  bool      ok = false;
+  QString   respError;
+  QJsonObject respResult;
+
+  QEventLoop loop;
+  QTimer     timer;
+  timer.setSingleShot(true);
+  QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+  QMetaObject::Connection conn = connect(
+      m_client, &CoreManagerClient::responseReceived, this,
+      [&](int respId, bool respOk, const QJsonObject& resp,
+          const QString& respErr) {
+        if (respId != id) return;
+        ok         = respOk;
+        respResult = resp;
+        respError  = respErr;
+        loop.quit();
+      });
+
+  m_client->sendRequest(id, method, params);
+  timer.start(5000);
+  loop.exec();
+  disconnect(conn);
+
+  if (timer.isActive() == false) {
+    if (error) *error = tr("RPC timeout");
+    return false;
+  }
+  if (!ok && error) {
+    *error = respError;
+  }
+  if (result) {
+    *result = respResult;
+  }
+  return ok;
 }
-void KernelService::onReadyReadStandardError() {
-  QString error = QString::fromUtf8(m_process->readAllStandardError());
-  Logger::error(QString("[Kernel Error] %1").arg(error.trimmed()));
-  emit outputReceived(error);
-}
+
 QString KernelService::findKernelPath() const {
 #ifdef Q_OS_WIN
   QString kernelName = "sing-box.exe";
@@ -221,7 +292,13 @@ QString KernelService::findKernelPath() const {
   Logger::warn("sing-box kernel not found");
   return QString();
 }
+
 QString KernelService::getDefaultConfigPath() const {
   const QString dataDir = appDataDir();
   return QDir(dataDir).filePath("config.json");
+}
+
+QString KernelService::findCoreManagerPath() const {
+  const QString exeName = coreManagerExecutableName();
+  return QDir(QCoreApplication::applicationDirPath()).filePath(exeName);
 }

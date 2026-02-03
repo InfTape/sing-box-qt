@@ -139,7 +139,6 @@ QWidget* SettingsView::buildProxySection() {
 
   m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
 
-  m_systemProxyCheck = new QCheckBox(tr("Auto-set system proxy"));
 
   QLabel* mixedPortLabel = createFormLabel(tr("Mixed port:"));
   QLabel* apiPortLabel   = createFormLabel(tr("API port:"));
@@ -150,7 +149,6 @@ QWidget* SettingsView::buildProxySection() {
   proxyLayout->addWidget(apiPortLabel, 0, 2);
   proxyLayout->addWidget(m_apiPortSpin, 0, 3);
   proxyLayout->addWidget(m_autoStartCheck, 1, 0, 1, 4);
-  proxyLayout->addWidget(m_systemProxyCheck, 2, 0, 1, 4);
 
   proxySectionLayout->addWidget(proxyCard);
   return proxySection;
@@ -594,8 +592,7 @@ QString SettingsView::normalizeBypassText(const QString& text) const {
 void SettingsView::fillGeneralFromUi(SettingsModel::Data& data) const {
   data.mixedPort          = m_mixedPortSpin->value();
   data.apiPort            = m_apiPortSpin->value();
-  data.autoStart          = m_autoStartCheck->isChecked();
-  data.systemProxyEnabled = m_systemProxyCheck->isChecked();
+  data.autoStart = m_autoStartCheck->isChecked();
 }
 void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
   data.systemProxyBypass =
@@ -639,8 +636,6 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   m_apiPortSpin->setValue(data.apiPort);
 
   m_autoStartCheck->setChecked(data.autoStart);
-
-  m_systemProxyCheck->setChecked(data.systemProxyEnabled);
   m_systemProxyBypassEdit->setPlainText(data.systemProxyBypass);
   m_tunMtuSpin->setValue(data.tunMtu);
   if (data.tunStack == "system") {

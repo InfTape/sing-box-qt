@@ -549,24 +549,10 @@ void HomeView::updateConnections(int count, qint64 memoryUsage) {
         tr("Memory usage: %1").arg(formatBytes(memoryUsage)));
 }
 void HomeView::onSystemProxyToggled(bool checked) {
-  if (checked && m_tunModeSwitch && m_tunModeSwitch->isChecked()) {
-    QSignalBlocker blocker(m_tunModeSwitch);
-    m_tunModeSwitch->setChecked(false);
-    setCardActive(m_tunModeCard, false);
-    emit tunModeChanged(false);
-  }
-
   setCardActive(m_systemProxyCard, checked);
   emit systemProxyChanged(checked);
 }
 void HomeView::onTunModeToggled(bool checked) {
-  if (checked && m_systemProxySwitch && m_systemProxySwitch->isChecked()) {
-    QSignalBlocker blocker(m_systemProxySwitch);
-    m_systemProxySwitch->setChecked(false);
-    setCardActive(m_systemProxyCard, false);
-    emit systemProxyChanged(false);
-  }
-
   setCardActive(m_tunModeCard, checked);
   emit tunModeChanged(checked);
 }

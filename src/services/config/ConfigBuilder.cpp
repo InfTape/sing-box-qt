@@ -209,7 +209,6 @@ QJsonArray ConfigBuilder::buildInbounds() {
   mixed["listen"]           = "127.0.0.1";
   mixed["listen_port"]      = settings.mixedPort();
   mixed["sniff"]            = true;
-  mixed["set_system_proxy"] = settings.systemProxyEnabled();
   inbounds.append(mixed);
 
   if (settings.tunEnabled()) {
