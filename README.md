@@ -59,7 +59,8 @@
 
 ## 截图预览
 
-![主页](https://github.com/user-attachments/assets/e441feb4-77e5-442f-af0f-0f122fa035d6)
+![主页](https://github.com/user-attachments/assets/84b6067e-eda4-4a70-a2b2-8d0cd574e8d1)
+
 
 
 ![代理](https://github.com/user-attachments/assets/0ffdde0f-e0c2-4712-a165-e48299c59103)
