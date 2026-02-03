@@ -115,9 +115,35 @@ void ConnectionsView::setProxyService(ProxyService* service) {
             QJsonObject metadata = conn["metadata"].toObject();
 
             setCell(i, 0, metadata["sourceIP"].toString());
-            setCell(i, 1,
-                    metadata["host"].toString() + ":" +
-                        QString::number(metadata["destinationPort"].toInt()));
+            QString host = metadata["host"].toString();
+            if (host.isEmpty()) host = metadata["destinationIP"].toString();
+            if (host.isEmpty()) host = metadata["destinationIp"].toString();
+            if (host.isEmpty()) host = tr("Unknown");
+
+            auto readPort = [](const QJsonValue& value) -> int {
+              if (value.isString()) {
+                bool ok = false;
+                const int parsed = value.toString().toInt(&ok);
+                return ok ? parsed : 0;
+              }
+              if (value.isDouble()) {
+                return value.toInt();
+              }
+              bool ok = false;
+              const int parsed = value.toVariant().toInt(&ok);
+              return ok ? parsed : 0;
+            };
+
+            QJsonValue portValue = metadata.value("destinationPort");
+            if (portValue.isUndefined()) {
+              portValue = metadata.value("destination_port");
+            }
+            const int port = readPort(portValue);
+            QString   destination = host;
+            if (port > 0) {
+              destination += ":" + QString::number(port);
+            }
+            setCell(i, 1, destination);
             setCell(i, 2, metadata["network"].toString());
             setCell(i, 3, conn["rule"].toString());
             setCell(i, 4,

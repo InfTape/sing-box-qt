@@ -744,6 +744,28 @@ void HomeView::refreshDataUsageTable() {
     }
     return value.toVariant().toLongLong();
   };
+  auto sanitizeHostLabel = [](const QString& raw) -> QString {
+    QString text = raw.trimmed();
+    if (text.isEmpty()) return text;
+    if (text.startsWith('[')) {
+      const int end = text.indexOf(']');
+      if (end > 1) {
+        return text.mid(1, end - 1);
+      }
+    }
+    if (text.count(':') >= 2) {
+      return text;
+    }
+    const int colonPos = text.lastIndexOf(':');
+    if (colonPos > 0 && colonPos + 1 < text.size()) {
+      bool ok = false;
+      text.mid(colonPos + 1).toInt(&ok);
+      if (ok) {
+        return text.left(colonPos);
+      }
+    }
+    return text;
+  };
 
   const int topLimit = 5;
   const int topCount = qMin(entries.size(), topLimit);
@@ -769,13 +791,16 @@ void HomeView::refreshDataUsageTable() {
 
       QString displayLabel = label;
       if (typeKey == "host") {
-          QHostAddress addr;
-          if (!addr.setAddress(label)) {
-              const QStringList parts = label.split('.');
-              if (parts.size() > 2) {
-                  displayLabel = parts.at(parts.size() - 2) + "." + parts.at(parts.size() - 1);
-              }
+        const QString hostLabel = sanitizeHostLabel(label);
+        displayLabel = hostLabel;
+        QHostAddress addr;
+        if (!addr.setAddress(hostLabel)) {
+          const QStringList parts = hostLabel.split('.');
+          if (parts.size() > 2) {
+            displayLabel =
+                parts.at(parts.size() - 2) + "." + parts.at(parts.size() - 1);
           }
+        }
       }
 
       QTableWidgetItem* nameItem = new QTableWidgetItem(displayLabel);
