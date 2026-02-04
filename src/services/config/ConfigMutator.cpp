@@ -1,5 +1,6 @@
 #include "services/config/ConfigMutator.h"
 
+#include <QDir>
 #include <QHostAddress>
 #include <QSet>
 #include <QStringList>
@@ -8,6 +9,7 @@
 #include "services/config/ConfigBuilder.h"
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
+#include "utils/AppPaths.h"
 #include "utils/Logger.h"
 namespace {
 bool isIpAddress(const QString& value) {
@@ -125,6 +127,14 @@ int findInsertIndex(const QJsonArray& rules) {
     insertIndex = 0;
   return insertIndex;
 }
+void normalizeCacheFileConfig(QJsonObject& experimental) {
+  QJsonObject cacheFile = experimental.value("cache_file").toObject();
+  cacheFile["enabled"]  = cacheFile.value("enabled").toBool(true);
+  if (cacheFile.value("path").toString().trimmed().isEmpty()) {
+    cacheFile["path"] = QDir(appDataDir()).filePath("cache.db");
+  }
+  experimental["cache_file"] = cacheFile;
+}
 }  // namespace
 bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
   QJsonArray outbounds = config.value("outbounds").toArray();
@@ -220,7 +230,8 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       QString("127.0.0.1:%1").arg(settings.apiPort());
   clashApi["external_ui_download_detour"] = settings.normalizedDownloadDetour();
   experimental["clash_api"]               = clashApi;
-  config["experimental"]                  = experimental;
+  normalizeCacheFileConfig(experimental);
+  config["experimental"] = experimental;
 
   QJsonObject dns = config.value("dns").toObject();
   dns["strategy"] = settings.dnsStrategy();
@@ -496,9 +507,7 @@ bool ConfigMutator::updateClashDefaultMode(QJsonObject&   config,
   }
   experimental["clash_api"] = clashApi;
 
-  QJsonObject cacheFile      = experimental.value("cache_file").toObject();
-  cacheFile["enabled"]       = cacheFile.value("enabled").toBool(true);
-  experimental["cache_file"] = cacheFile;
+  normalizeCacheFileConfig(experimental);
 
   config["experimental"] = experimental;
   return true;

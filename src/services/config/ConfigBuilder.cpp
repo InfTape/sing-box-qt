@@ -1,9 +1,11 @@
 #include "services/config/ConfigBuilder.h"
 
+#include <QDir>
 #include <QStringList>
 
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
+#include "utils/AppPaths.h"
 namespace {
 QJsonObject makeRemoteRuleSet(const QString& tag, const QString& url,
                               const QString& downloadDetour,
@@ -356,6 +358,7 @@ QJsonObject ConfigBuilder::buildExperimental() {
 
   QJsonObject cacheFile;
   cacheFile["enabled"] = true;
+  cacheFile["path"]    = QDir(appDataDir()).filePath("cache.db");
 
   QJsonObject experimental;
   experimental["clash_api"]  = clashApi;

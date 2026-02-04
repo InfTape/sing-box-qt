@@ -1,5 +1,6 @@
 #include "KernelRunner.h"
 
+#include <QDir>
 #include <QFile>
 #include <QProcessEnvironment>
 #include <QRegularExpression>
@@ -65,6 +66,15 @@ bool KernelRunner::start(const QString& configPath) {
           &KernelRunner::onReadyReadStandardOutput);
   connect(m_process, &QProcess::readyReadStandardError, this,
           &KernelRunner::onReadyReadStandardError);
+
+  const QString workDir = appDataDir();
+  if (!QDir().mkpath(workDir)) {
+    m_lastError = tr("Failed to prepare working directory");
+    Logger::error(QString("%1: %2").arg(m_lastError, workDir));
+    emit errorOccurred(m_lastError);
+    return false;
+  }
+  m_process->setWorkingDirectory(workDir);
 
   QStringList args;
   args << "run" << "-c" << m_configPath;

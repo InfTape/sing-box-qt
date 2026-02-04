@@ -196,6 +196,15 @@ bool KernelService::ensureManagerReady(QString* error) {
     if (!m_managerProcess) {
       m_managerProcess = new QProcess(this);
     }
+    const QString workDir = appDataDir();
+    if (!QDir().mkpath(workDir)) {
+      Logger::error(QString("Failed to prepare working directory: %1").arg(workDir));
+      if (error) {
+        *error = tr("Failed to prepare working directory");
+      }
+      return false;
+    }
+    m_managerProcess->setWorkingDirectory(workDir);
     QStringList args;
     args << "--control-name" << m_serverName;
     m_managerProcess->start(exePath, args);
