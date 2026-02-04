@@ -125,7 +125,8 @@ bool ProxyController::setSystemProxyEnabled(bool enabled) {
     m_systemProxy->clearProxy();
     m_settings->setSystemProxyEnabled(false);
   }
-  return applySettingsToActiveConfig(true);
+  // System proxy toggle should not force a kernel restart.
+  return applySettingsToActiveConfig(false);
 }
 bool ProxyController::setTunModeEnabled(bool enabled) {
   m_settings->setTunEnabled(enabled);
