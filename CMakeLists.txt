@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(sing-box-qt VERSION 1.0.0 LANGUAGES CXX)
+project(sing-box-qt VERSION 1.1.2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -315,6 +315,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_include_directories(sing-box-core-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# Tests.
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
 
 # Install configuration.
 install(TARGETS ${PROJECT_NAME}

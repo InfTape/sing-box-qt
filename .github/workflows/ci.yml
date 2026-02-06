@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-test:
+    name: Unit Tests + Coverage
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            python3-pip
+          python3 -m pip install --upgrade gcovr
+
+      - name: Configure
+        run: >
+          cmake -S test -B build/test -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="--coverage -O0 -g"
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+
+      - name: Build
+        run: cmake --build build/test --config Debug
+
+      - name: Run tests
+        run: ctest --test-dir build/test --output-on-failure -C Debug
+
+      - name: Coverage gate
+        run: >
+          python3 -m gcovr
+          --root .
+          build/test
+          --filter "src/utils/.*"
+          --filter "test/unit_utils_test.cpp"
+          --exclude "test/build/.*"
+          --exclude ".*mocs_compilation.*"
+          --exclude ".*autogen.*"
+          --print-summary
+          --xml-pretty
+          --output build/test/coverage.xml
+          --fail-under-line 70
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/test/coverage.xml
+
+  clang-tidy:
+    name: Clang-Tidy
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            clang-tidy
+
+      - name: Configure (with clang-tidy)
+        run: >
+          cmake -S test -B build/test-tidy -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+
+      - name: Build (run clang-tidy)
+        run: cmake --build build/test-tidy --config Debug

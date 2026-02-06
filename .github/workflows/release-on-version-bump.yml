@@ -1,0 +1,123 @@
+name: Release On Version Bump
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - CMakeLists.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-version:
+    name: Detect Version Change
+    runs-on: ubuntu-24.04
+    outputs:
+      current_version: ${{ steps.detect.outputs.current_version }}
+      previous_version: ${{ steps.detect.outputs.previous_version }}
+      version_changed: ${{ steps.detect.outputs.version_changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse version from CMakeLists.txt
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          pattern='project[[:space:]]*\([[:space:]]*sing-box-qt[[:space:]]+VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+)'
+
+          current_version="$(perl -ne "if (/$pattern/i){print \$1; exit}" CMakeLists.txt || true)"
+          if [[ -z "$current_version" ]]; then
+            echo "Cannot parse current version from CMakeLists.txt"
+            exit 1
+          fi
+
+          previous_version=""
+          before_sha="${{ github.event.before }}"
+          if [[ -n "${before_sha:-}" && "$before_sha" != "0000000000000000000000000000000000000000" ]]; then
+            if git cat-file -e "${before_sha}:CMakeLists.txt" 2>/dev/null; then
+              previous_version="$(git show "${before_sha}:CMakeLists.txt" | perl -ne "if (/$pattern/i){print \$1; exit}" || true)"
+            fi
+          fi
+
+          version_changed="false"
+          if [[ "$current_version" != "$previous_version" ]]; then
+            version_changed="true"
+          fi
+
+          echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
+          echo "previous_version=$previous_version" >> "$GITHUB_OUTPUT"
+          echo "version_changed=$version_changed" >> "$GITHUB_OUTPUT"
+
+          echo "Current version: $current_version"
+          echo "Previous version: ${previous_version:-<none>}"
+          echo "Version changed: $version_changed"
+
+  build-and-release:
+    name: Build Portable And Publish Release
+    needs: detect-version
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-version.outputs.version_changed == 'true' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.10.1
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: Prepare build environment
+        shell: pwsh
+        run: |
+          if (-not $env:Qt6_DIR) {
+            throw "Qt6_DIR is missing after Qt installation."
+          }
+          $qtRoot = (Resolve-Path (Join-Path $env:Qt6_DIR "..\\..\\..")).Path
+          $cmakeExe = (Get-Command cmake).Source
+          "QT_ROOT=$qtRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CMAKE_BIN=$cmakeExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build portable package
+        shell: pwsh
+        run: |
+          ./pack.ps1
+          if (!(Test-Path "sing-box-qt-portable.zip")) {
+            throw "Portable package not found: sing-box-qt-portable.zip"
+          }
+          $version = "${{ needs.detect-version.outputs.current_version }}"
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Version is empty."
+          }
+          Copy-Item "sing-box-qt-portable.zip" "sing-box-qt-portable-v$version.zip" -Force
+
+      - name: Publish release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.detect-version.outputs.current_version }}
+          name: sing-box-qt v${{ needs.detect-version.outputs.current_version }}
+          artifacts: sing-box-qt-portable-v${{ needs.detect-version.outputs.current_version }}.zip
+          allowUpdates: true
+          replacesArtifacts: true
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
