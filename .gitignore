@@ -1,7 +1,20 @@
-# Build directories
+# Build output
 build/
+dist/
 cmake-build-*/
 out/
+debug/
+release/
+sing-box-qt-portable/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+GeneratedFiles/
+*.generated.*
 
 # Qt Creator generated files
 .qtcreator/
@@ -16,12 +29,13 @@ qrc_*.cpp
 ui_*.h
 *.autosave
 
-# CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-compile_commands.json
+# IDE specific
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
 
 # Build artifacts
 *.o
@@ -39,28 +53,10 @@ compile_commands.json
 # Database files
 *.db
 
-# IDE specific
-.vs/
-.vscode/
-*.suo
-*.user
-*.sln.docstates
-.idea/
-
-# Debug directories
-debug/
-release/
-
-# Generated files
-*.generated.*
-GeneratedFiles/
-
-# Windows specific
+# OS specific
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-
-# macOS specific
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -74,8 +70,8 @@ Desktop.ini
 
 # Logs
 *.log
-sing-box-qt-portable.zip
-sing-box-qt-portable/
+
+# Project-specific
 metacubexd/
 1.txt
 src/sing-box
