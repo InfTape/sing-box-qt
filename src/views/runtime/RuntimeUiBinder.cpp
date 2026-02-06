@@ -8,6 +8,7 @@
 #include "views/logs/LogView.h"
 #include "views/proxy/ProxyView.h"
 #include "views/rules/RulesView.h"
+
 RuntimeUiBinder::RuntimeUiBinder(ProxyRuntimeController* runtime, HomeView* home, ConnectionsView* connections,
                                  ProxyView* proxy, RulesView* rules, LogView* log, QPushButton* startStopBtn)
     : m_runtime(runtime),
@@ -17,6 +18,7 @@ RuntimeUiBinder::RuntimeUiBinder(ProxyRuntimeController* runtime, HomeView* home
       m_rules(rules),
       m_log(log),
       m_startStopBtn(startStopBtn) {}
+
 void RuntimeUiBinder::bind() {
   if (!m_runtime) return;
   // Kernel running state → UI (status, auto refresh, button text)

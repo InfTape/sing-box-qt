@@ -1,4 +1,5 @@
 #include "utils/proxy/ProxyNodeHelper.h"
+
 QString ProxyNodeHelper::delayStateFromText(const QString& delayText) {
   if (delayText.isEmpty() || delayText == "...") {
     return "loading";

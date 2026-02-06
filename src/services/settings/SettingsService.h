@@ -2,6 +2,7 @@
 #define SETTINGSSERVICE_H
 #include <QString>
 #include "models/SettingsModel.h"
+
 class SettingsService {
  public:
   static SettingsModel::Data loadSettings();

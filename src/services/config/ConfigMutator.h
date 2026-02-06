@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
+
 class ConfigMutator {
  public:
   static bool    injectNodes(QJsonObject& config, const QJsonArray& nodes);

@@ -1,5 +1,6 @@
 #include "utils/subscription/SubscriptionUserinfo.h"
 #include <QStringList>
+
 namespace SubscriptionUserinfo {
 QJsonObject parseUserinfoHeader(const QByteArray& header) {
   QJsonObject info;

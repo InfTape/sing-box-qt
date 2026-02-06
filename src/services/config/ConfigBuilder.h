@@ -2,6 +2,7 @@
 #define CONFIGBUILDER_H
 #include <QJsonArray>
 #include <QJsonObject>
+
 class ConfigBuilder {
  public:
   static QJsonObject buildBaseConfig();

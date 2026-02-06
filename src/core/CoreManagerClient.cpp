@@ -1,31 +1,38 @@
 #include "CoreManagerClient.h"
 #include <QJsonDocument>
 #include <QJsonValue>
+
 CoreManagerClient::CoreManagerClient(QObject* parent) : QObject(parent), m_socket(new QLocalSocket(this)) {
   connect(m_socket, &QLocalSocket::readyRead, this, &CoreManagerClient::onReadyRead);
   connect(m_socket, &QLocalSocket::connected, this, &CoreManagerClient::connected);
   connect(m_socket, &QLocalSocket::disconnected, this, &CoreManagerClient::onDisconnected);
 }
+
 void CoreManagerClient::connectToServer(const QString& name) {
   if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState) {
     return;
   }
   m_socket->connectToServer(name);
 }
+
 void CoreManagerClient::disconnectFromServer() {
   if (m_socket->state() != QLocalSocket::UnconnectedState) {
     m_socket->disconnectFromServer();
   }
 }
+
 bool CoreManagerClient::isConnected() const {
   return m_socket->state() == QLocalSocket::ConnectedState;
 }
+
 bool CoreManagerClient::waitForConnected(int timeoutMs) {
   return m_socket->waitForConnected(timeoutMs);
 }
+
 void CoreManagerClient::abort() {
   m_socket->abort();
 }
+
 void CoreManagerClient::sendRequest(int id, const QString& method, const QJsonObject& params) {
   QJsonObject obj;
   obj["id"]     = id;
@@ -37,6 +44,7 @@ void CoreManagerClient::sendRequest(int id, const QString& method, const QJsonOb
   m_socket->write(payload);
   m_socket->flush();
 }
+
 void CoreManagerClient::onReadyRead() {
   m_buffer.append(m_socket->readAll());
   while (true) {
@@ -54,9 +62,11 @@ void CoreManagerClient::onReadyRead() {
     handleMessage(doc.object());
   }
 }
+
 void CoreManagerClient::onDisconnected() {
   emit disconnected();
 }
+
 void CoreManagerClient::handleMessage(const QJsonObject& obj) {
   const QString event = obj.value("event").toString();
   if (!event.isEmpty()) {

@@ -7,6 +7,7 @@
 #include "core/ProxyController.h"
 #include "core/ProxyService.h"
 #include "core/DataUsageTracker.h"
+
 ProxyRuntimeController::ProxyRuntimeController(KernelService* kernelService, ProxyService* proxyService,
                                                ProxyController* proxyController, QObject* parent)
     : QObject(parent),
@@ -38,15 +39,18 @@ ProxyRuntimeController::ProxyRuntimeController(KernelService* kernelService, Pro
     connect(m_proxyService, &ProxyService::connectionsReceived, this, &ProxyRuntimeController::handleConnectionsJson);
   }
 }
+
 bool ProxyRuntimeController::isKernelRunning() const {
   return m_kernelService && m_kernelService->isRunning();
 }
+
 void ProxyRuntimeController::broadcastStates() {
   onKernelStatusChanged(isKernelRunning());
   if (m_dataUsageTracker) {
     emit dataUsageUpdated(m_dataUsageTracker->snapshot());
   }
 }
+
 void ProxyRuntimeController::onKernelStatusChanged(bool running) {
   emit kernelRunningChanged(running);
   if (m_proxyService) {
@@ -74,6 +78,7 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
     QTimer::singleShot(1200, this, &ProxyRuntimeController::refreshRulesViewRequested);
   }
 }
+
 void ProxyRuntimeController::handleConnectionsJson(const QJsonObject& connections) {
   const QJsonArray conns       = connections.value("connections").toArray();
   QJsonValue       memoryValue = connections.value("memory");
@@ -89,6 +94,7 @@ void ProxyRuntimeController::handleConnectionsJson(const QJsonObject& connection
     m_dataUsageTracker->updateFromConnections(connections);
   }
 }
+
 void ProxyRuntimeController::clearDataUsage() {
   if (m_dataUsageTracker) {
     m_dataUsageTracker->reset();

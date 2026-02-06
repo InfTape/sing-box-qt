@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QWebSocket>
+
 class WebSocketClient : public QObject {
   Q_OBJECT
  public:

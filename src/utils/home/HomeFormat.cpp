@@ -1,4 +1,5 @@
 #include "utils/home/HomeFormat.h"
+
 namespace HomeFormat {
 QString bytes(qint64 bytes) {
   if (bytes <= 0) return QStringLiteral("0 B");
@@ -11,6 +12,7 @@ QString bytes(qint64 bytes) {
   }
   return QString::number(size, 'f', unitIndex > 0 ? 2 : 0) + " " + units[unitIndex];
 }
+
 QString duration(int seconds) {
   int hours   = seconds / 3600;
   int minutes = (seconds % 3600) / 60;

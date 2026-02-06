@@ -1,5 +1,6 @@
 #include "utils/subscription/SubscriptionActions.h"
 #include "network/SubscriptionService.h"
+
 namespace SubscriptionActions {
 bool useSubscription(SubscriptionService* service, const QString& id) {
   if (!service) return false;
@@ -20,10 +21,12 @@ bool useSubscription(SubscriptionService* service, const QString& id) {
   }
   return true;
 }
+
 void refreshSubscription(SubscriptionService* service, const QString& id, bool applyRuntime) {
   if (!service) return;
   service->refreshSubscription(id, applyRuntime);
 }
+
 bool rollbackSubscription(SubscriptionService* service, const QString& id) {
   if (!service) return false;
   const QList<SubscriptionInfo> subs = service->getSubscriptions();

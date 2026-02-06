@@ -8,6 +8,7 @@
 #include <wininet.h>
 #endif
 SystemProxy::SystemProxy(QObject* parent) : QObject(parent) {}
+
 bool SystemProxy::setProxy(const QString& host, int port) {
 #ifdef Q_OS_WIN
   QString proxyServer = QString("%1:%2").arg(host).arg(port);
@@ -33,6 +34,7 @@ bool SystemProxy::setProxy(const QString& host, int port) {
   return false;
 #endif
 }
+
 bool SystemProxy::clearProxy() {
 #ifdef Q_OS_WIN
   QSettings settings(
@@ -48,6 +50,7 @@ bool SystemProxy::clearProxy() {
   return false;
 #endif
 }
+
 bool SystemProxy::isProxyEnabled() {
 #ifdef Q_OS_WIN
   QSettings settings(
@@ -59,6 +62,7 @@ bool SystemProxy::isProxyEnabled() {
   return false;
 #endif
 }
+
 QString SystemProxy::getProxyHost() {
 #ifdef Q_OS_WIN
   QSettings settings(
@@ -75,6 +79,7 @@ QString SystemProxy::getProxyHost() {
   return QString();
 #endif
 }
+
 int SystemProxy::getProxyPort() {
 #ifdef Q_OS_WIN
   QSettings settings(
@@ -91,6 +96,7 @@ int SystemProxy::getProxyPort() {
   return 0;
 #endif
 }
+
 bool SystemProxy::setPacProxy(const QString& pacUrl) {
 #ifdef Q_OS_WIN
   QSettings settings(
@@ -107,6 +113,7 @@ bool SystemProxy::setPacProxy(const QString& pacUrl) {
   return false;
 #endif
 }
+
 void SystemProxy::refreshSettings() {
 #ifdef Q_OS_WIN
   // Notify the system that proxy settings changed.

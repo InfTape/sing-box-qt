@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QStandardPaths>
 #include <QString>
+
 inline QString appDataRoot() {
   QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #ifdef Q_OS_WIN
@@ -18,6 +19,7 @@ inline QString appDataRoot() {
 #endif
   return QDir(path).absolutePath();
 }
+
 inline QString appDataDir() {
   return QDir(appDataRoot()).filePath("sing-box-qt");
 }

@@ -2,6 +2,7 @@
 #define CONFIGIO_H
 #include <QJsonObject>
 #include <QString>
+
 namespace ConfigIO {
 QString     getConfigDir();
 QString     getActiveConfigPath();

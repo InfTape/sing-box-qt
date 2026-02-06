@@ -7,23 +7,25 @@ class SubscriptionService;
 class ConfigRepository;
 class SettingsStore;
 class SystemProxyGateway;
+
 class ProxyController : public QObject {
   Q_OBJECT
  public:
   explicit ProxyController(KernelService* kernel, SubscriptionService* subscription = nullptr,
                            ConfigRepository* configRepo = nullptr, SettingsStore* settings = nullptr,
                            SystemProxyGateway* systemProxy = nullptr, QObject* parent = nullptr);
-  void           setSubscriptionService(SubscriptionService* service);
-  QString        activeConfigPath() const;
-  QString        currentProxyMode() const;
-  bool           startKernel();
-  void           stopKernel();
-  bool           toggleKernel();
-  bool           setProxyMode(const QString& mode, bool restartIfRunning, QString* error = nullptr);
-  bool           restartKernelWithConfig(const QString& configPath);
-  bool           setSystemProxyEnabled(bool enabled);
-  bool           setTunModeEnabled(bool enabled);
-  void           updateSystemProxyForKernelState(bool running);
+  void    setSubscriptionService(SubscriptionService* service);
+  QString activeConfigPath() const;
+  QString currentProxyMode() const;
+  bool    startKernel();
+  void    stopKernel();
+  bool    toggleKernel();
+  bool    setProxyMode(const QString& mode, bool restartIfRunning, QString* error = nullptr);
+  bool    restartKernelWithConfig(const QString& configPath);
+  bool    setSystemProxyEnabled(bool enabled);
+  bool    setTunModeEnabled(bool enabled);
+  void    updateSystemProxyForKernelState(bool running);
+
   KernelService* kernel() const { return m_kernel; }
 
  private:

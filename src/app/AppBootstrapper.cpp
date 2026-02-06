@@ -11,8 +11,11 @@
 #include "app/TrayIcon.h"
 #include "storage/DatabaseService.h"
 #include "utils/Logger.h"
+
 AppBootstrapper::AppBootstrapper(QApplication& app) : m_app(app) {}
+
 AppBootstrapper::~AppBootstrapper() = default;
+
 bool AppBootstrapper::initialize() {
   setupMeta();
   setupStyle();
@@ -31,6 +34,7 @@ bool AppBootstrapper::initialize() {
   loadTranslations();
   return true;
 }
+
 bool AppBootstrapper::createUI() {
   if (!m_context && !initialize()) {
     return false;
@@ -53,6 +57,7 @@ bool AppBootstrapper::createUI() {
   Logger::info("Application initialized, UI ready");
   return true;
 }
+
 void AppBootstrapper::showMainWindow(bool startHidden) {
   if (!m_mainWindow) return;
   if (!startHidden) {
@@ -60,12 +65,15 @@ void AppBootstrapper::showMainWindow(bool startHidden) {
   }
   Logger::info("Application started");
 }
+
 MainWindow* AppBootstrapper::mainWindow() const {
   return m_mainWindow.get();
 }
+
 AppContext* AppBootstrapper::context() const {
   return m_context.get();
 }
+
 void AppBootstrapper::setupMeta() {
   m_app.setApplicationName("Sing-Box——Qt");
   m_app.setApplicationVersion("1.1.1");
@@ -73,9 +81,11 @@ void AppBootstrapper::setupMeta() {
   m_app.setOrganizationDomain("github.com/inftape");
   m_app.setWindowIcon(QIcon(":/icons/app.png"));
 }
+
 void AppBootstrapper::setupStyle() {
   m_app.setStyle(QStyleFactory::create("Fusion"));
 }
+
 void AppBootstrapper::setupFont() {
   QStringList families;
   families << "Microsoft YaHei"
@@ -91,6 +101,7 @@ void AppBootstrapper::setupFont() {
   m_app.setProperty("appFontFamilyList", families.join("','"));
   Logger::info("Default font set: Microsoft YaHei");
 }
+
 bool AppBootstrapper::setupDatabase() {
   if (!DatabaseService::instance().init()) {
     Logger::error("Database initialization failed");
@@ -98,6 +109,7 @@ bool AppBootstrapper::setupDatabase() {
   }
   return true;
 }
+
 void AppBootstrapper::loadTranslations() {
   const QStringList uiLanguages = QLocale::system().uiLanguages();
   for (const QString& locale : uiLanguages) {

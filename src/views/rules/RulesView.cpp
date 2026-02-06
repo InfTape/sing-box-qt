@@ -33,6 +33,7 @@
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/rules/RuleCard.h"
+
 RulesView::RulesView(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_configRepo(configRepo), m_themeService(themeService) {
   setupUI();
@@ -41,6 +42,7 @@ RulesView::RulesView(ConfigRepository* configRepo, ThemeService* themeService, Q
     connect(m_themeService, &ThemeService::themeChanged, this, &RulesView::updateStyle);
   }
 }
+
 void RulesView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
@@ -140,6 +142,7 @@ void RulesView::setupUI() {
   connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);
   connect(m_proxyFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);
 }
+
 void RulesView::setProxyService(ProxyService* service) {
   m_proxyService = service;
   if (!m_proxyService) return;
@@ -169,6 +172,7 @@ void RulesView::setProxyService(ProxyService* service) {
     applyFilters();
   });
 }
+
 void RulesView::refresh() {
   if (!m_proxyService) return;
   m_loading = true;
@@ -176,9 +180,11 @@ void RulesView::refresh() {
   m_refreshBtn->setText(tr("Loading..."));
   m_proxyService->fetchRules();
 }
+
 void RulesView::onRefreshClicked() {
   refresh();
 }
+
 void RulesView::onEmptyActionClicked() {
   const bool hasFilters = !m_searchEdit->text().trimmed().isEmpty() ||
                           !m_typeFilter->currentData().toString().isEmpty() ||
@@ -191,6 +197,7 @@ void RulesView::onEmptyActionClicked() {
     refresh();
   }
 }
+
 void RulesView::onAddRuleClicked() {
   QString           error;
   const QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, QString(), &error);
@@ -220,12 +227,15 @@ void RulesView::onAddRuleClicked() {
   box->setAttribute(Qt::WA_DeleteOnClose);
   box->open();
 }
+
 void RulesView::onSearchChanged() {
   applyFilters();
 }
+
 void RulesView::onFilterChanged() {
   applyFilters();
 }
+
 void RulesView::applyFilters() {
   const QString query      = m_searchEdit->text().trimmed();
   const QString typeValue  = m_typeFilter->currentData().toString();
@@ -263,6 +273,7 @@ void RulesView::applyFilters() {
   }
   updateEmptyState();
 }
+
 void RulesView::updateFilterOptions() {
   const QString          currentType  = m_typeFilter->currentData().toString();
   const QString          currentProxy = m_proxyFilter->currentData().toString();
@@ -318,12 +329,14 @@ void RulesView::updateFilterOptions() {
   m_proxyFilter->setCurrentIndex(proxyIndex < 0 ? 0 : proxyIndex);
   m_proxyFilter->blockSignals(false);
 }
+
 void RulesView::sortRules() {
   std::stable_sort(m_rules.begin(), m_rules.end(), [](const RuleItem& a, const RuleItem& b) {
     if (a.isCustom != b.isCustom) return a.isCustom && !b.isCustom;
     return false;
   });
 }
+
 void RulesView::rebuildCards() {
   if (!m_gridLayout || !m_gridContainer) return;
   const auto runningAnimations = m_gridContainer->findChildren<QAbstractAnimation*>();
@@ -349,6 +362,7 @@ void RulesView::rebuildCards() {
     m_cards.append(card);
   }
 }
+
 void RulesView::layoutCards() {
   if (!m_gridLayout || !m_scrollArea || !m_gridContainer) return;
   const int  previousColumns   = m_columnCount;
@@ -400,6 +414,7 @@ void RulesView::layoutCards() {
     CardGridAnimation::animateReflow(m_gridContainer, widgets, oldGeometries, previousColumns, columns);
   }
 }
+
 void RulesView::updateEmptyState() {
   const bool hasFilters = !m_searchEdit->text().trimmed().isEmpty() ||
                           !m_typeFilter->currentData().toString().isEmpty() ||
@@ -414,6 +429,7 @@ void RulesView::updateEmptyState() {
     m_scrollArea->show();
   }
 }
+
 void RulesView::handleEditRule(const RuleItem& rule) {
   QString           error;
   const QString     outbound     = RuleUtils::normalizeProxyValue(rule.proxy);
@@ -449,6 +465,7 @@ void RulesView::handleEditRule(const RuleItem& rule) {
   updateFilterOptions();
   applyFilters();
 }
+
 void RulesView::handleDeleteRule(const RuleItem& rule) {
   const QMessageBox::StandardButton btn =
       QMessageBox::question(this, tr("Delete Rule"), tr("Delete this custom rule?"));
@@ -467,20 +484,24 @@ void RulesView::handleDeleteRule(const RuleItem& rule) {
   updateFilterOptions();
   applyFilters();
 }
+
 void RulesView::updateStyle() {
   ThemeService* ts = m_themeService;
   if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/rules_view.qss"));
 }
+
 void RulesView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   if (!m_cards.isEmpty()) layoutCards();
 }
+
 bool RulesView::eventFilter(QObject* watched, QEvent* event) {
   if (m_scrollArea && watched == m_scrollArea->viewport() && event->type() == QEvent::Resize) {
     if (!m_cards.isEmpty()) layoutCards();
   }
   return QWidget::eventFilter(watched, event);
 }
+
 void RulesView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
   if (m_cards.isEmpty()) return;

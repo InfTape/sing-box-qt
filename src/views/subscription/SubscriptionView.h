@@ -17,6 +17,7 @@ class NodeEditDialog;
 class SubscriptionService;
 class ThemeService;
 struct SubscriptionInfo;
+
 class SubscriptionView : public QWidget {
   Q_OBJECT
  public:

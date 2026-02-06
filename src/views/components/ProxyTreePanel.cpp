@@ -4,6 +4,7 @@
 #include <QHeaderView>
 #include <QTreeWidget>
 #include <QVBoxLayout>
+
 ProxyTreePanel::ProxyTreePanel(QWidget* parent) : QFrame(parent) {
   setObjectName("TreeCard");
   auto* rootLayout = new QVBoxLayout(this);

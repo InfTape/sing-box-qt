@@ -13,6 +13,7 @@ class ProxyViewController;
 class ProxyToolbar;
 class ProxyTreePanel;
 class ProxyTreePresenter;
+
 class ProxyView : public QWidget {
   Q_OBJECT
  public:

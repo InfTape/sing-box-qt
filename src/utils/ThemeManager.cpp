@@ -7,15 +7,19 @@
 #include <QSettings>
 #include "storage/DatabaseService.h"
 #include "utils/Logger.h"
+
 ThemeManager& ThemeManager::instance() {
   static ThemeManager instance;
   return instance;
 }
+
 ThemeManager::ThemeManager(QObject* parent)
     : QObject(parent),
       m_currentMode(Dark)  // Default to dark.
 {}
+
 ThemeManager::~ThemeManager() {}
+
 void ThemeManager::init() {
   // Load theme settings from database.
   QJsonObject themeConfig = DatabaseService::instance().getThemeConfig();
@@ -31,6 +35,7 @@ void ThemeManager::init() {
   loadThemeColors();
   updateApplicationStyle();
 }
+
 void ThemeManager::setThemeMode(ThemeMode mode) {
   m_currentMode = mode;
   loadThemeColors();
@@ -41,9 +46,11 @@ void ThemeManager::setThemeMode(ThemeMode mode) {
   DatabaseService::instance().saveThemeConfig(config);
   emit themeChanged();
 }
+
 ThemeManager::ThemeMode ThemeManager::getThemeMode() const {
   return m_currentMode;
 }
+
 void ThemeManager::loadThemeColors() {
   m_colors.clear();
   // Base palette (Tailwind CSS style).
@@ -114,6 +121,7 @@ void ThemeManager::loadThemeColors() {
   addAlpha("error-30", QColor(m_colors["error"]), 0.30);
   addAlpha("error-40", QColor(m_colors["error"]), 0.40);
 }
+
 ThemeManager::ThemeMode ThemeManager::resolveModeForColors() const {
   if (m_currentMode != Auto) {
     return m_currentMode;
@@ -129,12 +137,15 @@ ThemeManager::ThemeMode ThemeManager::resolveModeForColors() const {
   return Dark;
 #endif
 }
+
 QColor ThemeManager::getColor(const QString& key) const {
   return QColor(m_colors.value(key, "#000000"));
 }
+
 QString ThemeManager::getColorString(const QString& key) const {
   return m_colors.value(key, "#000000");
 }
+
 QString ThemeManager::getGlobalStyleSheet() const {
   QString family = qApp->property("appFontFamily").toString();
   if (family.isEmpty()) {
@@ -155,9 +166,11 @@ QString ThemeManager::getGlobalStyleSheet() const {
   extra.insert("font-family-list", familyList);
   return loadStyleSheet(":/styles/global.qss", extra);
 }
+
 QString ThemeManager::getLogViewStyle() const {
   return loadStyleSheet(":/styles/log_view.qss");
 }
+
 QString ThemeManager::loadStyleSheet(const QString& resourcePath, const QMap<QString, QString>& extra) const {
   QFile file(resourcePath);
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -174,6 +187,7 @@ QString ThemeManager::loadStyleSheet(const QString& resourcePath, const QMap<QSt
   }
   return qss;
 }
+
 void ThemeManager::updateApplicationStyle() {
   const QString family = qApp->property("appFontFamily").toString();
   if (!family.isEmpty()) {

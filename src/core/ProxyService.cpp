@@ -4,6 +4,7 @@
 #include "network/HttpClient.h"
 #include "network/WebSocketClient.h"
 #include "utils/Logger.h"
+
 ProxyService::ProxyService(QObject* parent)
     : QObject(parent), m_httpClient(new HttpClient(this)), m_wsClient(new WebSocketClient(this)), m_apiPort(9090) {
   connect(m_wsClient, &WebSocketClient::messageReceived, this, [this](const QString& message) {
@@ -16,23 +17,30 @@ ProxyService::ProxyService(QObject* parent)
     }
   });
 }
+
 ProxyService::~ProxyService() {}
+
 void ProxyService::setApiPort(int port) {
   m_apiPort = port;
 }
+
 int ProxyService::getApiPort() const {
   return m_apiPort;
 }
+
 void ProxyService::setApiToken(const QString& token) {
   m_apiToken = token;
   m_httpClient->setAuthToken(token);
 }
+
 QString ProxyService::getApiToken() const {
   return m_apiToken;
 }
+
 QString ProxyService::buildApiUrl(const QString& path) const {
   return QString("http://127.0.0.1:%1%2").arg(m_apiPort).arg(path);
 }
+
 void ProxyService::fetchProxies() {
   QString url = buildApiUrl("/proxies");
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
@@ -46,6 +54,7 @@ void ProxyService::fetchProxies() {
     }
   });
 }
+
 void ProxyService::fetchRules() {
   QString url = buildApiUrl("/rules");
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
@@ -59,6 +68,7 @@ void ProxyService::fetchRules() {
     }
   });
 }
+
 void ProxyService::fetchConnections() {
   QString url = buildApiUrl("/connections");
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
@@ -72,6 +82,7 @@ void ProxyService::fetchConnections() {
     }
   });
 }
+
 void ProxyService::selectProxy(const QString& group, const QString& proxy) {
   const QString groupPath = QString::fromUtf8(QUrl::toPercentEncoding(group));
   QString       url       = buildApiUrl(QString("/proxies/%1").arg(groupPath));
@@ -88,6 +99,7 @@ void ProxyService::selectProxy(const QString& group, const QString& proxy) {
     }
   });
 }
+
 void ProxyService::setProxyMode(const QString& mode) {
   const QString normalized = mode.trimmed().toLower();
   if (normalized.isEmpty()) {
@@ -104,6 +116,7 @@ void ProxyService::setProxyMode(const QString& mode) {
     }
   });
 }
+
 void ProxyService::closeConnection(const QString& id) {
   QString url = buildApiUrl(QString("/connections/%1").arg(id));
   m_httpClient->del(url, [this](bool success, const QByteArray&) {
@@ -112,6 +125,7 @@ void ProxyService::closeConnection(const QString& id) {
     }
   });
 }
+
 void ProxyService::closeAllConnections() {
   QString url = buildApiUrl("/connections");
   m_httpClient->del(url, [this](bool success, const QByteArray&) {
@@ -122,6 +136,7 @@ void ProxyService::closeAllConnections() {
     }
   });
 }
+
 void ProxyService::startTrafficMonitor() {
   QString url = QString("ws://127.0.0.1:%1/traffic").arg(m_apiPort);
   if (!m_apiToken.isEmpty()) {
@@ -133,6 +148,7 @@ void ProxyService::startTrafficMonitor() {
   }
   m_wsClient->connect(url);
 }
+
 void ProxyService::stopTrafficMonitor() {
   m_wsClient->disconnect();
 }

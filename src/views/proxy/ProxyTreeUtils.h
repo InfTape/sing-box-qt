@@ -5,6 +5,7 @@
 class QTreeWidget;
 class QTreeWidgetItem;
 class QWidget;
+
 namespace ProxyTreeUtils {
 QString  nodeDisplayName(QTreeWidgetItem* item);
 QWidget* buildNodeRow(QTreeWidget* treeWidget, const QString& name, const QString& type, const QString& delay);

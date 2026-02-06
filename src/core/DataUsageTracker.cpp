@@ -5,6 +5,7 @@
 #include <QSet>
 #include <algorithm>
 #include "storage/DatabaseService.h"
+
 namespace {
 QString normalizeProcessLabel(const QString& process) {
   if (process.isEmpty()) return QString();
@@ -17,9 +18,11 @@ QString normalizeProcessLabel(const QString& process) {
   return process;
 }
 }  // namespace
+
 DataUsageTracker::DataUsageTracker(QObject* parent) : QObject(parent) {
   loadFromStorage();
 }
+
 void DataUsageTracker::reset() {
   for (Type type : allTypes()) {
     m_entries[static_cast<int>(type)].clear();
@@ -30,10 +33,12 @@ void DataUsageTracker::reset() {
   persistToStorage();
   emit dataUsageUpdated(snapshot());
 }
+
 void DataUsageTracker::resetSession() {
   m_lastById.clear();
   m_initialized = false;
 }
+
 QString DataUsageTracker::typeKey(Type type) {
   switch (type) {
     case Type::SourceIP:
@@ -47,9 +52,11 @@ QString DataUsageTracker::typeKey(Type type) {
   }
   return QStringLiteral("unknown");
 }
+
 QList<DataUsageTracker::Type> DataUsageTracker::allTypes() {
   return {Type::SourceIP, Type::Host, Type::Process, Type::Outbound};
 }
+
 void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload, qint64 download, qint64 nowMs) {
   if (label.isEmpty()) return;
   auto& map  = m_entries[static_cast<int>(type)];
@@ -74,6 +81,7 @@ void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload, 
   }
   entry.lastSeenMs = nowMs;
 }
+
 void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   const QJsonArray conns = connections.value("connections").toArray();
   QSet<QString>    activeIds;
@@ -142,6 +150,7 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   }
   emit dataUsageUpdated(snapshot());
 }
+
 QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(const QHash<QString, Entry>& map, int limit) const {
   QVector<Entry> entries;
   entries.reserve(map.size());
@@ -157,6 +166,7 @@ QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(const QHash<QSt
   }
   return entries;
 }
+
 DataUsageTracker::Totals DataUsageTracker::buildTotals(const QHash<QString, Entry>& map) const {
   Totals totals;
   totals.count = map.size();
@@ -178,6 +188,7 @@ DataUsageTracker::Totals DataUsageTracker::buildTotals(const QHash<QString, Entr
   }
   return totals;
 }
+
 QJsonObject DataUsageTracker::buildTypeSnapshot(Type type, int limit) const {
   const auto& map    = m_entries[static_cast<int>(type)];
   const auto  list   = sortedEntries(map, limit);
@@ -205,6 +216,7 @@ QJsonObject DataUsageTracker::buildTypeSnapshot(Type type, int limit) const {
   payload.insert("summary", summary);
   return payload;
 }
+
 QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
   QJsonObject payload;
   for (Type type : allTypes()) {
@@ -213,13 +225,16 @@ QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
   payload.insert("updatedAt", QString::number(QDateTime::currentMSecsSinceEpoch()));
   return payload;
 }
+
 void DataUsageTracker::loadFromStorage() {
   QJsonObject payload = DatabaseService::instance().getDataUsage();
   restoreFromPayload(payload);
 }
+
 void DataUsageTracker::persistToStorage() const {
   DatabaseService::instance().saveDataUsage(buildPersistPayload());
 }
+
 QJsonObject DataUsageTracker::buildPersistPayload() const {
   QJsonObject root;
   for (Type type : allTypes()) {
@@ -240,6 +255,7 @@ QJsonObject DataUsageTracker::buildPersistPayload() const {
   root.insert("updatedAt", QString::number(QDateTime::currentMSecsSinceEpoch()));
   return root;
 }
+
 void DataUsageTracker::restoreFromPayload(const QJsonObject& payload) {
   auto readLongLong = [](const QJsonValue& value) -> qint64 {
     if (value.isString()) {

@@ -4,6 +4,7 @@
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "utils/AppPaths.h"
+
 namespace {
 QJsonObject makeRemoteRuleSet(const QString& tag, const QString& url, const QString& downloadDetour,
                               const QString& updateInterval) {
@@ -17,6 +18,7 @@ QJsonObject makeRemoteRuleSet(const QString& tag, const QString& url, const QStr
   return rs;
 }
 }  // namespace
+
 QJsonObject ConfigBuilder::buildBaseConfig() {
   QJsonObject config;
   QJsonObject log;
@@ -31,6 +33,7 @@ QJsonObject ConfigBuilder::buildBaseConfig() {
   config["experimental"] = buildExperimental();
   return config;
 }
+
 QJsonObject ConfigBuilder::buildDnsConfig() {
   const AppSettings& settings        = AppSettings::instance();
   const QString      defaultOutbound = settings.normalizedDefaultOutbound();
@@ -92,6 +95,7 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   dns["final"]             = ConfigConstants::DNS_PROXY;
   return dns;
 }
+
 QJsonObject ConfigBuilder::buildRouteConfig() {
   const AppSettings& settings        = AppSettings::instance();
   const QString      defaultOutbound = settings.normalizedDefaultOutbound();
@@ -164,6 +168,7 @@ QJsonObject ConfigBuilder::buildRouteConfig() {
   route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
   return route;
 }
+
 QJsonArray ConfigBuilder::buildInbounds() {
   const AppSettings& settings = AppSettings::instance();
   QJsonArray         inbounds;
@@ -197,6 +202,7 @@ QJsonArray ConfigBuilder::buildInbounds() {
   }
   return inbounds;
 }
+
 QJsonArray ConfigBuilder::buildOutbounds() {
   const AppSettings& settings = AppSettings::instance();
   QJsonArray         outbounds;
@@ -241,6 +247,7 @@ QJsonArray ConfigBuilder::buildOutbounds() {
   outbounds.append(block);
   return outbounds;
 }
+
 QJsonArray ConfigBuilder::buildRuleSets() {
   const AppSettings& settings       = AppSettings::instance();
   const QString      downloadDetour = settings.normalizedDownloadDetour();
@@ -272,6 +279,7 @@ QJsonArray ConfigBuilder::buildRuleSets() {
                                     ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN), downloadDetour, "1d"));
   return ruleSets;
 }
+
 QJsonObject ConfigBuilder::buildExperimental() {
   const AppSettings& settings = AppSettings::instance();
   QJsonObject        clashApi;

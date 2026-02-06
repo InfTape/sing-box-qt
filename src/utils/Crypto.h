@@ -2,6 +2,7 @@
 #define CRYPTO_H
 #include <QByteArray>
 #include <QString>
+
 class Crypto {
  public:
   // Base64 encode/decode.

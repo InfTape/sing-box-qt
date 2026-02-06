@@ -1,6 +1,7 @@
 #ifndef CONFIGREPOSITORYADAPTER_H
 #define CONFIGREPOSITORYADAPTER_H
 #include "app/interfaces/ConfigRepository.h"
+
 class ConfigRepositoryAdapter : public ConfigRepository {
  public:
   QString     getConfigDir() const override;

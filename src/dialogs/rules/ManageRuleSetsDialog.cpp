@@ -13,6 +13,7 @@
 #include "services/rules/RuleConfigService.h"
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/RoundedMenu.h"
+
 ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent)
     : QDialog(parent),
       m_list(new QListWidget(this)),
@@ -43,6 +44,7 @@ ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeSe
   connect(m_list, &QListWidget::currentRowChanged, this, &ManageRuleSetsDialog::onSetChanged);
   reload();
 }
+
 void ManageRuleSetsDialog::reload() {
   m_list->clear();
   QStringList sets = SharedRulesStore::listRuleSets();
@@ -54,10 +56,12 @@ void ManageRuleSetsDialog::reload() {
   if (m_list->count() > 0) m_list->setCurrentRow(0);
   reloadRules();
 }
+
 QString ManageRuleSetsDialog::selectedName() const {
   if (!m_list->currentItem()) return QString();
   return m_list->currentItem()->text().trimmed();
 }
+
 void ManageRuleSetsDialog::reloadRules() {
   m_ruleList->clear();
   const QString name = selectedName();
@@ -92,10 +96,12 @@ void ManageRuleSetsDialog::reloadRules() {
     item->setData(Qt::UserRole, obj);
   }
 }
+
 bool ManageRuleSetsDialog::confirmDelete(const QString& name) {
   return QMessageBox::question(this, tr("Delete Rule Set"), tr("Delete rule set '%1'?").arg(name),
                                QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
 }
+
 void ManageRuleSetsDialog::addRuleToSet(const QString& setName, const RuleConfigService::RuleEditData& dataIn) {
   QString                         error;
   RuleConfigService::RuleEditData normalized = dataIn;
@@ -107,6 +113,7 @@ void ManageRuleSetsDialog::addRuleToSet(const QString& setName, const RuleConfig
   }
   SharedRulesStore::addRule(setName, obj);
 }
+
 void ManageRuleSetsDialog::onSetAdd() {
   bool          ok = false;
   const QString name =
@@ -119,6 +126,7 @@ void ManageRuleSetsDialog::onSetAdd() {
   reload();
   emit ruleSetsChanged();
 }
+
 void ManageRuleSetsDialog::onSetRename() {
   const QString current = selectedName();
   if (current.isEmpty() || current == "default") return;
@@ -133,6 +141,7 @@ void ManageRuleSetsDialog::onSetRename() {
   reload();
   emit ruleSetsChanged();
 }
+
 void ManageRuleSetsDialog::onSetDelete() {
   const QString current = selectedName();
   if (current.isEmpty() || current == "default") return;
@@ -144,9 +153,11 @@ void ManageRuleSetsDialog::onSetDelete() {
   reload();
   emit ruleSetsChanged();
 }
+
 void ManageRuleSetsDialog::onSetChanged() {
   reloadRules();
 }
+
 void ManageRuleSetsDialog::onRuleAdd() {
   const QString set = selectedName();
   if (set.isEmpty()) return;
@@ -166,6 +177,7 @@ void ManageRuleSetsDialog::onRuleAdd() {
   reloadRules();
   emit ruleSetsChanged();
 }
+
 void ManageRuleSetsDialog::onRuleDelete() {
   const QString set = selectedName();
   if (set.isEmpty()) return;
@@ -178,6 +190,7 @@ void ManageRuleSetsDialog::onRuleDelete() {
   reloadRules();
   emit ruleSetsChanged();
 }
+
 void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
   const QString set     = selectedName();
   const bool    hasSet  = !set.isEmpty();
@@ -204,6 +217,7 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
   else if (chosen == delAct)
     onSetDelete();
 }
+
 void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
   const QString set = selectedName();
   if (set.isEmpty()) return;

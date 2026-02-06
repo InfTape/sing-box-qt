@@ -25,6 +25,7 @@
 #include "views/subscription/SubscriptionCard.h"
 #include "views/subscription/SubscriptionController.h"
 #include "widgets/common/RoundedMenu.h"
+
 // ==================== SubscriptionView ====================
 SubscriptionView::SubscriptionView(SubscriptionService* service, ThemeService* themeService, QWidget* parent)
     : QWidget(parent),
@@ -42,9 +43,11 @@ SubscriptionView::SubscriptionView(SubscriptionService* service, ThemeService* t
   connect(m_autoUpdateTimer, &QTimer::timeout, this, &SubscriptionView::onAutoUpdateTimer);
   m_autoUpdateTimer->start();
 }
+
 SubscriptionService* SubscriptionView::getService() const {
   return m_subscriptionService;
 }
+
 void SubscriptionView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
@@ -91,10 +94,12 @@ void SubscriptionView::setupUI() {
           [this](const QString& err) { QMessageBox::warning(this, tr("Notice"), err); });
   refreshList();
 }
+
 void SubscriptionView::updateStyle() {
   ThemeService* ts = m_themeService;
   if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/subscription_view.qss"));
 }
+
 void SubscriptionView::onAddClicked() {
   RoundedMenu menu(this);
   menu.setObjectName("TrayMenu");
@@ -109,6 +114,7 @@ void SubscriptionView::onAddClicked() {
   menu.setMinimumWidth(m_addBtn->width());
   menu.exec(m_addBtn->mapToGlobal(QPoint(0, m_addBtn->height())));
 }
+
 void SubscriptionView::openSubscriptionDialog() {
   SubscriptionFormDialog dialog(m_themeService, this);
   if (dialog.exec() != QDialog::Accepted) {
@@ -131,6 +137,7 @@ void SubscriptionView::openSubscriptionDialog() {
                                      dialog.sharedRulesEnabled(), dialog.ruleSets());
   }
 }
+
 void SubscriptionView::onAddNodeClicked() {
   NodeEditDialog dialog(m_themeService, this);
   if (dialog.exec() == QDialog::Accepted) {
@@ -144,6 +151,7 @@ void SubscriptionView::onAddNodeClicked() {
                                         dialog.ruleSets());
   }
 }
+
 void SubscriptionView::onAutoUpdateTimer() {
   const QList<SubscriptionInfo> subs        = m_subscriptionController->subscriptions();
   const int                     activeIndex = m_subscriptionController->activeIndex();
@@ -159,12 +167,14 @@ void SubscriptionView::onAutoUpdateTimer() {
     }
   }
 }
+
 SubscriptionCard* SubscriptionView::createSubscriptionCard(const SubscriptionInfo& info, bool active) {
   QWidget*          parent = m_cardsContainer ? m_cardsContainer : this;
   SubscriptionCard* card   = new SubscriptionCard(info, active, m_themeService, parent);
   wireCardSignals(card);
   return card;
 }
+
 void SubscriptionView::wireCardSignals(SubscriptionCard* card) {
   connect(card, &SubscriptionCard::useClicked, this, &SubscriptionView::handleUseSubscription);
   connect(card, &SubscriptionCard::editClicked, this, &SubscriptionView::handleEditSubscription);
@@ -174,9 +184,11 @@ void SubscriptionView::wireCardSignals(SubscriptionCard* card) {
   connect(card, &SubscriptionCard::deleteClicked, this, &SubscriptionView::handleDeleteSubscription);
   connect(card, &SubscriptionCard::copyLinkClicked, this, &SubscriptionView::handleCopyLink);
 }
+
 void SubscriptionView::handleUseSubscription(const QString& id) {
   SubscriptionActions::useSubscription(m_subscriptionController->service(), id);
 }
+
 void SubscriptionView::handleEditSubscription(const QString& id) {
   SubscriptionInfo target;
   if (!getSubscriptionById(id, &target)) return;
@@ -212,6 +224,7 @@ void SubscriptionView::handleEditSubscription(const QString& id) {
                                                  dialog.sharedRulesEnabled(), dialog.ruleSets());
   }
 }
+
 void SubscriptionView::handleEditConfig(const QString& id) {
   Q_UNUSED(id)
   const QString current = m_subscriptionController->currentConfig();
@@ -227,25 +240,30 @@ void SubscriptionView::handleEditConfig(const QString& id) {
     }
   }
 }
+
 void SubscriptionView::handleRefreshSubscription(const QString& id, bool applyRuntime) {
   SubscriptionActions::refreshSubscription(m_subscriptionController->service(), id, applyRuntime);
 }
+
 void SubscriptionView::handleRollbackSubscription(const QString& id) {
   if (!SubscriptionActions::rollbackSubscription(m_subscriptionController->service(), id)) {
     QMessageBox::warning(this, tr("Notice"), tr("No config available to roll back"));
   }
 }
+
 void SubscriptionView::handleDeleteSubscription(const QString& id) {
   if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete this subscription?")) ==
       QMessageBox::Yes) {
     m_subscriptionController->remove(id);
   }
 }
+
 void SubscriptionView::handleCopyLink(const QString& id) {
   SubscriptionInfo target;
   if (!getSubscriptionById(id, &target)) return;
   QApplication::clipboard()->setText(target.url);
 }
+
 void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
   SubscriptionInfo target;
   if (!getSubscriptionById(id, &target)) {
@@ -265,10 +283,12 @@ void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
   }
   card->updateInfo(target, !activeId.isEmpty() && activeId == id);
 }
+
 void SubscriptionView::handleActiveSubscriptionChanged(const QString& id, const QString& configPath) {
   Q_UNUSED(configPath)
   updateActiveCards(id);
 }
+
 SubscriptionCard* SubscriptionView::findCardById(const QString& id) const {
   for (SubscriptionCard* card : m_cards) {
     if (card && card->subscriptionId() == id) {
@@ -277,6 +297,7 @@ SubscriptionCard* SubscriptionView::findCardById(const QString& id) const {
   }
   return nullptr;
 }
+
 void SubscriptionView::updateActiveCards(const QString& activeId) {
   for (SubscriptionCard* card : m_cards) {
     if (!card) continue;
@@ -284,6 +305,7 @@ void SubscriptionView::updateActiveCards(const QString& activeId) {
     card->setActive(isActive);
   }
 }
+
 bool SubscriptionView::getSubscriptionById(const QString& id, SubscriptionInfo* out) const {
   const QList<SubscriptionInfo> subs = m_subscriptionController->subscriptions();
   for (const auto& sub : subs) {
@@ -294,6 +316,7 @@ bool SubscriptionView::getSubscriptionById(const QString& id, SubscriptionInfo* 
   }
   return false;
 }
+
 void SubscriptionView::refreshList() {
   while (m_cardsLayout->count() > 0) {
     QLayoutItem* item = m_cardsLayout->takeAt(0);
@@ -314,6 +337,7 @@ void SubscriptionView::refreshList() {
   m_skipNextAnimation = true;
   QTimer::singleShot(0, this, [this]() { layoutCards(); });
 }
+
 void SubscriptionView::layoutCards() {
   if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
   const int  previousColumns   = m_columnCount;
@@ -362,17 +386,20 @@ void SubscriptionView::layoutCards() {
     CardGridAnimation::animateReflow(m_cardsContainer, widgets, oldGeometries, previousColumns, columns);
   }
 }
+
 void SubscriptionView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   if (m_cards.isEmpty()) return;
   layoutCards();
 }
+
 bool SubscriptionView::eventFilter(QObject* watched, QEvent* event) {
   if (m_scrollArea && watched == m_scrollArea->viewport() && event->type() == QEvent::Resize) {
     if (!m_cards.isEmpty()) layoutCards();
   }
   return QWidget::eventFilter(watched, event);
 }
+
 void SubscriptionView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
   if (m_cards.isEmpty()) return;

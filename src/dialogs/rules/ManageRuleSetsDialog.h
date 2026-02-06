@@ -6,6 +6,7 @@
 class QListWidget;
 class ThemeService;
 class ConfigRepository;
+
 class ManageRuleSetsDialog : public QDialog {
   Q_OBJECT
  public:

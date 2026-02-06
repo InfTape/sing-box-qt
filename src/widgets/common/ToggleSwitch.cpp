@@ -5,6 +5,7 @@
 #include <QtMath>
 #include <algorithm>
 #include "app/interfaces/ThemeService.h"
+
 ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   setCursor(Qt::PointingHandCursor);
@@ -17,22 +18,26 @@ ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
     connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&ToggleSwitch::update));
   }
 }
+
 void ToggleSwitch::setChecked(bool checked) {
   if (m_checked == checked) return;
   animateTo(checked);
   setCheckedInternal(checked, true);
 }
+
 void ToggleSwitch::setCheckedInternal(bool checked, bool emitSignal) {
   m_checked = checked;
   if (emitSignal) emit toggled(m_checked);
   update();
 }
+
 void ToggleSwitch::setOffset(qreal v) {
   v = std::clamp(v, 0.0, 1.0);
   if (qFuzzyCompare(m_offset, v)) return;
   m_offset = v;
   update();
 }
+
 QRectF ToggleSwitch::trackRect() const {
   QRectF      r = rect().adjusted(2, 2, -2, -2);  // Leave padding to avoid clipping
   const qreal h = r.height() * 0.70;
@@ -41,6 +46,7 @@ QRectF ToggleSwitch::trackRect() const {
   const qreal y = r.center().y() - h / 2.0;
   return QRectF(x, y, w, h);
 }
+
 QRectF ToggleSwitch::thumbRectForOffset(qreal off) const {
   QRectF      tr     = trackRect();
   const qreal margin = tr.height() * 0.12;
@@ -51,12 +57,14 @@ QRectF ToggleSwitch::thumbRectForOffset(qreal off) const {
   const qreal y      = tr.top() + margin;
   return QRectF(x, y, d, d);
 }
+
 void ToggleSwitch::animateTo(bool checked) {
   m_anim->stop();
   m_anim->setStartValue(m_offset);
   m_anim->setEndValue(checked ? 1.0 : 0.0);
   m_anim->start();
 }
+
 void ToggleSwitch::paintEvent(QPaintEvent*) {
   QPainter p(this);
   p.setRenderHint(QPainter::Antialiasing, true);
@@ -99,6 +107,7 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
     p.drawRoundedRect(ring, ring.height() / 2.0, ring.height() / 2.0);
   }
 }
+
 void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
   if (!isEnabled() || e->button() != Qt::LeftButton) return;
   m_dragging    = true;
@@ -107,6 +116,7 @@ void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
   m_anim->stop();
   e->accept();
 }
+
 void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
   if (!m_dragging) return;
   QRectF      tr     = trackRect();
@@ -125,6 +135,7 @@ void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
   }
   e->accept();
 }
+
 void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
   if (!m_dragging || e->button() != Qt::LeftButton) return;
   m_dragging       = false;
@@ -135,6 +146,7 @@ void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
   setCheckedInternal(target, true);
   e->accept();
 }
+
 void ToggleSwitch::keyPressEvent(QKeyEvent* e) {
   if (!isEnabled()) return;
   if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {

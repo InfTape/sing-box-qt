@@ -1,6 +1,7 @@
 #ifndef THEMESERVICEADAPTER_H
 #define THEMESERVICEADAPTER_H
 #include "app/interfaces/ThemeService.h"
+
 class ThemeServiceAdapter : public ThemeService {
   Q_OBJECT
  public:

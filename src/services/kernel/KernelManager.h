@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QStringList>
 class HttpClient;
+
 class KernelManager : public QObject {
   Q_OBJECT
  public:

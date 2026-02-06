@@ -4,6 +4,7 @@
 class QLineEdit;
 class QPushButton;
 class QProgressBar;
+
 class ProxyToolbar : public QFrame {
   Q_OBJECT
  public:

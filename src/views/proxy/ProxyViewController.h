@@ -9,6 +9,7 @@ class ProxyService;
 class DelayTestService;
 class ConfigRepository;
 struct ProxyDelayTestResult;
+
 /**
  * @brief ProxyViewController
  * Responsible for proxy node selection, latency/speed test logic, preventing ProxyView from touching core services

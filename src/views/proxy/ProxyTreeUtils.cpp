@@ -8,6 +8,7 @@
 #include <QTreeWidgetItem>
 #include <QTreeWidgetItemIterator>
 #include "utils/proxy/ProxyNodeHelper.h"
+
 namespace ProxyTreeUtils {
 QString nodeDisplayName(QTreeWidgetItem* item) {
   if (!item) return QString();
@@ -17,6 +18,7 @@ QString nodeDisplayName(QTreeWidgetItem* item) {
   }
   return name;
 }
+
 QWidget* buildNodeRow(QTreeWidget* treeWidget, const QString& name, const QString& type, const QString& delay) {
   QWidget* card = new QFrame(treeWidget ? treeWidget->viewport() : nullptr);
   card->setObjectName("ProxyNodeCard");
@@ -41,6 +43,7 @@ QWidget* buildNodeRow(QTreeWidget* treeWidget, const QString& name, const QStrin
   layout->addWidget(delayLabel, 0, Qt::AlignRight);
   return card;
 }
+
 void updateNodeRowDelay(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString& delayText,
                         const QString& state) {
   if (!treeWidget || !item) return;
@@ -53,6 +56,7 @@ void updateNodeRowDelay(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QS
     delayLabel->style()->polish(delayLabel);
   }
 }
+
 void updateNodeRowSelected(QTreeWidget* treeWidget, QTreeWidgetItem* item, bool selected) {
   if (!treeWidget || !item) return;
   QWidget* row = treeWidget->itemWidget(item, 0);
@@ -61,6 +65,7 @@ void updateNodeRowSelected(QTreeWidget* treeWidget, QTreeWidgetItem* item, bool 
   row->style()->unpolish(row);
   row->style()->polish(row);
 }
+
 void markNodeState(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString& now, const QString& delayText) {
   if (!treeWidget || !item) return;
   QString baseName = item->data(0, Qt::UserRole + 3).toString();
@@ -83,6 +88,7 @@ void markNodeState(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString
   updateNodeRowDelay(treeWidget, item, delayText, state);
   updateNodeRowSelected(treeWidget, item, item->isSelected());
 }
+
 void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
   if (!treeWidget) return;
   QTreeWidgetItemIterator it(treeWidget);
@@ -97,6 +103,7 @@ void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
     ++it;
   }
 }
+
 void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
   if (!treeWidget) return;
   QTreeWidgetItemIterator it(treeWidget);
@@ -124,6 +131,7 @@ void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
     ++it;
   }
 }
+
 void updateGroupCurrentLabel(QTreeWidget* treeWidget, QTreeWidgetItem* groupItem, const QString& text) {
   if (!treeWidget || !groupItem) return;
   QWidget* groupCard = treeWidget->itemWidget(groupItem, 0);

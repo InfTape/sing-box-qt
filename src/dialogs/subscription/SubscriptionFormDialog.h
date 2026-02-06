@@ -12,6 +12,7 @@ class QToolButton;
 class RoundedMenu;
 class QLineEdit;
 class ThemeService;
+
 // Multi-select rule set dropdown widget
 class MultiSelectMenuBox : public QWidget {
   Q_OBJECT
@@ -33,6 +34,7 @@ class MultiSelectMenuBox : public QWidget {
   ThemeService* m_themeService = nullptr;
 };
 struct SubscriptionInfo;
+
 class SubscriptionFormDialog : public QDialog {
   Q_OBJECT
  public:

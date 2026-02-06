@@ -7,7 +7,9 @@
 #include "core/ProcessManager.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
 KernelRunner::KernelRunner(QObject* parent) : QObject(parent), m_process(nullptr), m_running(false) {}
+
 KernelRunner::~KernelRunner() {
   if (m_process) {
     if (m_process->state() != QProcess::NotRunning) {
@@ -16,6 +18,7 @@ KernelRunner::~KernelRunner() {
     m_process->deleteLater();
   }
 }
+
 bool KernelRunner::start(const QString& configPath) {
   if (m_process && m_process->state() != QProcess::NotRunning) {
     Logger::warn(tr("Kernel is already running"));
@@ -73,6 +76,7 @@ bool KernelRunner::start(const QString& configPath) {
   }
   return true;
 }
+
 void KernelRunner::stop() {
   if (!m_process || m_process->state() == QProcess::NotRunning) {
     Logger::warn(tr("Kernel is not running"));
@@ -83,9 +87,11 @@ void KernelRunner::stop() {
   m_process->terminate();
   // NOTE: kill fallback intentionally disabled for testing terminate() behavior.
 }
+
 void KernelRunner::restart() {
   restartWithConfig(m_configPath);
 }
+
 void KernelRunner::restartWithConfig(const QString& configPath) {
   setConfigPath(configPath);
   if (m_process && m_process->state() != QProcess::NotRunning) {
@@ -95,15 +101,19 @@ void KernelRunner::restartWithConfig(const QString& configPath) {
   }
   start(m_configPath);
 }
+
 void KernelRunner::setConfigPath(const QString& configPath) {
   m_configPath = configPath;
 }
+
 QString KernelRunner::getConfigPath() const {
   return m_configPath;
 }
+
 bool KernelRunner::isRunning() const {
   return m_running;
 }
+
 QString KernelRunner::getVersion() const {
   QString kernelPath = m_kernelPath;
   if (kernelPath.isEmpty()) {
@@ -126,16 +136,20 @@ QString KernelRunner::getVersion() const {
   }
   return output;
 }
+
 QString KernelRunner::getKernelPath() const {
   return m_kernelPath.isEmpty() ? findKernelPath() : m_kernelPath;
 }
+
 QString KernelRunner::lastError() const {
   return m_lastError;
 }
+
 void KernelRunner::onProcessStarted() {
   m_running = true;
   emit statusChanged(true);
 }
+
 void KernelRunner::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   Q_UNUSED(exitCode)
   Q_UNUSED(exitStatus)
@@ -146,6 +160,7 @@ void KernelRunner::onProcessFinished(int exitCode, QProcess::ExitStatus exitStat
     start(m_configPath);
   }
 }
+
 void KernelRunner::onProcessError(QProcess::ProcessError error) {
   QString errorMsg;
   switch (error) {
@@ -170,16 +185,19 @@ void KernelRunner::onProcessError(QProcess::ProcessError error) {
   Logger::error(errorMsg);
   emit errorOccurred(errorMsg);
 }
+
 void KernelRunner::onReadyReadStandardOutput() {
   QString output = QString::fromUtf8(m_process->readAllStandardOutput());
   Logger::info(QString("[Kernel] %1").arg(output.trimmed()));
   emit outputReceived(output);
 }
+
 void KernelRunner::onReadyReadStandardError() {
   QString error = QString::fromUtf8(m_process->readAllStandardError());
   Logger::error(QString("[Kernel Error] %1").arg(error.trimmed()));
   emit errorOutputReceived(error);
 }
+
 QString KernelRunner::findKernelPath() const {
 #ifdef Q_OS_WIN
   QString kernelName = "sing-box.exe";
@@ -197,6 +215,7 @@ QString KernelRunner::findKernelPath() const {
   Logger::warn("sing-box kernel not found");
   return QString();
 }
+
 QString KernelRunner::getDefaultConfigPath() const {
   const QString dataDir = appDataDir();
   return QDir(dataDir).filePath("config.json");

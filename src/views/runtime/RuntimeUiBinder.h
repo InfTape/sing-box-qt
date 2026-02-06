@@ -8,6 +8,7 @@ class ProxyView;
 class RulesView;
 class LogView;
 class QPushButton;
+
 class RuntimeUiBinder {
  public:
   RuntimeUiBinder(ProxyRuntimeController* runtime, HomeView* home, ConnectionsView* connections, ProxyView* proxy,

@@ -3,6 +3,7 @@
 #include <QFrame>
 class QLabel;
 class ThemeService;
+
 class StatCard : public QFrame {
   Q_OBJECT
  public:

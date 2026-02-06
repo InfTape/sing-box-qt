@@ -17,6 +17,7 @@
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
+
 namespace {
 bool isJsonText(const QString& text) {
   QJsonParseError err;
@@ -24,6 +25,7 @@ bool isJsonText(const QString& text) {
   return err.error == QJsonParseError::NoError && doc.isObject();
 }
 }  // namespace
+
 // ===== MultiSelectMenuBox =====
 MultiSelectMenuBox::MultiSelectMenuBox(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
@@ -51,6 +53,7 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget* parent, ThemeService* themeServi
     m_menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
   }
 }
+
 void MultiSelectMenuBox::setOptions(const QStringList& options) {
   m_options = options;
   m_options.removeDuplicates();
@@ -59,15 +62,18 @@ void MultiSelectMenuBox::setOptions(const QStringList& options) {
   if (!m_options.contains("default")) m_options.prepend("default");
   rebuildMenu();
 }
+
 void MultiSelectMenuBox::setSelected(const QStringList& selected) {
   m_selected = selected;
   if (m_selected.isEmpty()) m_selected << "default";
   m_selected.removeDuplicates();
   updateButtonText();
 }
+
 QStringList MultiSelectMenuBox::selected() const {
   return m_selected;
 }
+
 void MultiSelectMenuBox::rebuildMenu() {
   m_menu->clear();
   for (const QString& name : m_options) {
@@ -86,11 +92,13 @@ void MultiSelectMenuBox::rebuildMenu() {
     });
   }
 }
+
 void MultiSelectMenuBox::updateButtonText() {
   QString text = m_selected.join(", ");
   if (text.isEmpty()) text = tr("default");
   m_button->setText(text);
 }
+
 SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidget* parent)
     : QDialog(parent),
       m_nameEdit(new QLineEdit),
@@ -152,6 +160,7 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidg
   connect(m_ruleSetsBox, &MultiSelectMenuBox::selectionChanged, this, &SubscriptionFormDialog::updateState);
   updateState();
 }
+
 void SubscriptionFormDialog::setEditData(const SubscriptionInfo& info) {
   m_nameEdit->setText(info.name);
   if (info.isManual) {
@@ -176,39 +185,50 @@ void SubscriptionFormDialog::setEditData(const SubscriptionInfo& info) {
   m_autoUpdateCombo->setCurrentIndex(indexForInterval(info.autoUpdateIntervalMinutes));
   updateState();
 }
+
 QString SubscriptionFormDialog::name() const {
   return m_nameEdit->text().trimmed();
 }
+
 QString SubscriptionFormDialog::url() const {
   return m_urlEdit->toPlainText().trimmed();
 }
+
 QString SubscriptionFormDialog::manualContent() const {
   return m_manualEdit->toPlainText().trimmed();
 }
+
 QString SubscriptionFormDialog::uriContent() const {
   return m_uriEdit->toPlainText().trimmed();
 }
+
 bool SubscriptionFormDialog::isManual() const {
   return m_tabs->currentIndex() != 0;
 }
+
 bool SubscriptionFormDialog::isUriList() const {
   return m_tabs->currentIndex() == 2;
 }
+
 bool SubscriptionFormDialog::useOriginalConfig() const {
   return m_useOriginalCheck->isChecked();
 }
+
 bool SubscriptionFormDialog::sharedRulesEnabled() const {
   return m_sharedRulesCheck->isChecked();
 }
+
 QStringList SubscriptionFormDialog::ruleSets() const {
   QStringList list = m_ruleSetsBox->selected();
   if (list.isEmpty()) list << "default";
   list.removeDuplicates();
   return list;
 }
+
 int SubscriptionFormDialog::autoUpdateIntervalMinutes() const {
   return m_autoUpdateCombo->currentData().toInt();
 }
+
 bool SubscriptionFormDialog::validateInput(QString* error) const {
   if (name().isEmpty()) {
     if (error) *error = tr("Please enter a subscription name");
@@ -235,6 +255,7 @@ bool SubscriptionFormDialog::validateInput(QString* error) const {
   }
   return true;
 }
+
 QWidget* SubscriptionFormDialog::createTextTab(QTextEdit* edit, const QString& placeholder) {
   QWidget*     widget = new QWidget;
   QVBoxLayout* layout = new QVBoxLayout(widget);
@@ -243,6 +264,7 @@ QWidget* SubscriptionFormDialog::createTextTab(QTextEdit* edit, const QString& p
   layout->addWidget(edit);
   return widget;
 }
+
 int SubscriptionFormDialog::indexForInterval(int minutes) const {
   for (int i = 0; i < m_autoUpdateCombo->count(); ++i) {
     if (m_autoUpdateCombo->itemData(i).toInt() == minutes) {
@@ -251,6 +273,7 @@ int SubscriptionFormDialog::indexForInterval(int minutes) const {
   }
   return 0;
 }
+
 void SubscriptionFormDialog::updateState() {
   const bool urlTab = m_tabs->currentIndex() == 0;
   m_autoUpdateCombo->setEnabled(urlTab);

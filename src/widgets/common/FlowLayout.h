@@ -3,6 +3,7 @@
 #include <QLayout>
 #include <QList>
 #include <QStyle>
+
 class FlowLayout : public QLayout {
  public:
   explicit FlowLayout(QWidget* parent = nullptr, int margin = -1, int hSpacing = -1, int vSpacing = -1);

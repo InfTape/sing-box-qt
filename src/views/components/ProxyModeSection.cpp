@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "widgets/common/ToggleSwitch.h"
+
 namespace {
 QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color) {
   const qreal  dpr  = qApp->devicePixelRatio();
@@ -48,6 +49,7 @@ QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color)
   tinted.setDevicePixelRatio(dpr);
   return tinted;
 }
+
 void polishWidget(QWidget* widget) {
   if (!widget) return;
   widget->style()->unpolish(widget);
@@ -55,10 +57,12 @@ void polishWidget(QWidget* widget) {
   widget->update();
 }
 }  // namespace
+
 ProxyModeSection::ProxyModeSection(ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_themeService(themeService) {
   setupUi();
 }
+
 void ProxyModeSection::setupUi() {
   auto* rootLayout = new QGridLayout(this);
   rootLayout->setContentsMargins(0, 0, 0, 0);
@@ -153,6 +157,7 @@ void ProxyModeSection::setupUi() {
     }
   });
 }
+
 QWidget* ProxyModeSection::createModeItem(const QString& iconText, const QString& accentKey, const QString& title,
                                           const QString& desc, QWidget* control) {
   auto* card = new QFrame;
@@ -207,6 +212,7 @@ QWidget* ProxyModeSection::createModeItem(const QString& iconText, const QString
   }
   return card;
 }
+
 void ProxyModeSection::setCardActive(QWidget* card, bool active) {
   if (!card) return;
   card->setProperty("active", active);
@@ -223,24 +229,29 @@ void ProxyModeSection::setCardActive(QWidget* card, bool active) {
     polishWidget(child);
   }
 }
+
 bool ProxyModeSection::isSystemProxyEnabled() const {
   return m_systemProxySwitch && m_systemProxySwitch->isChecked();
 }
+
 void ProxyModeSection::setSystemProxyEnabled(bool enabled) {
   if (!m_systemProxySwitch) return;
   QSignalBlocker blocker(m_systemProxySwitch);
   m_systemProxySwitch->setChecked(enabled);
   setCardActive(m_systemProxyCard, enabled);
 }
+
 bool ProxyModeSection::isTunModeEnabled() const {
   return m_tunModeSwitch && m_tunModeSwitch->isChecked();
 }
+
 void ProxyModeSection::setTunModeEnabled(bool enabled) {
   if (!m_tunModeSwitch) return;
   QSignalBlocker blocker(m_tunModeSwitch);
   m_tunModeSwitch->setChecked(enabled);
   setCardActive(m_tunModeCard, enabled);
 }
+
 void ProxyModeSection::setProxyMode(const QString& mode) {
   const QString normalized = mode.trimmed().toLower();
   const bool    useGlobal  = (normalized == "global");
@@ -255,6 +266,7 @@ void ProxyModeSection::setProxyMode(const QString& mode) {
   setCardActive(m_globalModeCard, useGlobal);
   setCardActive(m_ruleModeCard, !useGlobal);
 }
+
 void ProxyModeSection::updateStyle() {
   setCardActive(m_systemProxyCard, isSystemProxyEnabled());
   setCardActive(m_tunModeCard, isTunModeEnabled());

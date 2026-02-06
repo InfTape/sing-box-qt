@@ -23,17 +23,20 @@ class AdminActions;
 class SettingsController;
 class RuntimeUiBinder;
 class AppContext;
+
 class MainWindow : public QMainWindow {
   Q_OBJECT
  public:
   explicit MainWindow(AppContext& ctx, QWidget* parent = nullptr);
   ~MainWindow();
-  void             showAndActivate();
-  bool             isKernelRunning() const;
-  QString          currentProxyMode() const;
-  QString          activeConfigPath() const;
+  void    showAndActivate();
+  bool    isKernelRunning() const;
+  QString currentProxyMode() const;
+  QString activeConfigPath() const;
+
   ProxyController* proxyController() const { return m_proxyController; }
-  void             setProxyModeUI(const QString& mode);
+
+  void setProxyModeUI(const QString& mode);
 
  protected:
   void closeEvent(QCloseEvent* event) override;

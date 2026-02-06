@@ -7,6 +7,7 @@
 #include <QJsonParseError>
 #include <QRegularExpression>
 #include "app/interfaces/ConfigRepository.h"
+
 namespace {
 QString sanitizeFileName(const QString& name) {
   QString safe = name.toLower();
@@ -19,14 +20,17 @@ QString sanitizeFileName(const QString& name) {
   return safe;
 }
 }  // namespace
+
 namespace SubscriptionConfigStore {
 QString generateConfigFileName(const QString& name) {
   const QString safe = sanitizeFileName(name);
   return QString("%1-%2.json").arg(safe).arg(QDateTime::currentMSecsSinceEpoch());
 }
+
 bool saveConfigWithNodes(ConfigRepository* cfg, const QJsonArray& nodes, const QString& targetPath) {
   return cfg ? cfg->generateConfigWithNodes(nodes, targetPath) : false;
 }
+
 bool saveOriginalConfig(ConfigRepository* cfg, const QString& content, const QString& targetPath) {
   QJsonParseError err;
   QJsonDocument   doc = QJsonDocument::fromJson(content.toUtf8(), &err);
@@ -38,6 +42,7 @@ bool saveOriginalConfig(ConfigRepository* cfg, const QString& content, const QSt
   cfg->applyPortSettings(config);
   return cfg->saveConfig(targetPath, config);
 }
+
 bool rollbackSubscriptionConfig(const QString& configPath) {
   QFileInfo pathInfo(configPath);
   if (!pathInfo.exists()) {
@@ -50,6 +55,7 @@ bool rollbackSubscriptionConfig(const QString& configPath) {
   QFile::remove(configPath);
   return QFile::copy(backupPath, configPath);
 }
+
 bool deleteSubscriptionConfig(const QString& configPath) {
   if (configPath.isEmpty()) {
     return false;

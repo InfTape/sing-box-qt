@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "app/AppBootstrapper.h"
+
 int main(int argc, char* argv[]) {
   // Enable high DPI support
   QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);

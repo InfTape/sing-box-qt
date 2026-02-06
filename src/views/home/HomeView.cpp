@@ -11,10 +11,12 @@
 #include "views/components/ProxyModeSection.h"
 #include "views/components/StatCard.h"
 #include "views/components/TrafficChart.h"
+
 namespace {
 QString rgba(const QColor& color, double alpha) {
   return QString("rgba(%1, %2, %3, %4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(alpha);
 }
+
 void polishWidget(QWidget* widget) {
   if (!widget) return;
   widget->style()->unpolish(widget);
@@ -22,6 +24,7 @@ void polishWidget(QWidget* widget) {
   widget->update();
 }
 }  // namespace
+
 HomeView::HomeView(ThemeService* themeService, QWidget* parent) : QWidget(parent), m_themeService(themeService) {
   setupUI();
   updateStyle();
@@ -29,6 +32,7 @@ HomeView::HomeView(ThemeService* themeService, QWidget* parent) : QWidget(parent
     connect(m_themeService, &ThemeService::themeChanged, this, &HomeView::updateStyle);
   }
 }
+
 void HomeView::setupUI() {
   QHBoxLayout* rootLayout = new QHBoxLayout(this);
   rootLayout->setContentsMargins(0, 0, 0, 0);
@@ -122,6 +126,7 @@ void HomeView::setupUI() {
     connect(m_proxyModeSection, &ProxyModeSection::proxyModeChanged, this, &HomeView::proxyModeChanged);
   }
 }
+
 void HomeView::updateStyle() {
   if (!m_themeService) return;
   QColor                 primary = m_themeService->color("primary");
@@ -163,24 +168,30 @@ void HomeView::updateStyle() {
   polishWidget(m_statusBadge);
   polishWidget(m_statusDot);
 }
+
 bool HomeView::isSystemProxyEnabled() const {
   return m_proxyModeSection && m_proxyModeSection->isSystemProxyEnabled();
 }
+
 void HomeView::setSystemProxyEnabled(bool enabled) {
   if (!m_proxyModeSection) return;
   m_proxyModeSection->setSystemProxyEnabled(enabled);
 }
+
 bool HomeView::isTunModeEnabled() const {
   return m_proxyModeSection && m_proxyModeSection->isTunModeEnabled();
 }
+
 void HomeView::setTunModeEnabled(bool enabled) {
   if (!m_proxyModeSection) return;
   m_proxyModeSection->setTunModeEnabled(enabled);
 }
+
 void HomeView::setProxyMode(const QString& mode) {
   if (!m_proxyModeSection) return;
   m_proxyModeSection->setProxyMode(mode);
 }
+
 void HomeView::updateStatus(bool running) {
   m_isRunning = running;
   m_statusText->setText(running ? tr("Running") : tr("Stopped"));
@@ -203,6 +214,7 @@ void HomeView::updateStatus(bool running) {
     if (m_downloadCard) m_downloadCard->setSubText(tr("Total: 0 B"));
   }
 }
+
 void HomeView::updateTraffic(qint64 upload, qint64 download) {
   if (m_uploadCard) m_uploadCard->setValueText(formatBytes(upload) + "/s");
   if (m_downloadCard) m_downloadCard->setValueText(formatBytes(download) + "/s");
@@ -220,6 +232,7 @@ void HomeView::updateTraffic(qint64 upload, qint64 download) {
   if (m_uploadCard) m_uploadCard->setSubText(tr("Total: %1").arg(formatBytes(m_totalUpload)));
   if (m_downloadCard) m_downloadCard->setSubText(tr("Total: %1").arg(formatBytes(m_totalDownload)));
 }
+
 void HomeView::updateUptime(int seconds) {
   if (!m_statusBadge) return;
   if (seconds <= 0) {
@@ -228,16 +241,20 @@ void HomeView::updateUptime(int seconds) {
   }
   m_statusBadge->setToolTip(tr("Uptime: %1").arg(formatDuration(seconds)));
 }
+
 void HomeView::updateConnections(int count, qint64 memoryUsage) {
   if (m_connectionsCard) m_connectionsCard->setValueText(QString::number(count));
   if (m_connectionsCard) m_connectionsCard->setSubText(tr("Memory usage: %1").arg(formatBytes(memoryUsage)));
 }
+
 void HomeView::updateDataUsage(const QJsonObject& snapshot) {
   if (m_dataUsageCard) m_dataUsageCard->updateDataUsage(snapshot);
 }
+
 QString HomeView::formatBytes(qint64 bytes) const {
   return HomeFormat::bytes(bytes);
 }
+
 QString HomeView::formatDuration(int seconds) const {
   return HomeFormat::duration(seconds);
 }

@@ -7,6 +7,7 @@ class QTableWidget;
 class QPushButton;
 class SegmentedControl;
 class ThemeService;
+
 class DataUsageCard : public QFrame {
   Q_OBJECT
  public:

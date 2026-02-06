@@ -6,6 +6,7 @@ class QApplication;
 class MainWindow;
 class TrayIcon;
 class AppContext;
+
 /**
  * @brief AppBootstrapper (Infrastructure, Translation, Context assembly, and UI
  * Creation).

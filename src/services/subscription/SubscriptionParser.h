@@ -4,6 +4,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
+
 class SubscriptionParser {
  public:
   static QJsonArray  parseSubscriptionContent(const QByteArray& content);

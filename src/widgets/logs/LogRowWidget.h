@@ -2,6 +2,7 @@
 #define LOGROWWIDGET_H
 #include <QFrame>
 #include "utils/LogParser.h"
+
 class LogRowWidget : public QFrame {
   Q_OBJECT
  public:

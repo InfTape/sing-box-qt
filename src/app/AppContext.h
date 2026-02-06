@@ -13,6 +13,7 @@ class ProxyUiController;
 class ProxyRuntimeController;
 class ProxyViewController;
 class SubscriptionService;
+
 /**
  * @brief AppContext aggregates core services required during runtime, managing lifecycle and injection.
  */

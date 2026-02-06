@@ -7,6 +7,7 @@
 #include <QPair>
 #include <QString>
 #include <QVector>
+
 class DataUsageTracker : public QObject {
   Q_OBJECT
  public:
@@ -28,6 +29,7 @@ class DataUsageTracker : public QObject {
     qint64  firstSeenMs = 0;
     qint64  lastSeenMs  = 0;
   };
+
   struct Totals {
     int    count       = 0;
     qint64 upload      = 0;
@@ -36,6 +38,7 @@ class DataUsageTracker : public QObject {
     qint64 firstSeenMs = 0;
     qint64 lastSeenMs  = 0;
   };
+
   static QString        typeKey(Type type);
   static QList<Type>    allTypes();
   void                  addDelta(Type type, const QString& label, qint64 upload, qint64 download, qint64 nowMs);

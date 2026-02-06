@@ -6,6 +6,7 @@ class ProxyController;
 class KernelService;
 class SettingsStore;
 class AdminActions;
+
 /**
  * @brief ProxyUiController
  * Coordinates proxy-related actions triggered by UI with business services,

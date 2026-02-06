@@ -6,6 +6,7 @@ class QLabel;
 class QPlainTextEdit;
 class MenuComboBox;
 class QLineEdit;
+
 class RuleEditorDialog : public QDialog {
   Q_OBJECT
  public:

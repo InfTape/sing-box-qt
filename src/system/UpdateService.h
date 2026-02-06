@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QString>
 class HttpClient;
+
 struct UpdateInfo {
   QString version;
   QString downloadUrl;
@@ -10,6 +11,7 @@ struct UpdateInfo {
   qint64  fileSize;
   bool    hasUpdate;
 };
+
 class UpdateService : public QObject {
   Q_OBJECT
  public:

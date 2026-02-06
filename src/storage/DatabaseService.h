@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QSqlDatabase>
+
 class DatabaseService : public QObject {
   Q_OBJECT
  public:

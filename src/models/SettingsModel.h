@@ -1,6 +1,7 @@
 #ifndef SETTINGSMODEL_H
 #define SETTINGSMODEL_H
 #include <QString>
+
 class SettingsModel {
  public:
   struct Data {
@@ -24,6 +25,7 @@ class SettingsModel {
     QString dnsResolver;
     QString urltestUrl;
   };
+
   static Data load();
   static bool save(const Data& data, QString* errorMessage = nullptr);
 };

@@ -3,6 +3,7 @@
 #include "app/interfaces/SettingsStore.h"
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
+
 ProxyUiController::ProxyUiController(ProxyController* proxyController, KernelService* kernelService,
                                      SettingsStore* settingsStore, AdminActions* adminActions, QObject* parent)
     : QObject(parent),
@@ -10,18 +11,23 @@ ProxyUiController::ProxyUiController(ProxyController* proxyController, KernelSer
       m_kernelService(kernelService),
       m_settings(settingsStore),
       m_adminActions(adminActions) {}
+
 bool ProxyUiController::isKernelRunning() const {
   return m_kernelService && m_kernelService->isRunning();
 }
+
 QString ProxyUiController::currentProxyMode() const {
   return m_proxyController ? m_proxyController->currentProxyMode() : QStringLiteral("rule");
 }
+
 bool ProxyUiController::systemProxyEnabled() const {
   return m_settings && m_settings->systemProxyEnabled();
 }
+
 bool ProxyUiController::tunModeEnabled() const {
   return m_settings && m_settings->tunEnabled();
 }
+
 bool ProxyUiController::toggleKernel(QString* error) {
   if (!m_proxyController) {
     if (error) *error = tr("Proxy controller is unavailable.");
@@ -35,6 +41,7 @@ bool ProxyUiController::toggleKernel(QString* error) {
   }
   return true;
 }
+
 bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
   if (!m_proxyController) {
     if (error) *error = tr("Proxy controller is unavailable.");
@@ -47,6 +54,7 @@ bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
   emit proxyModeChanged(mode);
   return true;
 }
+
 bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
   if (!m_proxyController || !m_settings) {
     if (error) *error = tr("Proxy components are unavailable.");
@@ -60,6 +68,7 @@ bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
   emit tunModeStateChanged(m_settings->tunEnabled());
   return true;
 }
+
 ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool                         enabled,
                                                                   const std::function<bool()>& confirmRestartAdmin) {
   if (!m_proxyController || !m_settings) {
@@ -97,6 +106,7 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool          
   emit       systemProxyStateChanged(m_settings->systemProxyEnabled());
   return ok ? TunResult::Applied : TunResult::Failed;
 }
+
 void ProxyUiController::broadcastCurrentStates() {
   if (m_settings) {
     const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;

@@ -17,6 +17,7 @@
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
+
 NodeEditDialog::NodeEditDialog(ThemeService* themeService, QWidget* parent)
     : QDialog(parent),
       m_currentEditor(nullptr),
@@ -25,7 +26,9 @@ NodeEditDialog::NodeEditDialog(ThemeService* themeService, QWidget* parent)
       m_themeService(themeService) {
   setupUI();
 }
+
 NodeEditDialog::~NodeEditDialog() {}
+
 void NodeEditDialog::setupUI() {
   setWindowTitle(tr("Edit Node"));
   setMinimumWidth(600);
@@ -124,10 +127,12 @@ void NodeEditDialog::setupUI() {
   // Initial editor
   onTypeChanged(m_typeCombo->currentText());
 }
+
 NodeEditor* NodeEditDialog::createEditor(const QString& type) {
   // For now, GenericNodeEditor handles all
   return new GenericNodeEditor(type, this);
 }
+
 void NodeEditDialog::onTypeChanged(const QString& type) {
   if (m_currentEditor) {
     m_editorContainer->removeWidget(m_currentEditor);
@@ -142,12 +147,14 @@ void NodeEditDialog::onTypeChanged(const QString& type) {
     // Connect data changed to nothing for now, or live preview if needed
   }
 }
+
 void NodeEditDialog::updatePreview() {
   if (m_currentEditor) {
     QJsonObject obj = m_currentEditor->getOutbound();
     m_jsonPreview->setText(QJsonDocument(obj).toJson(QJsonDocument::Indented));
   }
 }
+
 void NodeEditDialog::setNodeData(const QJsonObject& node) {
   QString type  = node["type"].toString();
   int     index = m_typeCombo->findText(type);
@@ -166,6 +173,7 @@ void NodeEditDialog::setNodeData(const QJsonObject& node) {
   // restore rule set selections if provided in node comment/tag? not present,
   // keep current
 }
+
 void NodeEditDialog::setRuleSets(const QStringList& sets, bool enableShared) {
   m_sharedRulesCheck->setChecked(enableShared);
   m_ruleSets = sets;
@@ -208,16 +216,19 @@ void NodeEditDialog::setRuleSets(const QStringList& sets, bool enableShared) {
       },
       Qt::QueuedConnection);
 }
+
 QJsonObject NodeEditDialog::nodeData() const {
   if (m_currentEditor) {
     return m_currentEditor->getOutbound();
   }
   return QJsonObject();
 }
+
 QStringList NodeEditDialog::ruleSets() const {
   if (m_ruleSets.isEmpty()) return {"default"};
   return m_ruleSets;
 }
+
 bool NodeEditDialog::sharedRulesEnabled() const {
   return m_sharedRulesCheck && m_sharedRulesCheck->isChecked();
 }

@@ -6,6 +6,7 @@ class QLineEdit;
 class QSpinBox;
 class QCheckBox;
 class QFormLayout;
+
 class GenericNodeEditor : public NodeEditor {
   Q_OBJECT
  public:

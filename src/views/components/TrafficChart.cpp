@@ -3,6 +3,7 @@
 #include <QPainterPath>
 #include <cmath>
 #include "app/interfaces/ThemeService.h"
+
 TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_themeService(themeService), m_updateTimer(new QTimer(this)) {
   setMinimumHeight(150);
@@ -31,13 +32,16 @@ TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
     connect(m_themeService, &ThemeService::themeChanged, this, &TrafficChart::updateStyle);
   }
 }
+
 TrafficChart::~TrafficChart() {
   m_updateTimer->stop();
 }
+
 void TrafficChart::updateData(qint64 uploadSpeed, qint64 downloadSpeed) {
   m_lastUploadSpeed   = uploadSpeed;
   m_lastDownloadSpeed = downloadSpeed;
 }
+
 void TrafficChart::clear() {
   m_uploadData.fill(0, MAX_DATA_POINTS);
   m_downloadData.fill(0, MAX_DATA_POINTS);
@@ -46,6 +50,7 @@ void TrafficChart::clear() {
   m_lastDownloadSpeed = 0;
   update();
 }
+
 void TrafficChart::updateStyle() {
   ThemeService* ts = m_themeService;
   if (!ts) return;
@@ -56,6 +61,7 @@ void TrafficChart::updateStyle() {
   m_bgColor       = ts->color("panel-bg");
   update();
 }
+
 void TrafficChart::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event)
   QPainter painter(this);
@@ -65,10 +71,12 @@ void TrafficChart::paintEvent(QPaintEvent* event) {
   drawChart(painter);
   drawLegend(painter);
 }
+
 void TrafficChart::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   update();
 }
+
 double TrafficChart::calculateMaxValue() const {
   double uploadMax   = 0.1;
   double downloadMax = 0.1;
@@ -81,6 +89,7 @@ double TrafficChart::calculateMaxValue() const {
   double currentMax = std::max(uploadMax, downloadMax);
   return std::max(currentMax * 1.2, 0.1);
 }
+
 void TrafficChart::drawChart(QPainter& painter) {
   const int paddingTop    = 24;
   const int paddingRight  = 15;
@@ -96,6 +105,7 @@ void TrafficChart::drawChart(QPainter& painter) {
     drawCurve(painter, chartRect, m_downloadData, m_downloadColor);
   }
 }
+
 void TrafficChart::drawGrid(QPainter& painter, const QRect& chartRect) {
   double maxValue = calculateMaxValue();
   // Draw Y axis labels and grid lines
@@ -128,6 +138,7 @@ void TrafficChart::drawGrid(QPainter& painter, const QRect& chartRect) {
     }
   }
 }
+
 void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect, const QVector<double>& data,
                              const QColor& color) {
   if (data.isEmpty()) return;
@@ -169,6 +180,7 @@ void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect, const QV
   painter.setBrush(color);
   painter.drawEllipse(endPoint, 3, 3);
 }
+
 void TrafficChart::drawLegend(QPainter& painter) {
   const int legendWidth  = 135;
   const int legendHeight = 22;
@@ -198,6 +210,7 @@ void TrafficChart::drawLegend(QPainter& painter) {
   painter.setPen(m_textColor);
   painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight), Qt::AlignVCenter, tr("Down"));
 }
+
 QString TrafficChart::formatSpeed(double bytesPerSecond) const {
   const char* units[]   = {"B/s", "KB/s", "MB/s", "GB/s"};
   int         unitIndex = 0;

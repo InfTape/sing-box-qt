@@ -2,6 +2,7 @@
 #define KERNELPLATFORM_H
 #include <QString>
 #include <QStringList>
+
 namespace KernelPlatform {
 QString     kernelInstallDir();
 QString     detectKernelPath();

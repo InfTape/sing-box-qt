@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <QVBoxLayout>
+
 ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(new QTextEdit) {
   setWindowTitle(tr("Edit current config"));
   setModal(true);
@@ -20,9 +21,11 @@ ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
 }
+
 void ConfigEditDialog::setContent(const QString& content) {
   m_editor->setPlainText(content);
 }
+
 QString ConfigEditDialog::content() const {
   return m_editor->toPlainText();
 }

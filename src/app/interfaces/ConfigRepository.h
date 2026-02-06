@@ -2,6 +2,7 @@
 #define CONFIGREPOSITORY_H
 #include <QJsonArray>
 #include <QString>
+
 class ConfigRepository {
  public:
   virtual ~ConfigRepository()                                                                             = default;

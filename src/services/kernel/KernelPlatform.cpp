@@ -10,10 +10,12 @@
 #include <QStandardPaths>
 #include <QSysInfo>
 #include "utils/AppPaths.h"
+
 namespace KernelPlatform {
 QString kernelInstallDir() {
   return appDataDir();
 }
+
 QString detectKernelPath() {
 #ifdef Q_OS_WIN
   const QString kernelName = "sing-box.exe";
@@ -27,6 +29,7 @@ QString detectKernelPath() {
   }
   return QString();
 }
+
 QString queryKernelVersion(const QString& kernelPath) {
   if (kernelPath.isEmpty() || !QFile::exists(kernelPath)) {
     return QString();
@@ -45,6 +48,7 @@ QString queryKernelVersion(const QString& kernelPath) {
   }
   return output;
 }
+
 QString getKernelArch() {
   const QString arch = QSysInfo::currentCpuArchitecture().toLower();
   if (arch.contains("arm64") || arch.contains("aarch64")) {
@@ -55,6 +59,7 @@ QString getKernelArch() {
   }
   return "386";
 }
+
 QString buildKernelFilename(const QString& version) {
   const QString arch = getKernelArch();
   if (arch.isEmpty()) {
@@ -76,6 +81,7 @@ QString buildKernelFilename(const QString& version) {
   }
   return QString("sing-box-%1-windows-%2.zip").arg(cleanVersion, arch);
 }
+
 QStringList buildDownloadUrls(const QString& version, const QString& filename) {
   QString tag = version;
   if (!tag.startsWith('v')) {
@@ -89,6 +95,7 @@ QStringList buildDownloadUrls(const QString& version, const QString& filename) {
   urls << "https://ghproxy.net/" + base;
   return urls;
 }
+
 QString findExecutableInDir(const QString& dirPath, const QString& exeName) {
   QDirIterator it(dirPath, QDir::Files, QDirIterator::Subdirectories);
   while (it.hasNext()) {
@@ -99,6 +106,7 @@ QString findExecutableInDir(const QString& dirPath, const QString& exeName) {
   }
   return QString();
 }
+
 bool extractZipArchive(const QString& zipPath, const QString& destDir, QString* errorMessage) {
 #ifdef Q_OS_WIN
   QDir dest(destDir);

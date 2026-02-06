@@ -7,6 +7,7 @@
 #include <QString>
 #include <QVector>
 #include <atomic>
+
 // Delay test options.
 struct DelayTestOptions {
   int     timeoutMs = 3000;  // Timeout in ms (Throne-dev default 3s).
@@ -14,6 +15,7 @@ struct DelayTestOptions {
   int     samples     = 2;   // Sample count (Throne-dev uses 2 samples for re-test).
   int     concurrency = 10;  // Concurrency (Throne-dev default 10, internal limit 100).
 };
+
 // Delay test result.
 struct ProxyDelayTestResult {
   QString proxy;               // Proxy name.
@@ -22,6 +24,7 @@ struct ProxyDelayTestResult {
   QString error;               // Error message.
   int     successSamples = 0;  // Successful samples.
 };
+
 class DelayTestService : public QObject {
   Q_OBJECT
  public:

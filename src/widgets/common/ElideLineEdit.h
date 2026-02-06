@@ -2,6 +2,7 @@
 #define ELIDELINEEDIT_H
 #include <QLineEdit>
 class QPaintEvent;
+
 class ElideLineEdit : public QLineEdit {
   Q_OBJECT
  public:

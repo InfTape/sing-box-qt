@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QWidget>
 class ThemeService;
+
 class TrafficChart : public QWidget {
   Q_OBJECT
  public:

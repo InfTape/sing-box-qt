@@ -6,6 +6,7 @@
 #include <QString>
 class HttpClient;
 class WebSocketClient;
+
 class ProxyService : public QObject {
   Q_OBJECT
  public:

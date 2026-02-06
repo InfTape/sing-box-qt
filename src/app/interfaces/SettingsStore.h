@@ -1,6 +1,7 @@
 #ifndef SETTINGSSTORE_H
 #define SETTINGSSTORE_H
 class QString;
+
 class SettingsStore {
  public:
   virtual ~SettingsStore()                         = default;

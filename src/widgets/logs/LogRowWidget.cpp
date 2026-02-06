@@ -2,6 +2,7 @@
 #include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
+
 LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent) : QFrame(parent) {
   setObjectName("LogEntry");
   setProperty("logType", entry.type);

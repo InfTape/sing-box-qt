@@ -20,9 +20,11 @@
 #include "utils/LogParser.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/logs/LogRowWidget.h"
+
 namespace {
 constexpr int kMaxLogEntries = 20;
 }  // namespace
+
 LogView::LogView(ThemeService* themeService, QWidget* parent) : QWidget(parent), m_themeService(themeService) {
   setupUI();
   updateStyle();
@@ -30,6 +32,7 @@ LogView::LogView(ThemeService* themeService, QWidget* parent) : QWidget(parent),
     connect(m_themeService, &ThemeService::themeChanged, this, &LogView::updateStyle);
   }
 }
+
 void LogView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
@@ -148,6 +151,7 @@ void LogView::setupUI() {
   connect(m_copyBtn, &QPushButton::clicked, this, &LogView::onCopyClicked);
   connect(m_exportBtn, &QPushButton::clicked, this, &LogView::onExportClicked);
 }
+
 void LogView::appendLog(const QString& message) {
   const QString cleaned = LogParser::stripAnsiSequences(message).trimmed();
   if (cleaned.isEmpty()) return;
@@ -208,6 +212,7 @@ void LogView::appendLog(const QString& message) {
     m_scrollArea->verticalScrollBar()->setValue(m_scrollArea->verticalScrollBar()->maximum());
   }
 }
+
 void LogView::clear() {
   m_logs.clear();
   m_filtered.clear();
@@ -215,12 +220,15 @@ void LogView::clear() {
   updateStats();
   updateEmptyState();
 }
+
 void LogView::onFilterChanged() {
   rebuildList();
 }
+
 void LogView::onClearClicked() {
   clear();
 }
+
 void LogView::onCopyClicked() {
   QStringList lines;
   for (const auto& log : std::as_const(m_filtered)) {
@@ -228,6 +236,7 @@ void LogView::onCopyClicked() {
   }
   QApplication::clipboard()->setText(lines.join("\n"));
 }
+
 void LogView::onExportClicked() {
   const QString path = QFileDialog::getSaveFileName(this, tr("Export Logs"), "logs.txt", tr("Text Files (*.txt)"));
   if (path.isEmpty()) return;
@@ -238,6 +247,7 @@ void LogView::onExportClicked() {
     out << QString("[%1] [%2] %3\n").arg(log.timestamp.toString(Qt::ISODate)).arg(log.type.toUpper()).arg(log.payload);
   }
 }
+
 void LogView::rebuildList() {
   const QString query     = m_searchEdit->text().trimmed();
   const QString typeValue = m_typeFilter->currentData().toString();
@@ -256,6 +266,7 @@ void LogView::rebuildList() {
   updateStats();
   updateEmptyState();
 }
+
 void LogView::updateStats() {
   int errorCount   = 0;
   int warningCount = 0;
@@ -269,6 +280,7 @@ void LogView::updateStats() {
   m_errorTag->setVisible(true);
   m_warningTag->setVisible(true);
 }
+
 bool LogView::logMatchesFilter(const LogParser::LogEntry& entry) const {
   const QString query       = m_searchEdit->text().trimmed();
   const QString typeValue   = m_typeFilter->currentData().toString();
@@ -276,9 +288,11 @@ bool LogView::logMatchesFilter(const LogParser::LogEntry& entry) const {
   const bool    matchType   = typeValue.isEmpty() || entry.type == typeValue;
   return matchSearch && matchType;
 }
+
 void LogView::appendLogRow(const LogParser::LogEntry& entry) {
   m_listLayout->insertWidget(m_listLayout->count() - 1, new LogRowWidget(entry));
 }
+
 void LogView::removeFirstLogRow() {
   if (m_listLayout->count() <= 1) {
     return;
@@ -291,6 +305,7 @@ void LogView::removeFirstLogRow() {
     delete item;
   }
 }
+
 void LogView::clearListWidgets() {
   while (m_listLayout->count() > 1) {
     QLayoutItem* item = m_listLayout->takeAt(0);
@@ -300,6 +315,7 @@ void LogView::clearListWidgets() {
     delete item;
   }
 }
+
 void LogView::updateEmptyState() {
   const QString query      = m_searchEdit->text().trimmed();
   const bool    hasFilters = !query.isEmpty() || !m_typeFilter->currentData().toString().isEmpty();
@@ -312,6 +328,7 @@ void LogView::updateEmptyState() {
     m_scrollArea->show();
   }
 }
+
 void LogView::updateStyle() {
   ThemeService* ts = m_themeService;
   if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/log_view.qss"));

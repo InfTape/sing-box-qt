@@ -5,6 +5,7 @@
 #include <QPushButton>
 #include <QStyle>
 #include <QVBoxLayout>
+
 ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
   setObjectName("ToolbarCard");
   auto* rootLayout = new QVBoxLayout(this);
@@ -39,20 +40,24 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
   connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyToolbar::testAllClicked);
   connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyToolbar::refreshClicked);
 }
+
 void ProxyToolbar::setTesting(bool testing) {
   if (!m_testAllBtn) return;
   m_testAllBtn->setProperty("testing", testing);
   m_testAllBtn->style()->unpolish(m_testAllBtn);
   m_testAllBtn->style()->polish(m_testAllBtn);
 }
+
 void ProxyToolbar::setTestAllText(const QString& text) {
   if (!m_testAllBtn) return;
   m_testAllBtn->setText(text);
 }
+
 void ProxyToolbar::setProgress(int progress) {
   if (!m_progressBar) return;
   m_progressBar->setValue(progress);
 }
+
 void ProxyToolbar::showProgress(bool visible) {
   if (!m_progressBar) return;
   m_progressBar->setVisible(visible);

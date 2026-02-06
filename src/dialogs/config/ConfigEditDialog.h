@@ -3,6 +3,7 @@
 #include <QDialog>
 #include <QString>
 class QTextEdit;
+
 class ConfigEditDialog : public QDialog {
   Q_OBJECT
  public:

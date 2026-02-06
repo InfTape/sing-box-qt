@@ -8,10 +8,12 @@
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "core/ProxyService.h"
+
 namespace {
 class ConnectionsItemDelegate : public QStyledItemDelegate {
  public:
   explicit ConnectionsItemDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QStyleOptionViewItem opt(option);
     opt.state &= ~QStyle::State_HasFocus;
@@ -20,6 +22,7 @@ class ConnectionsItemDelegate : public QStyledItemDelegate {
   }
 };
 }  // namespace
+
 ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
     : QWidget(parent),
       m_proxyService(nullptr),
@@ -33,6 +36,7 @@ ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
     connect(m_themeService, &ThemeService::themeChanged, this, &ConnectionsView::updateStyle);
   }
 }
+
 void ConnectionsView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
@@ -71,6 +75,7 @@ void ConnectionsView::setupUI() {
   connect(m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
   updateStyle();
 }
+
 void ConnectionsView::setProxyService(ProxyService* service) {
   m_proxyService = service;
   if (m_proxyService) {
@@ -129,6 +134,7 @@ void ConnectionsView::setProxyService(ProxyService* service) {
     });
   }
 }
+
 void ConnectionsView::setAutoRefreshEnabled(bool enabled) {
   m_autoRefreshEnabled = enabled;
   if (m_autoRefreshEnabled && m_proxyService) {
@@ -140,11 +146,13 @@ void ConnectionsView::setAutoRefreshEnabled(bool enabled) {
     m_refreshTimer->stop();
   }
 }
+
 void ConnectionsView::onRefresh() {
   if (m_proxyService && m_autoRefreshEnabled) {
     m_proxyService->fetchConnections();
   }
 }
+
 void ConnectionsView::onCloseSelected() {
   if (!m_proxyService) return;
   QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
@@ -157,11 +165,13 @@ void ConnectionsView::onCloseSelected() {
     m_proxyService->closeConnection(id);
   }
 }
+
 void ConnectionsView::onCloseAll() {
   if (m_proxyService) {
     m_proxyService->closeAllConnections();
   }
 }
+
 void ConnectionsView::updateStyle() {
   ThemeService* ts = m_themeService;
   if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/connections_view.qss"));

@@ -1,6 +1,7 @@
 #ifndef SETTINGSSTOREADAPTER_H
 #define SETTINGSSTOREADAPTER_H
 #include "app/interfaces/SettingsStore.h"
+
 class SettingsStoreAdapter : public SettingsStore {
  public:
   bool systemProxyEnabled() const override;

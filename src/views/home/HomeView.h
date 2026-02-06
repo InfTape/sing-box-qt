@@ -9,6 +9,7 @@ class ProxyModeSection;
 class StatCard;
 class TrafficChart;
 class ThemeService;
+
 class HomeView : public QWidget {
   Q_OBJECT
  public:

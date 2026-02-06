@@ -9,6 +9,7 @@
 #include "services/rules/SharedRulesStore.h"
 #include "storage/DatabaseService.h"
 #include "utils/rule/RuleUtils.h"
+
 namespace {
 bool buildRouteRule(const RuleConfigService::RuleEditData& data, QJsonObject* out, QString* error) {
   if (!out) return false;
@@ -65,6 +66,7 @@ bool buildRouteRule(const RuleConfigService::RuleEditData& data, QJsonObject* ou
   *out             = rule;
   return true;
 }
+
 int findInsertIndex(const QJsonArray& rules) {
   auto findIndex = [&rules](const QString& mode) -> int {
     for (int i = 0; i < rules.size(); ++i) {
@@ -87,6 +89,7 @@ int findInsertIndex(const QJsonArray& rules) {
     insertIndex = 0;
   return insertIndex;
 }
+
 bool ruleObjectMatches(const QJsonObject& obj, const RuleItem& rule, const QString& key, const QStringList& values) {
   if (obj.contains("action") && obj.value("action").toString() != "route") return false;
   if (!obj.contains(key)) return false;
@@ -115,6 +118,7 @@ bool ruleObjectMatches(const QJsonObject& obj, const RuleItem& rule, const QStri
   }
   return values.size() == 1 && v.toString().trimmed() == values.first();
 }
+
 bool removeRuleFromArray(QJsonArray* rules, const RuleItem& rule, QString* error) {
   if (!rules) return false;
   QString     key;
@@ -136,6 +140,7 @@ bool removeRuleFromArray(QJsonArray* rules, const RuleItem& rule, QString* error
   }
   return removed;
 }
+
 QJsonObject buildRouteRuleFromItem(const RuleItem& rule, QString* error) {
   QString     key;
   QStringList values;
@@ -155,9 +160,11 @@ QJsonObject buildRouteRuleFromItem(const RuleItem& rule, QString* error) {
   return obj;
 }
 }  // namespace
+
 bool RuleConfigService::buildRouteRulePublic(const RuleEditData& data, QJsonObject* out, QString* error) {
   return buildRouteRule(data, out, error);
 }
+
 QList<RuleConfigService::RuleFieldInfo> RuleConfigService::fieldInfos() {
   return {
       {QObject::tr("Domain"), "domain", QObject::tr("Example: example.com")},
@@ -178,15 +185,18 @@ QList<RuleConfigService::RuleFieldInfo> RuleConfigService::fieldInfos() {
       {QObject::tr("Package Name"), "package_name", QObject::tr("Example: com.example.app")},
   };
 }
+
 QString RuleConfigService::activeConfigPath(ConfigRepository* cfgRepo) {
   const QString subPath = DatabaseService::instance().getActiveConfigPath();
   if (!subPath.isEmpty()) return subPath;
   return cfgRepo ? cfgRepo->getActiveConfigPath() : QString();
 }
+
 QString RuleConfigService::findRuleSet(ConfigRepository* /*cfgRepo*/, const RuleItem& rule) {
   const QJsonObject obj = buildRouteRuleFromItem(rule, nullptr);
   return SharedRulesStore::findSetOfRule(obj);
 }
+
 QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo, const QString& extraTag, QString* error) {
   QSet<QString> tags;
   const QString path = activeConfigPath(cfgRepo);
@@ -213,6 +223,7 @@ QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo, const
   list.sort();
   return list;
 }
+
 bool RuleConfigService::addRule(ConfigRepository* cfgRepo, const RuleEditData& data, RuleItem* added, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
   if (path.isEmpty()) {
@@ -271,6 +282,7 @@ bool RuleConfigService::addRule(ConfigRepository* cfgRepo, const RuleEditData& d
   SharedRulesStore::addRule(setName, routeRule);
   return true;
 }
+
 bool RuleConfigService::updateRule(ConfigRepository* cfgRepo, const RuleItem& existing, const RuleEditData& data,
                                    RuleItem* updated, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
@@ -321,6 +333,7 @@ bool RuleConfigService::updateRule(ConfigRepository* cfgRepo, const RuleItem& ex
   SharedRulesStore::replaceRule(targetSet, oldRouteRule, routeRule);
   return true;
 }
+
 bool RuleConfigService::removeRule(ConfigRepository* cfgRepo, const RuleItem& rule, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
   if (path.isEmpty()) {
@@ -356,6 +369,7 @@ bool RuleConfigService::removeRule(ConfigRepository* cfgRepo, const RuleItem& ru
   }
   return true;
 }
+
 bool RuleConfigService::parseRulePayload(const QString& payload, QString* key, QStringList* values, QString* error) {
   if (key) key->clear();
   if (values) values->clear();

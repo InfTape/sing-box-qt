@@ -2,6 +2,7 @@
 #include "core/CoreManagerProtocol.h"
 #include "coremanager/CoreManagerServer.h"
 #include "utils/Logger.h"
+
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
   app.setApplicationName("sing-box-core-manager");

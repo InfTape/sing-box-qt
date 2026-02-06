@@ -3,14 +3,17 @@
 #include <QJsonDocument>
 #include "storage/ConfigIO.h"
 #include "utils/Logger.h"
+
 namespace {
 QString ruleToString(const QJsonObject& obj) {
   return QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
 }
 }  // namespace
+
 QString SharedRulesStore::storagePath() {
   return ConfigIO::getConfigDir() + "/shared-rules.json";
 }
+
 QJsonObject SharedRulesStore::loadDocument() {
   QFile file(storagePath());
   if (!file.exists()) {
@@ -41,6 +44,7 @@ QJsonObject SharedRulesStore::loadDocument() {
   }
   return root;
 }
+
 bool SharedRulesStore::saveDocument(const QJsonObject& doc) {
   QFile file(storagePath());
   if (!file.open(QIODevice::WriteOnly)) {
@@ -51,9 +55,11 @@ bool SharedRulesStore::saveDocument(const QJsonObject& doc) {
   file.close();
   return true;
 }
+
 bool SharedRulesStore::ruleEquals(const QJsonObject& a, const QJsonObject& b) {
   return ruleToString(a) == ruleToString(b);
 }
+
 void SharedRulesStore::normalizeRule(QJsonObject* rule) {
   if (!rule) return;
   rule->insert("shared",
@@ -62,6 +68,7 @@ void SharedRulesStore::normalizeRule(QJsonObject* rule) {
     rule->insert("source", "custom");
   }
 }
+
 QStringList SharedRulesStore::listRuleSets() {
   QJsonObject doc = loadDocument();
   QStringList names;
@@ -75,6 +82,7 @@ QStringList SharedRulesStore::listRuleSets() {
   if (names.isEmpty()) names << "default";
   return names;
 }
+
 bool SharedRulesStore::ensureRuleSet(const QString& name) {
   const QString target = name.trimmed().isEmpty() ? "default" : name.trimmed();
   QJsonObject   doc    = loadDocument();
@@ -91,6 +99,7 @@ bool SharedRulesStore::ensureRuleSet(const QString& name) {
   doc["sets"] = sets;
   return saveDocument(doc);
 }
+
 bool SharedRulesStore::removeRuleSet(const QString& name) {
   const QString target = name.trimmed();
   if (target.isEmpty() || target == "default") return false;
@@ -114,6 +123,7 @@ bool SharedRulesStore::removeRuleSet(const QString& name) {
   doc["sets"] = kept;
   return saveDocument(doc);
 }
+
 bool SharedRulesStore::renameRuleSet(const QString& from, const QString& to) {
   const QString src = from.trimmed();
   const QString dst = to.trimmed();
@@ -136,6 +146,7 @@ bool SharedRulesStore::renameRuleSet(const QString& from, const QString& to) {
   doc["sets"] = sets;
   return saveDocument(doc);
 }
+
 QJsonArray SharedRulesStore::loadRules(const QString& setName) {
   const QString target = setName.isEmpty() ? "default" : setName;
   QJsonObject   doc    = loadDocument();
@@ -148,6 +159,7 @@ QJsonArray SharedRulesStore::loadRules(const QString& setName) {
   }
   return QJsonArray();
 }
+
 bool SharedRulesStore::saveRules(const QString& setName, const QJsonArray& rules) {
   const QString target = setName.isEmpty() ? "default" : setName;
   QJsonObject   doc    = loadDocument();
@@ -173,6 +185,7 @@ bool SharedRulesStore::saveRules(const QString& setName, const QJsonArray& rules
   doc["sets"] = sets;
   return saveDocument(doc);
 }
+
 bool SharedRulesStore::addRule(const QString& setName, const QJsonObject& rule) {
   QJsonObject normalized = rule;
   normalizeRule(&normalized);
@@ -187,6 +200,7 @@ bool SharedRulesStore::addRule(const QString& setName, const QJsonObject& rule) 
   rules.append(normalized);
   return saveRules(target, rules);
 }
+
 bool SharedRulesStore::replaceRule(const QString& setName, const QJsonObject& oldRule, const QJsonObject& newRule) {
   QJsonObject oldNormalized = oldRule;
   QJsonObject newNormalized = newRule;
@@ -208,6 +222,7 @@ bool SharedRulesStore::replaceRule(const QString& setName, const QJsonObject& ol
   }
   return saveRules(target, rules);
 }
+
 bool SharedRulesStore::removeRule(const QString& setName, const QJsonObject& rule) {
   QJsonObject normalized = rule;
   normalizeRule(&normalized);
@@ -222,6 +237,7 @@ bool SharedRulesStore::removeRule(const QString& setName, const QJsonObject& rul
   }
   return true;
 }
+
 bool SharedRulesStore::removeRuleFromAll(const QJsonObject& rule) {
   QJsonObject doc        = loadDocument();
   QJsonArray  sets       = doc.value("sets").toArray();
@@ -249,6 +265,7 @@ bool SharedRulesStore::removeRuleFromAll(const QJsonObject& rule) {
   }
   return true;
 }
+
 QString SharedRulesStore::findSetOfRule(const QJsonObject& rule) {
   QJsonObject normalized = rule;
   normalizeRule(&normalized);

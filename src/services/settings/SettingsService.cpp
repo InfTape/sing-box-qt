@@ -4,6 +4,7 @@
 #include "storage/DatabaseService.h"
 #include "system/AutoStart.h"
 #include "utils/Logger.h"
+
 SettingsModel::Data SettingsService::loadSettings() {
   SettingsModel::Data data = SettingsModel::load();
   // Sync system auto-start status, ensuring display matches reality.
@@ -15,6 +16,7 @@ SettingsModel::Data SettingsService::loadSettings() {
   }
   return data;
 }
+
 bool SettingsService::saveSettings(const SettingsModel::Data& data, int themeIndex, int languageIndex,
                                    QString* errorMessage) {
   SettingsModel::Data mutableData = data;

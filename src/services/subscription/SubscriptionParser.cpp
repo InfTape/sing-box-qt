@@ -10,15 +10,18 @@
 #include <QUrlQuery>
 #include <yaml-cpp/yaml.h>
 #include "utils/Logger.h"
+
 namespace {
 void appendArray(QJsonArray& target, const QJsonArray& source) {
   for (const auto& val : source) {
     target.append(val);
   }
 }
+
 bool looksLikeWireguardConfig(const QString& text) {
   return text.contains("[Interface]") && text.contains("[Peer]");
 }
+
 QString normalizeHostToAscii(const QString& host) {
   if (host.isEmpty()) {
     return host;
@@ -29,6 +32,7 @@ QString normalizeHostToAscii(const QString& host) {
   }
   return host;
 }
+
 QList<QString> splitContentEntries(const QString& text) {
   QList<QString> entries;
   int            idx = 0;
@@ -67,6 +71,7 @@ QList<QString> splitContentEntries(const QString& text) {
   }
   return entries;
 }
+
 QJsonArray parseJsonContentToNodes(const QByteArray& content) {
   QJsonArray      result;
   QJsonParseError err;
@@ -100,6 +105,7 @@ QJsonArray parseJsonContentToNodes(const QByteArray& content) {
   return result;
 }
 }  // namespace
+
 QJsonArray SubscriptionParser::parseSubscriptionContent(const QByteArray& content) {
   QJsonArray jsonNodes = parseJsonContentToNodes(content);
   if (!jsonNodes.isEmpty()) {
@@ -119,6 +125,7 @@ QJsonArray SubscriptionParser::parseSubscriptionContent(const QByteArray& conten
   }
   return parseURIList(content);
 }
+
 QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   QJsonArray    nodes;
   QJsonDocument doc = QJsonDocument::fromJson(content);
@@ -157,6 +164,7 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   }
   return nodes;
 }
+
 QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
   QJsonArray nodes;
   auto       readString = [](const YAML::Node& node) -> QString {
@@ -349,6 +357,7 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
   }
   return nodes;
 }
+
 QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject& obj) {
   QJsonArray nodes;
   if (!obj.contains("servers") || !obj.value("servers").isArray()) {
@@ -378,6 +387,7 @@ QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject& obj) {
   }
   return nodes;
 }
+
 QJsonObject SubscriptionParser::parseSingleJsonNode(const QJsonObject& obj) {
   QJsonObject node = obj;
   QString     type = node.value("type").toString().trimmed();
@@ -413,6 +423,7 @@ QJsonObject SubscriptionParser::parseSingleJsonNode(const QJsonObject& obj) {
   }
   return node;
 }
+
 QJsonArray SubscriptionParser::parseURIList(const QByteArray& content) {
   QJsonArray nodes;
   QString    text = tryDecodeBase64ToText(QString::fromUtf8(content));
@@ -460,6 +471,7 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray& content) {
   }
   return nodes;
 }
+
 QJsonObject SubscriptionParser::parseVmessURI(const QString& uri) {
   QJsonObject   node;
   const QString encoded = uri.mid(8).trimmed();
@@ -597,6 +609,7 @@ QJsonObject SubscriptionParser::parseVmessURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -720,6 +733,7 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseTrojanURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -744,6 +758,7 @@ QJsonObject SubscriptionParser::parseTrojanURI(const QString& uri) {
   node["tls"]        = tls;
   return node;
 }
+
 QJsonObject SubscriptionParser::parseShadowsocksURI(const QString& uri) {
   QJsonObject node;
   QString     data      = uri.mid(5);
@@ -789,6 +804,7 @@ QJsonObject SubscriptionParser::parseShadowsocksURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseHysteria2URI(const QString& uri) {
   QJsonObject node;
   QString     uriFixed = uri;
@@ -826,6 +842,7 @@ QJsonObject SubscriptionParser::parseHysteria2URI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseHysteriaURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -886,6 +903,7 @@ QJsonObject SubscriptionParser::parseHysteriaURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -953,6 +971,7 @@ QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseSocksURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -980,6 +999,7 @@ QJsonObject SubscriptionParser::parseSocksURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseHttpURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -1016,6 +1036,7 @@ QJsonObject SubscriptionParser::parseHttpURI(const QString& uri) {
   }
   return node;
 }
+
 QJsonObject SubscriptionParser::parseWireguardConfig(const QString& content) {
   if (content.startsWith("wg://")) {
     const QString encoded = content.mid(5);
@@ -1100,6 +1121,7 @@ QJsonObject SubscriptionParser::parseWireguardConfig(const QString& content) {
   node["tag"] = tag;
   return node;
 }
+
 QString SubscriptionParser::tryDecodeBase64ToText(const QString& raw) {
   QString compact = raw;
   compact.remove(QRegularExpression("\\s+"));
@@ -1122,6 +1144,7 @@ QString SubscriptionParser::tryDecodeBase64ToText(const QString& raw) {
   }
   return QString();
 }
+
 QJsonArray SubscriptionParser::extractNodesWithFallback(const QString& content) {
   auto tryParse = [](const QString& text) -> QJsonArray {
     QJsonArray parsed = SubscriptionParser::parseSubscriptionContent(text.toUtf8());

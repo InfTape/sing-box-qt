@@ -2,6 +2,7 @@
 #define CONFIGCONSTANTS_H
 #include <QString>
 #include <QStringList>
+
 namespace ConfigConstants {
 // ==================== Outbound tags ====================
 // Proxy group/outbound tags exposed in Clash API (keep stable)
@@ -30,7 +31,8 @@ const QString RS_GEOSITE_NETFLIX            = "geosite-netflix";
 const QString RS_GEOSITE_OPENAI             = "geosite-openai";
 const QString RS_GEOIP_CN                   = "geoip-cn";
 // ==================== Rule set URLs ====================
-const QString  RULE_SET_BASE = "https://raw.githubusercontent.com";
+const QString RULE_SET_BASE = "https://raw.githubusercontent.com";
+
 inline QString ruleSetUrl(const QString& tag) {
   if (tag == RS_GEOSITE_CN) {
     return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-cn.srs";
@@ -53,15 +55,18 @@ inline QString ruleSetUrl(const QString& tag) {
   }
   return QString();
 }
+
 // ==================== Private IP ranges ====================
 inline QStringList privateIpCidrs() {
   return {"10.0.0.0/8",     "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12",
           "192.168.0.0/16", "::1/128",       "fc00::/7",    "fe80::/10"};
 }
+
 // ==================== TUN route excludes ====================
 inline QStringList tunRouteExcludes() {
   return {"127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "::1/128", "fc00::/7"};
 }
+
 // ==================== Default configuration ====================
 const int     DEFAULT_MIXED_PORT   = 7890;
 const int     DEFAULT_API_PORT     = 9090;

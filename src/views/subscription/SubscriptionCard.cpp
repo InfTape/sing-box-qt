@@ -13,6 +13,7 @@
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"
 #include "widgets/common/RoundedMenu.h"
+
 SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info, bool active, ThemeService* themeService,
                                    QWidget* parent)
     : QFrame(parent), m_subId(info.id), m_active(active), m_themeService(themeService) {
@@ -22,12 +23,14 @@ SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info, bool active, Th
     connect(m_themeService, &ThemeService::themeChanged, this, &SubscriptionCard::updateStyle);
   }
 }
+
 void SubscriptionCard::setActive(bool active) {
   if (m_active == active) return;
   m_active = active;
   applyActiveState();
   updateStyle();
 }
+
 void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   setObjectName("SubscriptionCard");
   setAttribute(Qt::WA_StyledBackground, true);
@@ -108,6 +111,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   mainLayout->addStretch();
   mainLayout->addWidget(m_useBtn);
 }
+
 void SubscriptionCard::applyActiveState() {
   if (m_statusTag) {
     m_statusTag->setText(m_active ? tr("Active") : tr("Inactive"));
@@ -126,6 +130,7 @@ void SubscriptionCard::applyActiveState() {
     m_editConfigAction->setVisible(m_active);
   }
 }
+
 void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
   m_subId = info.id;
   if (m_nameLabel) {
@@ -188,6 +193,7 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
   applyActiveState();
   updateStyle();
 }
+
 void SubscriptionCard::updateStyle() {
   ThemeService* ts = m_themeService;
   if (!ts) return;

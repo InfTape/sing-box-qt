@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QString>
+
 class KernelRunner : public QObject {
   Q_OBJECT
  public:

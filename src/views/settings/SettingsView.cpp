@@ -24,6 +24,7 @@
 #include "widgets/common/FlowLayout.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
+
 namespace {
 constexpr int kLanguageDefaultIndex       = 1;
 constexpr int kSpinBoxHeight              = 34;
@@ -49,6 +50,7 @@ constexpr int kKernelFormSpacing          = 15;
 constexpr int kSectionPaddingReserve      = 170;
 constexpr int kMinRoutingWrapWidth        = 1200;
 constexpr int kMinDnsWrapWidth            = 1180;
+
 class NoWheelSpinBox : public QSpinBox {
  public:
   explicit NoWheelSpinBox(QWidget* parent = nullptr) : QSpinBox(parent) {}
@@ -57,6 +59,7 @@ class NoWheelSpinBox : public QSpinBox {
   void wheelEvent(QWheelEvent* event) override { event->ignore(); }
 };
 }  // namespace
+
 SettingsView::SettingsView(ThemeService* themeService, SettingsController* controller, QWidget* parent)
     : QWidget(parent),
       m_settingsController(controller ? controller : new SettingsController(this)),
@@ -77,15 +80,18 @@ SettingsView::SettingsView(ThemeService* themeService, SettingsController* contr
   }
   updateStyle();
 }
+
 void SettingsView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
   updateResponsiveUi();
   ensureKernelInfoLoaded();
 }
+
 void SettingsView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   updateResponsiveUi();
 }
+
 void SettingsView::ensureKernelInfoLoaded() {
   if (m_kernelInfoLoaded) {
     return;
@@ -96,16 +102,19 @@ void SettingsView::ensureKernelInfoLoaded() {
     m_settingsController->fetchReleaseList();
   }
 }
+
 QLabel* SettingsView::createSectionTitle(const QString& text) {
   QLabel* title = new QLabel(text);
   title->setObjectName("SettingsSectionTitle");
   return title;
 }
+
 QFrame* SettingsView::createCard() {
   QFrame* card = new QFrame;
   card->setObjectName("SettingsCard");
   return card;
 }
+
 QLabel* SettingsView::createFormLabel(const QString& text) {
   QLabel* label = new QLabel(text);
   label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
@@ -113,6 +122,7 @@ QLabel* SettingsView::createFormLabel(const QString& text) {
   label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
   return label;
 }
+
 QSpinBox* SettingsView::createSpinBox(int min, int max, int value, bool blockWheel) {
   QSpinBox* spin = blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox) : new QSpinBox;
   spin->setButtonSymbols(QAbstractSpinBox::NoButtons);
@@ -123,6 +133,7 @@ QSpinBox* SettingsView::createSpinBox(int min, int max, int value, bool blockWhe
   spin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   return spin;
 }
+
 MenuComboBox* SettingsView::createMenuComboBox(bool expanding) {
   MenuComboBox* combo = new MenuComboBox(this, m_themeService);
   combo->setWheelEnabled(false);
@@ -133,6 +144,7 @@ MenuComboBox* SettingsView::createMenuComboBox(bool expanding) {
   }
   return combo;
 }
+
 ElideLineEdit* SettingsView::createElideLineEdit(const QString& placeholder) {
   ElideLineEdit* edit = new ElideLineEdit;
   edit->setPlaceholderText(placeholder);
@@ -140,6 +152,7 @@ ElideLineEdit* SettingsView::createElideLineEdit(const QString& placeholder) {
   edit->setMinimumWidth(kControlMinWidth);
   return edit;
 }
+
 void SettingsView::prepareFormLabelPair(QLabel* left, QLabel* right) {
   if (!left || !right) {
     return;
@@ -150,6 +163,7 @@ void SettingsView::prepareFormLabelPair(QLabel* left, QLabel* right) {
   left->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
   right->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 }
+
 QWidget* SettingsView::buildProxySection() {
   QWidget*     proxySection       = new QWidget;
   QVBoxLayout* proxySectionLayout = new QVBoxLayout(proxySection);
@@ -177,6 +191,7 @@ QWidget* SettingsView::buildProxySection() {
   proxySectionLayout->addWidget(proxyCard);
   return proxySection;
 }
+
 QWidget* SettingsView::buildProxyAdvancedSection() {
   ThemeService* ts = m_themeService;
   Q_UNUSED(ts);  // Colors obtained via QSS
@@ -241,6 +256,7 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   proxyAdvancedLayout->addWidget(proxyAdvancedCard);
   return proxyAdvancedSection;
 }
+
 QWidget* SettingsView::buildProfileSection() {
   ThemeService* ts = m_themeService;
   Q_UNUSED(ts);  // Colors obtained via QSS
@@ -325,6 +341,7 @@ QWidget* SettingsView::buildProfileSection() {
   singboxProfileLayout->addWidget(singboxProfileCard);
   return singboxProfileSection;
 }
+
 QWidget* SettingsView::buildAppearanceSection() {
   QWidget*     appearanceSection       = new QWidget;
   QVBoxLayout* appearanceSectionLayout = new QVBoxLayout(appearanceSection);
@@ -352,6 +369,7 @@ QWidget* SettingsView::buildAppearanceSection() {
   appearanceSectionLayout->addWidget(appearanceCard);
   return appearanceSection;
 }
+
 QWidget* SettingsView::buildKernelSection() {
   ThemeService* ts = m_themeService;
   Q_UNUSED(ts);  // Colors obtained via QSS
@@ -401,6 +419,7 @@ QWidget* SettingsView::buildKernelSection() {
   kernelSectionLayout->addWidget(kernelCard);
   return kernelSection;
 }
+
 void SettingsView::setupUI() {
   ThemeService* ts = m_themeService;
   Q_UNUSED(ts);  // Colors obtained via QSS
@@ -464,6 +483,7 @@ void SettingsView::setupUI() {
   });
   updateResponsiveUi();
 }
+
 void SettingsView::updateResponsiveUi() {
   int routingRequiredWidth = 0;
   if (m_defaultOutboundLabel && m_downloadDetourLabel) {
@@ -533,6 +553,7 @@ void SettingsView::updateResponsiveUi() {
   applyDnsLabelMode(m_dnsResolverLabel);
   applyDnsLabelMode(m_urltestLabel);
 }
+
 void SettingsView::updateStyle() {
   ThemeService* ts = m_themeService;
   if (!ts) return;
@@ -544,14 +565,17 @@ void SettingsView::updateStyle() {
     }
   }
 }
+
 QString SettingsView::normalizeBypassText(const QString& text) const {
   return SettingsHelpers::normalizeBypassText(text);
 }
+
 void SettingsView::fillGeneralFromUi(SettingsModel::Data& data) const {
   data.mixedPort = m_mixedPortSpin->value();
   data.apiPort   = m_apiPortSpin->value();
   data.autoStart = m_autoStartCheck->isChecked();
 }
+
 void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
   data.systemProxyBypass = normalizeBypassText(m_systemProxyBypassEdit->toPlainText());
   data.tunMtu            = m_tunMtuSpin->value();
@@ -570,6 +594,7 @@ void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
   data.tunAutoRoute   = m_tunAutoRouteSwitch->isChecked();
   data.tunStrictRoute = m_tunStrictRouteSwitch->isChecked();
 }
+
 void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
   data.defaultOutbound = (m_defaultOutboundCombo->currentIndex() == 1) ? "auto" : "manual";
   data.downloadDetour  = (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
@@ -581,6 +606,7 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
   data.dnsResolver = SettingsHelpers::resolveTextOrDefault(m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
   data.urltestUrl  = SettingsHelpers::resolveTextOrDefault(m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
 }
+
 void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   m_mixedPortSpin->setValue(data.mixedPort);
   m_apiPortSpin->setValue(data.apiPort);
@@ -618,11 +644,13 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
     m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
   }
 }
+
 void SettingsView::loadSettings() {
   if (m_settingsController) {
     applySettingsToUi(m_settingsController->loadSettings());
   }
 }
+
 bool SettingsView::saveSettings() {
   if (!m_settingsController) return false;
   SettingsModel::Data data = m_settingsController->loadSettings();
@@ -637,11 +665,13 @@ bool SettingsView::saveSettings() {
   }
   return true;
 }
+
 void SettingsView::onSaveClicked() {
   if (saveSettings()) {
     QMessageBox::information(this, tr("Notice"), tr("Settings saved"));
   }
 }
+
 void SettingsView::onDownloadKernelClicked() {
   if (m_isDownloading || !m_settingsController) {
     return;
@@ -653,6 +683,7 @@ void SettingsView::onDownloadKernelClicked() {
   setDownloadUi(true, tr("Preparing to download kernel..."));
   m_settingsController->downloadAndInstall(version);
 }
+
 void SettingsView::onCheckKernelClicked() {
   if (m_settingsController) {
     m_checkingInstall = true;
@@ -663,12 +694,14 @@ void SettingsView::onCheckKernelClicked() {
     setDownloadUi(false, tr("Kernel manager unavailable"));
   }
 }
+
 void SettingsView::onCheckUpdateClicked() {
   if (m_settingsController) {
     setDownloadUi(true, tr("Checking latest kernel version..."));
     m_settingsController->checkLatest();
   }
 }
+
 void SettingsView::onKernelInstalledReady(const QString& path, const QString& version) {
   setDownloadUi(false, tr("Installation check finished"));
   m_installedKernelVersion = version.trimmed();
@@ -692,6 +725,7 @@ void SettingsView::onKernelInstalledReady(const QString& path, const QString& ve
     QMessageBox::information(this, tr("Check Installation"), msg);
   }
 }
+
 void SettingsView::onKernelReleasesReady(const QStringList& versions, const QString& latest) {
   setDownloadUi(false);
   m_latestKernelVersion = latest.trimmed();
@@ -703,6 +737,7 @@ void SettingsView::onKernelReleasesReady(const QStringList& versions, const QStr
     m_kernelVersionCombo->addItem(ver);
   }
 }
+
 void SettingsView::onKernelLatestReady(const QString& latest, const QString& installed) {
   setDownloadUi(false);
   m_latestKernelVersion    = latest.trimmed();
@@ -728,6 +763,7 @@ void SettingsView::onKernelLatestReady(const QString& latest, const QString& ins
         tr("New kernel version %1 available, current %2").arg(m_latestKernelVersion, m_installedKernelVersion));
   }
 }
+
 void SettingsView::updateKernelVersionLabelStatus() {
   if (!m_kernelVersionLabel) {
     return;
@@ -740,15 +776,18 @@ void SettingsView::updateKernelVersionLabelStatus() {
   m_kernelVersionLabel->style()->polish(m_kernelVersionLabel);
   m_kernelVersionLabel->update();
 }
+
 void SettingsView::onKernelDownloadProgress(int percent) {
   if (m_kernelDownloadProgress) {
     m_kernelDownloadProgress->setValue(percent);
     m_kernelDownloadProgress->setVisible(true);
   }
 }
+
 void SettingsView::onKernelStatusChanged(const QString& status) {
   setDownloadUi(true, status);
 }
+
 void SettingsView::onKernelFinished(bool ok, const QString& message) {
   setDownloadUi(false, message);
   if (ok) {
@@ -757,6 +796,7 @@ void SettingsView::onKernelFinished(bool ok, const QString& message) {
     QMessageBox::warning(this, tr("Kernel"), message);
   }
 }
+
 void SettingsView::setDownloadUi(bool downloading, const QString& message) {
   m_isDownloading = downloading;
   m_downloadKernelBtn->setEnabled(!downloading);

@@ -5,6 +5,7 @@
 class QLabel;
 class RoundedMenu;
 class ThemeService;
+
 class RuleCard : public QFrame {
   Q_OBJECT
  public:

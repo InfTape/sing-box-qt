@@ -2,6 +2,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include "network/SubscriptionService.h"
+
 namespace SubscriptionHelpers {
 bool isSingleManualNode(const SubscriptionInfo& info, QJsonObject* outNode) {
   if (!info.isManual || info.useOriginalConfig) return false;

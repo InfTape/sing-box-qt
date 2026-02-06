@@ -1,5 +1,6 @@
 #include "utils/LogParser.h"
 #include <QRegularExpression>
+
 namespace LogParser {
 QString stripAnsiSequences(const QString& text) {
   static const QRegularExpression kAnsiPattern("\x1B\\[[0-?]*[ -/]*[@-~]");
@@ -7,6 +8,7 @@ QString stripAnsiSequences(const QString& text) {
   cleaned.remove(kAnsiPattern);
   return cleaned;
 }
+
 LogKind parseLogKind(const QString& message) {
   LogKind                         info;
   static const QRegularExpression kDnsPattern("\\bdns\\s*:");
@@ -38,6 +40,7 @@ LogKind parseLogKind(const QString& message) {
   info.isConnection = true;
   return info;
 }
+
 QString detectLogType(const QString& message) {
   const QString                   upper = message.toUpper();
   static const QRegularExpression kPanicRe("\\bPANIC\\b");
@@ -57,6 +60,7 @@ QString detectLogType(const QString& message) {
   if (upper.contains(kInfoRe)) return "info";
   return "info";
 }
+
 QString logTypeLabel(const QString& type) {
   if (type == "trace") return "TRACE";
   if (type == "debug") return "DEBUG";

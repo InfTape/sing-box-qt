@@ -2,17 +2,20 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
+
 RoundedMenu::RoundedMenu(QWidget* parent)
     : QMenu(parent), m_bgColor(QColor(30, 41, 59)), m_borderColor(QColor(255, 255, 255, 26)) {
   setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setAttribute(Qt::WA_NoSystemBackground, true);
 }
+
 void RoundedMenu::setThemeColors(const QColor& bg, const QColor& border) {
   m_bgColor     = bg;
   m_borderColor = border;
   update();
 }
+
 void RoundedMenu::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);

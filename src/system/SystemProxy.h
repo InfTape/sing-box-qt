@@ -2,6 +2,7 @@
 #define SYSTEMPROXY_H
 #include <QObject>
 #include <QString>
+
 class SystemProxy : public QObject {
   Q_OBJECT
  public:

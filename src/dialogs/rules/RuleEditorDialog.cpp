@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/MenuComboBox.h"
+
 RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
     : QDialog(parent),
       m_mode(mode),
@@ -55,13 +56,16 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
   connect(buttons, &QDialogButtonBox::accepted, this, &RuleEditorDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &RuleEditorDialog::reject);
 }
+
 void RuleEditorDialog::setOutboundTags(const QStringList& tags) {
   m_outboundCombo->clear();
   m_outboundCombo->addItems(tags);
 }
+
 void RuleEditorDialog::setRuleSetName(const QString& name) {
   m_ruleSetEdit->setText(name.isEmpty() ? QStringLiteral("default") : name);
 }
+
 bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
   QString     key;
   QStringList values;
@@ -88,9 +92,11 @@ bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
   }
   return true;
 }
+
 RuleConfigService::RuleEditData RuleEditorDialog::editData() const {
   return m_cachedData;
 }
+
 void RuleEditorDialog::accept() {
   RuleConfigService::RuleEditData data;
   QString                         error;
@@ -102,10 +108,12 @@ void RuleEditorDialog::accept() {
   m_cachedData = data;
   QDialog::accept();
 }
+
 void RuleEditorDialog::updatePlaceholder(int index) {
   if (index < 0 || index >= m_fields.size()) return;
   m_valueEdit->setPlaceholderText(m_fields[index].placeholder + tr(" (separate by commas or new lines)"));
 }
+
 bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out, QString* error) const {
   if (!out) return false;
   const int fieldIndex = m_typeCombo->currentIndex();

@@ -34,6 +34,7 @@
 #include "views/settings/SettingsController.h"
 #include "views/settings/SettingsView.h"
 #include "views/subscription/SubscriptionView.h"
+
 namespace {
 QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
   const qreal  dpr = qApp->devicePixelRatio();
@@ -71,6 +72,7 @@ QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
   return QIcon(tinted);
 }
 }  // namespace
+
 MainWindow::MainWindow(AppContext& ctx, QWidget* parent)
     : QMainWindow(parent),
       m_ctx(ctx),
@@ -99,9 +101,11 @@ MainWindow::MainWindow(AppContext& ctx, QWidget* parent)
   updateStyle();
   Logger::info(QStringLiteral("Main window initialized"));
 }
+
 MainWindow::~MainWindow() {
   saveSettings();
 }
+
 // ... existing code ...
 void MainWindow::setupUI() {
   setWindowTitle(tr("Sing-Box"));
@@ -156,15 +160,18 @@ void MainWindow::setupUI() {
   mainLayout->addWidget(contentContainer, 1);
   setupStatusBar();
 }
+
 void MainWindow::setupNavigation() {
   m_navList = new QListWidget;
   m_navList->setFixedWidth(200);
   m_navList->setIconSize(QSize(20, 20));
   m_navList->setFocusPolicy(Qt::NoFocus);
+
   struct NavItem {
     QString name;
     QString icon;
   };
+
   QList<NavItem> items = {{tr("Home"), "home"},        {tr("Proxy"), "proxy"}, {tr("Subscription"), "sub"},
                           {tr("Connections"), "conn"}, {tr("Rules"), "rule"},  {tr("Logs"), "log"},
                           {tr("Settings"), "settings"}};
@@ -176,6 +183,7 @@ void MainWindow::setupNavigation() {
   m_navList->setCurrentRow(0);
   updateNavIcons();
 }
+
 void MainWindow::setupStatusBar() {
   QWidget* statusWidget = new QWidget;
   statusWidget->setObjectName("StatusBar");
@@ -196,6 +204,7 @@ void MainWindow::setupStatusBar() {
     contentContainer->layout()->addWidget(statusWidget);
   }
 }
+
 void MainWindow::setupConnections() {
   setupNavigationConnections();
   setupThemeConnections();
@@ -214,15 +223,18 @@ void MainWindow::setupConnections() {
     m_proxyUiController->broadcastCurrentStates();
   }
 }
+
 void MainWindow::setupNavigationConnections() {
   connect(m_navList, &QListWidget::itemClicked, this, &MainWindow::onNavigationItemClicked);
   connect(m_startStopBtn, &QPushButton::clicked, this, &MainWindow::onStartStopClicked);
 }
+
 void MainWindow::setupThemeConnections() {
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, &MainWindow::updateStyle);
   }
 }
+
 void MainWindow::setupSubscriptionConnections() {
   if (!m_subscriptionService) return;
   connect(m_subscriptionService, &SubscriptionService::applyConfigRequested, this,
@@ -236,6 +248,7 @@ void MainWindow::setupSubscriptionConnections() {
             }
           });
 }
+
 void MainWindow::setupProxyUiBindings() {
   if (!m_proxyUiController || !m_homeView) return;
   connect(m_proxyUiController, &ProxyUiController::systemProxyStateChanged, m_homeView,
@@ -243,6 +256,7 @@ void MainWindow::setupProxyUiBindings() {
   connect(m_proxyUiController, &ProxyUiController::tunModeStateChanged, m_homeView, &HomeView::setTunModeEnabled);
   connect(m_proxyUiController, &ProxyUiController::proxyModeChanged, m_homeView, &HomeView::setProxyMode);
 }
+
 void MainWindow::setupHomeViewConnections() {
   if (!m_homeView) return;
   connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled) {
@@ -296,33 +310,40 @@ void MainWindow::setupHomeViewConnections() {
     }
   });
 }
+
 void MainWindow::onNavigationItemClicked(QListWidgetItem* item) {
   int index = m_navList->row(item);
   m_stackedWidget->setCurrentIndex(index);
 }
+
 bool MainWindow::isKernelRunning() const {
   if (m_proxyUiController) {
     return m_proxyUiController->isKernelRunning();
   }
   return m_proxyRuntimeController && m_proxyRuntimeController->isKernelRunning();
 }
+
 QString MainWindow::activeConfigPath() const {
   return m_proxyController ? m_proxyController->activeConfigPath() : QString();
 }
+
 QString MainWindow::currentProxyMode() const {
   return m_proxyUiController ? m_proxyUiController->currentProxyMode() : QStringLiteral("rule");
 }
+
 void MainWindow::setProxyModeUI(const QString& mode) {
   if (m_homeView) {
     m_homeView->setProxyMode(mode);
   }
 }
+
 void MainWindow::onKernelStatusChanged(bool running) {
   if (!m_startStopBtn) return;
   m_startStopBtn->setText(running ? tr("Stop") : tr("Start"));
   m_startStopBtn->setProperty("state", running ? "stop" : "start");
   applyStartStopStyle();
 }
+
 void MainWindow::onStartStopClicked() {
   QString    error;
   const bool wasRunning = m_proxyUiController && m_proxyUiController->isKernelRunning();
@@ -349,6 +370,7 @@ void MainWindow::onStartStopClicked() {
     QMessageBox::warning(this, tr("Start kernel"), error);
   }
 }
+
 void MainWindow::updateStyle() {
   if (m_themeService) {
     setStyleSheet(m_themeService->loadStyleSheet(":/styles/main_window.qss"));
@@ -356,20 +378,24 @@ void MainWindow::updateStyle() {
   updateNavIcons();
   applyStartStopStyle();
 }
+
 void MainWindow::showAndActivate() {
   show();
   raise();
   activateWindow();
 }
+
 void MainWindow::closeEvent(QCloseEvent* event) {
   hide();
   event->ignore();
 }
+
 void MainWindow::applyStartStopStyle() {
   // Qt will automatically update styles when properties change.
   // We only need to polish if the style doesn't update automatically.
   m_startStopBtn->style()->polish(m_startStopBtn);
 }
+
 void MainWindow::showStopFailedToast() {
   const QString title = tr("Stop kernel");
   const QString body  = tr("Kernel did not stop within 5 seconds. Please check logs.");
@@ -383,6 +409,7 @@ void MainWindow::showStopFailedToast() {
   }
   QMessageBox::warning(this, title, body);
 }
+
 void MainWindow::updateNavIcons() {
   if (!m_navList || m_navList->count() <= 1) {
     return;
@@ -415,11 +442,13 @@ void MainWindow::updateNavIcons() {
   }
   m_navList->setIconSize(QSize(iconSize, iconSize));
 }
+
 void MainWindow::loadSettings() {
   QSettings settings;
   restoreGeometry(settings.value("mainWindow/geometry").toByteArray());
   restoreState(settings.value("mainWindow/state").toByteArray());
 }
+
 void MainWindow::saveSettings() {
   QSettings settings;
   settings.setValue("mainWindow/geometry", saveGeometry());

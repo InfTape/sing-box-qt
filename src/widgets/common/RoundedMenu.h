@@ -2,6 +2,7 @@
 #define ROUNDEDMENU_H
 #include <QColor>
 #include <QMenu>
+
 class RoundedMenu : public QMenu {
   Q_OBJECT
  public:

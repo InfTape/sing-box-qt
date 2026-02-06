@@ -17,6 +17,7 @@ class ProxyService;
 class ThemeService;
 class ConfigRepository;
 class RuleCard;
+
 class RulesView : public QWidget {
   Q_OBJECT
  public:

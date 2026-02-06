@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QMutex>
 #include <QString>
+
 class Logger {
  public:
   static Logger& instance();

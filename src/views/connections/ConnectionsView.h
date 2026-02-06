@@ -6,6 +6,7 @@
 #include <QWidget>
 class ProxyService;
 class ThemeService;
+
 class ConnectionsView : public QWidget {
   Q_OBJECT
  public:

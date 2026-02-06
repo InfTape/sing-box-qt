@@ -5,6 +5,7 @@
 #include <QJsonObject>
 class QProcess;
 class CoreManagerClient;
+
 class KernelService : public QObject {
   Q_OBJECT
  public:

@@ -5,6 +5,7 @@
 #include <QPainterPath>
 #include <algorithm>
 #include "app/interfaces/ThemeService.h"
+
 SegmentedControl::SegmentedControl(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   setCursor(Qt::PointingHandCursor);
@@ -17,6 +18,7 @@ SegmentedControl::SegmentedControl(QWidget* parent, ThemeService* themeService)
     connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&SegmentedControl::update));
   }
 }
+
 void SegmentedControl::setItems(const QStringList& labels, const QStringList& values) {
   m_labels          = labels;
   m_values          = values;
@@ -25,6 +27,7 @@ void SegmentedControl::setItems(const QStringList& labels, const QStringList& va
   recalculateLayout();
   update();
 }
+
 void SegmentedControl::setCurrentIndex(int index) {
   if (index < 0 || index >= m_labels.size()) return;
   if (index == m_currentIndex) return;
@@ -33,12 +36,14 @@ void SegmentedControl::setCurrentIndex(int index) {
   emit currentIndexChanged(index);
   emit currentValueChanged(currentValue());
 }
+
 QString SegmentedControl::currentValue() const {
   if (m_currentIndex >= 0 && m_currentIndex < m_values.size()) {
     return m_values.at(m_currentIndex);
   }
   return QString();
 }
+
 void SegmentedControl::setThemeService(ThemeService* themeService) {
   m_themeService = themeService;
   if (m_themeService) {
@@ -46,19 +51,23 @@ void SegmentedControl::setThemeService(ThemeService* themeService) {
   }
   update();
 }
+
 void SegmentedControl::setSelectionOffset(qreal offset) {
   if (qFuzzyCompare(m_selectionOffset, offset)) return;
   m_selectionOffset = offset;
   update();
 }
+
 QSize SegmentedControl::sizeHint() const {
   recalculateLayout();
   int h = fontMetrics().height() + 12;
   return QSize(static_cast<int>(m_totalWidth) + 8, h);
 }
+
 QSize SegmentedControl::minimumSizeHint() const {
   return sizeHint();
 }
+
 void SegmentedControl::recalculateLayout() const {
   QFontMetrics fm = fontMetrics();
   m_itemWidths.clear();
@@ -69,6 +78,7 @@ void SegmentedControl::recalculateLayout() const {
     m_totalWidth += w;
   }
 }
+
 int SegmentedControl::indexAtPos(const QPoint& pos) const {
   if (m_labels.isEmpty()) return -1;
   qreal x = 4;  // left margin
@@ -80,6 +90,7 @@ int SegmentedControl::indexAtPos(const QPoint& pos) const {
   }
   return -1;
 }
+
 QRectF SegmentedControl::itemRect(int index) const {
   if (index < 0 || index >= m_itemWidths.size()) return QRectF();
   qreal x = 4;  // left margin
@@ -89,6 +100,7 @@ QRectF SegmentedControl::itemRect(int index) const {
   qreal h = height() - 4;
   return QRectF(x, 2, m_itemWidths[index], h);
 }
+
 QRectF SegmentedControl::selectionRect() const {
   if (m_labels.isEmpty()) return QRectF();
   // Interpolate between current position based on offset
@@ -101,12 +113,14 @@ QRectF SegmentedControl::selectionRect() const {
   qreal  w         = prevRect.width() + (nextRect.width() - prevRect.width()) * frac;
   return QRectF(x, prevRect.y(), w, prevRect.height());
 }
+
 void SegmentedControl::animateToIndex(int index) {
   m_anim->stop();
   m_anim->setStartValue(m_selectionOffset);
   m_anim->setEndValue(static_cast<qreal>(index));
   m_anim->start();
 }
+
 void SegmentedControl::paintEvent(QPaintEvent*) {
   QPainter p(this);
   p.setRenderHint(QPainter::Antialiasing, true);
@@ -159,11 +173,13 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
     p.drawText(r, Qt::AlignCenter, m_labels.at(i));
   }
 }
+
 void SegmentedControl::mousePressEvent(QMouseEvent* event) {
   if (event->button() != Qt::LeftButton) return;
   m_pressedIndex = indexAtPos(event->pos());
   event->accept();
 }
+
 void SegmentedControl::mouseReleaseEvent(QMouseEvent* event) {
   if (event->button() != Qt::LeftButton) return;
   int releasedIndex = indexAtPos(event->pos());
@@ -173,6 +189,7 @@ void SegmentedControl::mouseReleaseEvent(QMouseEvent* event) {
   m_pressedIndex = -1;
   event->accept();
 }
+
 void SegmentedControl::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   recalculateLayout();

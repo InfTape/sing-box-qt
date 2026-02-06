@@ -13,6 +13,7 @@ class QCheckBox;
 class QLabel;
 class QToolButton;
 class ThemeService;
+
 class NodeEditDialog : public QDialog {
   Q_OBJECT
  public:

@@ -10,6 +10,7 @@
 #include <QTreeWidgetItemIterator>
 #include "views/proxy/ProxyTreeUtils.h"
 #include "widgets/common/ChevronToggle.h"
+
 namespace {
 QString normalizeNodeName(QString name) {
   if (name.startsWith("* ")) {
@@ -17,24 +18,30 @@ QString normalizeNodeName(QString name) {
   }
   return name;
 }
+
 QString asCountText(const ProxyTreePresenter::CountFormatter& formatter, int count) {
   if (formatter) return formatter(count);
   return QString("%1 nodes").arg(count);
 }
+
 QString asCurrentText(const ProxyTreePresenter::CurrentFormatter& formatter, const QString& proxy) {
   if (formatter) return formatter(proxy);
   return QString("Current: %1").arg(proxy);
 }
+
 QString asDelayText(const ProxyTreePresenter::DelayFormatter& formatter, int delay) {
   if (formatter) return formatter(delay);
   if (delay <= 0) return QString("Timeout");
   return QString::number(delay) + " ms";
 }
 }  // namespace
+
 ProxyTreePresenter::ProxyTreePresenter(QTreeWidget* treeWidget) : m_treeWidget(treeWidget) {}
+
 void ProxyTreePresenter::setTreeWidget(QTreeWidget* treeWidget) {
   m_treeWidget = treeWidget;
 }
+
 QJsonObject ProxyTreePresenter::render(const QJsonObject& proxies, const DelayFormatter& formatDelay,
                                        const CountFormatter&   formatNodeCount,
                                        const CurrentFormatter& formatCurrent) const {
@@ -144,6 +151,7 @@ QJsonObject ProxyTreePresenter::render(const QJsonObject& proxies, const DelayFo
   ProxyTreeUtils::applyTreeItemColors(m_treeWidget, cachedProxies);
   return cachedProxies;
 }
+
 void ProxyTreePresenter::updateSelectedProxy(QJsonObject& cachedProxies, const QString& group, const QString& proxy,
                                              const CurrentFormatter& formatCurrent) const {
   if (group.isEmpty() || proxy.isEmpty() || !m_treeWidget) return;

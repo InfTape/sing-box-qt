@@ -7,6 +7,7 @@
 #include <tlhelp32.h>
 #endif
 ProcessManager::ProcessManager(QObject* parent) : QObject(parent) {}
+
 QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
   QList<ProcessInfo> processes;
 #ifdef Q_OS_WIN
@@ -31,9 +32,11 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
 #endif
   return processes;
 }
+
 bool ProcessManager::isProcessRunning(const QString& name) {
   return !findProcessesByName(name).isEmpty();
 }
+
 bool ProcessManager::isProcessRunning(qint64 pid) {
 #ifdef Q_OS_WIN
   HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, static_cast<DWORD>(pid));
@@ -51,6 +54,7 @@ bool ProcessManager::isProcessRunning(qint64 pid) {
   return false;
 #endif
 }
+
 bool ProcessManager::killProcess(qint64 pid) {
 #ifdef Q_OS_WIN
   HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
@@ -69,6 +73,7 @@ bool ProcessManager::killProcess(qint64 pid) {
   return false;
 #endif
 }
+
 bool ProcessManager::killProcessByName(const QString& name) {
   QList<ProcessInfo> processes = findProcessesByName(name);
   bool               allKilled = true;
@@ -79,6 +84,7 @@ bool ProcessManager::killProcessByName(const QString& name) {
   }
   return allKilled;
 }
+
 void ProcessManager::cleanupKernelProcesses() {
   Logger::info("Cleaning up leftover kernel processes...");
 #ifdef Q_OS_WIN

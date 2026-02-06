@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
+
 class ConfigManager : public QObject {
   Q_OBJECT
  public:

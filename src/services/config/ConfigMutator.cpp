@@ -9,11 +9,13 @@
 #include "storage/ConfigConstants.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
 namespace {
 bool isIpAddress(const QString& value) {
   QHostAddress addr;
   return addr.setAddress(value);
 }
+
 bool shouldIncludeNodeInGroups(const QJsonObject& node) {
   const QString server = node.value("server").toString().trimmed();
   if (server.isEmpty()) {
@@ -24,6 +26,7 @@ bool shouldIncludeNodeInGroups(const QJsonObject& node) {
   }
   return true;
 }
+
 int ensureOutboundIndex(QJsonArray& outbounds, const QString& tag) {
   for (int i = 0; i < outbounds.size(); ++i) {
     if (!outbounds[i].isObject()) continue;
@@ -36,6 +39,7 @@ int ensureOutboundIndex(QJsonArray& outbounds, const QString& tag) {
   outbounds.append(created);
   return outbounds.size() - 1;
 }
+
 void updateUrltestAndSelector(QJsonArray& outbounds, const QStringList& nodeTags) {
   const AppSettings& settings     = AppSettings::instance();
   const int          autoIdx      = ensureOutboundIndex(outbounds, ConfigConstants::TAG_AUTO);
@@ -65,6 +69,7 @@ void updateUrltestAndSelector(QJsonArray& outbounds, const QStringList& nodeTags
   manualOutbound["outbounds"] = QJsonArray::fromStringList(manualList);
   outbounds[manualIdx]        = manualOutbound;
 }
+
 void updateAppGroupSelectors(QJsonArray& outbounds, const QStringList& nodeTags) {
   const QStringList groups = {ConfigConstants::TAG_TELEGRAM, ConfigConstants::TAG_YOUTUBE, ConfigConstants::TAG_NETFLIX,
                               ConfigConstants::TAG_OPENAI};
@@ -90,6 +95,7 @@ void updateAppGroupSelectors(QJsonArray& outbounds, const QStringList& nodeTags)
     outbounds[idx]     = group;
   }
 }
+
 int findInsertIndex(const QJsonArray& rules) {
   auto findIndex = [&rules](const QString& mode) -> int {
     for (int i = 0; i < rules.size(); ++i) {
@@ -112,6 +118,7 @@ int findInsertIndex(const QJsonArray& rules) {
     insertIndex = 0;
   return insertIndex;
 }
+
 void normalizeCacheFileConfig(QJsonObject& experimental) {
   QJsonObject cacheFile = experimental.value("cache_file").toObject();
   cacheFile["enabled"]  = cacheFile.value("enabled").toBool(true);
@@ -121,6 +128,7 @@ void normalizeCacheFileConfig(QJsonObject& experimental) {
   experimental["cache_file"] = cacheFile;
 }
 }  // namespace
+
 bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
   QJsonArray    outbounds = config.value("outbounds").toArray();
   QSet<QString> existingTags;
@@ -191,6 +199,7 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
   config["outbounds"] = outbounds;
   return true;
 }
+
 void ConfigMutator::applySettings(QJsonObject& config) {
   const AppSettings& settings             = AppSettings::instance();
   config["inbounds"]                      = ConfigBuilder::buildInbounds();
@@ -393,6 +402,7 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     config["route"] = route;
   }
 }
+
 void ConfigMutator::applyPortSettings(QJsonObject& config) {
   const AppSettings& settings = AppSettings::instance();
   if (config.contains("experimental") && config["experimental"].isObject()) {
@@ -421,6 +431,7 @@ void ConfigMutator::applyPortSettings(QJsonObject& config) {
     config["inbounds"] = inbounds;
   }
 }
+
 bool ConfigMutator::updateClashDefaultMode(QJsonObject& config, const QString& mode, QString* error) {
   const QString normalized = mode.trimmed().toLower();
   if (normalized != "global" && normalized != "rule") {
@@ -438,6 +449,7 @@ bool ConfigMutator::updateClashDefaultMode(QJsonObject& config, const QString& m
   config["experimental"] = experimental;
   return true;
 }
+
 QString ConfigMutator::readClashDefaultMode(const QJsonObject& config) {
   if (config.isEmpty()) {
     return "rule";
@@ -450,6 +462,7 @@ QString ConfigMutator::readClashDefaultMode(const QJsonObject& config) {
   }
   return "rule";
 }
+
 void ConfigMutator::applySharedRules(QJsonObject& config, const QJsonArray& sharedRules, bool enabled) {
   if (!config.contains("route") || !config["route"].isObject()) {
     return;

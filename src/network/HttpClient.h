@@ -4,6 +4,7 @@
 #include <QNetworkReply>
 #include <QObject>
 #include <functional>
+
 class HttpClient : public QObject {
   Q_OBJECT
  public:

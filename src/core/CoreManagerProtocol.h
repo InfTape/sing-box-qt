@@ -2,6 +2,7 @@
 #define COREMANAGERPROTOCOL_H
 #include <QtGlobal>
 #include <QString>
+
 inline QString coreManagerServerName() {
   QString user = qEnvironmentVariable("USERNAME");
   if (user.isEmpty()) {
@@ -12,6 +13,7 @@ inline QString coreManagerServerName() {
   }
   return QString("sing-box-qt-core");
 }
+
 inline QString coreManagerExecutableName() {
 #ifdef Q_OS_WIN
   return "sing-box-core-manager.exe";

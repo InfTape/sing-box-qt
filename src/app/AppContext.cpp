@@ -11,6 +11,7 @@
 #include "core/ProxyService.h"
 #include "network/SubscriptionService.h"
 #include "views/proxy/ProxyViewController.h"
+
 AppContext::AppContext() {
   m_configRepository    = std::make_unique<ConfigRepositoryAdapter>();
   m_kernelService       = std::make_unique<KernelService>();
@@ -30,40 +31,53 @@ AppContext::AppContext() {
   m_proxyViewController = std::make_unique<ProxyViewController>(m_configRepository.get());
   m_proxyViewController->setProxyService(m_proxyService.get());
 }
+
 AppContext::~AppContext() = default;
+
 KernelService* AppContext::kernelService() const {
   return m_kernelService.get();
 }
+
 ProxyService* AppContext::proxyService() const {
   return m_proxyService.get();
 }
+
 ProxyController* AppContext::proxyController() const {
   return m_proxyController.get();
 }
+
 ProxyUiController* AppContext::proxyUiController() const {
   return m_proxyUiController.get();
 }
+
 ProxyRuntimeController* AppContext::proxyRuntimeController() const {
   return m_proxyRuntimeController.get();
 }
+
 ProxyViewController* AppContext::proxyViewController() const {
   return m_proxyViewController.get();
 }
+
 SubscriptionService* AppContext::subscriptionService() const {
   return m_subscriptionService.get();
 }
+
 ConfigRepository* AppContext::configRepository() const {
   return m_configRepository.get();
 }
+
 SettingsStore* AppContext::settingsStore() const {
   return m_settingsStore.get();
 }
+
 ThemeService* AppContext::themeService() const {
   return m_themeService.get();
 }
+
 SystemProxyGateway* AppContext::systemProxy() const {
   return m_systemProxyGateway.get();
 }
+
 AdminActions* AppContext::adminActions() const {
   return m_adminActions.get();
 }

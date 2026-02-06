@@ -4,12 +4,14 @@
 #include <QPainter>
 #include <QPropertyAnimation>
 #include <QStyleOption>
+
 ChevronToggle::ChevronToggle(QWidget* parent) : QWidget(parent) {
   setAttribute(Qt::WA_StyledBackground, true);
   setAttribute(Qt::WA_Hover, true);
   setCursor(Qt::PointingHandCursor);
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 }
+
 void ChevronToggle::setExpanded(bool expanded) {
   if (m_expanded == expanded) return;
   m_expanded = expanded;
@@ -24,10 +26,12 @@ void ChevronToggle::setExpanded(bool expanded) {
   m_anim->start();
   emit expandedChanged(m_expanded);
 }
+
 void ChevronToggle::setProgress(qreal value) {
   m_progress = qBound(0.0, value, 1.0);
   update();
 }
+
 void ChevronToggle::mousePressEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton) {
     setExpanded(!m_expanded);
@@ -38,6 +42,7 @@ void ChevronToggle::mousePressEvent(QMouseEvent* event) {
   }
   QWidget::mousePressEvent(event);
 }
+
 void ChevronToggle::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event)
   QPainter painter(this);
@@ -63,6 +68,7 @@ void ChevronToggle::paintEvent(QPaintEvent* event) {
   painter.drawPolyline(points);
   painter.restore();
 }
+
 QSize ChevronToggle::sizeHint() const {
   return QSize(28, 28);
 }

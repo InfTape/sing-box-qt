@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QStringList>
+
 // Support multiple rule sets: file structure { "sets": [ { "name": "default", "rules": [ ... ] },
 // ... ] }
 class SharedRulesStore {

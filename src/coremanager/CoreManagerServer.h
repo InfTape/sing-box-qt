@@ -5,6 +5,7 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 class KernelRunner;
+
 class CoreManagerServer : public QObject {
   Q_OBJECT
  public:

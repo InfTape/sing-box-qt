@@ -11,6 +11,7 @@
 #include "app/interfaces/ThemeService.h"
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/RoundedMenu.h"
+
 RuleCard::RuleCard(const RuleItem& rule, int index, ThemeService* themeService, QWidget* parent)
     : QFrame(parent), m_rule(rule), m_index(index), m_themeService(themeService) {
   setupUI();
@@ -19,6 +20,7 @@ RuleCard::RuleCard(const RuleItem& rule, int index, ThemeService* themeService, 
     connect(m_themeService, &ThemeService::themeChanged, this, &RuleCard::updateStyle);
   }
 }
+
 void RuleCard::setupUI() {
   setObjectName("RuleCard");
   setFrameShape(QFrame::NoFrame);
@@ -84,6 +86,7 @@ void RuleCard::setupUI() {
   layout->addStretch();
   layout->addWidget(proxyBtn);
 }
+
 void RuleCard::updateStyle() {
   ThemeService* ts = m_themeService;
   if (!ts) return;
@@ -93,6 +96,7 @@ void RuleCard::updateStyle() {
   }
   setStyleSheet(qss);
 }
+
 void RuleCard::updateMenuTheme() {
   if (!m_menu) return;
   ThemeService* ts = m_themeService;

@@ -7,14 +7,17 @@ class QLabel;
 class QPushButton;
 class ThemeService;
 struct SubscriptionInfo;
+
 class SubscriptionCard : public QFrame {
   Q_OBJECT
  public:
   explicit SubscriptionCard(const SubscriptionInfo& info, bool active, ThemeService* themeService,
                             QWidget* parent = nullptr);
+
   QString subscriptionId() const { return m_subId; }
-  void    setActive(bool active);
-  void    updateInfo(const SubscriptionInfo& info, bool active);
+
+  void setActive(bool active);
+  void updateInfo(const SubscriptionInfo& info, bool active);
  signals:
   void useClicked(const QString& id);
   void editClicked(const QString& id);

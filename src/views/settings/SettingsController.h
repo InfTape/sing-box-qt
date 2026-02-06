@@ -4,6 +4,7 @@
 #include <QStringList>
 #include "models/SettingsModel.h"
 class KernelManager;
+
 class SettingsController : public QObject {
   Q_OBJECT
  public:

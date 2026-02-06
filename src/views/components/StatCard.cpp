@@ -7,6 +7,7 @@
 #include <QSvgRenderer>
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
+
 namespace {
 QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color) {
   const qreal  dpr  = qApp->devicePixelRatio();
@@ -43,6 +44,7 @@ QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color)
   tinted.setDevicePixelRatio(dpr);
   return tinted;
 }
+
 QString resolveIconPath(const QString& iconText) {
   if (iconText.compare("UP", Qt::CaseInsensitive) == 0) {
     return ":/icons/arrowup.svg";
@@ -56,6 +58,7 @@ QString resolveIconPath(const QString& iconText) {
   return QString();
 }
 }  // namespace
+
 StatCard::StatCard(const QString& iconText, const QString& accentKey, const QString& title, ThemeService* themeService,
                    QWidget* parent)
     : QFrame(parent),
@@ -66,6 +69,7 @@ StatCard::StatCard(const QString& iconText, const QString& accentKey, const QStr
   setupUi(title);
   updateStyle();
 }
+
 void StatCard::setupUi(const QString& title) {
   setObjectName("StatCard");
   setProperty("accent", m_accentKey);
@@ -99,6 +103,7 @@ void StatCard::setupUi(const QString& title) {
   cardLayout->addLayout(textLayout);
   cardLayout->addStretch();
 }
+
 void StatCard::applyIcon() {
   if (!m_iconLabel) return;
   if (m_iconPath.isEmpty()) {
@@ -115,12 +120,15 @@ void StatCard::applyIcon() {
   }
   m_iconLabel->setPixmap(svgIconPixmap(m_iconPath, 20, iconColor));
 }
+
 void StatCard::updateStyle() {
   applyIcon();
 }
+
 void StatCard::setValueText(const QString& text) {
   if (m_valueLabel) m_valueLabel->setText(text);
 }
+
 void StatCard::setSubText(const QString& text) {
   if (m_subLabel) m_subLabel->setText(text);
 }

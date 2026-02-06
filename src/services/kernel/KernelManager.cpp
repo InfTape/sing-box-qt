@@ -10,6 +10,7 @@
 #include "network/HttpClient.h"
 #include "services/kernel/KernelPlatform.h"
 #include "utils/Logger.h"
+
 namespace {
 QString normalizeVersionTag(const QString& raw) {
   QString ver = raw.trimmed();
@@ -18,15 +19,19 @@ QString normalizeVersionTag(const QString& raw) {
   }
   return ver;
 }
+
 bool isPreReleaseTag(const QString& tag) {
   const QString lower = tag.toLower();
   return lower.contains("rc") || lower.contains("beta") || lower.contains("alpha");
 }
 }  // namespace
+
 KernelManager::KernelManager(QObject* parent) : QObject(parent), m_httpClient(new HttpClient(this)) {}
+
 QString KernelManager::normalizedLatest(const QString& rawTag) const {
   return normalizeVersionTag(rawTag);
 }
+
 QStringList KernelManager::latestKernelApiUrls() const {
   return {
       "https://api.github.com/repos/SagerNet/sing-box/releases/latest",
@@ -38,6 +43,7 @@ QStringList KernelManager::latestKernelApiUrls() const {
       "releases/latest",
   };
 }
+
 QStringList KernelManager::kernelReleasesApiUrls() const {
   return {
       "https://api.github.com/repos/SagerNet/sing-box/releases",
@@ -49,11 +55,13 @@ QStringList KernelManager::kernelReleasesApiUrls() const {
       "releases",
   };
 }
+
 void KernelManager::refreshInstalledInfo() {
   const QString kernelPath = KernelPlatform::detectKernelPath();
   const QString version    = KernelPlatform::queryKernelVersion(kernelPath);
   emit          installedInfoReady(kernelPath, version);
 }
+
 void KernelManager::fetchReleaseList() {
   if (!m_httpClient) {
     return;
@@ -101,6 +109,7 @@ void KernelManager::fetchReleaseList() {
   };
   (*tryFetch)(0);
 }
+
 void KernelManager::checkLatest() {
   if (!m_httpClient) {
     return;
@@ -135,6 +144,7 @@ void KernelManager::checkLatest() {
   };
   (*tryFetch)(0);
 }
+
 void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
   if (m_isDownloading) {
     return;
@@ -165,6 +175,7 @@ void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
   emit statusChanged(tr("Preparing to download kernel..."));
   tryDownloadUrl(0, urls, zipPath, extractDir, targetVersion);
 }
+
 void KernelManager::tryDownloadUrl(int index, const QStringList& urls, const QString& savePath,
                                    const QString& extractDir, const QString& version) {
   if (index >= urls.size()) {

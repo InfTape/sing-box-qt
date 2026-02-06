@@ -6,6 +6,7 @@
 class KernelService;
 class ProxyUiController;
 class ThemeService;
+
 class TrayIcon : public QSystemTrayIcon {
   Q_OBJECT
  public:

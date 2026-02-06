@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QSettings>
 #include "utils/Logger.h"
+
 bool AutoStart::isSupported() {
 #ifdef Q_OS_WIN
   return true;
@@ -10,6 +11,7 @@ bool AutoStart::isSupported() {
   return false;
 #endif
 }
+
 bool AutoStart::isEnabled(const QString& appName) {
 #ifdef Q_OS_WIN
   QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
@@ -25,6 +27,7 @@ bool AutoStart::isEnabled(const QString& appName) {
   return false;
 #endif
 }
+
 bool AutoStart::setEnabled(bool enabled, const QString& appName) {
 #ifdef Q_OS_WIN
   QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);

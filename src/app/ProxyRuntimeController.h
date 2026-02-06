@@ -7,6 +7,7 @@ class ProxyController;
 class DataUsageTracker;
 class QJsonObject;
 class QTimer;
+
 /**
  * @brief ProxyRuntimeController
  * Listens to Kernel/Proxy service runtime state, dispatching status/traffic/connection signals to UI,

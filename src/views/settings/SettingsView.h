@@ -17,6 +17,7 @@ class ElideLineEdit;
 class SettingsController;
 class ThemeService;
 class QResizeEvent;
+
 class SettingsView : public QWidget {
   Q_OBJECT
  public:

@@ -11,21 +11,27 @@
 #include <QtConcurrent>
 #include <algorithm>
 #include "storage/AppSettings.h"
+
 DelayTestService::DelayTestService(QObject* parent)
     : QObject(parent), m_apiPort(9090), m_stopping(false), m_semaphore(nullptr), m_activeTasks(0) {}
+
 DelayTestService::~DelayTestService() {
   stopAllTests();
   delete m_semaphore;
 }
+
 void DelayTestService::setApiPort(int port) {
   m_apiPort = port;
 }
+
 void DelayTestService::setApiToken(const QString& token) {
   m_apiToken = token.trimmed();
 }
+
 bool DelayTestService::isTesting() const {
   return m_activeTasks.load() > 0;
 }
+
 void DelayTestService::stopAllTests() {
   QMutexLocker locker(&m_mutex);
   m_stopping = true;
@@ -33,6 +39,7 @@ void DelayTestService::stopAllTests() {
     m_semaphore->release(m_semaphore->available() + 1);
   }
 }
+
 QString DelayTestService::buildClashDelayUrl(const QString& proxy, int timeoutMs, const QString& testUrl) const {
   // Build Clash API delay URL.
   // /proxies/{name}/delay?timeout=xxx&url=xxx
@@ -49,6 +56,7 @@ QString DelayTestService::buildClashDelayUrl(const QString& proxy, int timeoutMs
   url.setQuery(query);
   return url.toString();
 }
+
 namespace {
 QString resolveTestUrl(const DelayTestOptions& options) {
   const QString candidate = options.url.trimmed();
@@ -58,6 +66,7 @@ QString resolveTestUrl(const DelayTestOptions& options) {
   return AppSettings::instance().urltestUrl();
 }
 }  // namespace
+
 int DelayTestService::fetchSingleDelay(const QString& proxy, int timeoutMs, const QString& testUrl) {
   {
     QMutexLocker locker(&m_mutex);
@@ -99,6 +108,7 @@ int DelayTestService::fetchSingleDelay(const QString& proxy, int timeoutMs, cons
   delete reply;
   return result;
 }
+
 int DelayTestService::medianValue(QVector<int>& values) {
   if (values.isEmpty()) {
     return -1;
@@ -106,6 +116,7 @@ int DelayTestService::medianValue(QVector<int>& values) {
   std::sort(values.begin(), values.end());
   return values[values.size() / 2];
 }
+
 ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString& proxy, const DelayTestOptions& options) {
   ProxyDelayTestResult result;
   result.proxy          = proxy;
@@ -145,6 +156,7 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString& proxy, c
   }
   return result;
 }
+
 void DelayTestService::testNodeDelay(const QString& proxy, const DelayTestOptions& options) {
   m_activeTasks.store(1);
   m_lastFuture = QtConcurrent::run([this, proxy, options]() {
@@ -159,6 +171,7 @@ void DelayTestService::testNodeDelay(const QString& proxy, const DelayTestOption
         Qt::QueuedConnection);
   });
 }
+
 void DelayTestService::testNodesDelay(const QStringList& proxies, const DelayTestOptions& options) {
   if (proxies.isEmpty()) {
     emit testCompleted();

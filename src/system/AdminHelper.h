@@ -2,6 +2,7 @@
 #define ADMINHELPER_H
 #include <QObject>
 #include <QString>
+
 class AdminHelper : public QObject {
   Q_OBJECT
  public:

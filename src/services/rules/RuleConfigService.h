@@ -6,6 +6,7 @@
 #include <QStringList>
 #include "models/RuleItem.h"
 class ConfigRepository;
+
 class RuleConfigService {
  public:
   struct RuleFieldInfo {
@@ -14,12 +15,14 @@ class RuleConfigService {
     QString placeholder;
     bool    numeric = false;
   };
+
   struct RuleEditData {
     RuleFieldInfo field;
     QStringList   values;
     QString       outboundTag;
     QString       ruleSet;  // Multiple rule set name
   };
+
   static QList<RuleFieldInfo> fieldInfos();
   static QString              activeConfigPath(ConfigRepository* cfgRepo);
   static QStringList          loadOutboundTags(ConfigRepository* cfgRepo, const QString& extraTag = QString(),

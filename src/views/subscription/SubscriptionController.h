@@ -6,13 +6,16 @@
 #include <QStringList>
 class SubscriptionService;
 struct SubscriptionInfo;
+
 /**
  * @brief SubscriptionController encapsulates subscription business logic, reducing direct Service access from View.
  */
 class SubscriptionController {
  public:
   explicit SubscriptionController(SubscriptionService* service);
-  SubscriptionService*    service() const { return m_service; }
+
+  SubscriptionService* service() const { return m_service; }
+
   QList<SubscriptionInfo> subscriptions() const;
   int                     activeIndex() const;
   QString                 activeConfigPath() const;
@@ -24,7 +27,9 @@ class SubscriptionController {
   void refresh(const QString& id, bool applyRuntime);
   bool rollback(const QString& id);
   void remove(const QString& id);
+
   void removeSubscription(const QString& id) { remove(id); }
+
   void updateSubscription(const QString& id, const QString& name, const QString& url, bool isManual,
                           const QString& content, bool useOriginalConfig, int autoUpdateIntervalMinutes,
                           bool enableSharedRules, const QStringList& ruleSets);

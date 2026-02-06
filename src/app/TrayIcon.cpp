@@ -8,6 +8,7 @@
 #include "app/interfaces/ThemeService.h"
 #include "core/KernelService.h"
 #include "widgets/common/RoundedMenu.h"
+
 TrayIcon::TrayIcon(ProxyUiController* proxyUiController, KernelService* kernelService, ThemeService* themeService,
                    std::function<void()> showWindow, QObject* parent)
     : QSystemTrayIcon(parent),
@@ -27,9 +28,11 @@ TrayIcon::TrayIcon(ProxyUiController* proxyUiController, KernelService* kernelSe
             [this](const QString&) { updateProxyStatus(); });
   }
 }
+
 TrayIcon::~TrayIcon() {
   delete m_menu;
 }
+
 void TrayIcon::setupMenu() {
   auto* menu = new RoundedMenu;
   menu->setObjectName("TrayMenu");
@@ -58,6 +61,7 @@ void TrayIcon::setupMenu() {
   connect(m_menu, &QMenu::aboutToShow, this, &TrayIcon::updateProxyStatus);
   setContextMenu(m_menu);
 }
+
 void TrayIcon::onActivated(QSystemTrayIcon::ActivationReason reason) {
   switch (reason) {
     case QSystemTrayIcon::Trigger:
@@ -68,11 +72,13 @@ void TrayIcon::onActivated(QSystemTrayIcon::ActivationReason reason) {
       break;
   }
 }
+
 void TrayIcon::onShowWindow() {
   if (m_showWindow) {
     m_showWindow();
   }
 }
+
 void TrayIcon::onToggleProxy() {
   if (!m_proxyUiController) return;
   QString error;
@@ -82,6 +88,7 @@ void TrayIcon::onToggleProxy() {
   }
   updateProxyStatus();
 }
+
 void TrayIcon::onSelectGlobal() {
   if (!m_proxyUiController) return;
   QString error;
@@ -92,6 +99,7 @@ void TrayIcon::onSelectGlobal() {
   }
   updateProxyStatus();
 }
+
 void TrayIcon::onSelectRule() {
   if (!m_proxyUiController) return;
   QString error;
@@ -102,10 +110,12 @@ void TrayIcon::onSelectRule() {
   }
   updateProxyStatus();
 }
+
 void TrayIcon::onQuit() {
   // TODO: stop the kernel process
   QApplication::quit();
 }
+
 void TrayIcon::updateProxyStatus() {
   const bool running =
       m_proxyUiController ? m_proxyUiController->isKernelRunning() : (m_kernelService && m_kernelService->isRunning());

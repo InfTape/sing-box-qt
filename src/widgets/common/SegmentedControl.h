@@ -3,20 +3,25 @@
 #include <QStringList>
 #include <QWidget>
 class ThemeService;
+
 class SegmentedControl : public QWidget {
   Q_OBJECT
   Q_PROPERTY(qreal selectionOffset READ selectionOffset WRITE setSelectionOffset)
  public:
   explicit SegmentedControl(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
-  void    setItems(const QStringList& labels, const QStringList& values);
-  void    setCurrentIndex(int index);
-  int     currentIndex() const { return m_currentIndex; }
+  void setItems(const QStringList& labels, const QStringList& values);
+  void setCurrentIndex(int index);
+
+  int currentIndex() const { return m_currentIndex; }
+
   QString currentValue() const;
   void    setThemeService(ThemeService* themeService);
-  qreal   selectionOffset() const { return m_selectionOffset; }
-  void    setSelectionOffset(qreal offset);
-  QSize   sizeHint() const override;
-  QSize   minimumSizeHint() const override;
+
+  qreal selectionOffset() const { return m_selectionOffset; }
+
+  void  setSelectionOffset(qreal offset);
+  QSize sizeHint() const override;
+  QSize minimumSizeHint() const override;
  signals:
   void currentIndexChanged(int index);
   void currentValueChanged(const QString& value);

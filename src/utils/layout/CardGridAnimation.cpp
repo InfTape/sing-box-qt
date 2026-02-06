@@ -5,6 +5,7 @@
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
 #include <QWidget>
+
 namespace CardGridAnimation {
 void animateReflow(QWidget* container, const QList<QWidget*>& widgets, const QHash<QWidget*, QRect>& oldGeometries,
                    int previousColumns, int newColumns) {

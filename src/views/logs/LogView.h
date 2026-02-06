@@ -12,6 +12,7 @@ class QPushButton;
 class QScrollArea;
 class QVBoxLayout;
 class ThemeService;
+
 class LogView : public QWidget {
   Q_OBJECT
  public:

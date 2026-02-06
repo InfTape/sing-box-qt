@@ -2,6 +2,7 @@
 #define APPSETTINGS_H
 #include <QObject>
 #include <QString>
+
 /**
  * @brief Application settings manager.
  *
@@ -12,64 +13,95 @@ class AppSettings : public QObject {
   Q_OBJECT
  public:
   static AppSettings& instance();
+
   // Port config.
-  int  mixedPort() const { return m_mixedPort; }
-  int  apiPort() const { return m_apiPort; }
+  int mixedPort() const { return m_mixedPort; }
+
+  int apiPort() const { return m_apiPort; }
+
   void setMixedPort(int port);
   void setApiPort(int port);
+
   // TUN config.
-  bool    tunEnabled() const { return m_tunEnabled; }
-  bool    tunAutoRoute() const { return m_tunAutoRoute; }
-  bool    tunStrictRoute() const { return m_tunStrictRoute; }
+  bool tunEnabled() const { return m_tunEnabled; }
+
+  bool tunAutoRoute() const { return m_tunAutoRoute; }
+
+  bool tunStrictRoute() const { return m_tunStrictRoute; }
+
   QString tunStack() const { return m_tunStack; }
-  int     tunMtu() const { return m_tunMtu; }
+
+  int tunMtu() const { return m_tunMtu; }
+
   QString tunIpv4() const { return m_tunIpv4; }
+
   QString tunIpv6() const { return m_tunIpv6; }
-  bool    tunEnableIpv6() const { return m_tunEnableIpv6; }
-  void    setTunEnabled(bool enabled);
-  void    setTunAutoRoute(bool enabled);
-  void    setTunStrictRoute(bool enabled);
-  void    setTunStack(const QString& stack);
-  void    setTunMtu(int mtu);
-  void    setTunIpv4(const QString& addr);
-  void    setTunIpv6(const QString& addr);
-  void    setTunEnableIpv6(bool enabled);
+
+  bool tunEnableIpv6() const { return m_tunEnableIpv6; }
+
+  void setTunEnabled(bool enabled);
+  void setTunAutoRoute(bool enabled);
+  void setTunStrictRoute(bool enabled);
+  void setTunStack(const QString& stack);
+  void setTunMtu(int mtu);
+  void setTunIpv4(const QString& addr);
+  void setTunIpv6(const QString& addr);
+  void setTunEnableIpv6(bool enabled);
+
   // DNS config.
   QString dnsProxy() const { return m_dnsProxy; }
+
   QString dnsCn() const { return m_dnsCn; }
+
   QString dnsResolver() const { return m_dnsResolver; }
-  void    setDnsProxy(const QString& dns);
-  void    setDnsCn(const QString& dns);
-  void    setDnsResolver(const QString& dns);
+
+  void setDnsProxy(const QString& dns);
+  void setDnsCn(const QString& dns);
+  void setDnsResolver(const QString& dns);
+
   // Feature flags.
-  bool    blockAds() const { return m_blockAds; }
-  bool    enableAppGroups() const { return m_enableAppGroups; }
-  bool    preferIpv6() const { return m_preferIpv6; }
-  bool    dnsHijack() const { return m_dnsHijack; }
-  bool    systemProxyEnabled() const { return m_systemProxyEnabled; }
+  bool blockAds() const { return m_blockAds; }
+
+  bool enableAppGroups() const { return m_enableAppGroups; }
+
+  bool preferIpv6() const { return m_preferIpv6; }
+
+  bool dnsHijack() const { return m_dnsHijack; }
+
+  bool systemProxyEnabled() const { return m_systemProxyEnabled; }
+
   QString systemProxyBypass() const { return m_systemProxyBypass; }
-  void    setBlockAds(bool enabled);
-  void    setEnableAppGroups(bool enabled);
-  void    setPreferIpv6(bool enabled);
-  void    setDnsHijack(bool enabled);
-  void    setSystemProxyEnabled(bool enabled);
-  void    setSystemProxyBypass(const QString& bypass);
+
+  void setBlockAds(bool enabled);
+  void setEnableAppGroups(bool enabled);
+  void setPreferIpv6(bool enabled);
+  void setDnsHijack(bool enabled);
+  void setSystemProxyEnabled(bool enabled);
+  void setSystemProxyBypass(const QString& bypass);
+
   // URL test config.
   QString urltestUrl() const { return m_urltestUrl; }
-  int     urltestTimeoutMs() const { return m_urltestTimeoutMs; }
-  int     urltestConcurrency() const { return m_urltestConcurrency; }
-  int     urltestSamples() const { return m_urltestSamples; }
-  void    setUrltestTimeoutMs(int ms);
-  void    setUrltestConcurrency(int c);
-  void    setUrltestSamples(int s);
-  void    setUrltestUrl(const QString& url);
+
+  int urltestTimeoutMs() const { return m_urltestTimeoutMs; }
+
+  int urltestConcurrency() const { return m_urltestConcurrency; }
+
+  int urltestSamples() const { return m_urltestSamples; }
+
+  void setUrltestTimeoutMs(int ms);
+  void setUrltestConcurrency(int c);
+  void setUrltestSamples(int s);
+  void setUrltestUrl(const QString& url);
+
   // Default outbound selection.
   // "auto" uses the auto-select group, "manual" uses the manual group.
   QString defaultOutbound() const { return m_defaultOutbound; }
+
   // Detour for rule set downloads: "direct" or "manual".
   QString downloadDetour() const { return m_downloadDetour; }
-  void    setDefaultOutbound(const QString& outbound);
-  void    setDownloadDetour(const QString& detour);
+
+  void setDefaultOutbound(const QString& outbound);
+  void setDownloadDetour(const QString& detour);
   // Helper methods.
   QString normalizedDefaultOutbound() const;
   QString normalizedDownloadDetour() const;

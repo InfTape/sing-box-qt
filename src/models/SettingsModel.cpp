@@ -3,6 +3,7 @@
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"
+
 SettingsModel::Data SettingsModel::load() {
   SettingsModel::Data d;
   QJsonObject         config = DatabaseService::instance().getAppConfig();
@@ -31,6 +32,7 @@ SettingsModel::Data SettingsModel::load() {
   d.urltestUrl        = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
   return d;
 }
+
 bool SettingsModel::save(const SettingsModel::Data& data, QString* errorMessage) {
   if (data.tunMtu < 576 || data.tunMtu > 9000) {
     if (errorMessage) *errorMessage = QObject::tr("MTU must be between 576 and 9000");

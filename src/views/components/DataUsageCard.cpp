@@ -13,22 +13,26 @@
 #include "utils/home/HomeFormat.h"
 #include "views/components/DataUsageBar.h"
 #include "widgets/common/SegmentedControl.h"
+
 namespace {
 class NoFocusDelegate : public QStyledItemDelegate {
  public:
   explicit NoFocusDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QStyleOptionViewItem opt(option);
     opt.state &= ~QStyle::State_HasFocus;
     QStyledItemDelegate::paint(painter, opt, index);
   }
 };
+
 qint64 readLongLong(const QJsonValue& value) {
   if (value.isString()) {
     return value.toString().toLongLong();
   }
   return value.toVariant().toLongLong();
 }
+
 QString sanitizeHostLabel(const QString& raw) {
   QString text = raw.trimmed();
   if (text.isEmpty()) return text;
@@ -52,9 +56,11 @@ QString sanitizeHostLabel(const QString& raw) {
   return text;
 }
 }  // namespace
+
 DataUsageCard::DataUsageCard(ThemeService* themeService, QWidget* parent) : QFrame(parent) {
   setupUi(themeService);
 }
+
 void DataUsageCard::setupUi(ThemeService* themeService) {
   setObjectName("DataUsageCard");
   setFixedHeight(180);
@@ -108,10 +114,12 @@ void DataUsageCard::setupUi(ThemeService* themeService) {
   connect(m_clearButton, &QPushButton::clicked, this, &DataUsageCard::clearRequested);
   connect(m_rankingModeSelector, &SegmentedControl::currentValueChanged, this, [this]() { refreshTable(); });
 }
+
 void DataUsageCard::updateDataUsage(const QJsonObject& snapshot) {
   m_snapshot = snapshot;
   refreshTable();
 }
+
 void DataUsageCard::refreshTable() {
   if (!m_topTable || !m_rankingModeSelector || !m_emptyLabel) return;
   const QString     typeKey  = m_rankingModeSelector->currentValue();
@@ -155,9 +163,11 @@ void DataUsageCard::refreshTable() {
   m_emptyLabel->hide();
   m_topTable->show();
 }
+
 QString DataUsageCard::formatBytes(qint64 bytes) const {
   return HomeFormat::bytes(bytes);
 }
+
 QString DataUsageCard::formatHostLabel(const QString& label) const {
   const QString hostLabel = sanitizeHostLabel(label);
   QHostAddress  addr;

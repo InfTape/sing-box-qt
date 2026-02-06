@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include "network/HttpClient.h"
 #include "utils/Logger.h"
+
 UpdateService::UpdateService(QObject* parent)
     : QObject(parent),
       m_httpClient(new HttpClient(this)),
@@ -12,10 +13,13 @@ UpdateService::UpdateService(QObject* parent)
       m_updateUrl(
           "https://api.github.com/repos/xinggaoya/sing-box-windows/releases/"
           "latest") {}
+
 UpdateService::~UpdateService() {}
+
 QString UpdateService::getCurrentVersion() const {
   return m_currentVersion;
 }
+
 void UpdateService::checkForUpdate() {
   Logger::info("Checking for updates...");
   m_httpClient->get(m_updateUrl, [this](bool success, const QByteArray& data) {
@@ -58,6 +62,7 @@ void UpdateService::checkForUpdate() {
     }
   });
 }
+
 void UpdateService::downloadUpdate(const QString& url, const QString& savePath) {
   Logger::info(QString("Downloading update: %1").arg(url));
   m_httpClient->download(

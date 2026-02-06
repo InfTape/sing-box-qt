@@ -3,6 +3,7 @@
 #include <QJsonArray>
 #include <QString>
 class ConfigRepository;
+
 namespace SubscriptionConfigStore {
 QString generateConfigFileName(const QString& name);
 bool    saveConfigWithNodes(ConfigRepository* cfgRepo, const QJsonArray& nodes, const QString& targetPath);

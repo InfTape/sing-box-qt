@@ -1,6 +1,7 @@
 #include "utils/settings/SettingsHelpers.h"
 #include <QLineEdit>
 #include <QRegularExpression>
+
 namespace SettingsHelpers {
 int themeIndexFromMode(ThemeService::ThemeMode mode) {
   switch (mode) {
@@ -13,6 +14,7 @@ int themeIndexFromMode(ThemeService::ThemeMode mode) {
       return 0;
   }
 }
+
 ThemeService::ThemeMode themeModeFromIndex(int index) {
   switch (index) {
     case 1:
@@ -23,11 +25,13 @@ ThemeService::ThemeMode themeModeFromIndex(int index) {
       return ThemeService::ThemeMode::Dark;
   }
 }
+
 QString normalizeBypassText(const QString& text) {
   QString bypass = text;
   bypass.replace(QRegularExpression("[\\r\\n]+"), ";");
   return bypass.trimmed();
 }
+
 QString resolveTextOrDefault(const QLineEdit* edit, const QString& fallback) {
   if (!edit) return fallback;
   const QString value = edit->text().trimmed();

@@ -1,6 +1,7 @@
 #ifndef DATAUSAGEBAR_H
 #define DATAUSAGEBAR_H
 #include <QProgressBar>
+
 class DataUsageBar : public QProgressBar {
   Q_OBJECT
  public:

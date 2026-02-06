@@ -4,11 +4,14 @@
 #include <QMap>
 #include <QObject>
 #include <QString>
+
 class ThemeService : public QObject {
   Q_OBJECT
  public:
   enum class ThemeMode { Dark, Light, Auto };
+
   explicit ThemeService(QObject* parent = nullptr) : QObject(parent) {}
+
   ~ThemeService() override                                = default;
   virtual void      init()                                = 0;
   virtual QColor    color(const QString& key) const       = 0;

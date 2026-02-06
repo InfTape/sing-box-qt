@@ -4,6 +4,7 @@
 class QLabel;
 class ToggleSwitch;
 class ThemeService;
+
 class ProxyModeSection : public QWidget {
   Q_OBJECT
  public:

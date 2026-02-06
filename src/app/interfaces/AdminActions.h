@@ -1,5 +1,6 @@
 #ifndef ADMINACTIONS_H
 #define ADMINACTIONS_H
+
 class AdminActions {
  public:
   virtual ~AdminActions()       = default;

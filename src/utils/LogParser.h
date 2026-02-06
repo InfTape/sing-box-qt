@@ -2,6 +2,7 @@
 #define LOGPARSER_H
 #include <QDateTime>
 #include <QString>
+
 namespace LogParser {
 struct LogEntry {
   QString   type;
@@ -9,6 +10,7 @@ struct LogEntry {
   QString   direction;
   QDateTime timestamp;
 };
+
 struct LogKind {
   QString direction;
   QString host;
@@ -17,6 +19,7 @@ struct LogKind {
   bool    isConnection = false;
   bool    isDns        = false;
 };
+
 QString stripAnsiSequences(const QString& text);
 LogKind parseLogKind(const QString& message);
 QString detectLogType(const QString& message);

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QJsonObject>
 #include <QLocalSocket>
+
 class CoreManagerClient : public QObject {
   Q_OBJECT
  public:

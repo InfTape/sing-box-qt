@@ -11,6 +11,7 @@
 #include "core/CoreManagerProtocol.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
 KernelService::KernelService(QObject* parent)
     : QObject(parent), m_client(new CoreManagerClient(this)), m_managerProcess(nullptr), m_running(false) {
   connect(m_client, &CoreManagerClient::statusEvent, this, &KernelService::onManagerStatus);
@@ -18,6 +19,7 @@ KernelService::KernelService(QObject* parent)
   connect(m_client, &CoreManagerClient::errorEvent, this, &KernelService::onManagerError);
   connect(m_client, &CoreManagerClient::disconnected, this, &KernelService::onManagerDisconnected);
 }
+
 KernelService::~KernelService() {
   const bool managerRunning =
       (m_managerProcess && m_managerProcess->state() != QProcess::NotRunning) || m_client->isConnected();
@@ -36,6 +38,7 @@ KernelService::~KernelService() {
     m_managerProcess->deleteLater();
   }
 }
+
 bool KernelService::start(const QString& configPath) {
   if (!configPath.isEmpty()) {
     m_configPath = configPath;
@@ -59,6 +62,7 @@ bool KernelService::start(const QString& configPath) {
   }
   return true;
 }
+
 void KernelService::stop() {
   QJsonObject result;
   QString     error;
@@ -68,9 +72,11 @@ void KernelService::stop() {
     }
   }
 }
+
 void KernelService::restart() {
   restartWithConfig(m_configPath);
 }
+
 void KernelService::restartWithConfig(const QString& configPath) {
   if (!configPath.isEmpty()) {
     m_configPath = configPath;
@@ -87,15 +93,19 @@ void KernelService::restartWithConfig(const QString& configPath) {
     }
   }
 }
+
 void KernelService::setConfigPath(const QString& configPath) {
   m_configPath = configPath;
 }
+
 QString KernelService::getConfigPath() const {
   return m_configPath;
 }
+
 bool KernelService::isRunning() const {
   return m_running;
 }
+
 QString KernelService::getVersion() const {
   QString kernelPath = m_kernelPath;
   if (kernelPath.isEmpty()) {
@@ -118,29 +128,35 @@ QString KernelService::getVersion() const {
   }
   return output;
 }
+
 QString KernelService::getKernelPath() const {
   return m_kernelPath.isEmpty() ? findKernelPath() : m_kernelPath;
 }
+
 void KernelService::onManagerStatus(bool running) {
   if (m_running == running) return;
   m_running = running;
   emit statusChanged(running);
 }
+
 void KernelService::onManagerLog(const QString& stream, const QString& message) {
   Q_UNUSED(stream)
   emit outputReceived(message);
 }
+
 void KernelService::onManagerError(const QString& error) {
   if (!error.isEmpty()) {
     emit errorOccurred(error);
   }
 }
+
 void KernelService::onManagerDisconnected() {
   if (m_running) {
     m_running = false;
     emit statusChanged(false);
   }
 }
+
 bool KernelService::ensureManagerReady(QString* error) {
   if (m_serverName.isEmpty()) {
     m_serverName = coreManagerServerName();
@@ -196,6 +212,7 @@ bool KernelService::ensureManagerReady(QString* error) {
   }
   return false;
 }
+
 bool KernelService::sendRequestAndWait(const QString& method, const QJsonObject& params, QJsonObject* result,
                                        QString* error) {
   QString err;
@@ -235,6 +252,7 @@ bool KernelService::sendRequestAndWait(const QString& method, const QJsonObject&
   }
   return ok;
 }
+
 QString KernelService::findKernelPath() const {
 #ifdef Q_OS_WIN
   QString kernelName = "sing-box.exe";
@@ -252,10 +270,12 @@ QString KernelService::findKernelPath() const {
   Logger::warn("sing-box kernel not found");
   return QString();
 }
+
 QString KernelService::getDefaultConfigPath() const {
   const QString dataDir = appDataDir();
   return QDir(dataDir).filePath("config.json");
 }
+
 QString KernelService::findCoreManagerPath() const {
   const QString exeName = coreManagerExecutableName();
   return QDir(QCoreApplication::applicationDirPath()).filePath(exeName);

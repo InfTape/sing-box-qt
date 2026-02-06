@@ -5,6 +5,7 @@
 #include <QStandardPaths>
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
 namespace ConfigIO {
 QString getConfigDir() {
   const QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -25,9 +26,11 @@ QString getConfigDir() {
   }
   return dataDir;
 }
+
 QString getActiveConfigPath() {
   return getConfigDir() + "/config.json";
 }
+
 QJsonObject loadConfig(const QString& path) {
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) {
@@ -38,6 +41,7 @@ QJsonObject loadConfig(const QString& path) {
   file.close();
   return doc.object();
 }
+
 bool saveConfig(const QString& path, const QJsonObject& config) {
   QFile file(path);
   if (!file.open(QIODevice::WriteOnly)) {

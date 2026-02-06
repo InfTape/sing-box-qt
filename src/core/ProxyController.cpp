@@ -9,6 +9,7 @@
 #include "app/interfaces/SystemProxyGateway.h"
 #include "network/SubscriptionService.h"
 #include "utils/Logger.h"
+
 ProxyController::ProxyController(KernelService* kernel, SubscriptionService* subscription, ConfigRepository* configRepo,
                                  SettingsStore* settings, SystemProxyGateway* systemProxy, QObject* parent)
     : QObject(parent),
@@ -21,9 +22,11 @@ ProxyController::ProxyController(KernelService* kernel, SubscriptionService* sub
   Q_ASSERT(m_settings && "ProxyController requires SettingsStore");
   Q_ASSERT(m_systemProxy && "ProxyController requires SystemProxyGateway");
 }
+
 void ProxyController::setSubscriptionService(SubscriptionService* service) {
   m_subscription = service;
 }
+
 QString ProxyController::activeConfigPath() const {
   QString configPath;
   if (m_subscription) {
@@ -34,11 +37,13 @@ QString ProxyController::activeConfigPath() const {
   }
   return configPath;
 }
+
 QString ProxyController::currentProxyMode() const {
   const QString path = activeConfigPath();
   if (path.isEmpty() || !m_configRepo) return "rule";
   return m_configRepo->readClashDefaultMode(path);
 }
+
 bool ProxyController::ensureConfigExists(QString* outPath) {
   QString configPath = activeConfigPath();
   if (!configPath.isEmpty() && QFile::exists(configPath)) {
@@ -57,6 +62,7 @@ bool ProxyController::ensureConfigExists(QString* outPath) {
   if (outPath) *outPath = configPath;
   return QFile::exists(configPath);
 }
+
 bool ProxyController::startKernel() {
   if (!m_kernel) return false;
   QString configPath;
@@ -66,11 +72,13 @@ bool ProxyController::startKernel() {
   m_kernel->setConfigPath(configPath);
   return m_kernel->start(configPath);
 }
+
 void ProxyController::stopKernel() {
   if (m_kernel) {
     m_kernel->stop();
   }
 }
+
 bool ProxyController::toggleKernel() {
   if (!m_kernel) return false;
   if (m_kernel->isRunning()) {
@@ -79,6 +87,7 @@ bool ProxyController::toggleKernel() {
   }
   return startKernel();
 }
+
 bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, QString* error) {
   const QString configPath = activeConfigPath();
   if (configPath.isEmpty()) {
@@ -95,6 +104,7 @@ bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, Q
   }
   return ok;
 }
+
 bool ProxyController::restartKernelWithConfig(const QString& configPath) {
   if (!m_kernel || configPath.isEmpty()) return false;
   m_kernel->setConfigPath(configPath);
@@ -105,6 +115,7 @@ bool ProxyController::restartKernelWithConfig(const QString& configPath) {
   }
   return true;
 }
+
 bool ProxyController::setSystemProxyEnabled(bool enabled) {
   if (enabled) {
     const int port = m_configRepo ? m_configRepo->mixedPort() : 1080;
@@ -117,10 +128,12 @@ bool ProxyController::setSystemProxyEnabled(bool enabled) {
   // System proxy toggle should not force a kernel restart.
   return applySettingsToActiveConfig(false);
 }
+
 bool ProxyController::setTunModeEnabled(bool enabled) {
   m_settings->setTunEnabled(enabled);
   return applySettingsToActiveConfig(true);
 }
+
 bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
   QString configPath = activeConfigPath();
   if (configPath.isEmpty() || !m_configRepo) return false;
@@ -133,6 +146,7 @@ bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
   }
   return true;
 }
+
 void ProxyController::updateSystemProxyForKernelState(bool running) {
   const bool systemProxyEnabled = m_settings->systemProxyEnabled();
   if (!systemProxyEnabled) {

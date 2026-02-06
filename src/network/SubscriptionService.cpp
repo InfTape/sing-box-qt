@@ -19,9 +19,11 @@
 #include "storage/SubscriptionConfigStore.h"
 #include "utils/Logger.h"
 #include "utils/subscription/SubscriptionUserinfo.h"
+
 namespace {
 constexpr qint64 kUnsetValue = -1;
 }  // namespace
+
 SubscriptionService::SubscriptionService(ConfigRepository* configRepo, QObject* parent)
     : QObject(parent), m_activeIndex(-1), m_configRepo(configRepo) {
   QJsonArray subs = DatabaseService::instance().getSubscriptions();
@@ -68,7 +70,9 @@ SubscriptionService::SubscriptionService(ConfigRepository* configRepo, QObject* 
     syncSharedRulesToConfig(m_subscriptions[m_activeIndex]);
   }
 }
+
 SubscriptionService::~SubscriptionService() = default;
+
 void SubscriptionService::saveToDatabase() {
   QJsonArray array;
   for (const auto& info : m_subscriptions) {
@@ -101,6 +105,7 @@ void SubscriptionService::saveToDatabase() {
   DatabaseService::instance().saveActiveSubscriptionIndex(m_activeIndex);
   DatabaseService::instance().saveActiveConfigPath(m_activeConfigPath);
 }
+
 SubscriptionInfo* SubscriptionService::findSubscription(const QString& id) {
   for (auto& sub : m_subscriptions) {
     if (sub.id == id) {
@@ -109,11 +114,13 @@ SubscriptionInfo* SubscriptionService::findSubscription(const QString& id) {
   }
   return nullptr;
 }
+
 bool SubscriptionService::isJsonContent(const QString& content) const {
   QJsonParseError err;
   QJsonDocument   doc = QJsonDocument::fromJson(content.toUtf8(), &err);
   return err.error == QJsonParseError::NoError && doc.isObject();
 }
+
 void SubscriptionService::updateSubscriptionUserinfo(SubscriptionInfo& info, const QJsonObject& headers) {
   if (headers.isEmpty()) {
     info.subscriptionUpload   = kUnsetValue;
@@ -127,9 +134,11 @@ void SubscriptionService::updateSubscriptionUserinfo(SubscriptionInfo& info, con
   info.subscriptionTotal    = headers.value("total").toVariant().toLongLong();
   info.subscriptionExpire   = headers.value("expire").toVariant().toLongLong();
 }
+
 void SubscriptionService::updateSubscriptionUserinfoFromHeader(SubscriptionInfo& info, const QByteArray& header) {
   updateSubscriptionUserinfo(info, SubscriptionUserinfo::parseUserinfoHeader(header));
 }
+
 void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo& info) {
   if (info.configPath.isEmpty()) return;
   if (!m_configRepo) return;
@@ -146,6 +155,7 @@ void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo& info) 
   ConfigMutator::applySharedRules(config, merged, info.enableSharedRules && !merged.isEmpty());
   m_configRepo->saveConfig(info.configPath, config);
 }
+
 void SubscriptionService::addUrlSubscription(const QString& url, const QString& name, bool useOriginalConfig,
                                              int autoUpdateIntervalMinutes, bool applyRuntime, bool enableSharedRules,
                                              const QStringList& ruleSets) {
@@ -232,6 +242,7 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
     }
   });
 }
+
 void SubscriptionService::addManualSubscription(const QString& content, const QString& name, bool useOriginalConfig,
                                                 bool isUriList, bool applyRuntime, bool enableSharedRules,
                                                 const QStringList& ruleSets) {
@@ -304,6 +315,7 @@ void SubscriptionService::addManualSubscription(const QString& content, const QS
     emit applyConfigRequested(info.configPath, true);
   }
 }
+
 void SubscriptionService::removeSubscription(const QString& id) {
   for (int i = 0; i < m_subscriptions.count(); ++i) {
     if (m_subscriptions[i].id == id) {
@@ -324,6 +336,7 @@ void SubscriptionService::removeSubscription(const QString& id) {
     }
   }
 }
+
 void SubscriptionService::refreshSubscription(const QString& id, bool applyRuntime) {
   SubscriptionInfo* sub = findSubscription(id);
   if (!sub) {
@@ -432,6 +445,7 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
     }
   });
 }
+
 void SubscriptionService::updateAllSubscriptions(bool applyRuntime) {
   for (const auto& sub : m_subscriptions) {
     if (sub.enabled) {
@@ -439,6 +453,7 @@ void SubscriptionService::updateAllSubscriptions(bool applyRuntime) {
     }
   }
 }
+
 void SubscriptionService::updateSubscriptionMeta(const QString& id, const QString& name, const QString& url,
                                                  bool isManual, const QString& manualContent, bool useOriginalConfig,
                                                  int autoUpdateIntervalMinutes, bool enableSharedRules,
@@ -460,6 +475,7 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id, const QStrin
   syncSharedRulesToConfig(*sub);
   emit subscriptionUpdated(id);
 }
+
 void SubscriptionService::setActiveSubscription(const QString& id, bool applyRuntime) {
   for (int i = 0; i < m_subscriptions.count(); ++i) {
     if (m_subscriptions[i].id == id) {
@@ -476,12 +492,14 @@ void SubscriptionService::setActiveSubscription(const QString& id, bool applyRun
   }
   emit errorOccurred(tr("Subscription not found"));
 }
+
 void SubscriptionService::clearActiveSubscription() {
   m_activeIndex = -1;
   m_activeConfigPath.clear();
   saveToDatabase();
   emit activeSubscriptionChanged(QString(), QString());
 }
+
 QString SubscriptionService::getCurrentConfig() const {
   const QString path = m_activeConfigPath.isEmpty() ? (m_configRepo ? m_configRepo->getActiveConfigPath() : QString())
                                                     : m_activeConfigPath;
@@ -496,6 +514,7 @@ QString SubscriptionService::getCurrentConfig() const {
   file.close();
   return content;
 }
+
 bool SubscriptionService::saveCurrentConfig(const QString& content, bool applyRuntime) {
   QString targetPath = m_activeConfigPath;
   if (targetPath.isEmpty() && m_configRepo) {
@@ -517,21 +536,27 @@ bool SubscriptionService::saveCurrentConfig(const QString& content, bool applyRu
   }
   return true;
 }
+
 bool SubscriptionService::rollbackSubscriptionConfig(const QString& configPath) {
   return SubscriptionConfigStore::rollbackSubscriptionConfig(configPath);
 }
+
 bool SubscriptionService::deleteSubscriptionConfig(const QString& configPath) {
   return SubscriptionConfigStore::deleteSubscriptionConfig(configPath);
 }
+
 QList<SubscriptionInfo> SubscriptionService::getSubscriptions() const {
   return m_subscriptions;
 }
+
 int SubscriptionService::getActiveIndex() const {
   return m_activeIndex;
 }
+
 QString SubscriptionService::getActiveConfigPath() const {
   return m_activeConfigPath;
 }
+
 QString SubscriptionService::generateId() const {
   return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }

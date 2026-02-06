@@ -6,10 +6,12 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QSpinBox>
+
 GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent) : NodeEditor(parent), m_type(type) {
   setupUI();
   updateVisibility();
 }
+
 void GenericNodeEditor::setupUI() {
   QFormLayout* layout = new QFormLayout(this);
   layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
@@ -120,6 +122,7 @@ void GenericNodeEditor::setupUI() {
     }
   }
 }
+
 void GenericNodeEditor::updateVisibility() {
   if (m_networkCombo) {
     QString      net    = m_networkCombo->currentText();
@@ -163,6 +166,7 @@ void GenericNodeEditor::updateVisibility() {
     }
   }
 }
+
 QJsonObject GenericNodeEditor::getOutbound() const {
   QJsonObject outbound;
   outbound["type"]        = m_type;
@@ -271,6 +275,7 @@ QJsonObject GenericNodeEditor::getOutbound() const {
   }
   return outbound;
 }
+
 void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
   m_nameEdit->setText(outbound["tag"].toString());
   m_serverEdit->setText(outbound["server"].toString());
@@ -347,6 +352,7 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
     }
   }
 }
+
 bool GenericNodeEditor::validate(QString* error) const {
   if (m_serverEdit->text().isEmpty()) {
     if (error) *error = tr("Server address is required");

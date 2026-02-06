@@ -1,4 +1,5 @@
 #pragma once
+
 class CardGridLayoutHelper {
  public:
   static constexpr int kCardWidth  = 280;

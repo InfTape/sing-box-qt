@@ -1,6 +1,7 @@
 #ifndef SYSTEMPROXYGATEWAY_H
 #define SYSTEMPROXYGATEWAY_H
 #include <QString>
+
 class SystemProxyGateway {
  public:
   virtual ~SystemProxyGateway()                        = default;

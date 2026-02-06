@@ -3,11 +3,13 @@
 #include <QList>
 #include <QObject>
 #include <QString>
+
 struct ProcessInfo {
   qint64  pid;
   QString name;
   QString path;
 };
+
 class ProcessManager : public QObject {
   Q_OBJECT
  public:

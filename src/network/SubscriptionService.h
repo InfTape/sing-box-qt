@@ -5,6 +5,7 @@
 #include <QString>
 #include <QStringList>
 class ConfigRepository;
+
 struct SubscriptionInfo {
   QString     id;
   QString     name;
@@ -25,6 +26,7 @@ struct SubscriptionInfo {
   bool        enableSharedRules = true;
   QStringList ruleSets;
 };
+
 class SubscriptionService : public QObject {
   Q_OBJECT
  public:

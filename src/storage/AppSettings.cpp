@@ -4,10 +4,12 @@
 #include "ConfigConstants.h"
 #include "DatabaseService.h"
 #include "utils/Logger.h"
+
 AppSettings& AppSettings::instance() {
   static AppSettings instance;
   return instance;
 }
+
 AppSettings::AppSettings(QObject* parent)
     : QObject(parent)
       // Port defaults.
@@ -49,6 +51,7 @@ AppSettings::AppSettings(QObject* parent)
       m_downloadDetour("direct") {
   load();
 }
+
 void AppSettings::load() {
   QJsonObject config = DatabaseService::instance().getAppConfig();
   // Ports.
@@ -88,6 +91,7 @@ void AppSettings::load() {
   m_downloadDetour  = config.value("downloadDetour").toString("direct");
   Logger::info("App settings loaded");
 }
+
 void AppSettings::save() {
   QJsonObject config = DatabaseService::instance().getAppConfig();
   // Ports.
@@ -125,6 +129,7 @@ void AppSettings::save() {
   DatabaseService::instance().saveAppConfig(config);
   Logger::info("App settings saved");
 }
+
 // ==================== Setter implementations ====================
 void AppSettings::setMixedPort(int port) {
   if (m_mixedPort != port) {
@@ -133,6 +138,7 @@ void AppSettings::setMixedPort(int port) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setApiPort(int port) {
   if (m_apiPort != port) {
     m_apiPort = port;
@@ -140,6 +146,7 @@ void AppSettings::setApiPort(int port) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunEnabled(bool enabled) {
   if (m_tunEnabled != enabled) {
     m_tunEnabled = enabled;
@@ -147,6 +154,7 @@ void AppSettings::setTunEnabled(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunAutoRoute(bool enabled) {
   if (m_tunAutoRoute != enabled) {
     m_tunAutoRoute = enabled;
@@ -154,6 +162,7 @@ void AppSettings::setTunAutoRoute(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunStrictRoute(bool enabled) {
   if (m_tunStrictRoute != enabled) {
     m_tunStrictRoute = enabled;
@@ -161,6 +170,7 @@ void AppSettings::setTunStrictRoute(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunStack(const QString& stack) {
   if (m_tunStack != stack) {
     m_tunStack = stack;
@@ -168,6 +178,7 @@ void AppSettings::setTunStack(const QString& stack) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunMtu(int mtu) {
   if (m_tunMtu != mtu) {
     m_tunMtu = mtu;
@@ -175,6 +186,7 @@ void AppSettings::setTunMtu(int mtu) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunIpv4(const QString& addr) {
   if (m_tunIpv4 != addr) {
     m_tunIpv4 = addr;
@@ -182,6 +194,7 @@ void AppSettings::setTunIpv4(const QString& addr) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunIpv6(const QString& addr) {
   if (m_tunIpv6 != addr) {
     m_tunIpv6 = addr;
@@ -189,6 +202,7 @@ void AppSettings::setTunIpv6(const QString& addr) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setTunEnableIpv6(bool enabled) {
   if (m_tunEnableIpv6 != enabled) {
     m_tunEnableIpv6 = enabled;
@@ -196,6 +210,7 @@ void AppSettings::setTunEnableIpv6(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDnsProxy(const QString& dns) {
   if (m_dnsProxy != dns) {
     m_dnsProxy = dns;
@@ -203,6 +218,7 @@ void AppSettings::setDnsProxy(const QString& dns) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDnsCn(const QString& dns) {
   if (m_dnsCn != dns) {
     m_dnsCn = dns;
@@ -210,6 +226,7 @@ void AppSettings::setDnsCn(const QString& dns) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDnsResolver(const QString& dns) {
   if (m_dnsResolver != dns) {
     m_dnsResolver = dns;
@@ -217,6 +234,7 @@ void AppSettings::setDnsResolver(const QString& dns) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setBlockAds(bool enabled) {
   if (m_blockAds != enabled) {
     m_blockAds = enabled;
@@ -224,6 +242,7 @@ void AppSettings::setBlockAds(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setEnableAppGroups(bool enabled) {
   if (m_enableAppGroups != enabled) {
     m_enableAppGroups = enabled;
@@ -231,6 +250,7 @@ void AppSettings::setEnableAppGroups(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setPreferIpv6(bool enabled) {
   if (m_preferIpv6 != enabled) {
     m_preferIpv6 = enabled;
@@ -238,6 +258,7 @@ void AppSettings::setPreferIpv6(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDnsHijack(bool enabled) {
   if (m_dnsHijack != enabled) {
     m_dnsHijack = enabled;
@@ -245,6 +266,7 @@ void AppSettings::setDnsHijack(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setSystemProxyEnabled(bool enabled) {
   if (m_systemProxyEnabled != enabled) {
     m_systemProxyEnabled = enabled;
@@ -252,6 +274,7 @@ void AppSettings::setSystemProxyEnabled(bool enabled) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setSystemProxyBypass(const QString& bypass) {
   if (m_systemProxyBypass != bypass) {
     m_systemProxyBypass = bypass;
@@ -259,6 +282,7 @@ void AppSettings::setSystemProxyBypass(const QString& bypass) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setUrltestUrl(const QString& url) {
   if (m_urltestUrl != url) {
     m_urltestUrl = url;
@@ -266,6 +290,7 @@ void AppSettings::setUrltestUrl(const QString& url) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setUrltestTimeoutMs(int ms) {
   if (ms <= 0) {
     ms = ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS;
@@ -276,6 +301,7 @@ void AppSettings::setUrltestTimeoutMs(int ms) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setUrltestConcurrency(int c) {
   if (c <= 0) {
     c = 1;
@@ -286,6 +312,7 @@ void AppSettings::setUrltestConcurrency(int c) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setUrltestSamples(int s) {
   if (s <= 0) {
     s = 1;
@@ -296,6 +323,7 @@ void AppSettings::setUrltestSamples(int s) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDefaultOutbound(const QString& outbound) {
   if (m_defaultOutbound != outbound) {
     m_defaultOutbound = outbound;
@@ -303,6 +331,7 @@ void AppSettings::setDefaultOutbound(const QString& outbound) {
     emit settingsChanged();
   }
 }
+
 void AppSettings::setDownloadDetour(const QString& detour) {
   if (m_downloadDetour != detour) {
     m_downloadDetour = detour;
@@ -310,6 +339,7 @@ void AppSettings::setDownloadDetour(const QString& detour) {
     emit settingsChanged();
   }
 }
+
 // ==================== Helper methods ====================
 QString AppSettings::normalizedDefaultOutbound() const {
   if (m_defaultOutbound == "auto") {
@@ -317,12 +347,14 @@ QString AppSettings::normalizedDefaultOutbound() const {
   }
   return ConfigConstants::TAG_MANUAL;
 }
+
 QString AppSettings::normalizedDownloadDetour() const {
   if (m_downloadDetour == "manual") {
     return ConfigConstants::TAG_MANUAL;
   }
   return ConfigConstants::TAG_DIRECT;
 }
+
 QString AppSettings::dnsStrategy() const {
   if (m_preferIpv6) {
     return "prefer_ipv6";

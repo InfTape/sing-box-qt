@@ -8,6 +8,7 @@
 // clang-format on
 #endif
 AdminHelper::AdminHelper(QObject* parent) : QObject(parent) {}
+
 bool AdminHelper::isAdmin() {
 #ifdef Q_OS_WIN
   BOOL                     isAdmin     = FALSE;
@@ -24,6 +25,7 @@ bool AdminHelper::isAdmin() {
   return getuid() == 0;
 #endif
 }
+
 bool AdminHelper::restartAsAdmin() {
   QString     program = QCoreApplication::applicationFilePath();
   QStringList args    = QCoreApplication::arguments();
@@ -35,6 +37,7 @@ bool AdminHelper::restartAsAdmin() {
   }
   return false;
 }
+
 bool AdminHelper::runAsAdmin(const QString& program, const QStringList& arguments) {
 #ifdef Q_OS_WIN
   QString           args = arguments.join(' ');

@@ -12,6 +12,7 @@
 #include <QtMath>
 #include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
+
 MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
     : QComboBox(parent), m_themeService(themeService) {
   m_menu = new RoundedMenu(this);
@@ -21,9 +22,11 @@ MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
     connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
   }
 }
+
 void MenuComboBox::setWheelEnabled(bool enabled) {
   m_wheelEnabled = enabled;
 }
+
 void MenuComboBox::setThemeService(ThemeService* themeService) {
   if (m_themeService == themeService) return;
   if (m_themeService) {
@@ -35,6 +38,7 @@ void MenuComboBox::setThemeService(ThemeService* themeService) {
   }
   updateMenuStyle();
 }
+
 void MenuComboBox::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event);
   QStylePainter        painter(this);
@@ -45,6 +49,7 @@ void MenuComboBox::paintEvent(QPaintEvent* event) {
   painter.drawComplexControl(QStyle::CC_ComboBox, opt);
   painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
+
 void MenuComboBox::showPopup() {
   if (!m_menu) return;
   m_menu->clear();
@@ -76,11 +81,13 @@ void MenuComboBox::showPopup() {
   m_menu->setFixedWidth(menuWidth);
   m_menu->popup(mapToGlobal(QPoint(0, height())));
 }
+
 void MenuComboBox::hidePopup() {
   if (m_menu) {
     m_menu->hide();
   }
 }
+
 void MenuComboBox::wheelEvent(QWheelEvent* event) {
   if (!m_wheelEnabled) {
     event->ignore();
@@ -88,6 +95,7 @@ void MenuComboBox::wheelEvent(QWheelEvent* event) {
   }
   QComboBox::wheelEvent(event);
 }
+
 void MenuComboBox::updateMenuStyle() {
   if (!m_menu) return;
   ThemeService* ts = m_themeService;

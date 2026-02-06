@@ -4,10 +4,12 @@
 #include <QMap>
 #include <QObject>
 #include <QString>
+
 class ThemeManager : public QObject {
   Q_OBJECT
  public:
   enum ThemeMode { Light, Dark, Auto };
+
   static ThemeManager& instance();
   void                 init();
   void                 setThemeMode(ThemeMode mode);
