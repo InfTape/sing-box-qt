@@ -35,15 +35,19 @@ if (!(Get-Command $cmakeCmd -ErrorAction SilentlyContinue)) {
     throw "cmake not found. Set CMAKE_BIN or install CMake and add it to PATH."
 }
 
-# Configure if needed
-if (!(Test-Path (Join-Path $buildDir "CMakeCache.txt"))) {
-    Write-Host "Configuring project..." -ForegroundColor Cyan
-    & $cmakeCmd -S . -B $buildDir -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="$qtRoot"
+# Always configure to avoid stale/broken cache and fail fast on CI
+Write-Host "Configuring project..." -ForegroundColor Cyan
+& $cmakeCmd -S . -B $buildDir -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="$qtRoot"
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake configure failed"
 }
 
 # Build
 Write-Host "Building (Release)..." -ForegroundColor Cyan
 & $cmakeCmd --build $buildDir --config Release
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake build failed"
+}
 
 if (!(Test-Path $exePath)) {
     throw "Release exe not found: $exePath"
