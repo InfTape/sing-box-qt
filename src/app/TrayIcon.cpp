@@ -9,8 +9,11 @@
 #include "core/KernelService.h"
 #include "widgets/common/RoundedMenu.h"
 
-TrayIcon::TrayIcon(ProxyUiController* proxyUiController, KernelService* kernelService, ThemeService* themeService,
-                   std::function<void()> showWindow, QObject* parent)
+TrayIcon::TrayIcon(ProxyUiController*    proxyUiController,
+                   KernelService*        kernelService,
+                   ThemeService*         themeService,
+                   std::function<void()> showWindow,
+                   QObject*              parent)
     : QSystemTrayIcon(parent),
       m_proxyUiController(proxyUiController),
       m_kernelService(kernelService),
@@ -21,10 +24,14 @@ TrayIcon::TrayIcon(ProxyUiController* proxyUiController, KernelService* kernelSe
   setupMenu();
   connect(this, &QSystemTrayIcon::activated, this, &TrayIcon::onActivated);
   if (m_kernelService) {
-    connect(m_kernelService, &KernelService::statusChanged, this, [this](bool) { updateProxyStatus(); });
+    connect(m_kernelService, &KernelService::statusChanged, this, [this](bool) {
+      updateProxyStatus();
+    });
   }
   if (m_proxyUiController) {
-    connect(m_proxyUiController, &ProxyUiController::proxyModeChanged, this,
+    connect(m_proxyUiController,
+            &ProxyUiController::proxyModeChanged,
+            this,
             [this](const QString&) { updateProxyStatus(); });
   }
 }
@@ -39,8 +46,9 @@ void TrayIcon::setupMenu() {
   ThemeService* ts = m_themeService;
   if (ts) {
     menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    connect(ts, &ThemeService::themeChanged, menu,
-            [menu, ts]() { menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
+    connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {
+      menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+    });
   }
   m_menu       = menu;
   m_showAction = m_menu->addAction(tr("Show Window"));
@@ -80,32 +88,43 @@ void TrayIcon::onShowWindow() {
 }
 
 void TrayIcon::onToggleProxy() {
-  if (!m_proxyUiController) return;
+  if (!m_proxyUiController)
+    return;
   QString error;
   if (!m_proxyUiController->toggleKernel(&error)) {
-    QMessageBox::warning(nullptr, tr("Start Proxy"),
-                         error.isEmpty() ? tr("Configuration file not found. Unable to start kernel.") : error);
+    QMessageBox::warning(
+        nullptr,
+        tr("Start Proxy"),
+        error.isEmpty()
+            ? tr("Configuration file not found. Unable to start kernel.")
+            : error);
   }
   updateProxyStatus();
 }
 
 void TrayIcon::onSelectGlobal() {
-  if (!m_proxyUiController) return;
+  if (!m_proxyUiController)
+    return;
   QString error;
   if (!m_proxyUiController->switchProxyMode("global", &error)) {
-    QMessageBox::warning(nullptr, tr("Switch Mode Failed"),
-                         error.isEmpty() ? tr("Failed to switch proxy mode") : error);
+    QMessageBox::warning(
+        nullptr,
+        tr("Switch Mode Failed"),
+        error.isEmpty() ? tr("Failed to switch proxy mode") : error);
     return;
   }
   updateProxyStatus();
 }
 
 void TrayIcon::onSelectRule() {
-  if (!m_proxyUiController) return;
+  if (!m_proxyUiController)
+    return;
   QString error;
   if (!m_proxyUiController->switchProxyMode("rule", &error)) {
-    QMessageBox::warning(nullptr, tr("Switch Mode Failed"),
-                         error.isEmpty() ? tr("Failed to switch proxy mode") : error);
+    QMessageBox::warning(
+        nullptr,
+        tr("Switch Mode Failed"),
+        error.isEmpty() ? tr("Failed to switch proxy mode") : error);
     return;
   }
   updateProxyStatus();
@@ -117,8 +136,9 @@ void TrayIcon::onQuit() {
 }
 
 void TrayIcon::updateProxyStatus() {
-  const bool running =
-      m_proxyUiController ? m_proxyUiController->isKernelRunning() : (m_kernelService && m_kernelService->isRunning());
+  const bool running = m_proxyUiController
+                           ? m_proxyUiController->isKernelRunning()
+                           : (m_kernelService && m_kernelService->isRunning());
   m_toggleAction->setText(running ? tr("Stop Proxy") : tr("Start Proxy"));
   setToolTip(running ? tr("Sing-Box - Running") : tr("Sing-Box - Stopped"));
   QString mode = "rule";

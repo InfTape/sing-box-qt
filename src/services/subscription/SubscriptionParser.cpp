@@ -53,7 +53,8 @@ QList<QString> splitContentEntries(const QString& text) {
           depth++;
         else if (text[i] == close) {
           depth--;
-          if (depth == 0) break;
+          if (depth == 0)
+            break;
         }
       }
       const int end = (i < len) ? i + 1 : len;
@@ -62,7 +63,8 @@ QList<QString> splitContentEntries(const QString& text) {
       continue;
     }
     int nl = text.indexOf('\n', idx);
-    if (nl == -1) nl = len;
+    if (nl == -1)
+      nl = len;
     const QString segment = text.mid(idx, nl - idx).trimmed();
     if (!segment.isEmpty()) {
       entries.append(segment);
@@ -95,8 +97,10 @@ QJsonArray parseJsonContentToNodes(const QByteArray& content) {
   }
   if (doc.isArray()) {
     for (const auto& item : doc.array()) {
-      if (!item.isObject()) continue;
-      QJsonObject single = SubscriptionParser::parseSingleJsonNode(item.toObject());
+      if (!item.isObject())
+        continue;
+      QJsonObject single =
+          SubscriptionParser::parseSingleJsonNode(item.toObject());
       if (!single.isEmpty()) {
         result.append(single);
       }
@@ -106,7 +110,8 @@ QJsonArray parseJsonContentToNodes(const QByteArray& content) {
 }
 }  // namespace
 
-QJsonArray SubscriptionParser::parseSubscriptionContent(const QByteArray& content) {
+QJsonArray SubscriptionParser::parseSubscriptionContent(
+    const QByteArray& content) {
   QJsonArray jsonNodes = parseJsonContentToNodes(content);
   if (!jsonNodes.isEmpty()) {
     return jsonNodes;
@@ -134,9 +139,20 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   }
   auto isProxyOutbound = [](const QJsonObject& ob) -> bool {
     const QString type = ob.value("type").toString().trimmed().toLower();
-    if (type.isEmpty()) return false;
-    static const QSet<QString> proxyTypes = {"socks",  "http",     "shadowsocks", "vmess", "vless",     "trojan",
-                                             "anytls", "hysteria", "hysteria2",   "tuic",  "wireguard", "ssh"};
+    if (type.isEmpty())
+      return false;
+    static const QSet<QString> proxyTypes = {"socks",
+                                             "http",
+                                             "shadowsocks",
+                                             "vmess",
+                                             "vless",
+                                             "trojan",
+                                             "anytls",
+                                             "hysteria",
+                                             "hysteria2",
+                                             "tuic",
+                                             "wireguard",
+                                             "ssh"};
     if (!proxyTypes.contains(type)) {
       return false;
     }
@@ -150,16 +166,20 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   QJsonObject      root      = doc.object();
   const QJsonArray outbounds = root.value("outbounds").toArray();
   for (const auto& ob : outbounds) {
-    if (!ob.isObject()) continue;
+    if (!ob.isObject())
+      continue;
     QJsonObject outbound = ob.toObject();
-    if (!isProxyOutbound(outbound)) continue;
+    if (!isProxyOutbound(outbound))
+      continue;
     nodes.append(outbound);
   }
   const QJsonArray endpoints = root.value("endpoints").toArray();
   for (const auto& ep : endpoints) {
-    if (!ep.isObject()) continue;
+    if (!ep.isObject())
+      continue;
     QJsonObject endpoint = ep.toObject();
-    if (!isProxyOutbound(endpoint)) continue;
+    if (!isProxyOutbound(endpoint))
+      continue;
     nodes.append(endpoint);
   }
   return nodes;
@@ -181,11 +201,13 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
     const int value = QString::fromStdString(node.as<std::string>()).toInt(&ok);
     return ok ? value : defaultValue;
   };
-  auto readBool = [](const YAML::Node& node, bool defaultValue = false) -> bool {
+  auto readBool = [](const YAML::Node& node,
+                     bool              defaultValue = false) -> bool {
     if (!node || !node.IsScalar()) {
       return defaultValue;
     }
-    const QString text = QString::fromStdString(node.as<std::string>()).trimmed().toLower();
+    const QString text =
+        QString::fromStdString(node.as<std::string>()).trimmed().toLower();
     if (text == "true" || text == "1") {
       return true;
     }
@@ -244,14 +266,17 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
           node["method"]   = readString(proxy["cipher"]);
           node["password"] = readString(proxy["password"]);
         }
-        const bool supportsTransport = (type == "vmess" || type == "vless" || type == "trojan");
+        const bool supportsTransport =
+            (type == "vmess" || type == "vless" || type == "trojan");
         if (supportsTransport) {
           const bool    tlsEnabled = readBool(proxy["tls"], false);
           const QString serverName = readString(proxy["servername"]).trimmed();
           const QString sni        = readString(proxy["sni"]).trimmed();
           const QString peer       = readString(proxy["peer"]).trimmed();
-          const bool insecure = readBool(proxy["skip-cert-verify"], false) || readBool(proxy["allowInsecure"], false);
-          if (tlsEnabled || !serverName.isEmpty() || !sni.isEmpty() || !peer.isEmpty() || insecure) {
+          const bool    insecure = readBool(proxy["skip-cert-verify"], false) ||
+                                readBool(proxy["allowInsecure"], false);
+          if (tlsEnabled || !serverName.isEmpty() || !sni.isEmpty() ||
+              !peer.isEmpty() || insecure) {
             QJsonObject tlsObj;
             tlsObj["enabled"]     = true;
             QString tlsServerName = serverName;
@@ -278,7 +303,8 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
             }
             node["tls"] = tlsObj;
           }
-          const QString network = readString(proxy["network"]).trimmed().toLower();
+          const QString network =
+              readString(proxy["network"]).trimmed().toLower();
           if (network == "ws") {
             QJsonObject transport;
             transport["type"] = "ws";
@@ -331,8 +357,9 @@ QJsonArray SubscriptionParser::parseClashConfig(const QByteArray& content) {
           } else if (network == "h2" || network == "http") {
             QJsonObject transport;
             transport["type"] = "http";
-            YAML::Node opts   = (network == "h2") ? proxy["h2-opts"] : proxy["http-opts"];
-            QString    path;
+            YAML::Node opts =
+                (network == "h2") ? proxy["h2-opts"] : proxy["http-opts"];
+            QString path;
             if (opts && opts.IsMap()) {
               path = readString(opts["path"]).trimmed();
             }
@@ -365,7 +392,8 @@ QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject& obj) {
   }
   const QJsonArray servers = obj.value("servers").toArray();
   for (const auto& serverVal : servers) {
-    if (!serverVal.isObject()) continue;
+    if (!serverVal.isObject())
+      continue;
     const QJsonObject serverObj = serverVal.toObject();
     QJsonObject       node;
     node["type"]        = "shadowsocks";
@@ -378,10 +406,13 @@ QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject& obj) {
       tag = serverObj.value("name").toString().trimmed();
     }
     if (tag.isEmpty()) {
-      tag = QString("%1:%2").arg(node.value("server").toString()).arg(node.value("server_port").toInt());
+      tag = QString("%1:%2")
+                .arg(node.value("server").toString())
+                .arg(node.value("server_port").toInt());
     }
     node["tag"] = tag;
-    if (!node.value("server").toString().isEmpty() && node.value("server_port").toInt() > 0) {
+    if (!node.value("server").toString().isEmpty() &&
+        node.value("server_port").toInt() > 0) {
       nodes.append(node);
     }
   }
@@ -457,8 +488,8 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray& content) {
       node = parseHysteriaURI(uri);
     } else if (uri.startsWith("tuic://")) {
       node = parseTuicURI(uri);
-    } else if (uri.startsWith("socks://") || uri.startsWith("socks5://") || uri.startsWith("socks4://") ||
-               uri.startsWith("socks4a://")) {
+    } else if (uri.startsWith("socks://") || uri.startsWith("socks5://") ||
+               uri.startsWith("socks4://") || uri.startsWith("socks4a://")) {
       node = parseSocksURI(uri);
     } else if (uri.startsWith("http://") || uri.startsWith("https://")) {
       node = parseHttpURI(uri);
@@ -522,12 +553,15 @@ QJsonObject SubscriptionParser::parseVmessURI(const QString& uri) {
   bool          insecure   = false;
   if (obj.contains("allowInsecure")) {
     const QJsonValue insecureVal = obj.value("allowInsecure");
-    insecure = insecureVal.isBool() ? insecureVal.toBool() : insecureVal.toString().trimmed() == "1";
+    insecure                     = insecureVal.isBool() ? insecureVal.toBool()
+                                                        : insecureVal.toString().trimmed() == "1";
   }
-  if (tlsEnabled || !sni.isEmpty() || !alpn.isEmpty() || insecure || !fp.isEmpty()) {
+  if (tlsEnabled || !sni.isEmpty() || !alpn.isEmpty() || insecure ||
+      !fp.isEmpty()) {
     QJsonObject tlsObj;
-    tlsObj["enabled"]        = true;
-    const QString serverName = !sni.isEmpty() ? sni : (!host.isEmpty() ? host : server);
+    tlsObj["enabled"] = true;
+    const QString serverName =
+        !sni.isEmpty() ? sni : (!host.isEmpty() ? host : server);
     if (!serverName.isEmpty()) {
       tlsObj["server_name"] = serverName;
     }
@@ -638,18 +672,21 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
   const QString pbk      = query.queryItemValue("pbk");
   const QString sid      = query.queryItemValue("sid");
   const bool    insecure = query.queryItemValue("allowInsecure") == "1";
-  // Many subscription/hand-filled links omit security=tls, but still contain SNI/Fingerprint/PublicKey or use typical
-  // TLS ports, so here we auto-complete it.
-  const bool hasTlsHints = security == "tls" || security == "reality" || !sni.isEmpty() || !fp.isEmpty() ||
-                           !pbk.isEmpty() || !alpn.isEmpty() || port == 443 || port == 8443 || port == 2053 ||
-                           port == 2083 || port == 2087 || port == 2096 || port == 9443;
+  // Many subscription/hand-filled links omit security=tls, but still contain
+  // SNI/Fingerprint/PublicKey or use typical TLS ports, so here we
+  // auto-complete it.
+  const bool hasTlsHints = security == "tls" || security == "reality" ||
+                           !sni.isEmpty() || !fp.isEmpty() || !pbk.isEmpty() ||
+                           !alpn.isEmpty() || port == 443 || port == 8443 ||
+                           port == 2053 || port == 2083 || port == 2087 ||
+                           port == 2096 || port == 9443;
   if (hasTlsHints && security != "none") {
     QJsonObject tls;
     tls["enabled"]     = true;
     QString serverName = sni;
     if (serverName.isEmpty()) {
       const QString host = normalizeHostToAscii(query.queryItemValue("host"));
-      serverName         = host.isEmpty() ? node.value("server").toString() : host;
+      serverName = host.isEmpty() ? node.value("server").toString() : host;
     }
     if (!serverName.isEmpty()) {
       tls["server_name"] = serverName;
@@ -677,8 +714,8 @@ QJsonObject SubscriptionParser::parseVlessURI(const QString& uri) {
     }
     node["tls"] = tls;
   }
-  // Only enable when subscription explicitly specifies packetEncoding/pe, to avoid issues with nodes
-  // that do not support XUDP
+  // Only enable when subscription explicitly specifies packetEncoding/pe, to
+  // avoid issues with nodes that do not support XUDP
   QString packetEncoding = query.queryItemValue("packetEncoding");
   if (packetEncoding.isEmpty()) {
     packetEncoding = query.queryItemValue("packetencoding");
@@ -872,8 +909,10 @@ QJsonObject SubscriptionParser::parseHysteriaURI(const QString& uri) {
   }
   QString up   = query.queryItemValue("up");
   QString down = query.queryItemValue("down");
-  if (!up.isEmpty()) node["up_mbps"] = up;
-  if (!down.isEmpty()) node["down_mbps"] = down;
+  if (!up.isEmpty())
+    node["up_mbps"] = up;
+  if (!down.isEmpty())
+    node["down_mbps"] = down;
   QJsonObject tls;
   tls["enabled"] = true;
   QString sni    = query.queryItemValue("sni");
@@ -882,7 +921,8 @@ QJsonObject SubscriptionParser::parseHysteriaURI(const QString& uri) {
     const QString serverName = !sni.isEmpty() ? sni : peer;
     tls["server_name"]       = serverName;
   }
-  if (query.queryItemValue("insecure") == "1" || query.queryItemValue("allow_insecure") == "1") {
+  if (query.queryItemValue("insecure") == "1" ||
+      query.queryItemValue("allow_insecure") == "1") {
     tls["insecure"] = true;
   }
   if (!tls.isEmpty()) {
@@ -926,13 +966,17 @@ QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   node["tag"]            = tag;
   const QString uuid     = url.userName();
   const QString password = url.password();
-  if (!uuid.isEmpty()) node["uuid"] = uuid;
-  if (!password.isEmpty()) node["password"] = password;
+  if (!uuid.isEmpty())
+    node["uuid"] = uuid;
+  if (!password.isEmpty())
+    node["password"] = password;
   const QString token = query.queryItemValue("token");
-  if (!token.isEmpty()) node["token"] = token;
-  const QString congestion = query.queryItemValue("congestion_control").isEmpty()
-                                 ? query.queryItemValue("congestion")
-                                 : query.queryItemValue("congestion_control");
+  if (!token.isEmpty())
+    node["token"] = token;
+  const QString congestion =
+      query.queryItemValue("congestion_control").isEmpty()
+          ? query.queryItemValue("congestion")
+          : query.queryItemValue("congestion_control");
   if (!congestion.isEmpty()) {
     node["congestion_control"] = congestion;
   }
@@ -946,11 +990,13 @@ QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   }
   QString alpn = query.queryItemValue("alpn");
   if (!alpn.isEmpty()) {
-    node["alpn"] = QJsonArray::fromStringList(alpn.split(",", Qt::SkipEmptyParts));
+    node["alpn"] =
+        QJsonArray::fromStringList(alpn.split(",", Qt::SkipEmptyParts));
   }
-  const bool insecure = query.queryItemValue("allow_insecure") == "1" || query.queryItemValue("insecure") == "1";
-  QString    sni      = query.queryItemValue("sni");
-  QString    peer     = query.queryItemValue("peer");
+  const bool insecure = query.queryItemValue("allow_insecure") == "1" ||
+                        query.queryItemValue("insecure") == "1";
+  QString sni  = query.queryItemValue("sni");
+  QString peer = query.queryItemValue("peer");
   if (peer.isEmpty()) {
     peer = query.queryItemValue("serverName");
   }
@@ -1132,29 +1178,35 @@ QString SubscriptionParser::tryDecodeBase64ToText(const QString& raw) {
   if (rem != 0) {
     compact.append(QString("=").repeated(4 - rem));
   }
-  QByteArray input = compact.toUtf8();
-  QByteArray decoded =
-      QByteArray::fromBase64(input, QByteArray::Base64Encoding | QByteArray::AbortOnBase64DecodingErrors);
+  QByteArray input   = compact.toUtf8();
+  QByteArray decoded = QByteArray::fromBase64(
+      input,
+      QByteArray::Base64Encoding | QByteArray::AbortOnBase64DecodingErrors);
   if (!decoded.isEmpty()) {
     return QString::fromUtf8(decoded);
   }
-  decoded = QByteArray::fromBase64(input, QByteArray::Base64UrlEncoding | QByteArray::AbortOnBase64DecodingErrors);
+  decoded = QByteArray::fromBase64(
+      input,
+      QByteArray::Base64UrlEncoding | QByteArray::AbortOnBase64DecodingErrors);
   if (!decoded.isEmpty()) {
     return QString::fromUtf8(decoded);
   }
   return QString();
 }
 
-QJsonArray SubscriptionParser::extractNodesWithFallback(const QString& content) {
+QJsonArray SubscriptionParser::extractNodesWithFallback(
+    const QString& content) {
   auto tryParse = [](const QString& text) -> QJsonArray {
-    QJsonArray parsed = SubscriptionParser::parseSubscriptionContent(text.toUtf8());
+    QJsonArray parsed =
+        SubscriptionParser::parseSubscriptionContent(text.toUtf8());
     if (!parsed.isEmpty()) {
       return parsed;
     }
     QJsonArray           merged;
     const QList<QString> parts = splitContentEntries(text);
     for (const auto& part : parts) {
-      QJsonArray sub = SubscriptionParser::parseSubscriptionContent(part.toUtf8());
+      QJsonArray sub =
+          SubscriptionParser::parseSubscriptionContent(part.toUtf8());
       appendArray(merged, sub);
     }
     return merged;

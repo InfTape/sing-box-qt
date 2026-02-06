@@ -31,11 +31,14 @@ class KernelService : public QObject {
   void onManagerDisconnected();
 
  private:
-  bool    ensureManagerReady(QString* error = nullptr);
-  bool    sendRequestAndWait(const QString& method, const QJsonObject& params, QJsonObject* result, QString* error);
-  QString findKernelPath() const;
-  QString getDefaultConfigPath() const;
-  QString findCoreManagerPath() const;
+  bool               ensureManagerReady(QString* error = nullptr);
+  bool               sendRequestAndWait(const QString&     method,
+                                        const QJsonObject& params,
+                                        QJsonObject*       result,
+                                        QString*           error);
+  QString            findKernelPath() const;
+  QString            getDefaultConfigPath() const;
+  QString            findCoreManagerPath() const;
   CoreManagerClient* m_client;
   QProcess*          m_managerProcess;
   QString            m_serverName;

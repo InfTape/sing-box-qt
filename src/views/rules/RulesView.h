@@ -21,7 +21,9 @@ class RuleCard;
 class RulesView : public QWidget {
   Q_OBJECT
  public:
-  explicit RulesView(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent = nullptr);
+  explicit RulesView(ConfigRepository* configRepo,
+                     ThemeService*     themeService,
+                     QWidget*          parent = nullptr);
   void setProxyService(ProxyService* service);
   void refresh();
  public slots:

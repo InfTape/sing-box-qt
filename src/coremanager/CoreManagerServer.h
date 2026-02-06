@@ -23,7 +23,10 @@ class CoreManagerServer : public QObject {
 
  private:
   void          handleMessage(const QJsonObject& obj);
-  void          sendResponse(int id, bool ok, const QJsonObject& result, const QString& error);
+  void          sendResponse(int                id,
+                             bool               ok,
+                             const QJsonObject& result,
+                             const QString&     error);
   void          sendEvent(const QJsonObject& event);
   QLocalServer* m_server;
   QLocalSocket* m_client;

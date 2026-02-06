@@ -13,7 +13,8 @@ DatabaseService& DatabaseService::instance() {
   return instance;
 }
 
-DatabaseService::DatabaseService(QObject* parent) : QObject(parent), m_initialized(false) {}
+DatabaseService::DatabaseService(QObject* parent)
+    : QObject(parent), m_initialized(false) {}
 
 DatabaseService::~DatabaseService() {
   close();
@@ -32,7 +33,8 @@ bool DatabaseService::init() {
   m_db = QSqlDatabase::addDatabase("QSQLITE");
   m_db.setDatabaseName(dbPath);
   if (!m_db.open()) {
-    Logger::error(QString("Failed to open database: %1").arg(m_db.lastError().text()));
+    Logger::error(
+        QString("Failed to open database: %1").arg(m_db.lastError().text()));
     return false;
   }
   if (!createTables()) {
@@ -61,7 +63,8 @@ bool DatabaseService::createTables() {
         )
     )";
   if (!query.exec(sql)) {
-    Logger::error(QString("Failed to create table: %1").arg(query.lastError().text()));
+    Logger::error(
+        QString("Failed to create table: %1").arg(query.lastError().text()));
     return false;
   }
   return true;
@@ -71,7 +74,8 @@ QString DatabaseService::getDatabasePath() const {
   const QString newDir  = appDataDir();
   const QString newPath = QDir(newDir).filePath("sing-box.db");
   if (!QFile::exists(newPath)) {
-    const QString oldBase  = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString oldBase =
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const QString oldPath1 = QDir(oldBase).filePath("sing-box-qt/sing-box.db");
     const QString oldPath2 = QDir(oldBase).filePath("sing-box.db");
     if (QFile::exists(oldPath1)) {
@@ -83,7 +87,8 @@ QString DatabaseService::getDatabasePath() const {
   return newPath;
 }
 
-QString DatabaseService::getValue(const QString& key, const QString& defaultValue) {
+QString DatabaseService::getValue(const QString& key,
+                                  const QString& defaultValue) {
   QSqlQuery query(m_db);
   query.prepare("SELECT value FROM kv_store WHERE key = ?");
   query.addBindValue(key);
@@ -102,7 +107,8 @@ bool DatabaseService::setValue(const QString& key, const QString& value) {
   query.addBindValue(key);
   query.addBindValue(value);
   if (!query.exec()) {
-    Logger::error(QString("Failed to save data: %1").arg(query.lastError().text()));
+    Logger::error(
+        QString("Failed to save data: %1").arg(query.lastError().text()));
     return false;
   }
   return true;
@@ -114,17 +120,20 @@ QJsonObject DatabaseService::getAppConfig() {
 }
 
 bool DatabaseService::saveAppConfig(const QJsonObject& config) {
-  QString json = QString::fromUtf8(QJsonDocument(config).toJson(QJsonDocument::Compact));
+  QString json =
+      QString::fromUtf8(QJsonDocument(config).toJson(QJsonDocument::Compact));
   return setValue("app_config", json);
 }
 
 QJsonObject DatabaseService::getThemeConfig() {
-  QString json = getValue("theme_config", R"({"theme":"dark","primaryColor":"#e94560"})");
+  QString json =
+      getValue("theme_config", R"({"theme":"dark","primaryColor":"#e94560"})");
   return QJsonDocument::fromJson(json.toUtf8()).object();
 }
 
 bool DatabaseService::saveThemeConfig(const QJsonObject& config) {
-  QString json = QString::fromUtf8(QJsonDocument(config).toJson(QJsonDocument::Compact));
+  QString json =
+      QString::fromUtf8(QJsonDocument(config).toJson(QJsonDocument::Compact));
   return setValue("theme_config", json);
 }
 
@@ -142,7 +151,8 @@ QJsonArray DatabaseService::getSubscriptions() {
 }
 
 bool DatabaseService::saveSubscriptions(const QJsonArray& subscriptions) {
-  QString json = QString::fromUtf8(QJsonDocument(subscriptions).toJson(QJsonDocument::Compact));
+  QString json = QString::fromUtf8(
+      QJsonDocument(subscriptions).toJson(QJsonDocument::Compact));
   return setValue("subscriptions", json);
 }
 
@@ -168,9 +178,11 @@ QJsonArray DatabaseService::getSubscriptionNodes(const QString& id) {
   return QJsonDocument::fromJson(json.toUtf8()).array();
 }
 
-bool DatabaseService::saveSubscriptionNodes(const QString& id, const QJsonArray& nodes) {
-  QString key  = QString("sub_nodes_%1").arg(id);
-  QString json = QString::fromUtf8(QJsonDocument(nodes).toJson(QJsonDocument::Compact));
+bool DatabaseService::saveSubscriptionNodes(const QString&    id,
+                                            const QJsonArray& nodes) {
+  QString key = QString("sub_nodes_%1").arg(id);
+  QString json =
+      QString::fromUtf8(QJsonDocument(nodes).toJson(QJsonDocument::Compact));
   return setValue(key, json);
 }
 
@@ -180,7 +192,8 @@ QJsonObject DatabaseService::getDataUsage() {
 }
 
 bool DatabaseService::saveDataUsage(const QJsonObject& payload) {
-  QString json = QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
+  QString json =
+      QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
   return setValue("data_usage_v1", json);
 }
 

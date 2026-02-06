@@ -17,9 +17,12 @@
 namespace {
 class NoFocusDelegate : public QStyledItemDelegate {
  public:
-  explicit NoFocusDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+  explicit NoFocusDelegate(QObject* parent = nullptr)
+      : QStyledItemDelegate(parent) {}
 
-  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+  void paint(QPainter*                   painter,
+             const QStyleOptionViewItem& option,
+             const QModelIndex&          index) const override {
     QStyleOptionViewItem opt(option);
     opt.state &= ~QStyle::State_HasFocus;
     QStyledItemDelegate::paint(painter, opt, index);
@@ -35,7 +38,8 @@ qint64 readLongLong(const QJsonValue& value) {
 
 QString sanitizeHostLabel(const QString& raw) {
   QString text = raw.trimmed();
-  if (text.isEmpty()) return text;
+  if (text.isEmpty())
+    return text;
   if (text.startsWith('[')) {
     const int end = text.indexOf(']');
     if (end > 1) {
@@ -57,7 +61,8 @@ QString sanitizeHostLabel(const QString& raw) {
 }
 }  // namespace
 
-DataUsageCard::DataUsageCard(ThemeService* themeService, QWidget* parent) : QFrame(parent) {
+DataUsageCard::DataUsageCard(ThemeService* themeService, QWidget* parent)
+    : QFrame(parent) {
   setupUi(themeService);
 }
 
@@ -74,8 +79,9 @@ void DataUsageCard::setupUi(ThemeService* themeService) {
   auto* rankingTitle = new QLabel(tr("Ranking"));
   rankingTitle->setObjectName("SectionTitle");
   m_rankingModeSelector = new SegmentedControl(this, themeService);
-  m_rankingModeSelector->setItems({tr("Proxy"), tr("Process"), tr("Interface"), tr("Hostname")},
-                                  {"outbound", "process", "sourceIP", "host"});
+  m_rankingModeSelector->setItems(
+      {tr("Proxy"), tr("Process"), tr("Interface"), tr("Hostname")},
+      {"outbound", "process", "sourceIP", "host"});
   m_rankingModeSelector->setCurrentIndex(3);
   m_clearButton = new QPushButton;
   m_clearButton->setObjectName("DataUsageClearBtn");
@@ -111,8 +117,14 @@ void DataUsageCard::setupUi(ThemeService* themeService) {
   rootLayout->addWidget(m_emptyLabel);
   m_topTable->hide();
   m_emptyLabel->show();
-  connect(m_clearButton, &QPushButton::clicked, this, &DataUsageCard::clearRequested);
-  connect(m_rankingModeSelector, &SegmentedControl::currentValueChanged, this, [this]() { refreshTable(); });
+  connect(m_clearButton,
+          &QPushButton::clicked,
+          this,
+          &DataUsageCard::clearRequested);
+  connect(m_rankingModeSelector,
+          &SegmentedControl::currentValueChanged,
+          this,
+          [this]() { refreshTable(); });
 }
 
 void DataUsageCard::updateDataUsage(const QJsonObject& snapshot) {
@@ -121,7 +133,8 @@ void DataUsageCard::updateDataUsage(const QJsonObject& snapshot) {
 }
 
 void DataUsageCard::refreshTable() {
-  if (!m_topTable || !m_rankingModeSelector || !m_emptyLabel) return;
+  if (!m_topTable || !m_rankingModeSelector || !m_emptyLabel)
+    return;
   const QString     typeKey  = m_rankingModeSelector->currentValue();
   const QJsonObject typeObj  = m_snapshot.value(typeKey).toObject();
   const QJsonArray  entries  = typeObj.value("entries").toArray();
@@ -138,22 +151,27 @@ void DataUsageCard::refreshTable() {
   for (int i = 0; i < topCount; ++i) {
     const QJsonObject entry = entries.at(i).toObject();
     const qint64      total = readLongLong(entry.value("total"));
-    if (total > maxTotal) maxTotal = total;
+    if (total > maxTotal)
+      maxTotal = total;
   }
-  if (maxTotal <= 0) maxTotal = 1;
+  if (maxTotal <= 0)
+    maxTotal = 1;
   for (int i = 0; i < topCount; ++i) {
-    const QJsonObject entry        = entries.at(i).toObject();
-    const QString     rawLabel     = entry.value("label").toString();
-    const qint64      upload       = readLongLong(entry.value("upload"));
-    const qint64      download     = readLongLong(entry.value("download"));
-    const qint64      total        = readLongLong(entry.value("total"));
-    const QString     displayLabel = (typeKey == "host") ? formatHostLabel(rawLabel) : rawLabel;
-    auto*             nameItem     = new QTableWidgetItem(displayLabel);
+    const QJsonObject entry    = entries.at(i).toObject();
+    const QString     rawLabel = entry.value("label").toString();
+    const qint64      upload   = readLongLong(entry.value("upload"));
+    const qint64      download = readLongLong(entry.value("download"));
+    const qint64      total    = readLongLong(entry.value("total"));
+    const QString     displayLabel =
+        (typeKey == "host") ? formatHostLabel(rawLabel) : rawLabel;
+    auto* nameItem = new QTableWidgetItem(displayLabel);
     nameItem->setToolTip(rawLabel);
     m_topTable->setItem(i, 0, nameItem);
     auto* bar = new DataUsageBar(m_topTable);
     bar->setLogScaledValue(total, maxTotal);
-    bar->setToolTip(tr("Upload: %1\nDownload: %2").arg(formatBytes(upload)).arg(formatBytes(download)));
+    bar->setToolTip(tr("Upload: %1\nDownload: %2")
+                        .arg(formatBytes(upload))
+                        .arg(formatBytes(download)));
     m_topTable->setCellWidget(i, 1, bar);
     auto* totalItem = new QTableWidgetItem(formatBytes(total));
     totalItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);

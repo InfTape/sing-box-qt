@@ -15,11 +15,15 @@ SegmentedControl::SegmentedControl(QWidget* parent, ThemeService* themeService)
   m_anim->setDuration(150);
   m_anim->setEasingCurve(QEasingCurve::OutCubic);
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&SegmentedControl::update));
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            qOverload<>(&SegmentedControl::update));
   }
 }
 
-void SegmentedControl::setItems(const QStringList& labels, const QStringList& values) {
+void SegmentedControl::setItems(const QStringList& labels,
+                                const QStringList& values) {
   m_labels          = labels;
   m_values          = values;
   m_currentIndex    = 0;
@@ -29,8 +33,10 @@ void SegmentedControl::setItems(const QStringList& labels, const QStringList& va
 }
 
 void SegmentedControl::setCurrentIndex(int index) {
-  if (index < 0 || index >= m_labels.size()) return;
-  if (index == m_currentIndex) return;
+  if (index < 0 || index >= m_labels.size())
+    return;
+  if (index == m_currentIndex)
+    return;
   animateToIndex(index);
   m_currentIndex = index;
   emit currentIndexChanged(index);
@@ -47,13 +53,17 @@ QString SegmentedControl::currentValue() const {
 void SegmentedControl::setThemeService(ThemeService* themeService) {
   m_themeService = themeService;
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&SegmentedControl::update));
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            qOverload<>(&SegmentedControl::update));
   }
   update();
 }
 
 void SegmentedControl::setSelectionOffset(qreal offset) {
-  if (qFuzzyCompare(m_selectionOffset, offset)) return;
+  if (qFuzzyCompare(m_selectionOffset, offset))
+    return;
   m_selectionOffset = offset;
   update();
 }
@@ -80,7 +90,8 @@ void SegmentedControl::recalculateLayout() const {
 }
 
 int SegmentedControl::indexAtPos(const QPoint& pos) const {
-  if (m_labels.isEmpty()) return -1;
+  if (m_labels.isEmpty())
+    return -1;
   qreal x = 4;  // left margin
   for (int i = 0; i < m_itemWidths.size(); ++i) {
     if (pos.x() >= x && pos.x() < x + m_itemWidths[i]) {
@@ -92,7 +103,8 @@ int SegmentedControl::indexAtPos(const QPoint& pos) const {
 }
 
 QRectF SegmentedControl::itemRect(int index) const {
-  if (index < 0 || index >= m_itemWidths.size()) return QRectF();
+  if (index < 0 || index >= m_itemWidths.size())
+    return QRectF();
   qreal x = 4;  // left margin
   for (int i = 0; i < index; ++i) {
     x += m_itemWidths[i];
@@ -102,7 +114,8 @@ QRectF SegmentedControl::itemRect(int index) const {
 }
 
 QRectF SegmentedControl::selectionRect() const {
-  if (m_labels.isEmpty()) return QRectF();
+  if (m_labels.isEmpty())
+    return QRectF();
   // Interpolate between current position based on offset
   int    prevIndex = static_cast<int>(m_selectionOffset);
   int    nextIndex = qMin(prevIndex + 1, m_labels.size() - 1);
@@ -110,7 +123,7 @@ QRectF SegmentedControl::selectionRect() const {
   QRectF prevRect  = itemRect(prevIndex);
   QRectF nextRect  = itemRect(nextIndex);
   qreal  x         = prevRect.x() + (nextRect.x() - prevRect.x()) * frac;
-  qreal  w         = prevRect.width() + (nextRect.width() - prevRect.width()) * frac;
+  qreal  w = prevRect.width() + (nextRect.width() - prevRect.width()) * frac;
   return QRectF(x, prevRect.y(), w, prevRect.height());
 }
 
@@ -126,9 +139,9 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
   p.setRenderHint(QPainter::Antialiasing, true);
   ThemeService* ts = m_themeService;
   // Background colors
-  QColor bgColor           = ts ? ts->color("bg-secondary") : QColor(240, 240, 240);
-  QColor selColor          = ts ? ts->color("bg-tertiary") : QColor(60, 60, 70);
-  QColor textColor         = ts ? ts->color("text-secondary") : QColor(100, 100, 100);
+  QColor bgColor   = ts ? ts->color("bg-secondary") : QColor(240, 240, 240);
+  QColor selColor  = ts ? ts->color("bg-tertiary") : QColor(60, 60, 70);
+  QColor textColor = ts ? ts->color("text-secondary") : QColor(100, 100, 100);
   QColor selectedTextColor = ts ? ts->color("text-primary") : QColor(0, 0, 0);
   QColor borderColor       = ts ? ts->color("border") : QColor(200, 200, 200);
   // Draw background
@@ -163,9 +176,13 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
     if (dist < 0.5) {
       // Interpolate to selected color
       qreal t = 1.0 - dist * 2.0;
-      color   = QColor(static_cast<int>(textColor.red() + (selectedTextColor.red() - textColor.red()) * t),
-                       static_cast<int>(textColor.green() + (selectedTextColor.green() - textColor.green()) * t),
-                       static_cast<int>(textColor.blue() + (selectedTextColor.blue() - textColor.blue()) * t));
+      color   = QColor(
+          static_cast<int>(textColor.red() +
+                           (selectedTextColor.red() - textColor.red()) * t),
+          static_cast<int>(textColor.green() +
+                           (selectedTextColor.green() - textColor.green()) * t),
+          static_cast<int>(textColor.blue() +
+                           (selectedTextColor.blue() - textColor.blue()) * t));
     } else {
       color = textColor;
     }
@@ -175,13 +192,15 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
 }
 
 void SegmentedControl::mousePressEvent(QMouseEvent* event) {
-  if (event->button() != Qt::LeftButton) return;
+  if (event->button() != Qt::LeftButton)
+    return;
   m_pressedIndex = indexAtPos(event->pos());
   event->accept();
 }
 
 void SegmentedControl::mouseReleaseEvent(QMouseEvent* event) {
-  if (event->button() != Qt::LeftButton) return;
+  if (event->button() != Qt::LeftButton)
+    return;
   int releasedIndex = indexAtPos(event->pos());
   if (releasedIndex >= 0 && releasedIndex == m_pressedIndex) {
     setCurrentIndex(releasedIndex);

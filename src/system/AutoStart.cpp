@@ -14,13 +14,17 @@ bool AutoStart::isSupported() {
 
 bool AutoStart::isEnabled(const QString& appName) {
 #ifdef Q_OS_WIN
-  QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
-  const QString name  = appName.isEmpty() ? QCoreApplication::applicationName() : appName;
+  QSettings settings(
+      "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      QSettings::NativeFormat);
+  const QString name =
+      appName.isEmpty() ? QCoreApplication::applicationName() : appName;
   const QString value = settings.value(name).toString();
   if (value.isEmpty()) {
     return false;
   }
-  const QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+  const QString appPath =
+      QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
   return value.contains(appPath, Qt::CaseInsensitive);
 #else
   Q_UNUSED(appName)
@@ -30,11 +34,15 @@ bool AutoStart::isEnabled(const QString& appName) {
 
 bool AutoStart::setEnabled(bool enabled, const QString& appName) {
 #ifdef Q_OS_WIN
-  QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
-  const QString name = appName.isEmpty() ? QCoreApplication::applicationName() : appName;
+  QSettings settings(
+      "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      QSettings::NativeFormat);
+  const QString name =
+      appName.isEmpty() ? QCoreApplication::applicationName() : appName;
   if (enabled) {
-    const QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-    const QString value   = QString("\"%1\"").arg(appPath);
+    const QString appPath =
+        QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    const QString value = QString("\"%1\"").arg(appPath);
     settings.setValue(name, value);
     settings.sync();
     if (settings.status() != QSettings::NoError) {

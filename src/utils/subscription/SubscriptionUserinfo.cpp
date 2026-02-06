@@ -11,14 +11,20 @@ QJsonObject parseUserinfoHeader(const QByteArray& header) {
   const QStringList segments = raw.split(';', Qt::SkipEmptyParts);
   for (const QString& segment : segments) {
     const QStringList pair = segment.trimmed().split('=', Qt::SkipEmptyParts);
-    if (pair.size() != 2) continue;
+    if (pair.size() != 2)
+      continue;
     const QString key   = pair[0].trimmed().toLower();
     const qint64  value = pair[1].trimmed().toLongLong();
-    if (value < 0) continue;
-    if (key == "upload") info["upload"] = value;
-    if (key == "download") info["download"] = value;
-    if (key == "total") info["total"] = value;
-    if (key == "expire") info["expire"] = value;
+    if (value < 0)
+      continue;
+    if (key == "upload")
+      info["upload"] = value;
+    if (key == "download")
+      info["download"] = value;
+    if (key == "total")
+      info["total"] = value;
+    if (key == "expire")
+      info["expire"] = value;
   }
   return info;
 }

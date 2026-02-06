@@ -3,7 +3,8 @@
 
 namespace SubscriptionActions {
 bool useSubscription(SubscriptionService* service, const QString& id) {
-  if (!service) return false;
+  if (!service)
+    return false;
   const QList<SubscriptionInfo> subs         = service->getSubscriptions();
   const int                     activeIndex  = service->getActiveIndex();
   int                           clickedIndex = -1;
@@ -13,7 +14,8 @@ bool useSubscription(SubscriptionService* service, const QString& id) {
       break;
     }
   }
-  if (clickedIndex < 0) return false;
+  if (clickedIndex < 0)
+    return false;
   if (clickedIndex == activeIndex) {
     service->refreshSubscription(id, true);
   } else {
@@ -22,13 +24,17 @@ bool useSubscription(SubscriptionService* service, const QString& id) {
   return true;
 }
 
-void refreshSubscription(SubscriptionService* service, const QString& id, bool applyRuntime) {
-  if (!service) return;
+void refreshSubscription(SubscriptionService* service,
+                         const QString&       id,
+                         bool                 applyRuntime) {
+  if (!service)
+    return;
   service->refreshSubscription(id, applyRuntime);
 }
 
 bool rollbackSubscription(SubscriptionService* service, const QString& id) {
-  if (!service) return false;
+  if (!service)
+    return false;
   const QList<SubscriptionInfo> subs = service->getSubscriptions();
   for (const auto& sub : subs) {
     if (sub.id == id) {

@@ -17,7 +17,8 @@ class ThemeService;
 class MultiSelectMenuBox : public QWidget {
   Q_OBJECT
  public:
-  explicit MultiSelectMenuBox(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
+  explicit MultiSelectMenuBox(QWidget*      parent       = nullptr,
+                              ThemeService* themeService = nullptr);
   void        setOptions(const QStringList& options);
   void        setSelected(const QStringList& selected);
   QStringList selected() const;
@@ -38,7 +39,8 @@ struct SubscriptionInfo;
 class SubscriptionFormDialog : public QDialog {
   Q_OBJECT
  public:
-  explicit SubscriptionFormDialog(ThemeService* themeService, QWidget* parent = nullptr);
+  explicit SubscriptionFormDialog(ThemeService* themeService,
+                                  QWidget*      parent = nullptr);
   void        setEditData(const SubscriptionInfo& info);
   QString     name() const;
   QString     url() const;
@@ -53,16 +55,16 @@ class SubscriptionFormDialog : public QDialog {
   bool        validateInput(QString* error) const;
 
  private:
-  QWidget*            createTextTab(QTextEdit* edit, const QString& placeholder);
-  int                 indexForInterval(int minutes) const;
-  void                updateState();
-  QLineEdit*          m_nameEdit;
-  QTabWidget*         m_tabs;
-  QTextEdit*          m_urlEdit;
-  QTextEdit*          m_manualEdit;
-  QTextEdit*          m_uriEdit;
-  QCheckBox*          m_useOriginalCheck;
-  QCheckBox*          m_sharedRulesCheck;
+  QWidget*    createTextTab(QTextEdit* edit, const QString& placeholder);
+  int         indexForInterval(int minutes) const;
+  void        updateState();
+  QLineEdit*  m_nameEdit;
+  QTabWidget* m_tabs;
+  QTextEdit*  m_urlEdit;
+  QTextEdit*  m_manualEdit;
+  QTextEdit*  m_uriEdit;
+  QCheckBox*  m_useOriginalCheck;
+  QCheckBox*  m_sharedRulesCheck;
   MultiSelectMenuBox* m_ruleSetsBox;
   MenuComboBox*       m_autoUpdateCombo;
   QLabel*             m_hintLabel;

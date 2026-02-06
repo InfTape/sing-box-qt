@@ -8,8 +8,10 @@
 #include "core/ProxyService.h"
 #include "core/DataUsageTracker.h"
 
-ProxyRuntimeController::ProxyRuntimeController(KernelService* kernelService, ProxyService* proxyService,
-                                               ProxyController* proxyController, QObject* parent)
+ProxyRuntimeController::ProxyRuntimeController(KernelService*   kernelService,
+                                               ProxyService*    proxyService,
+                                               ProxyController* proxyController,
+                                               QObject*         parent)
     : QObject(parent),
       m_kernelService(kernelService),
       m_proxyService(proxyService),
@@ -25,18 +27,36 @@ ProxyRuntimeController::ProxyRuntimeController(KernelService* kernelService, Pro
     });
   }
   if (m_dataUsageTracker) {
-    connect(m_dataUsageTracker, &DataUsageTracker::dataUsageUpdated, this, &ProxyRuntimeController::dataUsageUpdated);
+    connect(m_dataUsageTracker,
+            &DataUsageTracker::dataUsageUpdated,
+            this,
+            &ProxyRuntimeController::dataUsageUpdated);
   }
   if (m_kernelService) {
-    connect(m_kernelService, &KernelService::statusChanged, this, &ProxyRuntimeController::onKernelStatusChanged);
-    connect(m_kernelService, &KernelService::outputReceived, this,
+    connect(m_kernelService,
+            &KernelService::statusChanged,
+            this,
+            &ProxyRuntimeController::onKernelStatusChanged);
+    connect(m_kernelService,
+            &KernelService::outputReceived,
+            this,
             [this](const QString& line) { emit logMessage(line, false); });
-    connect(m_kernelService, &KernelService::errorOccurred, this,
-            [this](const QString& error) { emit logMessage(QString("[ERROR] %1").arg(error), true); });
+    connect(m_kernelService,
+            &KernelService::errorOccurred,
+            this,
+            [this](const QString& error) {
+              emit logMessage(QString("[ERROR] %1").arg(error), true);
+            });
   }
   if (m_proxyService) {
-    connect(m_proxyService, &ProxyService::trafficUpdated, this, &ProxyRuntimeController::trafficUpdated);
-    connect(m_proxyService, &ProxyService::connectionsReceived, this, &ProxyRuntimeController::handleConnectionsJson);
+    connect(m_proxyService,
+            &ProxyService::trafficUpdated,
+            this,
+            &ProxyRuntimeController::trafficUpdated);
+    connect(m_proxyService,
+            &ProxyService::connectionsReceived,
+            this,
+            &ProxyRuntimeController::handleConnectionsJson);
   }
 }
 
@@ -62,10 +82,12 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
       }
     } else {
       m_proxyService->stopTrafficMonitor();
-      if (m_connectionsTimer) m_connectionsTimer->stop();
+      if (m_connectionsTimer)
+        m_connectionsTimer->stop();
     }
   } else if (!running) {
-    if (m_connectionsTimer) m_connectionsTimer->stop();
+    if (m_connectionsTimer)
+      m_connectionsTimer->stop();
   }
   if (!running && m_dataUsageTracker) {
     m_dataUsageTracker->resetSession();
@@ -74,12 +96,15 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
     m_proxyController->updateSystemProxyForKernelState(running);
   }
   if (running) {
-    QTimer::singleShot(1000, this, &ProxyRuntimeController::refreshProxyViewRequested);
-    QTimer::singleShot(1200, this, &ProxyRuntimeController::refreshRulesViewRequested);
+    QTimer::singleShot(
+        1000, this, &ProxyRuntimeController::refreshProxyViewRequested);
+    QTimer::singleShot(
+        1200, this, &ProxyRuntimeController::refreshRulesViewRequested);
   }
 }
 
-void ProxyRuntimeController::handleConnectionsJson(const QJsonObject& connections) {
+void ProxyRuntimeController::handleConnectionsJson(
+    const QJsonObject& connections) {
   const QJsonArray conns       = connections.value("connections").toArray();
   QJsonValue       memoryValue = connections.value("memory");
   if (memoryValue.isUndefined()) {

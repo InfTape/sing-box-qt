@@ -12,13 +12,14 @@ struct ProxyDelayTestResult;
 
 /**
  * @brief ProxyViewController
- * Responsible for proxy node selection, latency/speed test logic, preventing ProxyView from touching core services
- * directly.
+ * Responsible for proxy node selection, latency/speed test logic, preventing
+ * ProxyView from touching core services directly.
  */
 class ProxyViewController : public QObject {
   Q_OBJECT
  public:
-  explicit ProxyViewController(ConfigRepository* configRepository, QObject* parent = nullptr);
+  explicit ProxyViewController(ConfigRepository* configRepository,
+                               QObject*          parent = nullptr);
   void          setProxyService(ProxyService* service);
   ProxyService* proxyService() const;
   bool          isTesting() const;
@@ -27,8 +28,8 @@ class ProxyViewController : public QObject {
   void          startSingleDelayTest(const QString& nodeName);
   void          startBatchDelayTests(const QStringList& nodes);
   void          stopAllTests();
-  void          startSpeedTest(const QString& nodeName, const QString& groupName);
-  QJsonObject   loadNodeOutbound(const QString& tag) const;
+  void        startSpeedTest(const QString& nodeName, const QString& groupName);
+  QJsonObject loadNodeOutbound(const QString& tag) const;
  signals:
   void proxiesUpdated(const QJsonObject& proxies);
   void proxySelected(const QString& group, const QString& proxy);
@@ -40,12 +41,12 @@ class ProxyViewController : public QObject {
   void errorOccurred(const QString& message);
 
  private:
-  DelayTestService*                 ensureDelayTester();
-  void                              updateDelayTesterAuth();
-  DelayTestOptions                  buildSingleOptions() const;
-  DelayTestOptions                  buildBatchOptions() const;
-  QString                           runBandwidthTest(const QString& nodeTag) const;
-  ProxyService*                     m_proxyService = nullptr;
+  DelayTestService* ensureDelayTester();
+  void              updateDelayTesterAuth();
+  DelayTestOptions  buildSingleOptions() const;
+  DelayTestOptions  buildBatchOptions() const;
+  QString           runBandwidthTest(const QString& nodeTag) const;
+  ProxyService*     m_proxyService = nullptr;
   std::unique_ptr<DelayTestService> m_delayTestService;
   ConfigRepository*                 m_configRepository = nullptr;
 };

@@ -4,8 +4,11 @@
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
 
-ProxyUiController::ProxyUiController(ProxyController* proxyController, KernelService* kernelService,
-                                     SettingsStore* settingsStore, AdminActions* adminActions, QObject* parent)
+ProxyUiController::ProxyUiController(ProxyController* proxyController,
+                                     KernelService*   kernelService,
+                                     SettingsStore*   settingsStore,
+                                     AdminActions*    adminActions,
+                                     QObject*         parent)
     : QObject(parent),
       m_proxyController(proxyController),
       m_kernelService(kernelService),
@@ -17,7 +20,8 @@ bool ProxyUiController::isKernelRunning() const {
 }
 
 QString ProxyUiController::currentProxyMode() const {
-  return m_proxyController ? m_proxyController->currentProxyMode() : QStringLiteral("rule");
+  return m_proxyController ? m_proxyController->currentProxyMode()
+                           : QStringLiteral("rule");
 }
 
 bool ProxyUiController::systemProxyEnabled() const {
@@ -30,12 +34,14 @@ bool ProxyUiController::tunModeEnabled() const {
 
 bool ProxyUiController::toggleKernel(QString* error) {
   if (!m_proxyController) {
-    if (error) *error = tr("Proxy controller is unavailable.");
+    if (error)
+      *error = tr("Proxy controller is unavailable.");
     return false;
   }
   if (!m_proxyController->toggleKernel()) {
     if (error) {
-      *error = tr("Config file not found at the expected location; startup failed.");
+      *error =
+          tr("Config file not found at the expected location; startup failed.");
     }
     return false;
   }
@@ -44,7 +50,8 @@ bool ProxyUiController::toggleKernel(QString* error) {
 
 bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
   if (!m_proxyController) {
-    if (error) *error = tr("Proxy controller is unavailable.");
+    if (error)
+      *error = tr("Proxy controller is unavailable.");
     return false;
   }
   const bool restartKernel = m_kernelService && m_kernelService->isRunning();
@@ -57,11 +64,13 @@ bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
 
 bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
   if (!m_proxyController || !m_settings) {
-    if (error) *error = tr("Proxy components are unavailable.");
+    if (error)
+      *error = tr("Proxy components are unavailable.");
     return false;
   }
   if (!m_proxyController->setSystemProxyEnabled(enabled)) {
-    if (error) *error = tr("Failed to update system proxy settings.");
+    if (error)
+      *error = tr("Failed to update system proxy settings.");
     return false;
   }
   emit systemProxyStateChanged(m_settings->systemProxyEnabled());
@@ -69,8 +78,8 @@ bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
   return true;
 }
 
-ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool                         enabled,
-                                                                  const std::function<bool()>& confirmRestartAdmin) {
+ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
+    bool enabled, const std::function<bool()>& confirmRestartAdmin) {
   if (!m_proxyController || !m_settings) {
     return TunResult::Failed;
   }
@@ -85,7 +94,8 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool          
     if (confirmRestartAdmin && confirmRestartAdmin()) {
       // User agreed to restart as admin
       m_settings->setTunEnabled(true);
-      const bool restarted = m_adminActions ? m_adminActions->restartAsAdmin() : false;
+      const bool restarted =
+          m_adminActions ? m_adminActions->restartAsAdmin() : false;
       if (!restarted) {
         m_settings->setTunEnabled(false);
         emit tunModeStateChanged(false);

@@ -4,8 +4,11 @@
 #include <QPainterPath>
 
 RoundedMenu::RoundedMenu(QWidget* parent)
-    : QMenu(parent), m_bgColor(QColor(30, 41, 59)), m_borderColor(QColor(255, 255, 255, 26)) {
-  setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+    : QMenu(parent),
+      m_bgColor(QColor(30, 41, 59)),
+      m_borderColor(QColor(255, 255, 255, 26)) {
+  setWindowFlags(windowFlags() | Qt::FramelessWindowHint |
+                 Qt::NoDropShadowWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setAttribute(Qt::WA_NoSystemBackground, true);
 }

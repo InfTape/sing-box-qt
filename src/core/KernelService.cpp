@@ -13,16 +13,32 @@
 #include "utils/Logger.h"
 
 KernelService::KernelService(QObject* parent)
-    : QObject(parent), m_client(new CoreManagerClient(this)), m_managerProcess(nullptr), m_running(false) {
-  connect(m_client, &CoreManagerClient::statusEvent, this, &KernelService::onManagerStatus);
-  connect(m_client, &CoreManagerClient::logEvent, this, &KernelService::onManagerLog);
-  connect(m_client, &CoreManagerClient::errorEvent, this, &KernelService::onManagerError);
-  connect(m_client, &CoreManagerClient::disconnected, this, &KernelService::onManagerDisconnected);
+    : QObject(parent),
+      m_client(new CoreManagerClient(this)),
+      m_managerProcess(nullptr),
+      m_running(false) {
+  connect(m_client,
+          &CoreManagerClient::statusEvent,
+          this,
+          &KernelService::onManagerStatus);
+  connect(m_client,
+          &CoreManagerClient::logEvent,
+          this,
+          &KernelService::onManagerLog);
+  connect(m_client,
+          &CoreManagerClient::errorEvent,
+          this,
+          &KernelService::onManagerError);
+  connect(m_client,
+          &CoreManagerClient::disconnected,
+          this,
+          &KernelService::onManagerDisconnected);
 }
 
 KernelService::~KernelService() {
   const bool managerRunning =
-      (m_managerProcess && m_managerProcess->state() != QProcess::NotRunning) || m_client->isConnected();
+      (m_managerProcess && m_managerProcess->state() != QProcess::NotRunning) ||
+      m_client->isConnected();
   if (m_spawnedManager && managerRunning) {
     QJsonObject result;
     QString     error;
@@ -54,7 +70,10 @@ bool KernelService::start(const QString& configPath) {
   }
   QString     error;
   QJsonObject result;
-  if (!sendRequestAndWait("start", QJsonObject{{"configPath", m_configPath}}, &result, &error)) {
+  if (!sendRequestAndWait("start",
+                          QJsonObject{{"configPath", m_configPath}},
+                          &result,
+                          &error)) {
     if (!error.isEmpty()) {
       emit errorOccurred(error);
     }
@@ -120,7 +139,8 @@ QString KernelService::getVersion() const {
     process.kill();
     return QString();
   }
-  const QString           output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  const QString output =
+      QString::fromUtf8(process.readAllStandardOutput()).trimmed();
   QRegularExpression      re("(\\d+\\.\\d+\\.\\d+)");
   QRegularExpressionMatch match = re.match(output);
   if (match.hasMatch()) {
@@ -134,12 +154,14 @@ QString KernelService::getKernelPath() const {
 }
 
 void KernelService::onManagerStatus(bool running) {
-  if (m_running == running) return;
+  if (m_running == running)
+    return;
   m_running = running;
   emit statusChanged(running);
 }
 
-void KernelService::onManagerLog(const QString& stream, const QString& message) {
+void KernelService::onManagerLog(const QString& stream,
+                                 const QString& message) {
   Q_UNUSED(stream)
   emit outputReceived(message);
 }
@@ -161,7 +183,8 @@ bool KernelService::ensureManagerReady(QString* error) {
   if (m_serverName.isEmpty()) {
     m_serverName = coreManagerServerName();
   }
-  if (m_client->isConnected()) return true;
+  if (m_client->isConnected())
+    return true;
   m_client->connectToServer(m_serverName);
   if (m_client->waitForConnected(300)) {
     return true;
@@ -180,7 +203,8 @@ bool KernelService::ensureManagerReady(QString* error) {
     }
     const QString workDir = appDataDir();
     if (!QDir().mkpath(workDir)) {
-      Logger::error(QString("Failed to prepare working directory: %1").arg(workDir));
+      Logger::error(
+          QString("Failed to prepare working directory: %1").arg(workDir));
       if (error) {
         *error = tr("Failed to prepare working directory");
       }
@@ -213,11 +237,14 @@ bool KernelService::ensureManagerReady(QString* error) {
   return false;
 }
 
-bool KernelService::sendRequestAndWait(const QString& method, const QJsonObject& params, QJsonObject* result,
-                                       QString* error) {
+bool KernelService::sendRequestAndWait(const QString&     method,
+                                       const QJsonObject& params,
+                                       QJsonObject*       result,
+                                       QString*           error) {
   QString err;
   if (!ensureManagerReady(&err)) {
-    if (error) *error = err;
+    if (error)
+      *error = err;
     return false;
   }
   const int   id = m_nextRequestId++;
@@ -228,9 +255,15 @@ bool KernelService::sendRequestAndWait(const QString& method, const QJsonObject&
   QTimer      timer;
   timer.setSingleShot(true);
   QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-  QMetaObject::Connection conn = connect(m_client, &CoreManagerClient::responseReceived, this,
-                                         [&](int respId, bool respOk, const QJsonObject& resp, const QString& respErr) {
-                                           if (respId != id) return;
+  QMetaObject::Connection conn = connect(m_client,
+                                         &CoreManagerClient::responseReceived,
+                                         this,
+                                         [&](int                respId,
+                                             bool               respOk,
+                                             const QJsonObject& resp,
+                                             const QString&     respErr) {
+                                           if (respId != id)
+                                             return;
                                            ok         = respOk;
                                            respResult = resp;
                                            respError  = respErr;
@@ -241,7 +274,8 @@ bool KernelService::sendRequestAndWait(const QString& method, const QJsonObject&
   loop.exec();
   disconnect(conn);
   if (timer.isActive() == false) {
-    if (error) *error = tr("RPC timeout");
+    if (error)
+      *error = tr("RPC timeout");
     return false;
   }
   if (!ok && error) {

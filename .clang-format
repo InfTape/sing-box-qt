@@ -1,7 +1,7 @@
 BasedOnStyle: Google
 SortIncludes: false
 IncludeBlocks: Preserve
-ColumnLimit: 120
+ColumnLimit: 80
 IndentWidth: 2
 ContinuationIndentWidth: 4
 PointerAlignment: Left
@@ -24,7 +24,10 @@ AlignConsecutiveMacros:
   AcrossComments: false
   AlignCompound: false
 AllowShortFunctionsOnASingleLine: Inline
-AllowShortIfStatementsOnASingleLine: WithoutElse
-AllowShortLoopsOnASingleLine: true
 MaxEmptyLinesToKeep: 1
 SeparateDefinitionBlocks: Always
+AllowShortBlocksOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Never
+BinPackArguments: false
+BinPackParameters: false

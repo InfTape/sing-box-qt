@@ -60,23 +60,47 @@ class NoWheelSpinBox : public QSpinBox {
 };
 }  // namespace
 
-SettingsView::SettingsView(ThemeService* themeService, SettingsController* controller, QWidget* parent)
+SettingsView::SettingsView(ThemeService*       themeService,
+                           SettingsController* controller,
+                           QWidget*            parent)
     : QWidget(parent),
-      m_settingsController(controller ? controller : new SettingsController(this)),
+      m_settingsController(controller ? controller
+                                      : new SettingsController(this)),
       m_themeService(themeService) {
   setupUI();
   loadSettings();
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, &SettingsView::updateStyle);
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            &SettingsView::updateStyle);
   }
   // Kernel signals
   if (m_settingsController) {
-    connect(m_settingsController, &SettingsController::installedInfoReady, this, &SettingsView::onKernelInstalledReady);
-    connect(m_settingsController, &SettingsController::releasesReady, this, &SettingsView::onKernelReleasesReady);
-    connect(m_settingsController, &SettingsController::latestReady, this, &SettingsView::onKernelLatestReady);
-    connect(m_settingsController, &SettingsController::downloadProgress, this, &SettingsView::onKernelDownloadProgress);
-    connect(m_settingsController, &SettingsController::statusChanged, this, &SettingsView::onKernelStatusChanged);
-    connect(m_settingsController, &SettingsController::finished, this, &SettingsView::onKernelFinished);
+    connect(m_settingsController,
+            &SettingsController::installedInfoReady,
+            this,
+            &SettingsView::onKernelInstalledReady);
+    connect(m_settingsController,
+            &SettingsController::releasesReady,
+            this,
+            &SettingsView::onKernelReleasesReady);
+    connect(m_settingsController,
+            &SettingsController::latestReady,
+            this,
+            &SettingsView::onKernelLatestReady);
+    connect(m_settingsController,
+            &SettingsController::downloadProgress,
+            this,
+            &SettingsView::onKernelDownloadProgress);
+    connect(m_settingsController,
+            &SettingsController::statusChanged,
+            this,
+            &SettingsView::onKernelStatusChanged);
+    connect(m_settingsController,
+            &SettingsController::finished,
+            this,
+            &SettingsView::onKernelFinished);
   }
   updateStyle();
 }
@@ -123,8 +147,12 @@ QLabel* SettingsView::createFormLabel(const QString& text) {
   return label;
 }
 
-QSpinBox* SettingsView::createSpinBox(int min, int max, int value, bool blockWheel) {
-  QSpinBox* spin = blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox) : new QSpinBox;
+QSpinBox* SettingsView::createSpinBox(int  min,
+                                      int  max,
+                                      int  value,
+                                      bool blockWheel) {
+  QSpinBox* spin =
+      blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox) : new QSpinBox;
   spin->setButtonSymbols(QAbstractSpinBox::NoButtons);
   spin->setRange(min, max);
   spin->setValue(value);
@@ -172,7 +200,8 @@ QWidget* SettingsView::buildProxySection() {
   proxySectionLayout->addWidget(createSectionTitle(tr("Proxy Settings")));
   QFrame*      proxyCard   = createCard();
   QGridLayout* proxyLayout = new QGridLayout(proxyCard);
-  proxyLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin, kCardMargin);
+  proxyLayout->setContentsMargins(
+      kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   proxyLayout->setHorizontalSpacing(kGridHorizontalSpacing);
   proxyLayout->setVerticalSpacing(kGridVerticalSpacing);
   proxyLayout->setColumnStretch(1, 1);
@@ -199,16 +228,20 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   QVBoxLayout* proxyAdvancedLayout  = new QVBoxLayout(proxyAdvancedSection);
   proxyAdvancedLayout->setContentsMargins(0, 0, 0, 0);
   proxyAdvancedLayout->setSpacing(kSectionSpacing);
-  proxyAdvancedLayout->addWidget(createSectionTitle(tr("Proxy Advanced Settings")));
+  proxyAdvancedLayout->addWidget(
+      createSectionTitle(tr("Proxy Advanced Settings")));
   QFrame*      proxyAdvancedCard = createCard();
   QVBoxLayout* advancedLayout    = new QVBoxLayout(proxyAdvancedCard);
-  advancedLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin, kCardMargin);
+  advancedLayout->setContentsMargins(
+      kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   advancedLayout->setSpacing(kCardSpacing);
   QLabel* bypassLabel     = new QLabel(tr("System proxy bypass domains"));
   m_systemProxyBypassEdit = new QPlainTextEdit;
-  m_systemProxyBypassEdit->setPlaceholderText(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
+  m_systemProxyBypassEdit->setPlaceholderText(
+      ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
   m_systemProxyBypassEdit->setFixedHeight(kBypassEditHeight);
-  m_systemProxyBypassEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_systemProxyBypassEdit->setSizePolicy(QSizePolicy::Expanding,
+                                         QSizePolicy::Fixed);
   advancedLayout->addWidget(bypassLabel);
   advancedLayout->addWidget(m_systemProxyBypassEdit);
   QLabel* tunTitle = new QLabel(tr("TUN Virtual Adapter"));
@@ -218,7 +251,8 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   tunGrid->setVerticalSpacing(kGridVerticalCompactSpacing);
   tunGrid->setColumnStretch(1, 1);
   tunGrid->setColumnStretch(3, 1);
-  m_tunMtuSpin    = createSpinBox(576, 9000, ConfigConstants::DEFAULT_TUN_MTU, true);
+  m_tunMtuSpin =
+      createSpinBox(576, 9000, ConfigConstants::DEFAULT_TUN_MTU, true);
   m_tunStackCombo = createMenuComboBox(true);
   m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
   QLabel* mtuLabel   = createFormLabel(tr("MTU:"));
@@ -231,9 +265,13 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   QWidget* toggleCard = new QWidget;
   toggleCard->setObjectName("SettingsToggleCard");
   QHBoxLayout* toggleLayout = new QHBoxLayout(toggleCard);
-  toggleLayout->setContentsMargins(kToggleCardMarginH, kToggleCardMarginV, kToggleCardMarginH, kToggleCardMarginV);
+  toggleLayout->setContentsMargins(kToggleCardMarginH,
+                                   kToggleCardMarginV,
+                                   kToggleCardMarginH,
+                                   kToggleCardMarginV);
   toggleLayout->setSpacing(kToggleCardSpacing);
-  auto addToggle = [this, toggleLayout](const QString& text, ToggleSwitch*& toggle) {
+  auto addToggle = [this, toggleLayout](const QString& text,
+                                        ToggleSwitch*& toggle) {
     QWidget*     item       = new QWidget;
     QHBoxLayout* itemLayout = new QHBoxLayout(item);
     itemLayout->setContentsMargins(0, 0, 0, 0);
@@ -250,7 +288,8 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   addToggle(tr("Strict route"), m_tunStrictRouteSwitch);
   toggleLayout->addStretch();
   advancedLayout->addWidget(toggleCard);
-  QLabel* advancedHint = new QLabel(tr("Changes take effect after restart or proxy re-enable."));
+  QLabel* advancedHint =
+      new QLabel(tr("Changes take effect after restart or proxy re-enable."));
   advancedHint->setObjectName("SettingsHint");
   advancedLayout->addWidget(advancedHint);
   proxyAdvancedLayout->addWidget(proxyAdvancedCard);
@@ -264,10 +303,12 @@ QWidget* SettingsView::buildProfileSection() {
   QVBoxLayout* singboxProfileLayout  = new QVBoxLayout(singboxProfileSection);
   singboxProfileLayout->setContentsMargins(0, 0, 0, 0);
   singboxProfileLayout->setSpacing(kSectionSpacing);
-  singboxProfileLayout->addWidget(createSectionTitle(tr("Subscription Config Profile (Advanced)")));
+  singboxProfileLayout->addWidget(
+      createSectionTitle(tr("Subscription Config Profile (Advanced)")));
   QFrame*      singboxProfileCard       = createCard();
   QVBoxLayout* singboxProfileCardLayout = new QVBoxLayout(singboxProfileCard);
-  singboxProfileCardLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin, kCardMargin);
+  singboxProfileCardLayout->setContentsMargins(
+      kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   singboxProfileCardLayout->setSpacing(kCardSpacing);
   QLabel* routingTitle = new QLabel(tr("Routing & Downloads"));
   routingTitle->setProperty("class", "SettingsSectionSubTitle");
@@ -278,11 +319,13 @@ QWidget* SettingsView::buildProfileSection() {
   routingGrid->setColumnStretch(1, 1);
   routingGrid->setColumnStretch(3, 1);
   m_defaultOutboundCombo = createMenuComboBox();
-  m_defaultOutboundCombo->addItems({tr("Manual selector"), tr("Auto select (URLTest)")});
+  m_defaultOutboundCombo->addItems(
+      {tr("Manual selector"), tr("Auto select (URLTest)")});
   m_downloadDetourCombo = createMenuComboBox();
   m_downloadDetourCombo->addItems({tr("Manual selector"), tr("Direct")});
-  m_defaultOutboundLabel = createFormLabel(tr("Default outbound for non-CN traffic"));
-  m_downloadDetourLabel  = createFormLabel(tr("Rule-set/UI download detour"));
+  m_defaultOutboundLabel =
+      createFormLabel(tr("Default outbound for non-CN traffic"));
+  m_downloadDetourLabel = createFormLabel(tr("Rule-set/UI download detour"));
   prepareFormLabelPair(m_defaultOutboundLabel, m_downloadDetourLabel);
   routingGrid->addWidget(m_defaultOutboundLabel, 0, 0);
   routingGrid->addWidget(m_defaultOutboundCombo, 0, 1);
@@ -291,11 +334,14 @@ QWidget* SettingsView::buildProfileSection() {
   singboxProfileCardLayout->addLayout(routingGrid);
   QWidget* profileToggleCard = new QWidget;
   profileToggleCard->setObjectName("SettingsToggleCard");
-  FlowLayout* profileToggleLayout =
-      new FlowLayout(profileToggleCard, 0, kProfileToggleHSpacing, kProfileToggleVSpacing);
-  profileToggleLayout->setContentsMargins(kToggleCardMarginH, kToggleCardMarginV, kToggleCardMarginH,
+  FlowLayout* profileToggleLayout = new FlowLayout(
+      profileToggleCard, 0, kProfileToggleHSpacing, kProfileToggleVSpacing);
+  profileToggleLayout->setContentsMargins(kToggleCardMarginH,
+                                          kToggleCardMarginV,
+                                          kToggleCardMarginH,
                                           kToggleCardMarginV);
-  auto addProfileToggle = [this, profileToggleLayout](const QString& text, ToggleSwitch*& toggle) {
+  auto addProfileToggle = [this, profileToggleLayout](const QString& text,
+                                                      ToggleSwitch*& toggle) {
     QWidget*     item       = new QWidget;
     QHBoxLayout* itemLayout = new QHBoxLayout(item);
     itemLayout->setContentsMargins(0, 0, 0, 0);
@@ -307,9 +353,11 @@ QWidget* SettingsView::buildProfileSection() {
     itemLayout->addStretch();
     profileToggleLayout->addWidget(item);
   };
-  addProfileToggle(tr("Block ads (geosite-category-ads-all)"), m_blockAdsSwitch);
+  addProfileToggle(tr("Block ads (geosite-category-ads-all)"),
+                   m_blockAdsSwitch);
   addProfileToggle(tr("DNS hijack (hijack-dns)"), m_dnsHijackSwitch);
-  addProfileToggle(tr("Enable app groups (TG/YouTube/Netflix/OpenAI)"), m_enableAppGroupsSwitch);
+  addProfileToggle(tr("Enable app groups (TG/YouTube/Netflix/OpenAI)"),
+                   m_enableAppGroupsSwitch);
   singboxProfileCardLayout->addWidget(profileToggleCard);
   QLabel* dnsTitle = new QLabel(tr("DNS"));
   dnsTitle->setProperty("class", "SettingsSectionSubTitle");
@@ -319,15 +367,17 @@ QWidget* SettingsView::buildProfileSection() {
   dnsGrid->setVerticalSpacing(kGridVerticalSpacing);
   dnsGrid->setColumnStretch(1, 1);
   dnsGrid->setColumnStretch(3, 1);
-  m_dnsProxyEdit        = createElideLineEdit(ConfigConstants::DEFAULT_DNS_PROXY);
-  m_dnsCnEdit           = createElideLineEdit(ConfigConstants::DEFAULT_DNS_CN);
-  m_dnsResolverEdit     = createElideLineEdit(ConfigConstants::DEFAULT_DNS_RESOLVER);
-  m_urltestUrlEdit      = createElideLineEdit(ConfigConstants::DEFAULT_URLTEST_URL);
+  m_dnsProxyEdit = createElideLineEdit(ConfigConstants::DEFAULT_DNS_PROXY);
+  m_dnsCnEdit    = createElideLineEdit(ConfigConstants::DEFAULT_DNS_CN);
+  m_dnsResolverEdit =
+      createElideLineEdit(ConfigConstants::DEFAULT_DNS_RESOLVER);
+  m_urltestUrlEdit = createElideLineEdit(ConfigConstants::DEFAULT_URLTEST_URL);
   QLabel* dnsProxyLabel = createFormLabel(tr("Proxy DNS (non-CN)"));
   QLabel* dnsCnLabel    = createFormLabel(tr("CN DNS"));
   prepareFormLabelPair(dnsProxyLabel, dnsCnLabel);
-  m_dnsResolverLabel = createFormLabel(tr("Resolver DNS (for DoH hostname resolving)"));
-  m_urltestLabel     = createFormLabel(tr("URLTest URL"));
+  m_dnsResolverLabel =
+      createFormLabel(tr("Resolver DNS (for DoH hostname resolving)"));
+  m_urltestLabel = createFormLabel(tr("URLTest URL"));
   prepareFormLabelPair(m_dnsResolverLabel, m_urltestLabel);
   dnsGrid->addWidget(dnsProxyLabel, 0, 0);
   dnsGrid->addWidget(m_dnsProxyEdit, 0, 1);
@@ -350,7 +400,8 @@ QWidget* SettingsView::buildAppearanceSection() {
   appearanceSectionLayout->addWidget(createSectionTitle(tr("Appearance")));
   QFrame*      appearanceCard   = createCard();
   QGridLayout* appearanceLayout = new QGridLayout(appearanceCard);
-  appearanceLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin, kCardMargin);
+  appearanceLayout->setContentsMargins(
+      kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   appearanceLayout->setHorizontalSpacing(kGridHorizontalSpacing);
   appearanceLayout->setVerticalSpacing(kGridVerticalSpacing);
   appearanceLayout->setColumnStretch(1, 1);
@@ -361,7 +412,8 @@ QWidget* SettingsView::buildAppearanceSection() {
   m_themeCombo = createMenuComboBox(true);
   m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
   m_languageCombo = createMenuComboBox(true);
-  m_languageCombo->addItems({tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
+  m_languageCombo->addItems(
+      {tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
   appearanceLayout->addWidget(themeLabel, 0, 0);
   appearanceLayout->addWidget(m_themeCombo, 0, 1);
   appearanceLayout->addWidget(languageLabel, 0, 2);
@@ -380,7 +432,8 @@ QWidget* SettingsView::buildKernelSection() {
   kernelSectionLayout->addWidget(createSectionTitle(tr("Kernel Settings")));
   QFrame*      kernelCard   = createCard();
   QFormLayout* kernelLayout = new QFormLayout(kernelCard);
-  kernelLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin, kCardMargin);
+  kernelLayout->setContentsMargins(
+      kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   kernelLayout->setSpacing(kKernelFormSpacing);
   kernelLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
   m_kernelVersionLabel = new QLabel(tr("Not installed"));
@@ -410,8 +463,10 @@ QWidget* SettingsView::buildKernelSection() {
   kernelBtnLayout->addWidget(m_checkKernelBtn);
   kernelBtnLayout->addWidget(m_checkUpdateBtn);
   kernelBtnLayout->addStretch();
-  kernelLayout->addRow(createFormLabel(tr("Installed version:")), m_kernelVersionLabel);
-  kernelLayout->addRow(createFormLabel(tr("Select version:")), m_kernelVersionCombo);
+  kernelLayout->addRow(createFormLabel(tr("Installed version:")),
+                       m_kernelVersionLabel);
+  kernelLayout->addRow(createFormLabel(tr("Select version:")),
+                       m_kernelVersionCombo);
   kernelLayout->addRow(createFormLabel(tr("Kernel path:")), m_kernelPathEdit);
   kernelLayout->addRow(m_kernelDownloadProgress);
   kernelLayout->addRow(m_kernelDownloadStatus);
@@ -436,7 +491,8 @@ void SettingsView::setupUI() {
   scrollArea->setObjectName("SettingsScroll");
   QWidget*     contentWidget = new QWidget;
   QVBoxLayout* mainLayout    = new QVBoxLayout(contentWidget);
-  mainLayout->setContentsMargins(kPageMargin, kPageMargin, kPageMargin, kPageMargin);
+  mainLayout->setContentsMargins(
+      kPageMargin, kPageMargin, kPageMargin, kPageMargin);
   mainLayout->setSpacing(kCardSpacing);
   // Header (match Rules page layout spacing)
   QHBoxLayout* headerLayout = new QHBoxLayout;
@@ -465,40 +521,66 @@ void SettingsView::setupUI() {
   scrollArea->setWidget(contentWidget);
   outerLayout->addWidget(scrollArea, 1);
   connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
-  connect(m_downloadKernelBtn, &QPushButton::clicked, this, &SettingsView::onDownloadKernelClicked);
-  connect(m_checkKernelBtn, &QPushButton::clicked, this, &SettingsView::onCheckKernelClicked);
-  connect(m_checkUpdateBtn, &QPushButton::clicked, this, &SettingsView::onCheckUpdateClicked);
-  connect(m_themeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
-    if (m_themeService) {
-      m_themeService->setThemeMode(SettingsHelpers::themeModeFromIndex(index));
-    }
-  });
-  connect(m_languageCombo, QOverload<int>::of(&QComboBox::activated), this, [this](int index) {
-    if (index == kLanguageDefaultIndex) {
-      return;
-    }
-    QMessageBox::information(this, tr("Info"), tr("Adapting..."));
-    QSignalBlocker blocker(m_languageCombo);
-    m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
-  });
+  connect(m_downloadKernelBtn,
+          &QPushButton::clicked,
+          this,
+          &SettingsView::onDownloadKernelClicked);
+  connect(m_checkKernelBtn,
+          &QPushButton::clicked,
+          this,
+          &SettingsView::onCheckKernelClicked);
+  connect(m_checkUpdateBtn,
+          &QPushButton::clicked,
+          this,
+          &SettingsView::onCheckUpdateClicked);
+  connect(m_themeCombo,
+          QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this,
+          [this](int index) {
+            if (m_themeService) {
+              m_themeService->setThemeMode(
+                  SettingsHelpers::themeModeFromIndex(index));
+            }
+          });
+  connect(m_languageCombo,
+          QOverload<int>::of(&QComboBox::activated),
+          this,
+          [this](int index) {
+            if (index == kLanguageDefaultIndex) {
+              return;
+            }
+            QMessageBox::information(this, tr("Info"), tr("Adapting..."));
+            QSignalBlocker blocker(m_languageCombo);
+            m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
+          });
   updateResponsiveUi();
 }
 
 void SettingsView::updateResponsiveUi() {
   int routingRequiredWidth = 0;
   if (m_defaultOutboundLabel && m_downloadDetourLabel) {
-    const int text1    = m_defaultOutboundLabel->fontMetrics().horizontalAdvance(m_defaultOutboundLabel->text());
-    const int text2    = m_downloadDetourLabel->fontMetrics().horizontalAdvance(m_downloadDetourLabel->text());
-    const int control1 = m_defaultOutboundCombo ? std::max(m_defaultOutboundCombo->sizeHint().width(), kControlMinWidth)
-                                                : kControlMinWidth;
-    const int control2 = m_downloadDetourCombo ? std::max(m_downloadDetourCombo->sizeHint().width(), kControlMinWidth)
-                                               : kControlMinWidth;
+    const int text1 = m_defaultOutboundLabel->fontMetrics().horizontalAdvance(
+        m_defaultOutboundLabel->text());
+    const int text2 = m_downloadDetourLabel->fontMetrics().horizontalAdvance(
+        m_downloadDetourLabel->text());
+    const int control1 =
+        m_defaultOutboundCombo
+            ? std::max(m_defaultOutboundCombo->sizeHint().width(),
+                       kControlMinWidth)
+            : kControlMinWidth;
+    const int control2 =
+        m_downloadDetourCombo
+            ? std::max(m_downloadDetourCombo->sizeHint().width(),
+                       kControlMinWidth)
+            : kControlMinWidth;
     routingRequiredWidth =
-        std::max(text1 + text2 + control1 + control2 + kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
+        std::max(text1 + text2 + control1 + control2 +
+                     kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
                  kMinRoutingWrapWidth);
   }
-  const bool narrow                = routingRequiredWidth > 0 && width() < routingRequiredWidth;
-  auto       applyRoutingLabelMode = [narrow](QLabel* label) {
+  const bool narrow =
+      routingRequiredWidth > 0 && width() < routingRequiredWidth;
+  auto applyRoutingLabelMode = [narrow](QLabel* label) {
     if (!label) {
       return;
     }
@@ -509,7 +591,8 @@ void SettingsView::updateResponsiveUi() {
   };
   applyRoutingLabelMode(m_defaultOutboundLabel);
   applyRoutingLabelMode(m_downloadDetourLabel);
-  const int compactMinWidth = narrow ? kControlMinWidthCompact : kControlMinWidth;
+  const int compactMinWidth =
+      narrow ? kControlMinWidthCompact : kControlMinWidth;
   if (m_mixedPortSpin) {
     m_mixedPortSpin->setMinimumWidth(compactMinWidth);
   }
@@ -530,24 +613,32 @@ void SettingsView::updateResponsiveUi() {
   }
   int dnsRequiredWidth = 0;
   if (m_dnsResolverLabel && m_urltestLabel) {
-    const int dnsText1 = m_dnsResolverLabel->fontMetrics().horizontalAdvance(m_dnsResolverLabel->text());
-    const int dnsText2 = m_urltestLabel->fontMetrics().horizontalAdvance(m_urltestLabel->text());
+    const int dnsText1 = m_dnsResolverLabel->fontMetrics().horizontalAdvance(
+        m_dnsResolverLabel->text());
+    const int dnsText2 =
+        m_urltestLabel->fontMetrics().horizontalAdvance(m_urltestLabel->text());
     const int dnsControl1 =
-        m_dnsResolverEdit ? std::max(m_dnsResolverEdit->sizeHint().width(), compactMinWidth) : compactMinWidth;
+        m_dnsResolverEdit
+            ? std::max(m_dnsResolverEdit->sizeHint().width(), compactMinWidth)
+            : compactMinWidth;
     const int dnsControl2 =
-        m_urltestUrlEdit ? std::max(m_urltestUrlEdit->sizeHint().width(), compactMinWidth) : compactMinWidth;
+        m_urltestUrlEdit
+            ? std::max(m_urltestUrlEdit->sizeHint().width(), compactMinWidth)
+            : compactMinWidth;
     dnsRequiredWidth =
-        std::max(dnsText1 + dnsText2 + dnsControl1 + dnsControl2 + kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
+        std::max(dnsText1 + dnsText2 + dnsControl1 + dnsControl2 +
+                     kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
                  kMinDnsWrapWidth);
   }
-  const bool dnsNarrow         = dnsRequiredWidth > 0 && width() < dnsRequiredWidth;
+  const bool dnsNarrow = dnsRequiredWidth > 0 && width() < dnsRequiredWidth;
   auto       applyDnsLabelMode = [dnsNarrow](QLabel* label) {
     if (!label) {
       return;
     }
     label->setWordWrap(dnsNarrow);
-    label->setSizePolicy(dnsNarrow ? QSizePolicy::Preferred : QSizePolicy::Minimum,
-                         dnsNarrow ? QSizePolicy::Minimum : QSizePolicy::Fixed);
+    label->setSizePolicy(
+        dnsNarrow ? QSizePolicy::Preferred : QSizePolicy::Minimum,
+        dnsNarrow ? QSizePolicy::Minimum : QSizePolicy::Fixed);
     label->updateGeometry();
   };
   applyDnsLabelMode(m_dnsResolverLabel);
@@ -556,12 +647,14 @@ void SettingsView::updateResponsiveUi() {
 
 void SettingsView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts) return;
+  if (!ts)
+    return;
   setStyleSheet(ts->loadStyleSheet(":/styles/settings_view.qss"));
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
-      m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(ts->themeMode()));
+      m_themeCombo->setCurrentIndex(
+          SettingsHelpers::themeIndexFromMode(ts->themeMode()));
     }
   }
 }
@@ -577,8 +670,9 @@ void SettingsView::fillGeneralFromUi(SettingsModel::Data& data) const {
 }
 
 void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
-  data.systemProxyBypass = normalizeBypassText(m_systemProxyBypassEdit->toPlainText());
-  data.tunMtu            = m_tunMtuSpin->value();
+  data.systemProxyBypass =
+      normalizeBypassText(m_systemProxyBypassEdit->toPlainText());
+  data.tunMtu = m_tunMtuSpin->value();
   switch (m_tunStackCombo->currentIndex()) {
     case 1:
       data.tunStack = "system";
@@ -596,15 +690,21 @@ void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
 }
 
 void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
-  data.defaultOutbound = (m_defaultOutboundCombo->currentIndex() == 1) ? "auto" : "manual";
-  data.downloadDetour  = (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
+  data.defaultOutbound =
+      (m_defaultOutboundCombo->currentIndex() == 1) ? "auto" : "manual";
+  data.downloadDetour =
+      (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
   data.blockAds        = m_blockAdsSwitch->isChecked();
   data.dnsHijack       = m_dnsHijackSwitch->isChecked();
   data.enableAppGroups = m_enableAppGroupsSwitch->isChecked();
-  data.dnsProxy        = SettingsHelpers::resolveTextOrDefault(m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
-  data.dnsCn           = SettingsHelpers::resolveTextOrDefault(m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
-  data.dnsResolver = SettingsHelpers::resolveTextOrDefault(m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
-  data.urltestUrl  = SettingsHelpers::resolveTextOrDefault(m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
+  data.dnsProxy        = SettingsHelpers::resolveTextOrDefault(
+      m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
+  data.dnsCn = SettingsHelpers::resolveTextOrDefault(
+      m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
+  data.dnsResolver = SettingsHelpers::resolveTextOrDefault(
+      m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
+  data.urltestUrl = SettingsHelpers::resolveTextOrDefault(
+      m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
 }
 
 void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
@@ -623,8 +723,10 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   m_tunEnableIpv6Switch->setChecked(data.tunEnableIpv6);
   m_tunAutoRouteSwitch->setChecked(data.tunAutoRoute);
   m_tunStrictRouteSwitch->setChecked(data.tunStrictRoute);
-  m_defaultOutboundCombo->setCurrentIndex(data.defaultOutbound == "auto" ? 1 : 0);
-  m_downloadDetourCombo->setCurrentIndex(data.downloadDetour == "manual" ? 0 : 1);
+  m_defaultOutboundCombo->setCurrentIndex(data.defaultOutbound == "auto" ? 1
+                                                                         : 0);
+  m_downloadDetourCombo->setCurrentIndex(data.downloadDetour == "manual" ? 0
+                                                                         : 1);
   m_blockAdsSwitch->setChecked(data.blockAds);
   m_dnsHijackSwitch->setChecked(data.dnsHijack);
   m_enableAppGroupsSwitch->setChecked(data.enableAppGroups);
@@ -635,7 +737,9 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
-      const ThemeService::ThemeMode mode = m_themeService ? m_themeService->themeMode() : ThemeService::ThemeMode::Dark;
+      const ThemeService::ThemeMode mode = m_themeService
+                                               ? m_themeService->themeMode()
+                                               : ThemeService::ThemeMode::Dark;
       m_themeCombo->setCurrentIndex(SettingsHelpers::themeIndexFromMode(mode));
     }
   }
@@ -652,13 +756,16 @@ void SettingsView::loadSettings() {
 }
 
 bool SettingsView::saveSettings() {
-  if (!m_settingsController) return false;
+  if (!m_settingsController)
+    return false;
   SettingsModel::Data data = m_settingsController->loadSettings();
   fillGeneralFromUi(data);
   fillAdvancedFromUi(data);
   fillProfileFromUi(data);
   QString errorMessage;
-  if (!m_settingsController->saveSettings(data, m_themeCombo->currentIndex(), m_languageCombo->currentIndex(),
+  if (!m_settingsController->saveSettings(data,
+                                          m_themeCombo->currentIndex(),
+                                          m_languageCombo->currentIndex(),
                                           &errorMessage)) {
     QMessageBox::warning(this, tr("Notice"), errorMessage);
     return false;
@@ -702,7 +809,8 @@ void SettingsView::onCheckUpdateClicked() {
   }
 }
 
-void SettingsView::onKernelInstalledReady(const QString& path, const QString& version) {
+void SettingsView::onKernelInstalledReady(const QString& path,
+                                          const QString& version) {
   setDownloadUi(false, tr("Installation check finished"));
   m_installedKernelVersion = version.trimmed();
   if (m_kernelPathEdit) {
@@ -721,16 +829,19 @@ void SettingsView::onKernelInstalledReady(const QString& path, const QString& ve
     const QString msg = m_installedKernelVersion.isEmpty()
                             ? tr("Kernel is not installed.")
                             : tr("Kernel installed. Version: %1\nPath: %2")
-                                  .arg(m_installedKernelVersion, path.isEmpty() ? tr("Unknown") : path);
+                                  .arg(m_installedKernelVersion,
+                                       path.isEmpty() ? tr("Unknown") : path);
     QMessageBox::information(this, tr("Check Installation"), msg);
   }
 }
 
-void SettingsView::onKernelReleasesReady(const QStringList& versions, const QString& latest) {
+void SettingsView::onKernelReleasesReady(const QStringList& versions,
+                                         const QString&     latest) {
   setDownloadUi(false);
   m_latestKernelVersion = latest.trimmed();
   updateKernelVersionLabelStatus();
-  if (!m_kernelVersionCombo) return;
+  if (!m_kernelVersionCombo)
+    return;
   m_kernelVersionCombo->clear();
   m_kernelVersionCombo->addItem(tr("Latest version"));
   for (const QString& ver : versions) {
@@ -738,7 +849,8 @@ void SettingsView::onKernelReleasesReady(const QStringList& versions, const QStr
   }
 }
 
-void SettingsView::onKernelLatestReady(const QString& latest, const QString& installed) {
+void SettingsView::onKernelLatestReady(const QString& latest,
+                                       const QString& installed) {
   setDownloadUi(false);
   m_latestKernelVersion    = latest.trimmed();
   m_installedKernelVersion = installed.trimmed();
@@ -751,16 +863,21 @@ void SettingsView::onKernelLatestReady(const QString& latest, const QString& ins
   }
   updateKernelVersionLabelStatus();
   if (m_installedKernelVersion.isEmpty()) {
-    QMessageBox::information(this, tr("Check Updates"),
-                             tr("Kernel not installed. Latest version is %1").arg(m_latestKernelVersion));
+    QMessageBox::information(this,
+                             tr("Check Updates"),
+                             tr("Kernel not installed. Latest version is %1")
+                                 .arg(m_latestKernelVersion));
     return;
   }
   if (m_installedKernelVersion == m_latestKernelVersion) {
-    QMessageBox::information(this, tr("Check Updates"), tr("Already on the latest version"));
+    QMessageBox::information(
+        this, tr("Check Updates"), tr("Already on the latest version"));
   } else {
     QMessageBox::information(
-        this, tr("Check Updates"),
-        tr("New kernel version %1 available, current %2").arg(m_latestKernelVersion, m_installedKernelVersion));
+        this,
+        tr("Check Updates"),
+        tr("New kernel version %1 available, current %2")
+            .arg(m_latestKernelVersion, m_installedKernelVersion));
   }
 }
 
@@ -770,7 +887,8 @@ void SettingsView::updateKernelVersionLabelStatus() {
   }
   const bool hasInstalled = !m_installedKernelVersion.isEmpty();
   const bool hasLatest    = !m_latestKernelVersion.isEmpty();
-  const bool isLatest     = hasInstalled && hasLatest && (m_installedKernelVersion == m_latestKernelVersion);
+  const bool isLatest     = hasInstalled && hasLatest &&
+                        (m_installedKernelVersion == m_latestKernelVersion);
   m_kernelVersionLabel->setProperty("status", isLatest ? "success" : "error");
   m_kernelVersionLabel->style()->unpolish(m_kernelVersionLabel);
   m_kernelVersionLabel->style()->polish(m_kernelVersionLabel);

@@ -11,7 +11,8 @@ class ThemeService;
 class DataUsageCard : public QFrame {
   Q_OBJECT
  public:
-  explicit DataUsageCard(ThemeService* themeService = nullptr, QWidget* parent = nullptr);
+  explicit DataUsageCard(ThemeService* themeService = nullptr,
+                         QWidget*      parent       = nullptr);
   void updateDataUsage(const QJsonObject& snapshot);
  signals:
   void clearRequested();

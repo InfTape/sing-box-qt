@@ -4,7 +4,8 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(new QTextEdit) {
+ConfigEditDialog::ConfigEditDialog(QWidget* parent)
+    : QDialog(parent), m_editor(new QTextEdit) {
   setWindowTitle(tr("Edit current config"));
   setModal(true);
   setMinimumWidth(720);

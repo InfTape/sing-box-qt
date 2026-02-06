@@ -46,12 +46,17 @@ bool AppBootstrapper::createUI() {
       m_mainWindow->showAndActivate();
     }
   };
-  m_trayIcon = std::make_unique<TrayIcon>(m_context ? m_context->proxyUiController() : nullptr,
-                                          m_context ? m_context->kernelService() : nullptr,
-                                          m_context ? m_context->themeService() : nullptr, showWindow, &m_app);
+  m_trayIcon = std::make_unique<TrayIcon>(
+      m_context ? m_context->proxyUiController() : nullptr,
+      m_context ? m_context->kernelService() : nullptr,
+      m_context ? m_context->themeService() : nullptr,
+      showWindow,
+      &m_app);
   m_trayIcon->show();
   if (m_context && m_context->proxyUiController() && m_mainWindow) {
-    QObject::connect(m_context->proxyUiController(), &ProxyUiController::proxyModeChanged, m_mainWindow.get(),
+    QObject::connect(m_context->proxyUiController(),
+                     &ProxyUiController::proxyModeChanged,
+                     m_mainWindow.get(),
                      &MainWindow::setProxyModeUI);
   }
   Logger::info("Application initialized, UI ready");
@@ -59,7 +64,8 @@ bool AppBootstrapper::createUI() {
 }
 
 void AppBootstrapper::showMainWindow(bool startHidden) {
-  if (!m_mainWindow) return;
+  if (!m_mainWindow)
+    return;
   if (!startHidden) {
     m_mainWindow->show();
   }

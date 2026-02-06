@@ -9,7 +9,10 @@ class ThemeService;
 class RuleCard : public QFrame {
   Q_OBJECT
  public:
-  explicit RuleCard(const RuleItem& rule, int index, ThemeService* themeService, QWidget* parent = nullptr);
+  explicit RuleCard(const RuleItem& rule,
+                    int             index,
+                    ThemeService*   themeService,
+                    QWidget*        parent = nullptr);
  signals:
   void editRequested(const RuleItem& rule);
   void deleteRequested(const RuleItem& rule);

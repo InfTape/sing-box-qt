@@ -17,7 +17,10 @@ class CoreManagerClient : public QObject {
  signals:
   void connected();
   void disconnected();
-  void responseReceived(int id, bool ok, const QJsonObject& result, const QString& error);
+  void responseReceived(int                id,
+                        bool               ok,
+                        const QJsonObject& result,
+                        const QString&     error);
   void statusEvent(bool running);
   void logEvent(const QString& stream, const QString& message);
   void errorEvent(const QString& message);

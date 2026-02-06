@@ -10,7 +10,9 @@ class ConfigRepository;
 class ManageRuleSetsDialog : public QDialog {
   Q_OBJECT
  public:
-  explicit ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent = nullptr);
+  explicit ManageRuleSetsDialog(ConfigRepository* configRepo,
+                                ThemeService*     themeService,
+                                QWidget*          parent = nullptr);
  signals:
   void ruleSetsChanged();
  private slots:
@@ -28,7 +30,8 @@ class ManageRuleSetsDialog : public QDialog {
   QString           selectedName() const;
   void              reloadRules();
   bool              confirmDelete(const QString& name);
-  void              addRuleToSet(const QString& setName, const RuleConfigService::RuleEditData& data);
+  void              addRuleToSet(const QString&                         setName,
+                                 const RuleConfigService::RuleEditData& data);
   void              updateMenus();
   QListWidget*      m_list;
   QListWidget*      m_ruleList;

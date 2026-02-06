@@ -8,7 +8,8 @@
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 
-KernelRunner::KernelRunner(QObject* parent) : QObject(parent), m_process(nullptr), m_running(false) {}
+KernelRunner::KernelRunner(QObject* parent)
+    : QObject(parent), m_process(nullptr), m_running(false) {}
 
 KernelRunner::~KernelRunner() {
   if (m_process) {
@@ -49,10 +50,18 @@ bool KernelRunner::start(const QString& configPath) {
   m_process       = new QProcess(this);
   m_stopRequested = false;
   connect(m_process, &QProcess::started, this, &KernelRunner::onProcessStarted);
-  connect(m_process, &QProcess::finished, this, &KernelRunner::onProcessFinished);
-  connect(m_process, &QProcess::errorOccurred, this, &KernelRunner::onProcessError);
-  connect(m_process, &QProcess::readyReadStandardOutput, this, &KernelRunner::onReadyReadStandardOutput);
-  connect(m_process, &QProcess::readyReadStandardError, this, &KernelRunner::onReadyReadStandardError);
+  connect(
+      m_process, &QProcess::finished, this, &KernelRunner::onProcessFinished);
+  connect(
+      m_process, &QProcess::errorOccurred, this, &KernelRunner::onProcessError);
+  connect(m_process,
+          &QProcess::readyReadStandardOutput,
+          this,
+          &KernelRunner::onReadyReadStandardOutput);
+  connect(m_process,
+          &QProcess::readyReadStandardError,
+          this,
+          &KernelRunner::onReadyReadStandardError);
   const QString workDir = appDataDir();
   if (!QDir().mkpath(workDir)) {
     m_lastError = tr("Failed to prepare working directory");
@@ -85,7 +94,8 @@ void KernelRunner::stop() {
   m_stopRequested = true;
   Logger::info(tr("Stopping kernel..."));
   m_process->terminate();
-  // NOTE: kill fallback intentionally disabled for testing terminate() behavior.
+  // NOTE: kill fallback intentionally disabled for testing terminate()
+  // behavior.
 }
 
 void KernelRunner::restart() {
@@ -128,7 +138,8 @@ QString KernelRunner::getVersion() const {
     process.kill();
     return QString();
   }
-  const QString           output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  const QString output =
+      QString::fromUtf8(process.readAllStandardOutput()).trimmed();
   QRegularExpression      re("(\\d+\\.\\d+\\.\\d+)");
   QRegularExpressionMatch match = re.match(output);
   if (match.hasMatch()) {
@@ -150,7 +161,8 @@ void KernelRunner::onProcessStarted() {
   emit statusChanged(true);
 }
 
-void KernelRunner::onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+void KernelRunner::onProcessFinished(int                  exitCode,
+                                     QProcess::ExitStatus exitStatus) {
   Q_UNUSED(exitCode)
   Q_UNUSED(exitStatus)
   m_running = false;

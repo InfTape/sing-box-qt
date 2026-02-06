@@ -6,16 +6,22 @@
 #include "utils/Logger.h"
 
 ProxyService::ProxyService(QObject* parent)
-    : QObject(parent), m_httpClient(new HttpClient(this)), m_wsClient(new WebSocketClient(this)), m_apiPort(9090) {
-  connect(m_wsClient, &WebSocketClient::messageReceived, this, [this](const QString& message) {
-    QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
-    if (doc.isObject()) {
-      QJsonObject obj  = doc.object();
-      qint64      up   = obj["up"].toVariant().toLongLong();
-      qint64      down = obj["down"].toVariant().toLongLong();
-      emit        trafficUpdated(up, down);
-    }
-  });
+    : QObject(parent),
+      m_httpClient(new HttpClient(this)),
+      m_wsClient(new WebSocketClient(this)),
+      m_apiPort(9090) {
+  connect(m_wsClient,
+          &WebSocketClient::messageReceived,
+          this,
+          [this](const QString& message) {
+            QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
+            if (doc.isObject()) {
+              QJsonObject obj  = doc.object();
+              qint64      up   = obj["up"].toVariant().toLongLong();
+              qint64      down = obj["down"].toVariant().toLongLong();
+              emit        trafficUpdated(up, down);
+            }
+          });
 }
 
 ProxyService::~ProxyService() {}
@@ -88,16 +94,20 @@ void ProxyService::selectProxy(const QString& group, const QString& proxy) {
   QString       url       = buildApiUrl(QString("/proxies/%1").arg(groupPath));
   QJsonObject   body;
   body["name"] = proxy;
-  m_httpClient->put(url, QJsonDocument(body).toJson(), [this, group, proxy](bool success, const QByteArray&) {
-    if (success) {
-      Logger::info(QString("Proxy switched to: %1").arg(proxy));
-      emit proxySelected(group, proxy);
-    } else {
-      Logger::warn(QString("Proxy switch failed: group=%1, proxy=%2").arg(group, proxy));
-      emit proxySelectFailed(group, proxy);
-      emit errorOccurred(tr("Failed to switch proxy"));
-    }
-  });
+  m_httpClient->put(
+      url,
+      QJsonDocument(body).toJson(),
+      [this, group, proxy](bool success, const QByteArray&) {
+        if (success) {
+          Logger::info(QString("Proxy switched to: %1").arg(proxy));
+          emit proxySelected(group, proxy);
+        } else {
+          Logger::warn(QString("Proxy switch failed: group=%1, proxy=%2")
+                           .arg(group, proxy));
+          emit proxySelectFailed(group, proxy);
+          emit errorOccurred(tr("Failed to switch proxy"));
+        }
+      });
 }
 
 void ProxyService::setProxyMode(const QString& mode) {
@@ -108,13 +118,16 @@ void ProxyService::setProxyMode(const QString& mode) {
   QString     url = buildApiUrl("/configs");
   QJsonObject body;
   body["mode"] = normalized;
-  m_httpClient->put(url, QJsonDocument(body).toJson(), [this, normalized](bool success, const QByteArray&) {
-    if (success) {
-      Logger::info(QString("Proxy mode switched: %1").arg(normalized));
-    } else {
-      emit errorOccurred(tr("Failed to switch proxy mode"));
-    }
-  });
+  m_httpClient->put(
+      url,
+      QJsonDocument(body).toJson(),
+      [this, normalized](bool success, const QByteArray&) {
+        if (success) {
+          Logger::info(QString("Proxy mode switched: %1").arg(normalized));
+        } else {
+          emit errorOccurred(tr("Failed to switch proxy mode"));
+        }
+      });
 }
 
 void ProxyService::closeConnection(const QString& id) {

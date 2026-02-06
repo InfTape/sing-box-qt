@@ -6,6 +6,7 @@
 class LogRowWidget : public QFrame {
   Q_OBJECT
  public:
-  explicit LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent = nullptr);
+  explicit LogRowWidget(const LogParser::LogEntry& entry,
+                        QWidget*                   parent = nullptr);
 };
 #endif  // LOGROWWIDGET_H

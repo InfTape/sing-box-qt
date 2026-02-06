@@ -48,8 +48,9 @@ QString Logger::getLogFilePath() const {
 }
 
 void Logger::log(const QString& level, const QString& message) {
-  QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
-  QString logLine   = QString("[%1] [%2] %3").arg(timestamp, level, message);
+  QString timestamp =
+      QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+  QString logLine = QString("[%1] [%2] %3").arg(timestamp, level, message);
   // Output to console.
   qDebug().noquote() << logLine;
   // Output to file.

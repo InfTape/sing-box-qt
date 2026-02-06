@@ -8,7 +8,8 @@ class ThemeService;
 class ProxyModeSection : public QWidget {
   Q_OBJECT
  public:
-  explicit ProxyModeSection(ThemeService* themeService = nullptr, QWidget* parent = nullptr);
+  explicit ProxyModeSection(ThemeService* themeService = nullptr,
+                            QWidget*      parent       = nullptr);
   bool isSystemProxyEnabled() const;
   void setSystemProxyEnabled(bool enabled);
   bool isTunModeEnabled() const;
@@ -22,8 +23,11 @@ class ProxyModeSection : public QWidget {
 
  private:
   void     setupUi();
-  QWidget* createModeItem(const QString& iconText, const QString& accentKey, const QString& title, const QString& desc,
-                          QWidget* control);
+  QWidget* createModeItem(const QString& iconText,
+                          const QString& accentKey,
+                          const QString& title,
+                          const QString& desc,
+                          QWidget*       control);
   void     setCardActive(QWidget* card, bool active);
 
  private:

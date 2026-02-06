@@ -14,7 +14,9 @@
 #include "widgets/common/ToggleSwitch.h"
 
 namespace {
-QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color) {
+QPixmap svgIconPixmap(const QString& resourcePath,
+                      int            box,
+                      const QColor&  color) {
   const qreal  dpr  = qApp->devicePixelRatio();
   const int    size = static_cast<int>(box * dpr);
   QSvgRenderer renderer(resourcePath);
@@ -34,7 +36,8 @@ QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color)
     } else if (ratio < 1.0) {
       renderW = renderW * ratio;
     }
-    QRectF target((size - renderW) / 2.0, (size - renderH) / 2.0, renderW, renderH);
+    QRectF target(
+        (size - renderW) / 2.0, (size - renderH) / 2.0, renderW, renderH);
     renderer.render(&p, target);
   }
   QPixmap tinted(size, size);
@@ -51,7 +54,8 @@ QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color)
 }
 
 void polishWidget(QWidget* widget) {
-  if (!widget) return;
+  if (!widget)
+    return;
   widget->style()->unpolish(widget);
   widget->style()->polish(widget);
   widget->update();
@@ -84,10 +88,16 @@ void ProxyModeSection::setupUi() {
   m_tunModeSwitch->setObjectName("ModeSwitch");
   m_tunModeSwitch->setCursor(Qt::PointingHandCursor);
   m_tunModeSwitch->setFixedSize(m_tunModeSwitch->sizeHint());
-  m_systemProxyCard =
-      createModeItem("SYS", "primary", tr("System Proxy"), tr("Auto-set system proxy"), m_systemProxySwitch);
-  m_tunModeCard =
-      createModeItem("TUN", "primary", tr("TUN Mode"), tr("Use TUN for system-wide proxy"), m_tunModeSwitch);
+  m_systemProxyCard = createModeItem("SYS",
+                                     "primary",
+                                     tr("System Proxy"),
+                                     tr("Auto-set system proxy"),
+                                     m_systemProxySwitch);
+  m_tunModeCard     = createModeItem("TUN",
+                                 "primary",
+                                 tr("TUN Mode"),
+                                 tr("Use TUN for system-wide proxy"),
+                                 m_tunModeSwitch);
   flowLayout->addWidget(m_systemProxyCard);
   flowLayout->addWidget(m_tunModeCard);
   // Node mode section
@@ -108,9 +118,16 @@ void ProxyModeSection::setupUi() {
   m_ruleModeSwitch->setCursor(Qt::PointingHandCursor);
   m_ruleModeSwitch->setProperty("exclusiveSwitch", true);
   m_ruleModeSwitch->setFixedSize(m_ruleModeSwitch->sizeHint());
-  m_globalModeCard =
-      createModeItem("GLB", "primary", tr("Global Mode"), tr("All traffic via proxy"), m_globalModeSwitch);
-  m_ruleModeCard = createModeItem("RULE", "primary", tr("Rule Mode"), tr("Smart routing by rules"), m_ruleModeSwitch);
+  m_globalModeCard = createModeItem("GLB",
+                                    "primary",
+                                    tr("Global Mode"),
+                                    tr("All traffic via proxy"),
+                                    m_globalModeSwitch);
+  m_ruleModeCard   = createModeItem("RULE",
+                                  "primary",
+                                  tr("Rule Mode"),
+                                  tr("Smart routing by rules"),
+                                  m_ruleModeSwitch);
   nodeLayout->addWidget(m_globalModeCard);
   nodeLayout->addWidget(m_ruleModeCard);
   rootLayout->addWidget(flowSection, 0, 0);
@@ -122,27 +139,29 @@ void ProxyModeSection::setupUi() {
   setCardActive(m_globalModeCard, false);
   setCardActive(m_systemProxyCard, false);
   setCardActive(m_tunModeCard, false);
-  connect(m_systemProxySwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
-    setCardActive(m_systemProxyCard, checked);
-    emit systemProxyChanged(checked);
-  });
+  connect(
+      m_systemProxySwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
+        setCardActive(m_systemProxyCard, checked);
+        emit systemProxyChanged(checked);
+      });
   connect(m_tunModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
     setCardActive(m_tunModeCard, checked);
     emit tunModeChanged(checked);
   });
-  connect(m_globalModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
-    if (checked) {
-      if (m_ruleModeSwitch && m_ruleModeSwitch->isChecked()) {
-        QSignalBlocker blocker(m_ruleModeSwitch);
-        m_ruleModeSwitch->setChecked(false);
-        setCardActive(m_ruleModeCard, false);
-      }
-      setCardActive(m_globalModeCard, true);
-      emit proxyModeChanged("global");
-    } else if (m_ruleModeSwitch && !m_ruleModeSwitch->isChecked()) {
-      m_globalModeSwitch->setChecked(true);
-    }
-  });
+  connect(
+      m_globalModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
+        if (checked) {
+          if (m_ruleModeSwitch && m_ruleModeSwitch->isChecked()) {
+            QSignalBlocker blocker(m_ruleModeSwitch);
+            m_ruleModeSwitch->setChecked(false);
+            setCardActive(m_ruleModeCard, false);
+          }
+          setCardActive(m_globalModeCard, true);
+          emit proxyModeChanged("global");
+        } else if (m_ruleModeSwitch && !m_ruleModeSwitch->isChecked()) {
+          m_globalModeSwitch->setChecked(true);
+        }
+      });
   connect(m_ruleModeSwitch, &ToggleSwitch::toggled, this, [this](bool checked) {
     if (checked) {
       if (m_globalModeSwitch && m_globalModeSwitch->isChecked()) {
@@ -158,8 +177,11 @@ void ProxyModeSection::setupUi() {
   });
 }
 
-QWidget* ProxyModeSection::createModeItem(const QString& iconText, const QString& accentKey, const QString& title,
-                                          const QString& desc, QWidget* control) {
+QWidget* ProxyModeSection::createModeItem(const QString& iconText,
+                                          const QString& accentKey,
+                                          const QString& title,
+                                          const QString& desc,
+                                          QWidget*       control) {
   auto* card = new QFrame;
   card->setObjectName("ModeCard");
   card->setProperty("active", false);
@@ -187,7 +209,8 @@ QWidget* ProxyModeSection::createModeItem(const QString& iconText, const QString
     iconPath = ":/icons/mappin.svg";
   }
   if (!iconPath.isEmpty()) {
-    QColor iconColor = m_themeService ? m_themeService->color("primary") : QColor();
+    QColor iconColor =
+        m_themeService ? m_themeService->color("primary") : QColor();
     iconLabel->setPixmap(svgIconPixmap(iconPath, 20, iconColor));
     iconLabel->setProperty("iconPath", iconPath);
     iconLabel->setProperty("iconSize", 20);
@@ -214,15 +237,20 @@ QWidget* ProxyModeSection::createModeItem(const QString& iconText, const QString
 }
 
 void ProxyModeSection::setCardActive(QWidget* card, bool active) {
-  if (!card) return;
+  if (!card)
+    return;
   card->setProperty("active", active);
   for (auto* label : card->findChildren<QLabel*>()) {
     const QVariant pathVar = label->property("iconPath");
-    if (!pathVar.isValid()) continue;
+    if (!pathVar.isValid())
+      continue;
     const QString iconPath = pathVar.toString();
     const int     iconSize = label->property("iconSize").toInt();
-    const QColor  color = active ? QColor(Qt::white) : (m_themeService ? m_themeService->color("primary") : QColor());
-    label->setPixmap(svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
+    const QColor  color =
+        active ? QColor(Qt::white)
+                : (m_themeService ? m_themeService->color("primary") : QColor());
+    label->setPixmap(
+        svgIconPixmap(iconPath, iconSize > 0 ? iconSize : 20, color));
   }
   polishWidget(card);
   for (auto* child : card->findChildren<QWidget*>()) {
@@ -235,7 +263,8 @@ bool ProxyModeSection::isSystemProxyEnabled() const {
 }
 
 void ProxyModeSection::setSystemProxyEnabled(bool enabled) {
-  if (!m_systemProxySwitch) return;
+  if (!m_systemProxySwitch)
+    return;
   QSignalBlocker blocker(m_systemProxySwitch);
   m_systemProxySwitch->setChecked(enabled);
   setCardActive(m_systemProxyCard, enabled);
@@ -246,7 +275,8 @@ bool ProxyModeSection::isTunModeEnabled() const {
 }
 
 void ProxyModeSection::setTunModeEnabled(bool enabled) {
-  if (!m_tunModeSwitch) return;
+  if (!m_tunModeSwitch)
+    return;
   QSignalBlocker blocker(m_tunModeSwitch);
   m_tunModeSwitch->setChecked(enabled);
   setCardActive(m_tunModeCard, enabled);

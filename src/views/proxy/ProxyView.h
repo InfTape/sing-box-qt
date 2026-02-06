@@ -41,7 +41,8 @@ class ProxyView : public QWidget {
   void            setupUI();
   void            handleNodeActivation(QTreeWidgetItem* item);
   QString         formatDelay(int delay) const;
-  void            onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+  void            onSelectionChanged(const QItemSelection& selected,
+                                     const QItemSelection& deselected);
   void            updateTestButtonStyle(bool testing);
   QJsonObject     loadNodeOutbound(const QString& tag) const;
   bool            isTesting() const;

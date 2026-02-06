@@ -27,8 +27,12 @@ ThemeService::ThemeMode toServiceMode(ThemeManager::ThemeMode mode) {
 }
 }  // namespace
 
-ThemeServiceAdapter::ThemeServiceAdapter(QObject* parent) : ThemeService(parent) {
-  connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, &ThemeService::themeChanged);
+ThemeServiceAdapter::ThemeServiceAdapter(QObject* parent)
+    : ThemeService(parent) {
+  connect(&ThemeManager::instance(),
+          &ThemeManager::themeChanged,
+          this,
+          &ThemeService::themeChanged);
 }
 
 void ThemeServiceAdapter::init() {
@@ -43,7 +47,8 @@ QString ThemeServiceAdapter::colorString(const QString& key) const {
   return ThemeManager::instance().getColorString(key);
 }
 
-QString ThemeServiceAdapter::loadStyleSheet(const QString& resourcePath, const QMap<QString, QString>& extra) const {
+QString ThemeServiceAdapter::loadStyleSheet(
+    const QString& resourcePath, const QMap<QString, QString>& extra) const {
   return ThemeManager::instance().loadStyleSheet(resourcePath, extra);
 }
 

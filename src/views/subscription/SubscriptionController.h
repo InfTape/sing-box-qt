@@ -8,7 +8,8 @@ class SubscriptionService;
 struct SubscriptionInfo;
 
 /**
- * @brief SubscriptionController encapsulates subscription business logic, reducing direct Service access from View.
+ * @brief SubscriptionController encapsulates subscription business logic,
+ * reducing direct Service access from View.
  */
 class SubscriptionController {
  public:
@@ -20,19 +21,35 @@ class SubscriptionController {
   int                     activeIndex() const;
   QString                 activeConfigPath() const;
   QString                 currentConfig() const;
-  void addUrl(const QString& url, const QString& name, bool useOriginalConfig, int autoUpdateIntervalMinutes,
-              bool applyRuntime, bool enableSharedRules, const QStringList& ruleSets);
-  void addManual(const QString& content, const QString& name, bool useOriginalConfig, bool isUriList, bool applyRuntime,
-                 bool enableSharedRules, const QStringList& ruleSets);
-  void refresh(const QString& id, bool applyRuntime);
-  bool rollback(const QString& id);
-  void remove(const QString& id);
+  void                    addUrl(const QString&     url,
+                                 const QString&     name,
+                                 bool               useOriginalConfig,
+                                 int                autoUpdateIntervalMinutes,
+                                 bool               applyRuntime,
+                                 bool               enableSharedRules,
+                                 const QStringList& ruleSets);
+  void                    addManual(const QString&     content,
+                                    const QString&     name,
+                                    bool               useOriginalConfig,
+                                    bool               isUriList,
+                                    bool               applyRuntime,
+                                    bool               enableSharedRules,
+                                    const QStringList& ruleSets);
+  void                    refresh(const QString& id, bool applyRuntime);
+  bool                    rollback(const QString& id);
+  void                    remove(const QString& id);
 
   void removeSubscription(const QString& id) { remove(id); }
 
-  void updateSubscription(const QString& id, const QString& name, const QString& url, bool isManual,
-                          const QString& content, bool useOriginalConfig, int autoUpdateIntervalMinutes,
-                          bool enableSharedRules, const QStringList& ruleSets);
+  void updateSubscription(const QString&     id,
+                          const QString&     name,
+                          const QString&     url,
+                          bool               isManual,
+                          const QString&     content,
+                          bool               useOriginalConfig,
+                          int                autoUpdateIntervalMinutes,
+                          bool               enableSharedRules,
+                          const QStringList& ruleSets);
   bool saveCurrentConfig(const QString& content, bool applyRuntime);
 
  private:

@@ -11,7 +11,8 @@ FlowLayout::FlowLayout(QWidget* parent, int margin, int hSpacing, int vSpacing)
   }
 }
 
-FlowLayout::FlowLayout(int margin, int hSpacing, int vSpacing) : m_hSpace(hSpacing), m_vSpace(vSpacing) {
+FlowLayout::FlowLayout(int margin, int hSpacing, int vSpacing)
+    : m_hSpace(hSpacing), m_vSpace(vSpacing) {
   if (margin >= 0) {
     setContentsMargins(margin, margin, margin, margin);
   }
@@ -106,14 +107,18 @@ int FlowLayout::doLayout(const QRect& rect, bool testOnly) const {
     QWidget* itemWidget = item->widget();
     int      spaceX     = horizontalSpacing();
     if (spaceX < 0) {
-      spaceX = itemWidget ? itemWidget->style()->layoutSpacing(QSizePolicy::PushButton, QSizePolicy::PushButton,
-                                                               Qt::Horizontal)
-                          : 0;
+      spaceX = itemWidget
+                   ? itemWidget->style()->layoutSpacing(QSizePolicy::PushButton,
+                                                        QSizePolicy::PushButton,
+                                                        Qt::Horizontal)
+                   : 0;
     }
     int spaceY = verticalSpacing();
     if (spaceY < 0) {
       spaceY = itemWidget
-                   ? itemWidget->style()->layoutSpacing(QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Vertical)
+                   ? itemWidget->style()->layoutSpacing(QSizePolicy::PushButton,
+                                                        QSizePolicy::PushButton,
+                                                        Qt::Vertical)
                    : 0;
     }
     const QSize itemSize = item->sizeHint();

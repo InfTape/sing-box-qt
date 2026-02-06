@@ -11,8 +11,10 @@ class SettingsController : public QObject {
   explicit SettingsController(QObject* parent = nullptr);
   ~SettingsController() override = default;
   SettingsModel::Data loadSettings() const;
-  bool                saveSettings(const SettingsModel::Data& data, int themeIndex, int languageIndex,
-                                   QString* errorMessage = nullptr) const;
+  bool                saveSettings(const SettingsModel::Data& data,
+                                   int                        themeIndex,
+                                   int                        languageIndex,
+                                   QString*                   errorMessage = nullptr) const;
   void                refreshInstalledInfo();
   void                fetchReleaseList();
   void                checkLatest();

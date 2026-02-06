@@ -17,8 +17,10 @@ SettingsModel::Data SettingsService::loadSettings() {
   return data;
 }
 
-bool SettingsService::saveSettings(const SettingsModel::Data& data, int themeIndex, int languageIndex,
-                                   QString* errorMessage) {
+bool SettingsService::saveSettings(const SettingsModel::Data& data,
+                                   int                        themeIndex,
+                                   int                        languageIndex,
+                                   QString*                   errorMessage) {
   SettingsModel::Data mutableData = data;
   // Handle auto-start (system side effects concentrated here).
   if (AutoStart::isSupported()) {
@@ -51,7 +53,8 @@ bool SettingsService::saveSettings(const SettingsModel::Data& data, int themeInd
   DatabaseService::instance().saveThemeConfig(theme);
   // Save language.
   const QString locales[] = {"zh_CN", "en", "ja", "ru"};
-  const int     safeIndex = (languageIndex >= 0 && languageIndex < 4) ? languageIndex : 0;
+  const int     safeIndex =
+      (languageIndex >= 0 && languageIndex < 4) ? languageIndex : 0;
   DatabaseService::instance().saveLocale(locales[safeIndex]);
   Logger::info(QObject::tr("Settings saved"));
   return true;

@@ -9,7 +9,9 @@
 #include "app/interfaces/ThemeService.h"
 
 namespace {
-QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color) {
+QPixmap svgIconPixmap(const QString& resourcePath,
+                      int            box,
+                      const QColor&  color) {
   const qreal  dpr  = qApp->devicePixelRatio();
   const int    size = static_cast<int>(box * dpr);
   QSvgRenderer renderer(resourcePath);
@@ -29,7 +31,8 @@ QPixmap svgIconPixmap(const QString& resourcePath, int box, const QColor& color)
     } else if (ratio < 1.0) {
       renderW = renderW * ratio;
     }
-    const QRectF target((size - renderW) / 2.0, (size - renderH) / 2.0, renderW, renderH);
+    const QRectF target(
+        (size - renderW) / 2.0, (size - renderH) / 2.0, renderW, renderH);
     renderer.render(&p, target);
   }
   QPixmap tinted(size, size);
@@ -59,8 +62,11 @@ QString resolveIconPath(const QString& iconText) {
 }
 }  // namespace
 
-StatCard::StatCard(const QString& iconText, const QString& accentKey, const QString& title, ThemeService* themeService,
-                   QWidget* parent)
+StatCard::StatCard(const QString& iconText,
+                   const QString& accentKey,
+                   const QString& title,
+                   ThemeService*  themeService,
+                   QWidget*       parent)
     : QFrame(parent),
       m_iconText(iconText),
       m_accentKey(accentKey),
@@ -105,12 +111,14 @@ void StatCard::setupUi(const QString& title) {
 }
 
 void StatCard::applyIcon() {
-  if (!m_iconLabel) return;
+  if (!m_iconLabel)
+    return;
   if (m_iconPath.isEmpty()) {
     m_iconLabel->setText(m_iconText);
     return;
   }
-  QColor iconColor = m_themeService ? m_themeService->color("text-primary") : QColor();
+  QColor iconColor =
+      m_themeService ? m_themeService->color("text-primary") : QColor();
   if (m_accentKey == "success") {
     iconColor = m_themeService ? m_themeService->color("success") : QColor();
   } else if (m_accentKey == "primary") {
@@ -126,9 +134,11 @@ void StatCard::updateStyle() {
 }
 
 void StatCard::setValueText(const QString& text) {
-  if (m_valueLabel) m_valueLabel->setText(text);
+  if (m_valueLabel)
+    m_valueLabel->setText(text);
 }
 
 void StatCard::setSubText(const QString& text) {
-  if (m_subLabel) m_subLabel->setText(text);
+  if (m_subLabel)
+    m_subLabel->setText(text);
 }

@@ -15,31 +15,37 @@ ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
   m_anim->setDuration(140);
   m_anim->setEasingCurve(QEasingCurve::InOutCubic);
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&ToggleSwitch::update));
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            qOverload<>(&ToggleSwitch::update));
   }
 }
 
 void ToggleSwitch::setChecked(bool checked) {
-  if (m_checked == checked) return;
+  if (m_checked == checked)
+    return;
   animateTo(checked);
   setCheckedInternal(checked, true);
 }
 
 void ToggleSwitch::setCheckedInternal(bool checked, bool emitSignal) {
   m_checked = checked;
-  if (emitSignal) emit toggled(m_checked);
+  if (emitSignal)
+    emit toggled(m_checked);
   update();
 }
 
 void ToggleSwitch::setOffset(qreal v) {
   v = std::clamp(v, 0.0, 1.0);
-  if (qFuzzyCompare(m_offset, v)) return;
+  if (qFuzzyCompare(m_offset, v))
+    return;
   m_offset = v;
   update();
 }
 
 QRectF ToggleSwitch::trackRect() const {
-  QRectF      r = rect().adjusted(2, 2, -2, -2);  // Leave padding to avoid clipping
+  QRectF r = rect().adjusted(2, 2, -2, -2);  // Leave padding to avoid clipping
   const qreal h = r.height() * 0.70;
   const qreal w = qMax(h * 1.8, r.width() * 0.90);
   const qreal x = r.center().x() - w / 2.0;
@@ -74,11 +80,14 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
   ThemeService* ts = m_themeService;
   const bool    en = isEnabled();
   // Use text-tertiary for day mode only, fallback to gray for dark mode
-  const ThemeService::ThemeMode mode    = ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
-  const bool                    isLight = mode == ThemeService::ThemeMode::Light ||
-                       (mode == ThemeService::ThemeMode::Auto && ts && ts->color("bg-primary") == QColor("#f8fafc"));
-  QColor trackOff = (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
-  QColor trackOn  = ts ? ts->color("primary") : QColor(0, 0, 200);
+  const ThemeService::ThemeMode mode =
+      ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
+  const bool isLight = mode == ThemeService::ThemeMode::Light ||
+                       (mode == ThemeService::ThemeMode::Auto && ts &&
+                        ts->color("bg-primary") == QColor("#f8fafc"));
+  QColor trackOff =
+      (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
+  QColor trackOn = ts ? ts->color("primary") : QColor(0, 0, 200);
   QColor thumb(255, 255, 255);
   QColor track = m_checked ? trackOn : trackOff;
   if (!en) {
@@ -109,7 +118,8 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
 }
 
 void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
-  if (!isEnabled() || e->button() != Qt::LeftButton) return;
+  if (!isEnabled() || e->button() != Qt::LeftButton)
+    return;
   m_dragging    = true;
   m_pressPos    = e->pos();
   m_pressOffset = m_offset;
@@ -118,7 +128,8 @@ void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
 }
 
 void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
-  if (!m_dragging) return;
+  if (!m_dragging)
+    return;
   QRectF      tr     = trackRect();
   const qreal margin = tr.height() * 0.12;
   const qreal d      = tr.height() - 2 * margin;
@@ -137,19 +148,23 @@ void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
-  if (!m_dragging || e->button() != Qt::LeftButton) return;
+  if (!m_dragging || e->button() != Qt::LeftButton)
+    return;
   m_dragging       = false;
   const int moved  = (e->pos() - m_pressPos).manhattanLength();
   bool      target = m_checked;
-  if (moved < 4) target = !m_checked;
+  if (moved < 4)
+    target = !m_checked;
   animateTo(target);
   setCheckedInternal(target, true);
   e->accept();
 }
 
 void ToggleSwitch::keyPressEvent(QKeyEvent* e) {
-  if (!isEnabled()) return;
-  if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
+  if (!isEnabled())
+    return;
+  if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return ||
+      e->key() == Qt::Key_Enter) {
     setChecked(!m_checked);
     e->accept();
     return;

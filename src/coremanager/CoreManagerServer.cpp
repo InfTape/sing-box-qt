@@ -6,12 +6,30 @@
 #include "utils/Logger.h"
 
 CoreManagerServer::CoreManagerServer(QObject* parent)
-    : QObject(parent), m_server(new QLocalServer(this)), m_client(nullptr), m_kernel(new KernelRunner(this)) {
-  connect(m_server, &QLocalServer::newConnection, this, &CoreManagerServer::onNewConnection);
-  connect(m_kernel, &KernelRunner::statusChanged, this, &CoreManagerServer::onKernelStatusChanged);
-  connect(m_kernel, &KernelRunner::outputReceived, this, &CoreManagerServer::onKernelOutput);
-  connect(m_kernel, &KernelRunner::errorOutputReceived, this, &CoreManagerServer::onKernelErrorOutput);
-  connect(m_kernel, &KernelRunner::errorOccurred, this, &CoreManagerServer::onKernelError);
+    : QObject(parent),
+      m_server(new QLocalServer(this)),
+      m_client(nullptr),
+      m_kernel(new KernelRunner(this)) {
+  connect(m_server,
+          &QLocalServer::newConnection,
+          this,
+          &CoreManagerServer::onNewConnection);
+  connect(m_kernel,
+          &KernelRunner::statusChanged,
+          this,
+          &CoreManagerServer::onKernelStatusChanged);
+  connect(m_kernel,
+          &KernelRunner::outputReceived,
+          this,
+          &CoreManagerServer::onKernelOutput);
+  connect(m_kernel,
+          &KernelRunner::errorOutputReceived,
+          this,
+          &CoreManagerServer::onKernelErrorOutput);
+  connect(m_kernel,
+          &KernelRunner::errorOccurred,
+          this,
+          &CoreManagerServer::onKernelError);
 }
 
 bool CoreManagerServer::startListening(const QString& name, QString* error) {
@@ -22,7 +40,8 @@ bool CoreManagerServer::startListening(const QString& name, QString* error) {
   QLocalServer::removeServer(name);
   if (!m_server->listen(name)) {
     if (error) {
-      *error = QString("Failed to listen on %1: %2").arg(name, m_server->errorString());
+      *error = QString("Failed to listen on %1: %2")
+                   .arg(name, m_server->errorString());
     }
     return false;
   }
@@ -36,14 +55,21 @@ QString CoreManagerServer::serverName() const {
 
 void CoreManagerServer::onNewConnection() {
   QLocalSocket* socket = m_server->nextPendingConnection();
-  if (!socket) return;
+  if (!socket)
+    return;
   if (m_client) {
     m_client->disconnectFromServer();
     m_client->deleteLater();
   }
   m_client = socket;
-  connect(m_client, &QLocalSocket::readyRead, this, &CoreManagerServer::onReadyRead);
-  connect(m_client, &QLocalSocket::disconnected, this, &CoreManagerServer::onClientDisconnected);
+  connect(m_client,
+          &QLocalSocket::readyRead,
+          this,
+          &CoreManagerServer::onReadyRead);
+  connect(m_client,
+          &QLocalSocket::disconnected,
+          this,
+          &CoreManagerServer::onClientDisconnected);
   QJsonObject event;
   event["event"]   = "status";
   event["running"] = m_kernel->isRunning();
@@ -51,15 +77,18 @@ void CoreManagerServer::onNewConnection() {
 }
 
 void CoreManagerServer::onReadyRead() {
-  if (!m_client) return;
+  if (!m_client)
+    return;
   m_buffer.append(m_client->readAll());
   while (true) {
     const int idx = m_buffer.indexOf('\n');
-    if (idx < 0) break;
+    if (idx < 0)
+      break;
     QByteArray line = m_buffer.left(idx);
     m_buffer.remove(0, idx + 1);
     line = line.trimmed();
-    if (line.isEmpty()) continue;
+    if (line.isEmpty())
+      continue;
     QJsonParseError err;
     QJsonDocument   doc = QJsonDocument::fromJson(line, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -155,11 +184,16 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
     QTimer::singleShot(0, qApp, &QCoreApplication::quit);
     return;
   }
-  sendResponse(id, false, QJsonObject(), QString("Unknown method: %1").arg(method));
+  sendResponse(
+      id, false, QJsonObject(), QString("Unknown method: %1").arg(method));
 }
 
-void CoreManagerServer::sendResponse(int id, bool ok, const QJsonObject& result, const QString& error) {
-  if (!m_client || id < 0) return;
+void CoreManagerServer::sendResponse(int                id,
+                                     bool               ok,
+                                     const QJsonObject& result,
+                                     const QString&     error) {
+  if (!m_client || id < 0)
+    return;
   QJsonObject obj;
   obj["id"] = id;
   obj["ok"] = ok;
@@ -169,14 +203,17 @@ void CoreManagerServer::sendResponse(int id, bool ok, const QJsonObject& result,
   if (!error.isEmpty()) {
     obj["error"] = error;
   }
-  const QByteArray payload = QJsonDocument(obj).toJson(QJsonDocument::Compact) + "\n";
+  const QByteArray payload =
+      QJsonDocument(obj).toJson(QJsonDocument::Compact) + "\n";
   m_client->write(payload);
   m_client->flush();
 }
 
 void CoreManagerServer::sendEvent(const QJsonObject& event) {
-  if (!m_client) return;
-  const QByteArray payload = QJsonDocument(event).toJson(QJsonDocument::Compact) + "\n";
+  if (!m_client)
+    return;
+  const QByteArray payload =
+      QJsonDocument(event).toJson(QJsonDocument::Compact) + "\n";
   m_client->write(payload);
   m_client->flush();
 }

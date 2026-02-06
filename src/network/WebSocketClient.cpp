@@ -3,18 +3,33 @@
 
 WebSocketClient::WebSocketClient(QObject* parent)
     : QObject(parent),
-      m_socket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this)),
+      m_socket(
+          new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this)),
       m_reconnectTimer(new QTimer(this)),
       m_autoReconnect(true),
       m_reconnectInterval(3000),
       m_intentionalDisconnect(false) {
-  QObject::connect(m_socket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
-  QObject::connect(m_socket, &QWebSocket::disconnected, this, &WebSocketClient::onDisconnected);
-  QObject::connect(m_socket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived);
-  QObject::connect(m_socket, &QWebSocket::binaryMessageReceived, this, &WebSocketClient::onBinaryMessageReceived);
-  QObject::connect(m_socket, &QWebSocket::errorOccurred, this, &WebSocketClient::onError);
+  QObject::connect(
+      m_socket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
+  QObject::connect(m_socket,
+                   &QWebSocket::disconnected,
+                   this,
+                   &WebSocketClient::onDisconnected);
+  QObject::connect(m_socket,
+                   &QWebSocket::textMessageReceived,
+                   this,
+                   &WebSocketClient::onTextMessageReceived);
+  QObject::connect(m_socket,
+                   &QWebSocket::binaryMessageReceived,
+                   this,
+                   &WebSocketClient::onBinaryMessageReceived);
+  QObject::connect(
+      m_socket, &QWebSocket::errorOccurred, this, &WebSocketClient::onError);
   m_reconnectTimer->setSingleShot(true);
-  QObject::connect(m_reconnectTimer, &QTimer::timeout, this, &WebSocketClient::attemptReconnect);
+  QObject::connect(m_reconnectTimer,
+                   &QTimer::timeout,
+                   this,
+                   &WebSocketClient::attemptReconnect);
 }
 
 WebSocketClient::~WebSocketClient() {

@@ -8,7 +8,8 @@
 
 namespace ConfigIO {
 QString getConfigDir() {
-  const QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  const QString baseDir =
+      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   const QString dataDir = appDataDir();
   QDir          dir(dataDir);
   if (!dir.exists()) {

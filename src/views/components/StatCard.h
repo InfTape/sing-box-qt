@@ -7,8 +7,11 @@ class ThemeService;
 class StatCard : public QFrame {
   Q_OBJECT
  public:
-  explicit StatCard(const QString& iconText, const QString& accentKey, const QString& title,
-                    ThemeService* themeService = nullptr, QWidget* parent = nullptr);
+  explicit StatCard(const QString& iconText,
+                    const QString& accentKey,
+                    const QString& title,
+                    ThemeService*  themeService = nullptr,
+                    QWidget*       parent       = nullptr);
   void setValueText(const QString& text);
   void setSubText(const QString& text);
   void updateStyle();

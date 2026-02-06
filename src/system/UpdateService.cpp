@@ -32,9 +32,9 @@ void UpdateService::checkForUpdate() {
       emit errorOccurred(tr("Failed to parse update info"));
       return;
     }
-    QJsonObject release       = doc.object();
-    QString     tagName       = release["tag_name"].toString();
-    QString     latestVersion = tagName.startsWith('v') ? tagName.mid(1) : tagName;
+    QJsonObject release   = doc.object();
+    QString     tagName   = release["tag_name"].toString();
+    QString latestVersion = tagName.startsWith('v') ? tagName.mid(1) : tagName;
     // Compare versions.
     if (latestVersion > m_currentVersion) {
       UpdateInfo info;
@@ -63,10 +63,15 @@ void UpdateService::checkForUpdate() {
   });
 }
 
-void UpdateService::downloadUpdate(const QString& url, const QString& savePath) {
+void UpdateService::downloadUpdate(const QString& url,
+                                   const QString& savePath) {
   Logger::info(QString("Downloading update: %1").arg(url));
   m_httpClient->download(
-      url, savePath, [this](qint64 received, qint64 total) { emit downloadProgress(received, total); },
+      url,
+      savePath,
+      [this](qint64 received, qint64 total) {
+        emit downloadProgress(received, total);
+      },
       [this, savePath](bool success, const QByteArray&) {
         if (success) {
           Logger::info("Update download completed");

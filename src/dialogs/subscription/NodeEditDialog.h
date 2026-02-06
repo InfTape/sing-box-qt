@@ -17,7 +17,8 @@ class ThemeService;
 class NodeEditDialog : public QDialog {
   Q_OBJECT
  public:
-  explicit NodeEditDialog(ThemeService* themeService, QWidget* parent = nullptr);
+  explicit NodeEditDialog(ThemeService* themeService,
+                          QWidget*      parent = nullptr);
   ~NodeEditDialog();
   void        setNodeData(const QJsonObject& node);
   QJsonObject nodeData() const;

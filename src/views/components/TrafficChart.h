@@ -9,7 +9,8 @@ class ThemeService;
 class TrafficChart : public QWidget {
   Q_OBJECT
  public:
-  explicit TrafficChart(ThemeService* themeService = nullptr, QWidget* parent = nullptr);
+  explicit TrafficChart(ThemeService* themeService = nullptr,
+                        QWidget*      parent       = nullptr);
   ~TrafficChart();
   void updateData(qint64 uploadSpeed, qint64 downloadSpeed);
   void clear();
@@ -19,12 +20,15 @@ class TrafficChart : public QWidget {
   void resizeEvent(QResizeEvent* event) override;
 
  private:
-  void    drawChart(QPainter& painter);
-  void    drawGrid(QPainter& painter, const QRect& chartRect);
-  void    drawCurve(QPainter& painter, const QRect& chartRect, const QVector<double>& data, const QColor& color);
-  void    drawLegend(QPainter& painter);
-  QString formatSpeed(double bytesPerSecond) const;
-  double  calculateMaxValue() const;
+  void             drawChart(QPainter& painter);
+  void             drawGrid(QPainter& painter, const QRect& chartRect);
+  void             drawCurve(QPainter&              painter,
+                             const QRect&           chartRect,
+                             const QVector<double>& data,
+                             const QColor&          color);
+  void             drawLegend(QPainter& painter);
+  QString          formatSpeed(double bytesPerSecond) const;
+  double           calculateMaxValue() const;
   static const int MAX_DATA_POINTS = 60;
   QVector<double>  m_uploadData;
   QVector<double>  m_downloadData;

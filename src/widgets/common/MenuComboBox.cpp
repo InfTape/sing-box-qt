@@ -19,7 +19,10 @@ MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
   m_menu->setObjectName("ComboMenu");
   updateMenuStyle();
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            &MenuComboBox::updateMenuStyle);
   }
 }
 
@@ -28,13 +31,17 @@ void MenuComboBox::setWheelEnabled(bool enabled) {
 }
 
 void MenuComboBox::setThemeService(ThemeService* themeService) {
-  if (m_themeService == themeService) return;
+  if (m_themeService == themeService)
+    return;
   if (m_themeService) {
     disconnect(m_themeService, nullptr, this, nullptr);
   }
   m_themeService = themeService;
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            &MenuComboBox::updateMenuStyle);
   }
   updateMenuStyle();
 }
@@ -44,14 +51,17 @@ void MenuComboBox::paintEvent(QPaintEvent* event) {
   QStylePainter        painter(this);
   QStyleOptionComboBox opt;
   initStyleOption(&opt);
-  const QRect textRect = style()->subControlRect(QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
-  opt.currentText      = fontMetrics().elidedText(opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
+  const QRect textRect = style()->subControlRect(
+      QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
+  opt.currentText = fontMetrics().elidedText(
+      opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
   painter.drawComplexControl(QStyle::CC_ComboBox, opt);
   painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 
 void MenuComboBox::showPopup() {
-  if (!m_menu) return;
+  if (!m_menu)
+    return;
   m_menu->clear();
   ThemeService* ts         = m_themeService;
   QColor        checkColor = ts ? ts->color("primary") : QColor(0, 0, 200);
@@ -75,7 +85,8 @@ void MenuComboBox::showPopup() {
       painter.drawPath(path);
       action->setIcon(QIcon(pixmap));
     }
-    connect(action, &QAction::triggered, this, [this, i]() { setCurrentIndex(i); });
+    connect(
+        action, &QAction::triggered, this, [this, i]() { setCurrentIndex(i); });
   }
   const int menuWidth = qMax(width(), 180);
   m_menu->setFixedWidth(menuWidth);
@@ -97,7 +108,9 @@ void MenuComboBox::wheelEvent(QWheelEvent* event) {
 }
 
 void MenuComboBox::updateMenuStyle() {
-  if (!m_menu) return;
+  if (!m_menu)
+    return;
   ThemeService* ts = m_themeService;
-  if (ts) m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+  if (ts)
+    m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 }

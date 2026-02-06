@@ -12,9 +12,13 @@ class ProxyTreePresenter {
   using CurrentFormatter = std::function<QString(const QString&)>;
   explicit ProxyTreePresenter(QTreeWidget* treeWidget = nullptr);
   void        setTreeWidget(QTreeWidget* treeWidget);
-  QJsonObject render(const QJsonObject& proxies, const DelayFormatter& formatDelay,
-                     const CountFormatter& formatNodeCount, const CurrentFormatter& formatCurrent) const;
-  void        updateSelectedProxy(QJsonObject& cachedProxies, const QString& group, const QString& proxy,
+  QJsonObject render(const QJsonObject&      proxies,
+                     const DelayFormatter&   formatDelay,
+                     const CountFormatter&   formatNodeCount,
+                     const CurrentFormatter& formatCurrent) const;
+  void        updateSelectedProxy(QJsonObject&            cachedProxies,
+                                  const QString&          group,
+                                  const QString&          proxy,
                                   const CurrentFormatter& formatCurrent) const;
 
  private:

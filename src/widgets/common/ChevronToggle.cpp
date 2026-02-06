@@ -13,7 +13,8 @@ ChevronToggle::ChevronToggle(QWidget* parent) : QWidget(parent) {
 }
 
 void ChevronToggle::setExpanded(bool expanded) {
-  if (m_expanded == expanded) return;
+  if (m_expanded == expanded)
+    return;
   m_expanded = expanded;
   if (!m_anim) {
     m_anim = new QPropertyAnimation(this, "progress", this);
@@ -64,7 +65,8 @@ void ChevronToggle::paintEvent(QPaintEvent* event) {
   painter.translate(center);
   painter.rotate(90.0 * m_progress);
   QPolygonF points;
-  points << QPointF(-size * 0.5, -size) << QPointF(size * 0.5, 0) << QPointF(-size * 0.5, size);
+  points << QPointF(-size * 0.5, -size) << QPointF(size * 0.5, 0)
+         << QPointF(-size * 0.5, size);
   painter.drawPolyline(points);
   painter.restore();
 }

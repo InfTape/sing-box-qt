@@ -12,18 +12,21 @@ class ConfigManager : public QObject {
   QString               getConfigDir() const;
   QString               getActiveConfigPath() const;
   QJsonObject           generateBaseConfig();
-  bool                  generateConfigWithNodes(const QJsonArray& nodes, const QString& targetPath = QString());
-  bool                  injectNodes(QJsonObject& config, const QJsonArray& nodes);
-  void                  applySettingsToConfig(QJsonObject& config);
-  void                  applyPortSettings(QJsonObject& config);
-  QJsonObject           loadConfig(const QString& path);
-  bool                  saveConfig(const QString& path, const QJsonObject& config);
-  int                   getMixedPort() const;
-  int                   getApiPort() const;
-  void                  setMixedPort(int port);
-  void                  setApiPort(int port);
-  bool    updateClashDefaultMode(const QString& configPath, const QString& mode, QString* error = nullptr);
-  QString readClashDefaultMode(const QString& configPath) const;
+  bool                  generateConfigWithNodes(const QJsonArray& nodes,
+                                                const QString&    targetPath = QString());
+  bool        injectNodes(QJsonObject& config, const QJsonArray& nodes);
+  void        applySettingsToConfig(QJsonObject& config);
+  void        applyPortSettings(QJsonObject& config);
+  QJsonObject loadConfig(const QString& path);
+  bool        saveConfig(const QString& path, const QJsonObject& config);
+  int         getMixedPort() const;
+  int         getApiPort() const;
+  void        setMixedPort(int port);
+  void        setApiPort(int port);
+  bool        updateClashDefaultMode(const QString& configPath,
+                                     const QString& mode,
+                                     QString*       error = nullptr);
+  QString     readClashDefaultMode(const QString& configPath) const;
 
  private:
   explicit ConfigManager(QObject* parent = nullptr);

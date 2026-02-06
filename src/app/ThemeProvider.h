@@ -3,8 +3,8 @@
 #include "app/interfaces/ThemeService.h"
 
 /**
- * @brief ThemeProvider provides global ThemeService access point, replacing direct dependency on ThemeManager
- * Singleton.
+ * @brief ThemeProvider provides global ThemeService access point, replacing
+ * direct dependency on ThemeManager Singleton.
  *
  * Usage:
  * - Call ThemeProvider::setInstance(themeService) when initializing AppContext

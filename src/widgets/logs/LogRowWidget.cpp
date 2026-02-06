@@ -3,7 +3,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 
-LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent) : QFrame(parent) {
+LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent)
+    : QFrame(parent) {
   setObjectName("LogEntry");
   setProperty("logType", entry.type);
   QHBoxLayout* layout = new QHBoxLayout(this);
@@ -19,8 +20,10 @@ LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent) : 
   typeLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   typeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
   const QFontMetrics typeMetrics(typeLabel->font());
-  const QSize        typeSize = typeMetrics.size(Qt::TextSingleLine, typeLabel->text());
-  typeLabel->setFixedSize(typeSize.width() + badgePaddingX * 2, typeSize.height() + badgePaddingY * 2);
+  const QSize        typeSize =
+      typeMetrics.size(Qt::TextSingleLine, typeLabel->text());
+  typeLabel->setFixedSize(typeSize.width() + badgePaddingX * 2,
+                          typeSize.height() + badgePaddingY * 2);
   QHBoxLayout* badgeLayout = new QHBoxLayout;
   badgeLayout->setContentsMargins(0, 0, 0, 0);
   badgeLayout->setSpacing(6);
@@ -42,8 +45,10 @@ LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent) : 
     directionTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     directionTag->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     const QFontMetrics dirMetrics(directionTag->font());
-    const QSize        dirSize = dirMetrics.size(Qt::TextSingleLine, directionTag->text());
-    directionTag->setFixedSize(dirSize.width() + badgePaddingX * 2, dirSize.height() + badgePaddingY * 2);
+    const QSize        dirSize =
+        dirMetrics.size(Qt::TextSingleLine, directionTag->text());
+    directionTag->setFixedSize(dirSize.width() + badgePaddingX * 2,
+                               dirSize.height() + badgePaddingY * 2);
     badgeLayout->addWidget(directionTag);
   }
   QWidget* badgeRow = new QWidget;

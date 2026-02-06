@@ -8,7 +8,8 @@
 
 namespace {
 QString normalizeProcessLabel(const QString& process) {
-  if (process.isEmpty()) return QString();
+  if (process.isEmpty())
+    return QString();
   int lastSlash = process.lastIndexOf('/');
   int lastBack  = process.lastIndexOf('\\');
   int idx       = std::max(lastSlash, lastBack);
@@ -57,8 +58,13 @@ QList<DataUsageTracker::Type> DataUsageTracker::allTypes() {
   return {Type::SourceIP, Type::Host, Type::Process, Type::Outbound};
 }
 
-void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload, qint64 download, qint64 nowMs) {
-  if (label.isEmpty()) return;
+void DataUsageTracker::addDelta(Type           type,
+                                const QString& label,
+                                qint64         upload,
+                                qint64         download,
+                                qint64         nowMs) {
+  if (label.isEmpty())
+    return;
   auto& map  = m_entries[static_cast<int>(type)];
   auto  iter = map.find(label);
   if (iter == map.end()) {
@@ -91,7 +97,8 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   for (const QJsonValue& item : conns) {
     const QJsonObject conn = item.toObject();
     const QString     id   = conn.value("id").toString();
-    if (id.isEmpty()) continue;
+    if (id.isEmpty())
+      continue;
     activeIds.insert(id);
     const qint64 upload    = conn.value("upload").toVariant().toLongLong();
     const qint64 download  = conn.value("download").toVariant().toLongLong();
@@ -107,26 +114,38 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
       deltaDown = download;
     }
     m_lastById[id] = {upload, download};
-    if (deltaUp == 0 && deltaDown == 0) continue;
+    if (deltaUp == 0 && deltaDown == 0)
+      continue;
     changed                  = true;
     const QJsonObject meta   = conn.value("metadata").toObject();
     QString           source = meta.value("sourceIP").toString();
-    if (source.isEmpty()) source = QStringLiteral("Inner");
+    if (source.isEmpty())
+      source = QStringLiteral("Inner");
     QString host = meta.value("host").toString();
-    if (host.isEmpty()) host = meta.value("destinationIP").toString();
-    if (host.isEmpty()) host = meta.value("destinationIp").toString();
-    if (host.isEmpty()) host = QStringLiteral("Unknown");
+    if (host.isEmpty())
+      host = meta.value("destinationIP").toString();
+    if (host.isEmpty())
+      host = meta.value("destinationIp").toString();
+    if (host.isEmpty())
+      host = QStringLiteral("Unknown");
     QString process = meta.value("process").toString();
-    if (process.isEmpty()) process = meta.value("processName").toString();
-    if (process.isEmpty()) process = meta.value("processPath").toString();
+    if (process.isEmpty())
+      process = meta.value("processName").toString();
+    if (process.isEmpty())
+      process = meta.value("processPath").toString();
     process = normalizeProcessLabel(process);
-    if (process.isEmpty()) process = QStringLiteral("Unknown");
+    if (process.isEmpty())
+      process = QStringLiteral("Unknown");
     QString          outbound;
     const QJsonArray chains = conn.value("chains").toArray();
-    if (!chains.isEmpty()) outbound = chains.first().toString();
-    if (outbound.isEmpty()) outbound = conn.value("outbound").toString();
-    if (outbound.isEmpty()) outbound = meta.value("outbound").toString();
-    if (outbound.isEmpty()) outbound = QStringLiteral("DIRECT");
+    if (!chains.isEmpty())
+      outbound = chains.first().toString();
+    if (outbound.isEmpty())
+      outbound = conn.value("outbound").toString();
+    if (outbound.isEmpty())
+      outbound = meta.value("outbound").toString();
+    if (outbound.isEmpty())
+      outbound = QStringLiteral("DIRECT");
     addDelta(Type::SourceIP, source, deltaUp, deltaDown, nowMs);
     addDelta(Type::Host, host, deltaUp, deltaDown, nowMs);
     addDelta(Type::Process, process, deltaUp, deltaDown, nowMs);
@@ -151,14 +170,16 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   emit dataUsageUpdated(snapshot());
 }
 
-QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(const QHash<QString, Entry>& map, int limit) const {
+QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(
+    const QHash<QString, Entry>& map, int limit) const {
   QVector<Entry> entries;
   entries.reserve(map.size());
   for (const auto& entry : map) {
     entries.push_back(entry);
   }
   std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
-    if (a.total == b.total) return a.label < b.label;
+    if (a.total == b.total)
+      return a.label < b.label;
     return a.total > b.total;
   });
   if (limit > 0 && entries.size() > limit) {
@@ -167,10 +188,12 @@ QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(const QHash<QSt
   return entries;
 }
 
-DataUsageTracker::Totals DataUsageTracker::buildTotals(const QHash<QString, Entry>& map) const {
+DataUsageTracker::Totals DataUsageTracker::buildTotals(
+    const QHash<QString, Entry>& map) const {
   Totals totals;
   totals.count = map.size();
-  if (map.isEmpty()) return totals;
+  if (map.isEmpty())
+    return totals;
   bool hasTime = false;
   for (const auto& entry : map) {
     totals.upload += entry.upload;
@@ -222,7 +245,8 @@ QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
   for (Type type : allTypes()) {
     payload.insert(typeKey(type), buildTypeSnapshot(type, limitPerType));
   }
-  payload.insert("updatedAt", QString::number(QDateTime::currentMSecsSinceEpoch()));
+  payload.insert("updatedAt",
+                 QString::number(QDateTime::currentMSecsSinceEpoch()));
   return payload;
 }
 
@@ -252,7 +276,8 @@ QJsonObject DataUsageTracker::buildPersistPayload() const {
     }
     root.insert(typeKey(type), typeObj);
   }
-  root.insert("updatedAt", QString::number(QDateTime::currentMSecsSinceEpoch()));
+  root.insert("updatedAt",
+              QString::number(QDateTime::currentMSecsSinceEpoch()));
   return root;
 }
 

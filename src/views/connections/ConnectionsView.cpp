@@ -12,9 +12,12 @@
 namespace {
 class ConnectionsItemDelegate : public QStyledItemDelegate {
  public:
-  explicit ConnectionsItemDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+  explicit ConnectionsItemDelegate(QObject* parent = nullptr)
+      : QStyledItemDelegate(parent) {}
 
-  void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+  void paint(QPainter*                   painter,
+             const QStyleOptionViewItem& option,
+             const QModelIndex&          index) const override {
     QStyleOptionViewItem opt(option);
     opt.state &= ~QStyle::State_HasFocus;
     opt.showDecorationSelected = true;
@@ -33,7 +36,10 @@ ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
   m_refreshTimer->setInterval(1000);
   connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, &ConnectionsView::updateStyle);
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            &ConnectionsView::updateStyle);
   }
 }
 
@@ -64,74 +70,96 @@ void ConnectionsView::setupUI() {
   m_tableWidget = new QTableWidget;
   m_tableWidget->setObjectName("ConnectionsTable");
   m_tableWidget->setColumnCount(6);
-  m_tableWidget->setHorizontalHeaderLabels(
-      {tr("Source"), tr("Destination"), tr("Network"), tr("Rule"), tr("Upload"), tr("Download")});
+  m_tableWidget->setHorizontalHeaderLabels({tr("Source"),
+                                            tr("Destination"),
+                                            tr("Network"),
+                                            tr("Rule"),
+                                            tr("Upload"),
+                                            tr("Download")});
   m_tableWidget->horizontalHeader()->setStretchLastSection(true);
   m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
   m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
   mainLayout->addWidget(m_tableWidget, 1);
-  connect(m_closeSelectedBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseSelected);
-  connect(m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
+  connect(m_closeSelectedBtn,
+          &QPushButton::clicked,
+          this,
+          &ConnectionsView::onCloseSelected);
+  connect(
+      m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
   updateStyle();
 }
 
 void ConnectionsView::setProxyService(ProxyService* service) {
   m_proxyService = service;
   if (m_proxyService) {
-    connect(m_proxyService, &ProxyService::connectionsReceived, this, [this](const QJsonObject& connections) {
-      QJsonArray conns = connections["connections"].toArray();
-      m_tableWidget->setRowCount(conns.count());
-      auto setCell = [this](int row, int col, const QString& text) {
-        QTableWidgetItem* item = m_tableWidget->item(row, col);
-        if (!item) {
-          item = new QTableWidgetItem();
-          m_tableWidget->setItem(row, col, item);
-        }
-        item->setText(text);
-      };
-      for (int i = 0; i < conns.count(); ++i) {
-        QJsonObject conn     = conns[i].toObject();
-        QJsonObject metadata = conn["metadata"].toObject();
-        setCell(i, 0, metadata["sourceIP"].toString());
-        QString host = metadata["host"].toString();
-        if (host.isEmpty()) host = metadata["destinationIP"].toString();
-        if (host.isEmpty()) host = metadata["destinationIp"].toString();
-        if (host.isEmpty()) host = tr("Unknown");
-        auto readPort = [](const QJsonValue& value) -> int {
-          if (value.isString()) {
-            bool      ok     = false;
-            const int parsed = value.toString().toInt(&ok);
-            return ok ? parsed : 0;
-          }
-          if (value.isDouble()) {
-            return value.toInt();
-          }
-          bool      ok     = false;
-          const int parsed = value.toVariant().toInt(&ok);
-          return ok ? parsed : 0;
-        };
-        QJsonValue portValue = metadata.value("destinationPort");
-        if (portValue.isUndefined()) {
-          portValue = metadata.value("destination_port");
-        }
-        const int port        = readPort(portValue);
-        QString   destination = host;
-        if (port > 0) {
-          destination += ":" + QString::number(port);
-        }
-        setCell(i, 1, destination);
-        setCell(i, 2, metadata["network"].toString());
-        setCell(i, 3, conn["rule"].toString());
-        setCell(i, 4, QString::number(conn["upload"].toVariant().toLongLong() / 1024) + " KB");
-        setCell(i, 5, QString::number(conn["download"].toVariant().toLongLong() / 1024) + " KB");
-        // Store connection ID.
-        QTableWidgetItem* idItem = m_tableWidget->item(i, 0);
-        if (idItem) {
-          idItem->setData(Qt::UserRole, conn["id"].toString());
-        }
-      }
-    });
+    connect(m_proxyService,
+            &ProxyService::connectionsReceived,
+            this,
+            [this](const QJsonObject& connections) {
+              QJsonArray conns = connections["connections"].toArray();
+              m_tableWidget->setRowCount(conns.count());
+              auto setCell = [this](int row, int col, const QString& text) {
+                QTableWidgetItem* item = m_tableWidget->item(row, col);
+                if (!item) {
+                  item = new QTableWidgetItem();
+                  m_tableWidget->setItem(row, col, item);
+                }
+                item->setText(text);
+              };
+              for (int i = 0; i < conns.count(); ++i) {
+                QJsonObject conn     = conns[i].toObject();
+                QJsonObject metadata = conn["metadata"].toObject();
+                setCell(i, 0, metadata["sourceIP"].toString());
+                QString host = metadata["host"].toString();
+                if (host.isEmpty())
+                  host = metadata["destinationIP"].toString();
+                if (host.isEmpty())
+                  host = metadata["destinationIp"].toString();
+                if (host.isEmpty())
+                  host = tr("Unknown");
+                auto readPort = [](const QJsonValue& value) -> int {
+                  if (value.isString()) {
+                    bool      ok     = false;
+                    const int parsed = value.toString().toInt(&ok);
+                    return ok ? parsed : 0;
+                  }
+                  if (value.isDouble()) {
+                    return value.toInt();
+                  }
+                  bool      ok     = false;
+                  const int parsed = value.toVariant().toInt(&ok);
+                  return ok ? parsed : 0;
+                };
+                QJsonValue portValue = metadata.value("destinationPort");
+                if (portValue.isUndefined()) {
+                  portValue = metadata.value("destination_port");
+                }
+                const int port        = readPort(portValue);
+                QString   destination = host;
+                if (port > 0) {
+                  destination += ":" + QString::number(port);
+                }
+                setCell(i, 1, destination);
+                setCell(i, 2, metadata["network"].toString());
+                setCell(i, 3, conn["rule"].toString());
+                setCell(i,
+                        4,
+                        QString::number(
+                            conn["upload"].toVariant().toLongLong() / 1024) +
+                            " KB");
+                setCell(i,
+                        5,
+                        QString::number(
+                            conn["download"].toVariant().toLongLong() / 1024) +
+                            " KB");
+                // Store connection ID.
+                QTableWidgetItem* idItem = m_tableWidget->item(i, 0);
+                if (idItem) {
+                  idItem->setData(Qt::UserRole, conn["id"].toString());
+                }
+              }
+            });
   }
 }
 
@@ -154,7 +182,8 @@ void ConnectionsView::onRefresh() {
 }
 
 void ConnectionsView::onCloseSelected() {
-  if (!m_proxyService) return;
+  if (!m_proxyService)
+    return;
   QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
   QSet<int>                rows;
   for (auto item : selected) {
@@ -174,5 +203,6 @@ void ConnectionsView::onCloseAll() {
 
 void ConnectionsView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (ts) setStyleSheet(ts->loadStyleSheet(":/styles/connections_view.qss"));
+  if (ts)
+    setStyleSheet(ts->loadStyleSheet(":/styles/connections_view.qss"));
 }

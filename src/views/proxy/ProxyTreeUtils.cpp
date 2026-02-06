@@ -11,7 +11,8 @@
 
 namespace ProxyTreeUtils {
 QString nodeDisplayName(QTreeWidgetItem* item) {
-  if (!item) return QString();
+  if (!item)
+    return QString();
   QString name = item->data(0, Qt::UserRole + 3).toString();
   if (name.isEmpty()) {
     name = item->text(0);
@@ -19,7 +20,10 @@ QString nodeDisplayName(QTreeWidgetItem* item) {
   return name;
 }
 
-QWidget* buildNodeRow(QTreeWidget* treeWidget, const QString& name, const QString& type, const QString& delay) {
+QWidget* buildNodeRow(QTreeWidget*   treeWidget,
+                      const QString& name,
+                      const QString& type,
+                      const QString& delay) {
   QWidget* card = new QFrame(treeWidget ? treeWidget->viewport() : nullptr);
   card->setObjectName("ProxyNodeCard");
   card->setAttribute(Qt::WA_Hover, true);
@@ -44,11 +48,15 @@ QWidget* buildNodeRow(QTreeWidget* treeWidget, const QString& name, const QStrin
   return card;
 }
 
-void updateNodeRowDelay(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString& delayText,
-                        const QString& state) {
-  if (!treeWidget || !item) return;
+void updateNodeRowDelay(QTreeWidget*     treeWidget,
+                        QTreeWidgetItem* item,
+                        const QString&   delayText,
+                        const QString&   state) {
+  if (!treeWidget || !item)
+    return;
   QWidget* row = treeWidget->itemWidget(item, 0);
-  if (!row) return;
+  if (!row)
+    return;
   if (auto* delayLabel = row->findChild<QLabel*>("ProxyNodeDelay")) {
     delayLabel->setText(delayText);
     delayLabel->setProperty("state", state);
@@ -57,17 +65,25 @@ void updateNodeRowDelay(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QS
   }
 }
 
-void updateNodeRowSelected(QTreeWidget* treeWidget, QTreeWidgetItem* item, bool selected) {
-  if (!treeWidget || !item) return;
+void updateNodeRowSelected(QTreeWidget*     treeWidget,
+                           QTreeWidgetItem* item,
+                           bool             selected) {
+  if (!treeWidget || !item)
+    return;
   QWidget* row = treeWidget->itemWidget(item, 0);
-  if (!row) return;
+  if (!row)
+    return;
   row->setProperty("selected", selected);
   row->style()->unpolish(row);
   row->style()->polish(row);
 }
 
-void markNodeState(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString& now, const QString& delayText) {
-  if (!treeWidget || !item) return;
+void markNodeState(QTreeWidget*     treeWidget,
+                   QTreeWidgetItem* item,
+                   const QString&   now,
+                   const QString&   delayText) {
+  if (!treeWidget || !item)
+    return;
   QString baseName = item->data(0, Qt::UserRole + 3).toString();
   if (baseName.isEmpty()) {
     baseName = item->text(0);
@@ -90,14 +106,16 @@ void markNodeState(QTreeWidget* treeWidget, QTreeWidgetItem* item, const QString
 }
 
 void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
-  if (!treeWidget) return;
+  if (!treeWidget)
+    return;
   QTreeWidgetItemIterator it(treeWidget);
   while (*it) {
     QTreeWidgetItem* item = *it;
     const QString    role = item->data(0, Qt::UserRole).toString();
     if (role == "node") {
       const QString group = item->data(0, Qt::UserRole + 1).toString();
-      const QString now   = proxies.value(group).toObject().value("now").toString();
+      const QString now =
+          proxies.value(group).toObject().value("now").toString();
       markNodeState(treeWidget, item, now, item->text(2));
     }
     ++it;
@@ -105,16 +123,19 @@ void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
 }
 
 void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
-  if (!treeWidget) return;
+  if (!treeWidget)
+    return;
   QTreeWidgetItemIterator it(treeWidget);
   while (*it) {
     if ((*it)->data(0, Qt::UserRole).toString() == "node") {
-      const bool match = nodeDisplayName(*it).contains(text, Qt::CaseInsensitive);
+      const bool match =
+          nodeDisplayName(*it).contains(text, Qt::CaseInsensitive);
       (*it)->setHidden(!match && !text.isEmpty());
     }
     ++it;
   }
-  if (text.isEmpty()) return;
+  if (text.isEmpty())
+    return;
   it = QTreeWidgetItemIterator(treeWidget);
   while (*it) {
     if ((*it)->data(0, Qt::UserRole).toString() == "group") {
@@ -132,12 +153,17 @@ void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
   }
 }
 
-void updateGroupCurrentLabel(QTreeWidget* treeWidget, QTreeWidgetItem* groupItem, const QString& text) {
-  if (!treeWidget || !groupItem) return;
+void updateGroupCurrentLabel(QTreeWidget*     treeWidget,
+                             QTreeWidgetItem* groupItem,
+                             const QString&   text) {
+  if (!treeWidget || !groupItem)
+    return;
   QWidget* groupCard = treeWidget->itemWidget(groupItem, 0);
-  if (!groupCard) return;
+  if (!groupCard)
+    return;
   QLabel* currentLabel = groupCard->findChild<QLabel*>("ProxyGroupCurrent");
-  if (!currentLabel) return;
+  if (!currentLabel)
+    return;
   currentLabel->setText(text);
   currentLabel->setVisible(true);
 }

@@ -10,14 +10,17 @@ class QTimer;
 
 /**
  * @brief ProxyRuntimeController
- * Listens to Kernel/Proxy service runtime state, dispatching status/traffic/connection signals to UI,
- * and coordinates with business layer during kernel start/stop (system proxy sync, traffic monitor toggle).
+ * Listens to Kernel/Proxy service runtime state, dispatching
+ * status/traffic/connection signals to UI, and coordinates with business layer
+ * during kernel start/stop (system proxy sync, traffic monitor toggle).
  */
 class ProxyRuntimeController : public QObject {
   Q_OBJECT
  public:
-  explicit ProxyRuntimeController(KernelService* kernelService, ProxyService* proxyService,
-                                  ProxyController* proxyController, QObject* parent = nullptr);
+  explicit ProxyRuntimeController(KernelService*   kernelService,
+                                  ProxyService*    proxyService,
+                                  ProxyController* proxyController,
+                                  QObject*         parent = nullptr);
   bool isKernelRunning() const;
   void broadcastStates();
  signals:

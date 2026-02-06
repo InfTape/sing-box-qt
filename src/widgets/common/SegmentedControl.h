@@ -6,9 +6,11 @@ class ThemeService;
 
 class SegmentedControl : public QWidget {
   Q_OBJECT
-  Q_PROPERTY(qreal selectionOffset READ selectionOffset WRITE setSelectionOffset)
+  Q_PROPERTY(
+      qreal selectionOffset READ selectionOffset WRITE setSelectionOffset)
  public:
-  explicit SegmentedControl(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
+  explicit SegmentedControl(QWidget*      parent       = nullptr,
+                            ThemeService* themeService = nullptr);
   void setItems(const QStringList& labels, const QStringList& values);
   void setCurrentIndex(int index);
 

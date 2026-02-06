@@ -15,20 +15,32 @@
 #include "storage/AppSettings.h"
 #include "utils/proxy/ProxyActions.h"
 
-ProxyViewController::ProxyViewController(ConfigRepository* configRepository, QObject* parent)
+ProxyViewController::ProxyViewController(ConfigRepository* configRepository,
+                                         QObject*          parent)
     : QObject(parent), m_configRepository(configRepository) {}
 
 void ProxyViewController::setProxyService(ProxyService* service) {
-  if (m_proxyService == service) return;
+  if (m_proxyService == service)
+    return;
   if (m_proxyService) {
     disconnect(m_proxyService, nullptr, this, nullptr);
   }
   m_proxyService = service;
-  if (!m_proxyService) return;
+  if (!m_proxyService)
+    return;
   updateDelayTesterAuth();
-  connect(m_proxyService, &ProxyService::proxiesReceived, this, &ProxyViewController::proxiesUpdated);
-  connect(m_proxyService, &ProxyService::proxySelected, this, &ProxyViewController::proxySelected);
-  connect(m_proxyService, &ProxyService::proxySelectFailed, this, &ProxyViewController::proxySelectFailed);
+  connect(m_proxyService,
+          &ProxyService::proxiesReceived,
+          this,
+          &ProxyViewController::proxiesUpdated);
+  connect(m_proxyService,
+          &ProxyService::proxySelected,
+          this,
+          &ProxyViewController::proxySelected);
+  connect(m_proxyService,
+          &ProxyService::proxySelectFailed,
+          this,
+          &ProxyViewController::proxySelectFailed);
 }
 
 ProxyService* ProxyViewController::proxyService() const {
@@ -38,10 +50,22 @@ ProxyService* ProxyViewController::proxyService() const {
 DelayTestService* ProxyViewController::ensureDelayTester() {
   if (!m_delayTestService) {
     m_delayTestService = std::make_unique<DelayTestService>(this);
-    connect(m_delayTestService.get(), &DelayTestService::nodeDelayResult, this, &ProxyViewController::delayResult);
-    connect(m_delayTestService.get(), &DelayTestService::testProgress, this, &ProxyViewController::testProgress);
-    connect(m_delayTestService.get(), &DelayTestService::testCompleted, this, &ProxyViewController::testCompleted);
-    connect(m_delayTestService.get(), &DelayTestService::errorOccurred, this, &ProxyViewController::errorOccurred);
+    connect(m_delayTestService.get(),
+            &DelayTestService::nodeDelayResult,
+            this,
+            &ProxyViewController::delayResult);
+    connect(m_delayTestService.get(),
+            &DelayTestService::testProgress,
+            this,
+            &ProxyViewController::testProgress);
+    connect(m_delayTestService.get(),
+            &DelayTestService::testCompleted,
+            this,
+            &ProxyViewController::testCompleted);
+    connect(m_delayTestService.get(),
+            &DelayTestService::errorOccurred,
+            this,
+            &ProxyViewController::errorOccurred);
   }
   updateDelayTesterAuth();
   return m_delayTestService.get();
@@ -52,7 +76,8 @@ bool ProxyViewController::isTesting() const {
 }
 
 void ProxyViewController::updateDelayTesterAuth() {
-  if (!m_delayTestService || !m_proxyService) return;
+  if (!m_delayTestService || !m_proxyService)
+    return;
   m_delayTestService->setApiPort(m_proxyService->getApiPort());
   m_delayTestService->setApiToken(m_proxyService->getApiToken());
 }
@@ -63,8 +88,10 @@ void ProxyViewController::refreshProxies() const {
   }
 }
 
-void ProxyViewController::selectProxy(const QString& group, const QString& proxy) {
-  if (!m_proxyService) return;
+void ProxyViewController::selectProxy(const QString& group,
+                                      const QString& proxy) {
+  if (!m_proxyService)
+    return;
   ProxyActions::selectProxy(m_proxyService, group, proxy);
 }
 
@@ -88,13 +115,15 @@ DelayTestOptions ProxyViewController::buildBatchOptions() const {
 
 void ProxyViewController::startSingleDelayTest(const QString& nodeName) {
   DelayTestService* tester = ensureDelayTester();
-  if (!tester) return;
+  if (!tester)
+    return;
   tester->testNodeDelay(nodeName, buildSingleOptions());
 }
 
 void ProxyViewController::startBatchDelayTests(const QStringList& nodes) {
   DelayTestService* tester = ensureDelayTester();
-  if (!tester) return;
+  if (!tester)
+    return;
   tester->testNodesDelay(nodes, buildBatchOptions());
 }
 
@@ -106,12 +135,15 @@ void ProxyViewController::stopAllTests() {
 
 QJsonObject ProxyViewController::loadNodeOutbound(const QString& tag) const {
   const QString path = RuleConfigService::activeConfigPath(m_configRepository);
-  if (path.isEmpty() || !m_configRepository) return QJsonObject();
+  if (path.isEmpty() || !m_configRepository)
+    return QJsonObject();
   QJsonObject config = m_configRepository->loadConfig(path);
-  if (config.isEmpty()) return QJsonObject();
+  if (config.isEmpty())
+    return QJsonObject();
   const QJsonArray outbounds = config.value("outbounds").toArray();
   for (const auto& v : outbounds) {
-    if (!v.isObject()) continue;
+    if (!v.isObject())
+      continue;
     QJsonObject ob = v.toObject();
     if (ob.value("tag").toString() == tag) {
       return ob;
@@ -123,9 +155,12 @@ QJsonObject ProxyViewController::loadNodeOutbound(const QString& tag) const {
 QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   Q_UNUSED(nodeTag)
   QNetworkAccessManager manager;
-  QNetworkProxy         proxy(QNetworkProxy::Socks5Proxy, "127.0.0.1", AppSettings::instance().mixedPort());
+  QNetworkProxy         proxy(QNetworkProxy::Socks5Proxy,
+                      "127.0.0.1",
+                      AppSettings::instance().mixedPort());
   manager.setProxy(proxy);
-  const QString   testUrl   = QStringLiteral("https://speed.cloudflare.com/__down?bytes=5000000");
+  const QString testUrl =
+      QStringLiteral("https://speed.cloudflare.com/__down?bytes=5000000");
   const int       timeoutMs = 15000;
   const QUrl      testQUrl(testUrl);
   QNetworkRequest request(testQUrl);
@@ -153,13 +188,15 @@ QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   reply->readAll();
   reply->deleteLater();
   const qint64 ms = timer.elapsed();
-  if (ms <= 0) return QString();
+  if (ms <= 0)
+    return QString();
   const double bytesPerSec = (static_cast<double>(totalBytes) * 1000.0) / ms;
   const double mbps        = (bytesPerSec * 8.0) / (1024.0 * 1024.0);
   return tr("%1 Mbps").arg(QString::number(mbps, 'f', 1));
 }
 
-void ProxyViewController::startSpeedTest(const QString& nodeName, const QString& groupName) {
+void ProxyViewController::startSpeedTest(const QString& nodeName,
+                                         const QString& groupName) {
   if (!m_proxyService) {
     emit speedTestResult(nodeName, QString());
     return;
@@ -168,6 +205,8 @@ void ProxyViewController::startSpeedTest(const QString& nodeName, const QString&
   QThreadPool::globalInstance()->start([this, nodeName]() {
     const QString result = runBandwidthTest(nodeName);
     QMetaObject::invokeMethod(
-        this, [this, nodeName, result]() { emit speedTestResult(nodeName, result); }, Qt::QueuedConnection);
+        this,
+        [this, nodeName, result]() { emit speedTestResult(nodeName, result); },
+        Qt::QueuedConnection);
   });
 }

@@ -36,29 +36,38 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
   m_progressBar->hide();
   rootLayout->addLayout(toolbarLayout);
   rootLayout->addWidget(m_progressBar);
-  connect(m_searchEdit, &QLineEdit::textChanged, this, &ProxyToolbar::searchTextChanged);
-  connect(m_testAllBtn, &QPushButton::clicked, this, &ProxyToolbar::testAllClicked);
-  connect(m_refreshBtn, &QPushButton::clicked, this, &ProxyToolbar::refreshClicked);
+  connect(m_searchEdit,
+          &QLineEdit::textChanged,
+          this,
+          &ProxyToolbar::searchTextChanged);
+  connect(
+      m_testAllBtn, &QPushButton::clicked, this, &ProxyToolbar::testAllClicked);
+  connect(
+      m_refreshBtn, &QPushButton::clicked, this, &ProxyToolbar::refreshClicked);
 }
 
 void ProxyToolbar::setTesting(bool testing) {
-  if (!m_testAllBtn) return;
+  if (!m_testAllBtn)
+    return;
   m_testAllBtn->setProperty("testing", testing);
   m_testAllBtn->style()->unpolish(m_testAllBtn);
   m_testAllBtn->style()->polish(m_testAllBtn);
 }
 
 void ProxyToolbar::setTestAllText(const QString& text) {
-  if (!m_testAllBtn) return;
+  if (!m_testAllBtn)
+    return;
   m_testAllBtn->setText(text);
 }
 
 void ProxyToolbar::setProgress(int progress) {
-  if (!m_progressBar) return;
+  if (!m_progressBar)
+    return;
   m_progressBar->setValue(progress);
 }
 
 void ProxyToolbar::showProgress(bool visible) {
-  if (!m_progressBar) return;
+  if (!m_progressBar)
+    return;
   m_progressBar->setVisible(visible);
 }

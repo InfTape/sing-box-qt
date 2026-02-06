@@ -11,6 +11,8 @@ QString     getKernelArch();
 QString     buildKernelFilename(const QString& version);
 QStringList buildDownloadUrls(const QString& version, const QString& filename);
 QString     findExecutableInDir(const QString& dirPath, const QString& exeName);
-bool        extractZipArchive(const QString& zipPath, const QString& destDir, QString* errorMessage);
+bool        extractZipArchive(const QString& zipPath,
+                              const QString& destDir,
+                              QString*       errorMessage);
 }  // namespace KernelPlatform
 #endif  // KERNELPLATFORM_H

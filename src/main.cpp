@@ -3,7 +3,8 @@
 
 int main(int argc, char* argv[]) {
   // Enable high DPI support
-  QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+  QApplication::setHighDpiScaleFactorRoundingPolicy(
+      Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
   QApplication    app(argc, argv);
   AppBootstrapper bootstrapper(app);
   if (!bootstrapper.initialize()) {

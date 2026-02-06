@@ -24,20 +24,27 @@ QString sanitizeFileName(const QString& name) {
 namespace SubscriptionConfigStore {
 QString generateConfigFileName(const QString& name) {
   const QString safe = sanitizeFileName(name);
-  return QString("%1-%2.json").arg(safe).arg(QDateTime::currentMSecsSinceEpoch());
+  return QString("%1-%2.json")
+      .arg(safe)
+      .arg(QDateTime::currentMSecsSinceEpoch());
 }
 
-bool saveConfigWithNodes(ConfigRepository* cfg, const QJsonArray& nodes, const QString& targetPath) {
+bool saveConfigWithNodes(ConfigRepository* cfg,
+                         const QJsonArray& nodes,
+                         const QString&    targetPath) {
   return cfg ? cfg->generateConfigWithNodes(nodes, targetPath) : false;
 }
 
-bool saveOriginalConfig(ConfigRepository* cfg, const QString& content, const QString& targetPath) {
+bool saveOriginalConfig(ConfigRepository* cfg,
+                        const QString&    content,
+                        const QString&    targetPath) {
   QJsonParseError err;
   QJsonDocument   doc = QJsonDocument::fromJson(content.toUtf8(), &err);
   if (err.error != QJsonParseError::NoError || !doc.isObject()) {
     return false;
   }
-  if (!cfg) return false;
+  if (!cfg)
+    return false;
   QJsonObject config = doc.object();
   cfg->applyPortSettings(config);
   return cfg->saveConfig(targetPath, config);

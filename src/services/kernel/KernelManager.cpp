@@ -22,11 +22,13 @@ QString normalizeVersionTag(const QString& raw) {
 
 bool isPreReleaseTag(const QString& tag) {
   const QString lower = tag.toLower();
-  return lower.contains("rc") || lower.contains("beta") || lower.contains("alpha");
+  return lower.contains("rc") || lower.contains("beta") ||
+         lower.contains("alpha");
 }
 }  // namespace
 
-KernelManager::KernelManager(QObject* parent) : QObject(parent), m_httpClient(new HttpClient(this)) {}
+KernelManager::KernelManager(QObject* parent)
+    : QObject(parent), m_httpClient(new HttpClient(this)) {}
 
 QString KernelManager::normalizedLatest(const QString& rawTag) const {
   return normalizeVersionTag(rawTag);
@@ -75,37 +77,39 @@ void KernelManager::fetchReleaseList() {
       return;
     }
     const QString url = apiUrls.at(index);
-    m_httpClient->get(url, [this, apiUrls, index, tryFetch](bool success, const QByteArray& data) {
-      if (!success) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      QJsonDocument doc = QJsonDocument::fromJson(data);
-      if (!doc.isArray()) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      QStringList      versions;
-      const QJsonArray arr = doc.array();
-      for (const QJsonValue& item : arr) {
-        const QJsonObject obj        = item.toObject();
-        const bool        prerelease = obj.value("prerelease").toBool(false);
-        if (prerelease) {
-          continue;
-        }
-        const QString tag = obj.value("tag_name").toString();
-        if (tag.isEmpty() || isPreReleaseTag(tag)) {
-          continue;
-        }
-        versions.append(normalizeVersionTag(tag));
-      }
-      if (versions.isEmpty()) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      m_latestKernelVersion = versions.first();
-      emit releasesReady(versions, m_latestKernelVersion);
-    });
+    m_httpClient->get(
+        url,
+        [this, apiUrls, index, tryFetch](bool success, const QByteArray& data) {
+          if (!success) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          QJsonDocument doc = QJsonDocument::fromJson(data);
+          if (!doc.isArray()) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          QStringList      versions;
+          const QJsonArray arr = doc.array();
+          for (const QJsonValue& item : arr) {
+            const QJsonObject obj = item.toObject();
+            const bool prerelease = obj.value("prerelease").toBool(false);
+            if (prerelease) {
+              continue;
+            }
+            const QString tag = obj.value("tag_name").toString();
+            if (tag.isEmpty() || isPreReleaseTag(tag)) {
+              continue;
+            }
+            versions.append(normalizeVersionTag(tag));
+          }
+          if (versions.isEmpty()) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          m_latestKernelVersion = versions.first();
+          emit releasesReady(versions, m_latestKernelVersion);
+        });
   };
   (*tryFetch)(0);
 }
@@ -114,33 +118,39 @@ void KernelManager::checkLatest() {
   if (!m_httpClient) {
     return;
   }
-  const QString     installedVersion = KernelPlatform::queryKernelVersion(KernelPlatform::detectKernelPath());
-  const QStringList apiUrls          = latestKernelApiUrls();
-  auto              tryFetch         = std::make_shared<std::function<void(int)>>();
-  *tryFetch                          = [this, apiUrls, installedVersion, tryFetch](int index) {
+  const QString installedVersion =
+      KernelPlatform::queryKernelVersion(KernelPlatform::detectKernelPath());
+  const QStringList apiUrls  = latestKernelApiUrls();
+  auto              tryFetch = std::make_shared<std::function<void(int)>>();
+  *tryFetch = [this, apiUrls, installedVersion, tryFetch](int index) {
     if (index >= apiUrls.size()) {
-      emit finished(false, tr("Failed to fetch kernel versions. Please try again."));
+      emit finished(false,
+                    tr("Failed to fetch kernel versions. Please try again."));
       return;
     }
     const QString url = apiUrls.at(index);
-    m_httpClient->get(url, [this, apiUrls, installedVersion, index, tryFetch](bool success, const QByteArray& data) {
-      if (!success) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      QJsonDocument doc = QJsonDocument::fromJson(data);
-      if (!doc.isObject()) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      const QJsonObject obj    = doc.object();
-      QString           latest = normalizeVersionTag(obj.value("tag_name").toString());
-      if (latest.isEmpty()) {
-        (*tryFetch)(index + 1);
-        return;
-      }
-      emit latestReady(latest, normalizeVersionTag(installedVersion));
-    });
+    m_httpClient->get(
+        url,
+        [this, apiUrls, installedVersion, index, tryFetch](
+            bool success, const QByteArray& data) {
+          if (!success) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          QJsonDocument doc = QJsonDocument::fromJson(data);
+          if (!doc.isObject()) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          const QJsonObject obj = doc.object();
+          QString           latest =
+              normalizeVersionTag(obj.value("tag_name").toString());
+          if (latest.isEmpty()) {
+            (*tryFetch)(index + 1);
+            return;
+          }
+          emit latestReady(latest, normalizeVersionTag(installedVersion));
+        });
   };
   (*tryFetch)(0);
 }
@@ -162,11 +172,14 @@ void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
     emit finished(false, tr("Unsupported system architecture"));
     return;
   }
-  const QString tempDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/sing-box";
+  const QString tempDir =
+      QStandardPaths::writableLocation(QStandardPaths::TempLocation) +
+      "/sing-box";
   QDir().mkpath(tempDir);
   const QString     zipPath    = tempDir + "/" + filename;
   const QString     extractDir = tempDir + "/extract-" + targetVersion;
-  const QStringList urls       = KernelPlatform::buildDownloadUrls(targetVersion, filename);
+  const QStringList urls =
+      KernelPlatform::buildDownloadUrls(targetVersion, filename);
   if (urls.isEmpty()) {
     emit finished(false, tr("Download URL is empty"));
     return;
@@ -176,8 +189,11 @@ void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
   tryDownloadUrl(0, urls, zipPath, extractDir, targetVersion);
 }
 
-void KernelManager::tryDownloadUrl(int index, const QStringList& urls, const QString& savePath,
-                                   const QString& extractDir, const QString& version) {
+void KernelManager::tryDownloadUrl(int                index,
+                                   const QStringList& urls,
+                                   const QString&     savePath,
+                                   const QString&     extractDir,
+                                   const QString&     version) {
   if (index >= urls.size()) {
     m_isDownloading = false;
     emit finished(false, tr("Failed to download kernel from mirror"));
@@ -186,26 +202,31 @@ void KernelManager::tryDownloadUrl(int index, const QStringList& urls, const QSt
   const QString url = urls.at(index);
   emit          statusChanged(tr("Downloading: %1").arg(url));
   m_httpClient->download(
-      url, savePath,
+      url,
+      savePath,
       [this](qint64 received, qint64 total) {
         if (total > 0) {
           int  percent = static_cast<int>((received * 100) / total);
           emit downloadProgress(percent);
         }
       },
-      [this, urls, index, savePath, extractDir, version](bool success, const QByteArray&) {
+      [this, urls, index, savePath, extractDir, version](bool success,
+                                                         const QByteArray&) {
         if (!success) {
           tryDownloadUrl(index + 1, urls, savePath, extractDir, version);
           return;
         }
         QString errorMessage;
-        if (!KernelPlatform::extractZipArchive(savePath, extractDir, &errorMessage)) {
+        if (!KernelPlatform::extractZipArchive(
+                savePath, extractDir, &errorMessage)) {
           m_isDownloading = false;
           emit finished(false, tr("Extract failed: %1").arg(errorMessage));
           return;
         }
-        QString       exeName  = QSysInfo::productType() == "windows" ? "sing-box.exe" : "sing-box";
-        const QString foundExe = KernelPlatform::findExecutableInDir(extractDir, exeName);
+        QString exeName =
+            QSysInfo::productType() == "windows" ? "sing-box.exe" : "sing-box";
+        const QString foundExe =
+            KernelPlatform::findExecutableInDir(extractDir, exeName);
         if (foundExe.isEmpty()) {
           m_isDownloading = false;
           emit finished(false, tr("sing-box executable not found in archive"));

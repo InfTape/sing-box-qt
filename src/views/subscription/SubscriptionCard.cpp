@@ -14,18 +14,27 @@
 #include "utils/subscription/SubscriptionFormat.h"
 #include "widgets/common/RoundedMenu.h"
 
-SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info, bool active, ThemeService* themeService,
-                                   QWidget* parent)
-    : QFrame(parent), m_subId(info.id), m_active(active), m_themeService(themeService) {
+SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info,
+                                   bool                    active,
+                                   ThemeService*           themeService,
+                                   QWidget*                parent)
+    : QFrame(parent),
+      m_subId(info.id),
+      m_active(active),
+      m_themeService(themeService) {
   setupUI(info);
   updateInfo(info, active);
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this, &SubscriptionCard::updateStyle);
+    connect(m_themeService,
+            &ThemeService::themeChanged,
+            this,
+            &SubscriptionCard::updateStyle);
   }
 }
 
 void SubscriptionCard::setActive(bool active) {
-  if (m_active == active) return;
+  if (m_active == active)
+    return;
   m_active = active;
   applyActiveState();
   updateStyle();
@@ -57,8 +66,9 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   ThemeService* ts = m_themeService;
   if (ts) {
     menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    connect(ts, &ThemeService::themeChanged, menu,
-            [menu, ts]() { menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
+    connect(ts, &ThemeService::themeChanged, menu, [menu, ts]() {
+      menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+    });
   }
   QAction* copyAction         = menu->addAction(tr("Copy Link"));
   QAction* editAction         = menu->addAction(tr("Edit Subscription"));
@@ -69,15 +79,29 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   menu->addSeparator();
   QAction* deleteAction = menu->addAction(tr("Delete Subscription"));
   deleteAction->setObjectName("DeleteAction");
-  connect(menuBtn, &QPushButton::clicked,
-          [menuBtn, menu]() { menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height()))); });
-  connect(copyAction, &QAction::triggered, [this]() { emit copyLinkClicked(m_subId); });
-  connect(editAction, &QAction::triggered, [this]() { emit editClicked(m_subId); });
-  connect(m_editConfigAction, &QAction::triggered, [this]() { emit editConfigClicked(m_subId); });
-  connect(refreshAction, &QAction::triggered, [this]() { emit refreshClicked(m_subId, false); });
-  connect(refreshApplyAction, &QAction::triggered, [this]() { emit refreshClicked(m_subId, true); });
-  connect(rollbackAction, &QAction::triggered, [this]() { emit rollbackClicked(m_subId); });
-  connect(deleteAction, &QAction::triggered, [this]() { emit deleteClicked(m_subId); });
+  connect(menuBtn, &QPushButton::clicked, [menuBtn, menu]() {
+    menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
+  });
+  connect(copyAction, &QAction::triggered, [this]() {
+    emit copyLinkClicked(m_subId);
+  });
+  connect(
+      editAction, &QAction::triggered, [this]() { emit editClicked(m_subId); });
+  connect(m_editConfigAction, &QAction::triggered, [this]() {
+    emit editConfigClicked(m_subId);
+  });
+  connect(refreshAction, &QAction::triggered, [this]() {
+    emit refreshClicked(m_subId, false);
+  });
+  connect(refreshApplyAction, &QAction::triggered, [this]() {
+    emit refreshClicked(m_subId, true);
+  });
+  connect(rollbackAction, &QAction::triggered, [this]() {
+    emit rollbackClicked(m_subId);
+  });
+  connect(deleteAction, &QAction::triggered, [this]() {
+    emit deleteClicked(m_subId);
+  });
   headerLayout->addWidget(m_nameLabel);
   headerLayout->addWidget(m_typeTag);
   headerLayout->addWidget(m_statusTag);
@@ -105,7 +129,8 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   m_useBtn->setCursor(Qt::PointingHandCursor);
   m_useBtn->setMinimumHeight(38);
   m_useBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  connect(m_useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
+  connect(
+      m_useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
   mainLayout->addLayout(headerLayout);
   mainLayout->addWidget(infoPanel);
   mainLayout->addStretch();
@@ -160,18 +185,21 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
     m_urlLabel->setText(urlText);
   }
   if (m_timeLabel) {
-    m_timeLabel->setText(tr("Updated: ") + SubscriptionFormat::formatTimestamp(info.lastUpdate));
+    m_timeLabel->setText(tr("Updated: ") +
+                         SubscriptionFormat::formatTimestamp(info.lastUpdate));
   }
   if (m_trafficLabel) {
     if (info.subscriptionUpload >= 0 || info.subscriptionDownload >= 0) {
-      qint64  used = qMax<qint64>(0, info.subscriptionUpload) + qMax<qint64>(0, info.subscriptionDownload);
+      qint64 used = qMax<qint64>(0, info.subscriptionUpload) +
+                    qMax<qint64>(0, info.subscriptionDownload);
       QString trafficText;
       if (info.subscriptionTotal > 0) {
         qint64 remain = qMax<qint64>(0, info.subscriptionTotal - used);
-        trafficText   = tr("Used %1 / Total %2 / Remaining %3")
-                          .arg(SubscriptionFormat::formatBytes(used))
-                          .arg(SubscriptionFormat::formatBytes(info.subscriptionTotal))
-                          .arg(SubscriptionFormat::formatBytes(remain));
+        trafficText =
+            tr("Used %1 / Total %2 / Remaining %3")
+                .arg(SubscriptionFormat::formatBytes(used))
+                .arg(SubscriptionFormat::formatBytes(info.subscriptionTotal))
+                .arg(SubscriptionFormat::formatBytes(remain));
       } else {
         trafficText = tr("Used %1").arg(SubscriptionFormat::formatBytes(used));
       }
@@ -183,7 +211,9 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
   }
   if (m_expireLabel) {
     if (info.subscriptionExpire > 0) {
-      m_expireLabel->setText(tr("Expires: ") + SubscriptionFormat::formatExpireTime(info.subscriptionExpire));
+      m_expireLabel->setText(
+          tr("Expires: ") +
+          SubscriptionFormat::formatExpireTime(info.subscriptionExpire));
       m_expireLabel->setVisible(true);
     } else {
       m_expireLabel->setVisible(false);
@@ -196,7 +226,8 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
 
 void SubscriptionCard::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts) return;
+  if (!ts)
+    return;
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   if (qss.isEmpty()) {
     qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // Fallback

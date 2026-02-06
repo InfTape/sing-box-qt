@@ -10,8 +10,12 @@
 #include "network/SubscriptionService.h"
 #include "utils/Logger.h"
 
-ProxyController::ProxyController(KernelService* kernel, SubscriptionService* subscription, ConfigRepository* configRepo,
-                                 SettingsStore* settings, SystemProxyGateway* systemProxy, QObject* parent)
+ProxyController::ProxyController(KernelService*       kernel,
+                                 SubscriptionService* subscription,
+                                 ConfigRepository*    configRepo,
+                                 SettingsStore*       settings,
+                                 SystemProxyGateway*  systemProxy,
+                                 QObject*             parent)
     : QObject(parent),
       m_kernel(kernel),
       m_subscription(subscription),
@@ -40,14 +44,16 @@ QString ProxyController::activeConfigPath() const {
 
 QString ProxyController::currentProxyMode() const {
   const QString path = activeConfigPath();
-  if (path.isEmpty() || !m_configRepo) return "rule";
+  if (path.isEmpty() || !m_configRepo)
+    return "rule";
   return m_configRepo->readClashDefaultMode(path);
 }
 
 bool ProxyController::ensureConfigExists(QString* outPath) {
   QString configPath = activeConfigPath();
   if (!configPath.isEmpty() && QFile::exists(configPath)) {
-    if (outPath) *outPath = configPath;
+    if (outPath)
+      *outPath = configPath;
     return true;
   }
   if (!m_configRepo) {
@@ -59,12 +65,14 @@ bool ProxyController::ensureConfigExists(QString* outPath) {
     return false;
   }
   configPath = m_configRepo->getActiveConfigPath();
-  if (outPath) *outPath = configPath;
+  if (outPath)
+    *outPath = configPath;
   return QFile::exists(configPath);
 }
 
 bool ProxyController::startKernel() {
-  if (!m_kernel) return false;
+  if (!m_kernel)
+    return false;
   QString configPath;
   if (!ensureConfigExists(&configPath)) {
     return false;
@@ -80,7 +88,8 @@ void ProxyController::stopKernel() {
 }
 
 bool ProxyController::toggleKernel() {
-  if (!m_kernel) return false;
+  if (!m_kernel)
+    return false;
   if (m_kernel->isRunning()) {
     m_kernel->stop();
     return true;
@@ -88,14 +97,18 @@ bool ProxyController::toggleKernel() {
   return startKernel();
 }
 
-bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, QString* error) {
+bool ProxyController::setProxyMode(const QString& mode,
+                                   bool           restartIfRunning,
+                                   QString*       error) {
   const QString configPath = activeConfigPath();
   if (configPath.isEmpty()) {
-    if (error) *error = QObject::tr("Failed to resolve config path");
+    if (error)
+      *error = QObject::tr("Failed to resolve config path");
     return false;
   }
   if (!m_configRepo) {
-    if (error) *error = QObject::tr("Config repository not available");
+    if (error)
+      *error = QObject::tr("Config repository not available");
     return false;
   }
   bool ok = m_configRepo->updateClashDefaultMode(configPath, mode, error);
@@ -106,7 +119,8 @@ bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, Q
 }
 
 bool ProxyController::restartKernelWithConfig(const QString& configPath) {
-  if (!m_kernel || configPath.isEmpty()) return false;
+  if (!m_kernel || configPath.isEmpty())
+    return false;
   m_kernel->setConfigPath(configPath);
   if (m_kernel->isRunning()) {
     m_kernel->restartWithConfig(configPath);
@@ -136,9 +150,11 @@ bool ProxyController::setTunModeEnabled(bool enabled) {
 
 bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
   QString configPath = activeConfigPath();
-  if (configPath.isEmpty() || !m_configRepo) return false;
+  if (configPath.isEmpty() || !m_configRepo)
+    return false;
   QJsonObject config = m_configRepo->loadConfig(configPath);
-  if (config.isEmpty()) return false;
+  if (config.isEmpty())
+    return false;
   m_configRepo->applySettingsToConfig(config);
   m_configRepo->saveConfig(configPath, config);
   if (restartIfRunning && m_kernel && m_kernel->isRunning()) {

@@ -24,20 +24,22 @@ class GenericNodeEditor : public NodeEditor {
   QLineEdit* m_serverEdit = nullptr;
   QSpinBox*  m_portScan   = nullptr;
   // VMess/VLESS
-  QLineEdit*    m_uuidEdit     = nullptr;
-  QLineEdit*    m_securityEdit = nullptr;  // VMess security / VLESS flow? No, flow is flow.
-  MenuComboBox* m_flowCombo    = nullptr;  // VLESS flow
-  QLineEdit*    m_alterIdEdit  = nullptr;  // VMess alterId (deprecated but maybe needed?)
+  QLineEdit* m_uuidEdit = nullptr;
+  QLineEdit* m_securityEdit =
+      nullptr;  // VMess security / VLESS flow? No, flow is flow.
+  MenuComboBox* m_flowCombo = nullptr;  // VLESS flow
+  QLineEdit*    m_alterIdEdit =
+      nullptr;  // VMess alterId (deprecated but maybe needed?)
   // Shadowsocks / Trojan / Tuic / Hysteria
   QLineEdit* m_methodEdit   = nullptr;  // SS method
   QLineEdit* m_passwordEdit = nullptr;
   // VMess/VLESS/Trojan Transport & TLS
-  MenuComboBox* m_networkCombo    = nullptr;  // tcp, ws, grpc, etc.
-  MenuComboBox* m_securityCombo   = nullptr;  // VLESS security: none/tls/reality
-  QCheckBox*    m_tlsCheck        = nullptr;
-  QLineEdit*    m_serverNameEdit  = nullptr;  // SNI
-  QLineEdit*    m_alpnEdit        = nullptr;
-  QCheckBox*    m_insecureCheck   = nullptr;
+  MenuComboBox* m_networkCombo   = nullptr;  // tcp, ws, grpc, etc.
+  MenuComboBox* m_securityCombo  = nullptr;  // VLESS security: none/tls/reality
+  QCheckBox*    m_tlsCheck       = nullptr;
+  QLineEdit*    m_serverNameEdit = nullptr;  // SNI
+  QLineEdit*    m_alpnEdit       = nullptr;
+  QCheckBox*    m_insecureCheck  = nullptr;
   QLineEdit*    m_fingerprintEdit = nullptr;
   QLineEdit*    m_publicKeyEdit   = nullptr;  // Reality
   QLineEdit*    m_shortIdEdit     = nullptr;  // Reality

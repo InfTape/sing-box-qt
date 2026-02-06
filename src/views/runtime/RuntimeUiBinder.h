@@ -11,8 +11,13 @@ class QPushButton;
 
 class RuntimeUiBinder {
  public:
-  RuntimeUiBinder(ProxyRuntimeController* runtime, HomeView* home, ConnectionsView* connections, ProxyView* proxy,
-                  RulesView* rules, LogView* log, QPushButton* startStopBtn);
+  RuntimeUiBinder(ProxyRuntimeController* runtime,
+                  HomeView*               home,
+                  ConnectionsView*        connections,
+                  ProxyView*              proxy,
+                  RulesView*              rules,
+                  LogView*                log,
+                  QPushButton*            startStopBtn);
   ~RuntimeUiBinder() = default;
   void bind();
 

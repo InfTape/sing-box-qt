@@ -11,16 +11,21 @@ class SystemProxyGateway;
 class ProxyController : public QObject {
   Q_OBJECT
  public:
-  explicit ProxyController(KernelService* kernel, SubscriptionService* subscription = nullptr,
-                           ConfigRepository* configRepo = nullptr, SettingsStore* settings = nullptr,
-                           SystemProxyGateway* systemProxy = nullptr, QObject* parent = nullptr);
+  explicit ProxyController(KernelService*       kernel,
+                           SubscriptionService* subscription = nullptr,
+                           ConfigRepository*    configRepo   = nullptr,
+                           SettingsStore*       settings     = nullptr,
+                           SystemProxyGateway*  systemProxy  = nullptr,
+                           QObject*             parent       = nullptr);
   void    setSubscriptionService(SubscriptionService* service);
   QString activeConfigPath() const;
   QString currentProxyMode() const;
   bool    startKernel();
   void    stopKernel();
   bool    toggleKernel();
-  bool    setProxyMode(const QString& mode, bool restartIfRunning, QString* error = nullptr);
+  bool    setProxyMode(const QString& mode,
+                       bool           restartIfRunning,
+                       QString*       error = nullptr);
   bool    restartKernelWithConfig(const QString& configPath);
   bool    setSystemProxyEnabled(bool enabled);
   bool    setTunModeEnabled(bool enabled);
@@ -29,9 +34,9 @@ class ProxyController : public QObject {
   KernelService* kernel() const { return m_kernel; }
 
  private:
-  bool                 ensureConfigExists(QString* outPath = nullptr);
-  bool                 applySettingsToActiveConfig(bool restartIfRunning = true);
-  KernelService*       m_kernel;
+  bool           ensureConfigExists(QString* outPath = nullptr);
+  bool           applySettingsToActiveConfig(bool restartIfRunning = true);
+  KernelService* m_kernel;
   SubscriptionService* m_subscription;
   ConfigRepository*    m_configRepo;
   SettingsStore*       m_settings;

@@ -14,7 +14,16 @@ bool AdminHelper::isAdmin() {
   BOOL                     isAdmin     = FALSE;
   PSID                     adminGroup  = nullptr;
   SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
-  if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
+  if (AllocateAndInitializeSid(&ntAuthority,
+                               2,
+                               SECURITY_BUILTIN_DOMAIN_RID,
+                               DOMAIN_ALIAS_RID_ADMINS,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
                                &adminGroup)) {
     CheckTokenMembership(nullptr, adminGroup, &isAdmin);
     FreeSid(adminGroup);
@@ -38,7 +47,8 @@ bool AdminHelper::restartAsAdmin() {
   return false;
 }
 
-bool AdminHelper::runAsAdmin(const QString& program, const QStringList& arguments) {
+bool AdminHelper::runAsAdmin(const QString&     program,
+                             const QStringList& arguments) {
 #ifdef Q_OS_WIN
   QString           args = arguments.join(' ');
   SHELLEXECUTEINFOW sei  = {};
@@ -56,7 +66,8 @@ bool AdminHelper::runAsAdmin(const QString& program, const QStringList& argument
     if (error == ERROR_CANCELLED) {
       Logger::warn("User canceled UAC request");
     } else {
-      Logger::error(QString("Admin elevation failed, error code: %1").arg(error));
+      Logger::error(
+          QString("Admin elevation failed, error code: %1").arg(error));
     }
     return false;
   }

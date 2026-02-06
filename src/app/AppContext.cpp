@@ -13,22 +13,30 @@
 #include "views/proxy/ProxyViewController.h"
 
 AppContext::AppContext() {
-  m_configRepository    = std::make_unique<ConfigRepositoryAdapter>();
-  m_kernelService       = std::make_unique<KernelService>();
-  m_proxyService        = std::make_unique<ProxyService>();
-  m_subscriptionService = std::make_unique<SubscriptionService>(m_configRepository.get());
-  m_settingsStore       = std::make_unique<SettingsStoreAdapter>();
-  m_themeService        = std::make_unique<ThemeServiceAdapter>();
-  m_systemProxyGateway  = std::make_unique<SystemProxyAdapter>();
-  m_adminActions        = std::make_unique<AdminActionsAdapter>();
+  m_configRepository = std::make_unique<ConfigRepositoryAdapter>();
+  m_kernelService    = std::make_unique<KernelService>();
+  m_proxyService     = std::make_unique<ProxyService>();
+  m_subscriptionService =
+      std::make_unique<SubscriptionService>(m_configRepository.get());
+  m_settingsStore      = std::make_unique<SettingsStoreAdapter>();
+  m_themeService       = std::make_unique<ThemeServiceAdapter>();
+  m_systemProxyGateway = std::make_unique<SystemProxyAdapter>();
+  m_adminActions       = std::make_unique<AdminActionsAdapter>();
   m_proxyController =
-      std::make_unique<ProxyController>(m_kernelService.get(), m_subscriptionService.get(), m_configRepository.get(),
-                                        m_settingsStore.get(), m_systemProxyGateway.get());
-  m_proxyUiController = std::make_unique<ProxyUiController>(m_proxyController.get(), m_kernelService.get(),
-                                                            m_settingsStore.get(), m_adminActions.get());
-  m_proxyRuntimeController =
-      std::make_unique<ProxyRuntimeController>(m_kernelService.get(), m_proxyService.get(), m_proxyController.get());
-  m_proxyViewController = std::make_unique<ProxyViewController>(m_configRepository.get());
+      std::make_unique<ProxyController>(m_kernelService.get(),
+                                        m_subscriptionService.get(),
+                                        m_configRepository.get(),
+                                        m_settingsStore.get(),
+                                        m_systemProxyGateway.get());
+  m_proxyUiController =
+      std::make_unique<ProxyUiController>(m_proxyController.get(),
+                                          m_kernelService.get(),
+                                          m_settingsStore.get(),
+                                          m_adminActions.get());
+  m_proxyRuntimeController = std::make_unique<ProxyRuntimeController>(
+      m_kernelService.get(), m_proxyService.get(), m_proxyController.get());
+  m_proxyViewController =
+      std::make_unique<ProxyViewController>(m_configRepository.get());
   m_proxyViewController->setProxyService(m_proxyService.get());
 }
 

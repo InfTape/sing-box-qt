@@ -42,7 +42,8 @@ void ThemeManager::setThemeMode(ThemeMode mode) {
   updateApplicationStyle();
   // Save settings.
   QJsonObject config = DatabaseService::instance().getThemeConfig();
-  config["theme"]    = (mode == Light ? "light" : (mode == Auto ? "auto" : "dark"));
+  config["theme"] =
+      (mode == Light ? "light" : (mode == Auto ? "auto" : "dark"));
   DatabaseService::instance().saveThemeConfig(config);
   emit themeChanged();
 }
@@ -60,9 +61,15 @@ void ThemeManager::loadThemeColors() {
   m_colors["success"]        = "#10b981";  // Emerald 500
   m_colors["warning"]        = "#f59e0b";  // Amber 500
   m_colors["error"]          = "#ef4444";  // Red 500
-  auto addAlpha              = [this](const QString& key, const QColor& color, double alpha) {
-    // 使用 rgba() 格式而不是 HexArgb，因为 Qt 样式表中 border 属性对 HexArgb 支持有问题
-    m_colors[key] = QString("rgba(%1, %2, %3, %4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(alpha);
+  auto addAlpha              = [this](
+                      const QString& key, const QColor& color, double alpha) {
+    // 使用 rgba() 格式而不是 HexArgb，因为 Qt 样式表中 border 属性对 HexArgb
+    // 支持有问题
+    m_colors[key] = QString("rgba(%1, %2, %3, %4)")
+                        .arg(color.red())
+                        .arg(color.green())
+                        .arg(color.blue())
+                        .arg(alpha);
   };
   // Derived hover colors
   {
@@ -171,7 +178,8 @@ QString ThemeManager::getLogViewStyle() const {
   return loadStyleSheet(":/styles/log_view.qss");
 }
 
-QString ThemeManager::loadStyleSheet(const QString& resourcePath, const QMap<QString, QString>& extra) const {
+QString ThemeManager::loadStyleSheet(
+    const QString& resourcePath, const QMap<QString, QString>& extra) const {
   QFile file(resourcePath);
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
     Logger::warn(QString("Failed to open stylesheet: %1").arg(resourcePath));
@@ -193,7 +201,9 @@ void ThemeManager::updateApplicationStyle() {
   if (!family.isEmpty()) {
     QFont font = qApp->font();
     font.setFamily(family);
-    QStringList families = qApp->property("appFontFamilyList").toString().split("','", Qt::SkipEmptyParts);
+    QStringList families = qApp->property("appFontFamilyList")
+                               .toString()
+                               .split("','", Qt::SkipEmptyParts);
     if (!families.isEmpty()) {
       font.setFamilies(families);
     }

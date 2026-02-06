@@ -12,6 +12,7 @@ class AdminHelper : public QObject {
   // Restart the app as admin.
   static bool restartAsAdmin();
   // Request UAC elevation to run a command.
-  static bool runAsAdmin(const QString& program, const QStringList& arguments = QStringList());
+  static bool runAsAdmin(const QString&     program,
+                         const QStringList& arguments = QStringList());
 };
 #endif  // ADMINHELPER_H

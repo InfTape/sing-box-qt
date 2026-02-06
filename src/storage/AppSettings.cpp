@@ -55,21 +55,27 @@ AppSettings::AppSettings(QObject* parent)
 void AppSettings::load() {
   QJsonObject config = DatabaseService::instance().getAppConfig();
   // Ports.
-  m_mixedPort = config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
-  m_apiPort   = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
+  m_mixedPort =
+      config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
+  m_apiPort = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
   // TUN.
   m_tunEnabled     = config.value("tunEnabled").toBool(false);
   m_tunAutoRoute   = config.value("tunAutoRoute").toBool(true);
   m_tunStrictRoute = config.value("tunStrictRoute").toBool(true);
-  m_tunStack       = config.value("tunStack").toString(ConfigConstants::DEFAULT_TUN_STACK);
-  m_tunMtu         = config.value("tunMtu").toInt(ConfigConstants::DEFAULT_TUN_MTU);
-  m_tunIpv4        = config.value("tunIpv4").toString(ConfigConstants::DEFAULT_TUN_IPV4);
-  m_tunIpv6        = config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
-  m_tunEnableIpv6  = config.value("tunEnableIpv6").toBool(false);
+  m_tunStack =
+      config.value("tunStack").toString(ConfigConstants::DEFAULT_TUN_STACK);
+  m_tunMtu = config.value("tunMtu").toInt(ConfigConstants::DEFAULT_TUN_MTU);
+  m_tunIpv4 =
+      config.value("tunIpv4").toString(ConfigConstants::DEFAULT_TUN_IPV4);
+  m_tunIpv6 =
+      config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
+  m_tunEnableIpv6 = config.value("tunEnableIpv6").toBool(false);
   // DNS.
-  m_dnsProxy    = config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
-  m_dnsCn       = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
-  m_dnsResolver = config.value("dnsResolver").toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
+  m_dnsProxy =
+      config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
+  m_dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
+  m_dnsResolver = config.value("dnsResolver")
+                      .toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
   // Feature flags.
   m_blockAds        = config.value("blockAds").toBool(false);
   m_enableAppGroups = config.value("enableAppGroups").toBool(true);
@@ -80,12 +86,19 @@ void AppSettings::load() {
   } else {
     m_systemProxyEnabled = config.value("systemProxy").toBool(true);
   }
-  m_systemProxyBypass = config.value("systemProxyBypass").toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
+  m_systemProxyBypass =
+      config.value("systemProxyBypass")
+          .toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
   // URL test.
-  m_urltestUrl         = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
-  m_urltestTimeoutMs   = config.value("urltestTimeoutMs").toInt(ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS);
-  m_urltestConcurrency = config.value("urltestConcurrency").toInt(ConfigConstants::DEFAULT_URLTEST_CONCURRENCY);
-  m_urltestSamples     = config.value("urltestSamples").toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
+  m_urltestUrl =
+      config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
+  m_urltestTimeoutMs = config.value("urltestTimeoutMs")
+                           .toInt(ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS);
+  m_urltestConcurrency =
+      config.value("urltestConcurrency")
+          .toInt(ConfigConstants::DEFAULT_URLTEST_CONCURRENCY);
+  m_urltestSamples = config.value("urltestSamples")
+                         .toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
   m_downloadDetour  = config.value("downloadDetour").toString("direct");
