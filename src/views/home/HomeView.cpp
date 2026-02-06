@@ -1,5 +1,4 @@
 #include "HomeView.h"
-#include <QDateTime>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>

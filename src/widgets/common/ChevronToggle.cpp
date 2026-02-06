@@ -1,5 +1,4 @@
 #include "widgets/common/ChevronToggle.h"
-#include <QEasingCurve>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPropertyAnimation>

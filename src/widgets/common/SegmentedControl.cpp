@@ -3,7 +3,6 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
-#include <algorithm>
 #include "app/interfaces/ThemeService.h"
 
 SegmentedControl::SegmentedControl(QWidget* parent, ThemeService* themeService)

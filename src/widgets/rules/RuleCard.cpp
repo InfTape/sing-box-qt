@@ -1,9 +1,7 @@
 ﻿#include "widgets/rules/RuleCard.h"
 #include <QAction>
 #include <QFrame>
-#include <QHBoxLayout>
 #include <QLabel>
-#include <QMap>
 #include <QPoint>
 #include <QPushButton>
 #include <QSizePolicy>

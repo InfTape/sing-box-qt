@@ -1,5 +1,4 @@
 #include "ProxyToolbar.h"
-#include <QHBoxLayout>
 #include <QLineEdit>
 #include <QProgressBar>
 #include <QPushButton>

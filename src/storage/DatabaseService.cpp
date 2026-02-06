@@ -1,10 +1,7 @@
 #include "DatabaseService.h"
-#include <QDir>
-#include <QFile>
 #include <QJsonDocument>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QStandardPaths>
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 

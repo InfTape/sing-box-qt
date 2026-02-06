@@ -1,8 +1,5 @@
 #include "ConnectionsView.h"
-#include <QFrame>
-#include <QHBoxLayout>
 #include <QHeaderView>
-#include <QJsonArray>
 #include <QLabel>
 #include <QStyledItemDelegate>
 #include <QVBoxLayout>

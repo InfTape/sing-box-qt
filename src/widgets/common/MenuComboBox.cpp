@@ -1,15 +1,12 @@
 ﻿#include "widgets/common/MenuComboBox.h"
 #include <QAction>
-#include <QPainter>
 #include <QPainterPath>
-#include <QPen>
 #include <QPixmap>
 #include <QPoint>
 #include <QStyle>
 #include <QStyleOptionComboBox>
 #include <QStylePainter>
 #include <QWheelEvent>
-#include <QtMath>
 #include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
 

@@ -1,12 +1,8 @@
 ﻿#include "dialogs/rules/ManageRuleSetsDialog.h"
-#include <QAbstractItemView>
-#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QListWidget>
-#include <QMenu>
 #include <QMessageBox>
-#include <QPushButton>
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/rules/RuleEditorDialog.h"

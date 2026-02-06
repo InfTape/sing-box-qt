@@ -1,8 +1,5 @@
 #include "storage/ConfigIO.h"
-#include <QDir>
-#include <QFile>
 #include <QJsonDocument>
-#include <QStandardPaths>
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 

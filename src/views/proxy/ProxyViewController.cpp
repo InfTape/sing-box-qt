@@ -1,12 +1,8 @@
 #include "ProxyViewController.h"
-#include <QElapsedTimer>
-#include <QEventLoop>
-#include <QNetworkAccessManager>
 #include <QNetworkProxy>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QThreadPool>
-#include <QTimer>
 #include <QtConcurrent>
 #include "app/interfaces/ConfigRepository.h"
 #include "core/DelayTestService.h"

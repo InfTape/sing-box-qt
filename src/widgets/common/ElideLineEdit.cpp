@@ -1,7 +1,6 @@
 #include "widgets/common/ElideLineEdit.h"
 #include <QPaintEvent>
 #include <QPainter>
-#include <QStyle>
 #include <QStyleOptionFrame>
 
 ElideLineEdit::ElideLineEdit(QWidget* parent) : QLineEdit(parent) {}

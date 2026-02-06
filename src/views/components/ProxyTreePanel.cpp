@@ -1,5 +1,4 @@
 #include "ProxyTreePanel.h"
-#include <QAbstractItemView>
 #include <QFrame>
 #include <QHeaderView>
 #include <QTreeWidget>

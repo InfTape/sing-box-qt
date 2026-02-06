@@ -1,7 +1,4 @@
 #include "views/runtime/RuntimeUiBinder.h"
-#include <QObject>
-#include <QPushButton>
-#include <QStyle>
 #include "app/ProxyRuntimeController.h"
 #include "views/connections/ConnectionsView.h"
 #include "views/home/HomeView.h"

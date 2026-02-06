@@ -1,5 +1,4 @@
 #include "dialogs/config/ConfigEditDialog.h"
-#include <QHBoxLayout>
 #include <QPushButton>
 #include <QTextEdit>
 #include <QVBoxLayout>

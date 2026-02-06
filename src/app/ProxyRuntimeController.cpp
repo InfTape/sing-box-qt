@@ -1,6 +1,5 @@
 #include "ProxyRuntimeController.h"
 #include <QJsonArray>
-#include <QJsonObject>
 #include <QJsonValue>
 #include <QTimer>
 #include "core/KernelService.h"

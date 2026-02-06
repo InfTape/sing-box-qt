@@ -1,6 +1,5 @@
 ﻿#include "core/DataUsageTracker.h"
 #include <QDateTime>
-#include <QJsonArray>
 #include <QJsonValue>
 #include <QSet>
 #include <algorithm>

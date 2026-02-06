@@ -1,8 +1,6 @@
 #include "ThemeManager.h"
 #include <QApplication>
-#include <QFile>
 #include <QFont>
-#include <QJsonObject>
 #include <QPalette>
 #include <QSettings>
 #include "storage/DatabaseService.h"

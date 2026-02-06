@@ -1,8 +1,6 @@
 #include "DataUsageCard.h"
-#include <QAbstractItemView>
 #include <QHeaderView>
 #include <QHostAddress>
-#include <QHBoxLayout>
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QLabel>

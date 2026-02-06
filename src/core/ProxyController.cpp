@@ -1,7 +1,4 @@
 #include "ProxyController.h"
-#include <QFile>
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QObject>
 #include "KernelService.h"
 #include "app/interfaces/ConfigRepository.h"

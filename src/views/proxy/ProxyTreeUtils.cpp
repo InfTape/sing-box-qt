@@ -1,10 +1,7 @@
 #include "ProxyTreeUtils.h"
-#include <QFrame>
 #include <QHBoxLayout>
 #include <QJsonObject>
 #include <QLabel>
-#include <QStyle>
-#include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QTreeWidgetItemIterator>
 #include "utils/proxy/ProxyNodeHelper.h"

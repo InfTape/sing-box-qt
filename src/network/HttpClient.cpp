@@ -1,5 +1,4 @@
 #include "HttpClient.h"
-#include <QEventLoop>
 #include <QFile>
 #include <QTimer>
 #include "utils/Logger.h"

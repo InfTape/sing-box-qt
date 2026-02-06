@@ -1,13 +1,9 @@
 ﻿#include "RulesView.h"
 #include <QAbstractAnimation>
-#include <QDialog>
-#include <QEvent>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QHash>
-#include <QJsonArray>
-#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMap>
@@ -17,12 +13,9 @@
 #include <QScrollBar>
 #include <QSet>
 #include <QShowEvent>
-#include <QStringList>
 #include <QTimer>
-#include <QVBoxLayout>
 #include <algorithm>
 #include <utility>
-#include "app/interfaces/ConfigRepository.h"
 #include "app/interfaces/ThemeService.h"
 #include "core/ProxyService.h"
 #include "dialogs/rules/ManageRuleSetsDialog.h"

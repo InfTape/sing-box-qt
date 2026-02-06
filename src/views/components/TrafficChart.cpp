@@ -1,7 +1,6 @@
 ﻿#include "TrafficChart.h"
 #include <QDateTime>
 #include <QPainterPath>
-#include <cmath>
 #include "app/interfaces/ThemeService.h"
 
 TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)

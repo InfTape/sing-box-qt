@@ -1,6 +1,5 @@
 #include "storage/SubscriptionConfigStore.h"
 #include <QDateTime>
-#include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>

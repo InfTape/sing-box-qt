@@ -8,12 +8,8 @@
 #include <QProgressBar>
 #include <QResizeEvent>
 #include <QScrollArea>
-#include <QShowEvent>
 #include <QSignalBlocker>
 #include <QSizePolicy>
-#include <QStyle>
-#include <QVBoxLayout>
-#include <QWheelEvent>
 #include <algorithm>
 #include "app/interfaces/ThemeService.h"
 #include "storage/ConfigConstants.h"

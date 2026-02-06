@@ -1,6 +1,4 @@
 #include "AppSettings.h"
-#include <QJsonDocument>
-#include <QJsonObject>
 #include "ConfigConstants.h"
 #include "DatabaseService.h"
 #include "utils/Logger.h"

@@ -2,16 +2,13 @@
 #include <QAbstractAnimation>
 #include <QApplication>
 #include <QClipboard>
-#include <QDateTime>
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QHash>
-#include <QJsonArray>
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QShowEvent>
 #include <QTimer>
-#include <QVBoxLayout>
 #include <QtGlobal>
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/config/ConfigEditDialog.h"

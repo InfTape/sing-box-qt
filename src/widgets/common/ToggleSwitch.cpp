@@ -1,8 +1,6 @@
 ﻿#include "widgets/common/ToggleSwitch.h"
-#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QtMath>
 #include <algorithm>
 #include "app/interfaces/ThemeService.h"
 

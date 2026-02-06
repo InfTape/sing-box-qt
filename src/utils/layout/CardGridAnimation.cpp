@@ -1,7 +1,4 @@
 #include "utils/layout/CardGridAnimation.h"
-#include <QAbstractAnimation>
-#include <QEasingCurve>
-#include <QObject>
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
 #include <QWidget>

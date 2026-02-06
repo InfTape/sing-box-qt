@@ -1,5 +1,4 @@
 #include "SettingsModel.h"
-#include <QJsonObject>
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"

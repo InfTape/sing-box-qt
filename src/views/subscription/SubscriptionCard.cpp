@@ -1,14 +1,11 @@
 ﻿#include "views/subscription/SubscriptionCard.h"
 #include <QAction>
-#include <QHBoxLayout>
 #include <QLabel>
-#include <QMap>
 #include <QPoint>
 #include <QPushButton>
 #include <QSizePolicy>
 #include <QStyle>
 #include <QVBoxLayout>
-#include <QtMath>
 #include "app/interfaces/ThemeService.h"
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"

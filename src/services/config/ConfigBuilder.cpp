@@ -1,5 +1,4 @@
 #include "services/config/ConfigBuilder.h"
-#include <QDir>
 #include <QStringList>
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"

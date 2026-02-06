@@ -1,6 +1,5 @@
 #include "ProxyModeSection.h"
 #include <QApplication>
-#include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -9,7 +8,6 @@
 #include <QSignalBlocker>
 #include <QStyle>
 #include <QSvgRenderer>
-#include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "widgets/common/ToggleSwitch.h"
 

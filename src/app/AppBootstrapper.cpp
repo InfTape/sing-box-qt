@@ -1,9 +1,6 @@
 #include "AppBootstrapper.h"
 #include <QApplication>
-#include <QFont>
-#include <QIcon>
 #include <QLocale>
-#include <QStringList>
 #include <QStyleFactory>
 #include "app/AppContext.h"
 #include "app/MainWindow.h"
