@@ -1,4 +1,5 @@
 #include "services/config/ConfigMutator.h"
+#include <QJsonDocument>
 #include <QHostAddress>
 #include <QSet>
 #include <QStringList>
