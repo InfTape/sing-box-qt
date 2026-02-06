@@ -1,5 +1,4 @@
 #include "services/config/ConfigManager.h"
-
 #include "services/config/ConfigBuilder.h"
 #include "services/config/ConfigMutator.h"
 #include "storage/AppSettings.h"
@@ -25,7 +24,6 @@ bool ConfigManager::generateConfigWithNodes(const QJsonArray& nodes, const QStri
   if (!ConfigMutator::injectNodes(config, nodes)) {
     return false;
   }
-
   const QString path = targetPath.isEmpty() ? getActiveConfigPath() : targetPath;
   return ConfigIO::saveConfig(path, config);
 }
@@ -62,16 +60,13 @@ bool ConfigManager::updateClashDefaultMode(const QString& configPath, const QStr
     if (error) *error = QString("Failed to load config file: %1").arg(configPath);
     return false;
   }
-
   if (!ConfigMutator::updateClashDefaultMode(config, mode, error)) {
     return false;
   }
-
   if (!ConfigIO::saveConfig(configPath, config)) {
     if (error) *error = QString("Failed to save config file: %1").arg(configPath);
     return false;
   }
-
   return true;
 }
 QString ConfigManager::readClashDefaultMode(const QString& configPath) const {

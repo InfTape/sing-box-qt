@@ -1,9 +1,7 @@
 #ifndef SUBSCRIPTIONCONFIGSTORE_H
 #define SUBSCRIPTIONCONFIGSTORE_H
-
 #include <QJsonArray>
 #include <QString>
-
 class ConfigRepository;
 namespace SubscriptionConfigStore {
 QString generateConfigFileName(const QString& name);

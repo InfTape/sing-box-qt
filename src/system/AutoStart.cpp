@@ -1,9 +1,7 @@
 #include "AutoStart.h"
-
 #include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
-
 #include "utils/Logger.h"
 bool AutoStart::isSupported() {
 #ifdef Q_OS_WIN
@@ -31,7 +29,6 @@ bool AutoStart::setEnabled(bool enabled, const QString& appName) {
 #ifdef Q_OS_WIN
   QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
   const QString name = appName.isEmpty() ? QCoreApplication::applicationName() : appName;
-
   if (enabled) {
     const QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
     const QString value   = QString("\"%1\"").arg(appPath);
@@ -43,7 +40,6 @@ bool AutoStart::setEnabled(bool enabled, const QString& appName) {
     }
     return true;
   }
-
   if (settings.contains(name)) {
     settings.remove(name);
     settings.sync();

@@ -1,5 +1,4 @@
 #include "AppContext.h"
-
 #include "app/ProxyRuntimeController.h"
 #include "app/ProxyUiController.h"
 #include "app/impl/AdminActionsAdapter.h"

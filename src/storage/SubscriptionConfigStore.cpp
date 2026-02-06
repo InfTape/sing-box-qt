@@ -1,5 +1,4 @@
 #include "storage/SubscriptionConfigStore.h"
-
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -7,7 +6,6 @@
 #include <QJsonObject>
 #include <QJsonParseError>
 #include <QRegularExpression>
-
 #include "app/interfaces/ConfigRepository.h"
 namespace {
 QString sanitizeFileName(const QString& name) {
@@ -35,11 +33,9 @@ bool saveOriginalConfig(ConfigRepository* cfg, const QString& content, const QSt
   if (err.error != QJsonParseError::NoError || !doc.isObject()) {
     return false;
   }
-
   if (!cfg) return false;
   QJsonObject config = doc.object();
   cfg->applyPortSettings(config);
-
   return cfg->saveConfig(targetPath, config);
 }
 bool rollbackSubscriptionConfig(const QString& configPath) {

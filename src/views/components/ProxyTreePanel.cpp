@@ -1,18 +1,14 @@
 #include "ProxyTreePanel.h"
-
 #include <QAbstractItemView>
 #include <QFrame>
 #include <QHeaderView>
 #include <QTreeWidget>
 #include <QVBoxLayout>
-
 ProxyTreePanel::ProxyTreePanel(QWidget* parent) : QFrame(parent) {
   setObjectName("TreeCard");
-
   auto* rootLayout = new QVBoxLayout(this);
   rootLayout->setContentsMargins(12, 12, 12, 12);
   rootLayout->setSpacing(0);
-
   m_treeWidget = new QTreeWidget(this);
   m_treeWidget->setObjectName("ProxyTree");
   m_treeWidget->setHeaderLabels({"", "", ""});
@@ -30,6 +26,5 @@ ProxyTreePanel::ProxyTreePanel(QWidget* parent) : QFrame(parent) {
   m_treeWidget->header()->resizeSection(2, 100);
   m_treeWidget->setSelectionMode(QAbstractItemView::SingleSelection);
   m_treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
-
   rootLayout->addWidget(m_treeWidget);
 }

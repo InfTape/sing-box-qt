@@ -1,8 +1,6 @@
 #include "AppSettings.h"
-
 #include <QJsonDocument>
 #include <QJsonObject>
-
 #include "ConfigConstants.h"
 #include "DatabaseService.h"
 #include "utils/Logger.h"
@@ -53,11 +51,9 @@ AppSettings::AppSettings(QObject* parent)
 }
 void AppSettings::load() {
   QJsonObject config = DatabaseService::instance().getAppConfig();
-
   // Ports.
   m_mixedPort = config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
   m_apiPort   = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
-
   // TUN.
   m_tunEnabled     = config.value("tunEnabled").toBool(false);
   m_tunAutoRoute   = config.value("tunAutoRoute").toBool(true);
@@ -67,12 +63,10 @@ void AppSettings::load() {
   m_tunIpv4        = config.value("tunIpv4").toString(ConfigConstants::DEFAULT_TUN_IPV4);
   m_tunIpv6        = config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
   m_tunEnableIpv6  = config.value("tunEnableIpv6").toBool(false);
-
   // DNS.
   m_dnsProxy    = config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
   m_dnsCn       = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
   m_dnsResolver = config.value("dnsResolver").toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
-
   // Feature flags.
   m_blockAds        = config.value("blockAds").toBool(false);
   m_enableAppGroups = config.value("enableAppGroups").toBool(true);
@@ -84,26 +78,21 @@ void AppSettings::load() {
     m_systemProxyEnabled = config.value("systemProxy").toBool(true);
   }
   m_systemProxyBypass = config.value("systemProxyBypass").toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
-
   // URL test.
   m_urltestUrl         = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
   m_urltestTimeoutMs   = config.value("urltestTimeoutMs").toInt(ConfigConstants::DEFAULT_URLTEST_TIMEOUT_MS);
   m_urltestConcurrency = config.value("urltestConcurrency").toInt(ConfigConstants::DEFAULT_URLTEST_CONCURRENCY);
   m_urltestSamples     = config.value("urltestSamples").toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
-
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
   m_downloadDetour  = config.value("downloadDetour").toString("direct");
-
   Logger::info("App settings loaded");
 }
 void AppSettings::save() {
   QJsonObject config = DatabaseService::instance().getAppConfig();
-
   // Ports.
   config["mixedPort"] = m_mixedPort;
   config["apiPort"]   = m_apiPort;
-
   // TUN.
   config["tunEnabled"]     = m_tunEnabled;
   config["tunAutoRoute"]   = m_tunAutoRoute;
@@ -113,12 +102,10 @@ void AppSettings::save() {
   config["tunIpv4"]        = m_tunIpv4;
   config["tunIpv6"]        = m_tunIpv6;
   config["tunEnableIpv6"]  = m_tunEnableIpv6;
-
   // DNS.
   config["dnsProxy"]    = m_dnsProxy;
   config["dnsCn"]       = m_dnsCn;
   config["dnsResolver"] = m_dnsResolver;
-
   // Feature flags.
   config["blockAds"]           = m_blockAds;
   config["enableAppGroups"]    = m_enableAppGroups;
@@ -127,22 +114,18 @@ void AppSettings::save() {
   config["systemProxyEnabled"] = m_systemProxyEnabled;
   config["systemProxy"]        = m_systemProxyEnabled;
   config["systemProxyBypass"]  = m_systemProxyBypass;
-
   // URL test.
   config["urltestUrl"]         = m_urltestUrl;
   config["urltestTimeoutMs"]   = m_urltestTimeoutMs;
   config["urltestConcurrency"] = m_urltestConcurrency;
   config["urltestSamples"]     = m_urltestSamples;
-
   // Outbound selection.
   config["defaultOutbound"] = m_defaultOutbound;
   config["downloadDetour"]  = m_downloadDetour;
-
   DatabaseService::instance().saveAppConfig(config);
   Logger::info("App settings saved");
 }
 // ==================== Setter implementations ====================
-
 void AppSettings::setMixedPort(int port) {
   if (m_mixedPort != port) {
     m_mixedPort = port;
@@ -328,7 +311,6 @@ void AppSettings::setDownloadDetour(const QString& detour) {
   }
 }
 // ==================== Helper methods ====================
-
 QString AppSettings::normalizedDefaultOutbound() const {
   if (m_defaultOutbound == "auto") {
     return ConfigConstants::TAG_AUTO;

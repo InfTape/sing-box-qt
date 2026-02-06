@@ -1,5 +1,4 @@
 ﻿#include "widgets/common/MenuComboBox.h"
-
 #include <QAction>
 #include <QPainter>
 #include <QPainterPath>
@@ -11,7 +10,6 @@
 #include <QStylePainter>
 #include <QWheelEvent>
 #include <QtMath>
-
 #include "app/interfaces/ThemeService.h"
 #include "widgets/common/RoundedMenu.h"
 MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
@@ -19,7 +17,6 @@ MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
   m_menu = new RoundedMenu(this);
   m_menu->setObjectName("ComboMenu");
   updateMenuStyle();
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
   }
@@ -43,48 +40,38 @@ void MenuComboBox::paintEvent(QPaintEvent* event) {
   QStylePainter        painter(this);
   QStyleOptionComboBox opt;
   initStyleOption(&opt);
-
   const QRect textRect = style()->subControlRect(QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
   opt.currentText      = fontMetrics().elidedText(opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
-
   painter.drawComplexControl(QStyle::CC_ComboBox, opt);
   painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 void MenuComboBox::showPopup() {
   if (!m_menu) return;
   m_menu->clear();
-
   ThemeService* ts         = m_themeService;
   QColor        checkColor = ts ? ts->color("primary") : QColor(0, 0, 200);
-
   for (int i = 0; i < count(); ++i) {
     QAction* action = m_menu->addAction(itemText(i));
-
     if (i == currentIndex()) {
       // Create checkmark icon for selected item
       QPixmap pixmap(14, 14);
       pixmap.fill(Qt::transparent);
       QPainter painter(&pixmap);
       painter.setRenderHint(QPainter::Antialiasing);
-
       QPen pen(checkColor, 2);
       pen.setCapStyle(Qt::RoundCap);
       pen.setJoinStyle(Qt::RoundJoin);
       painter.setPen(pen);
-
       // Draw checkmark path
       QPainterPath path;
       path.moveTo(1, 7);
       path.lineTo(5, 11);
       path.lineTo(13, 1);
       painter.drawPath(path);
-
       action->setIcon(QIcon(pixmap));
     }
-
     connect(action, &QAction::triggered, this, [this, i]() { setCurrentIndex(i); });
   }
-
   const int menuWidth = qMax(width(), 180);
   m_menu->setFixedWidth(menuWidth);
   m_menu->popup(mapToGlobal(QPoint(0, height())));

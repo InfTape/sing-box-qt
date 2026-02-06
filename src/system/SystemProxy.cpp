@@ -1,9 +1,7 @@
 #include "SystemProxy.h"
-
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "utils/Logger.h"
-
 #ifdef Q_OS_WIN
 #include <QSettings>
 #include <windows.h>
@@ -17,19 +15,15 @@ bool SystemProxy::setProxy(const QString& host, int port) {
   if (bypass.isEmpty()) {
     bypass = ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS;
   }
-
   QSettings settings(
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   settings.setValue("ProxyEnable", 1);
   settings.setValue("ProxyServer", proxyServer);
   settings.setValue("ProxyOverride", bypass);
   settings.sync();
-
   refreshSettings();
-
   Logger::info(QString("System proxy set: %1").arg(proxyServer));
   return true;
 #else
@@ -45,12 +39,9 @@ bool SystemProxy::clearProxy() {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   settings.setValue("ProxyEnable", 0);
   settings.sync();
-
   refreshSettings();
-
   Logger::info("System proxy cleared");
   return true;
 #else
@@ -63,7 +54,6 @@ bool SystemProxy::isProxyEnabled() {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   return settings.value("ProxyEnable", 0).toInt() == 1;
 #else
   return false;
@@ -75,7 +65,6 @@ QString SystemProxy::getProxyHost() {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   QString proxyServer = settings.value("ProxyServer").toString();
   int     colonIndex  = proxyServer.lastIndexOf(':');
   if (colonIndex != -1) {
@@ -92,7 +81,6 @@ int SystemProxy::getProxyPort() {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   QString proxyServer = settings.value("ProxyServer").toString();
   int     colonIndex  = proxyServer.lastIndexOf(':');
   if (colonIndex != -1) {
@@ -109,12 +97,9 @@ bool SystemProxy::setPacProxy(const QString& pacUrl) {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
-
   settings.setValue("AutoConfigURL", pacUrl);
   settings.sync();
-
   refreshSettings();
-
   Logger::info(QString("PAC proxy set: %1").arg(pacUrl));
   return true;
 #else

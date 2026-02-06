@@ -1,5 +1,4 @@
 ﻿#include "MainWindow.h"
-
 #include <QApplication>
 #include <QCloseEvent>
 #include <QHBoxLayout>
@@ -12,7 +11,6 @@
 #include <QSvgRenderer>
 #include <QTimer>
 #include <QVBoxLayout>
-
 #include "app/AppContext.h"
 #include "app/ProxyRuntimeController.h"
 #include "app/ProxyUiController.h"
@@ -38,12 +36,10 @@
 #include "views/subscription/SubscriptionView.h"
 namespace {
 QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
-  const qreal dpr = qApp->devicePixelRatio();
-  const int   box = static_cast<int>(size * dpr);
-
+  const qreal  dpr = qApp->devicePixelRatio();
+  const int    box = static_cast<int>(size * dpr);
   QSvgRenderer renderer(resourcePath);
-
-  QPixmap base(box, box);
+  QPixmap      base(box, box);
   base.fill(Qt::transparent);
   {
     QPainter p(&base);
@@ -62,7 +58,6 @@ QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
     QRectF target((box - renderW) / 2.0, (box - renderH) / 2.0, renderW, renderH);
     renderer.render(&p, target);
   }
-
   QPixmap tinted(box, box);
   tinted.fill(Qt::transparent);
   {
@@ -72,7 +67,6 @@ QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
     p.setCompositionMode(QPainter::CompositionMode_SourceIn);
     p.fillRect(tinted.rect(), color);
   }
-
   tinted.setDevicePixelRatio(dpr);
   return QIcon(tinted);
 }
@@ -109,47 +103,36 @@ MainWindow::~MainWindow() {
   saveSettings();
 }
 // ... existing code ...
-
 void MainWindow::setupUI() {
   setWindowTitle(tr("Sing-Box"));
   setMinimumSize(1000, 700);
-
   m_centralWidget = new QWidget(this);
   setCentralWidget(m_centralWidget);
-
   QHBoxLayout* mainLayout = new QHBoxLayout(m_centralWidget);
   mainLayout->setContentsMargins(0, 0, 0, 0);
   mainLayout->setSpacing(0);
-
   QWidget* navContainer = new QWidget;
   navContainer->setObjectName("NavContainer");
   QVBoxLayout* navLayout = new QVBoxLayout(navContainer);
   navLayout->setContentsMargins(0, 20, 0, 20);
   navLayout->setSpacing(10);
-
   QLabel* logoLabel = new QLabel("Sing-Box");
   logoLabel->setObjectName("LogoLabel");
   logoLabel->setAlignment(Qt::AlignCenter);
   navLayout->addWidget(logoLabel);
-
   setupNavigation();
   navLayout->addWidget(m_navList, 1);
-
   QLabel* versionLabel = new QLabel("v" + QApplication::applicationVersion());
   versionLabel->setObjectName("VersionLabel");
   versionLabel->setAlignment(Qt::AlignCenter);
   navLayout->addWidget(versionLabel);
-
   mainLayout->addWidget(navContainer);
-
   QWidget* contentContainer = new QWidget;
   contentContainer->setObjectName("ContentContainer");
   QVBoxLayout* contentLayout = new QVBoxLayout(contentContainer);
   contentLayout->setContentsMargins(0, 0, 0, 0);
   contentLayout->setSpacing(0);
-
-  m_stackedWidget = new QStackedWidget;
-
+  m_stackedWidget    = new QStackedWidget;
   m_homeView         = new HomeView(m_themeService);
   m_proxyView        = new ProxyView(m_themeService, this);
   m_subscriptionView = new SubscriptionView(m_subscriptionService, m_themeService, this);
@@ -157,13 +140,11 @@ void MainWindow::setupUI() {
   m_rulesView        = new RulesView(m_ctx.configRepository(), m_themeService);
   m_logView          = new LogView(m_themeService);
   m_settingsView     = new SettingsView(m_themeService, m_settingsController);
-
   m_proxyView->setController(m_ctx.proxyViewController());
   if (m_ctx.proxyService()) {
     m_connectionsView->setProxyService(m_ctx.proxyService());
     m_rulesView->setProxyService(m_ctx.proxyService());
   }
-
   m_stackedWidget->addWidget(m_homeView);
   m_stackedWidget->addWidget(m_proxyView);
   m_stackedWidget->addWidget(m_subscriptionView);
@@ -171,11 +152,8 @@ void MainWindow::setupUI() {
   m_stackedWidget->addWidget(m_rulesView);
   m_stackedWidget->addWidget(m_logView);
   m_stackedWidget->addWidget(m_settingsView);
-
   contentLayout->addWidget(m_stackedWidget, 1);
-
   mainLayout->addWidget(contentContainer, 1);
-
   setupStatusBar();
 }
 void MainWindow::setupNavigation() {
@@ -190,25 +168,20 @@ void MainWindow::setupNavigation() {
   QList<NavItem> items = {{tr("Home"), "home"},        {tr("Proxy"), "proxy"}, {tr("Subscription"), "sub"},
                           {tr("Connections"), "conn"}, {tr("Rules"), "rule"},  {tr("Logs"), "log"},
                           {tr("Settings"), "settings"}};
-
   for (const auto& item : items) {
     QListWidgetItem* listItem = new QListWidgetItem(item.name);
     listItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     m_navList->addItem(listItem);
   }
-
   m_navList->setCurrentRow(0);
-
   updateNavIcons();
 }
 void MainWindow::setupStatusBar() {
   QWidget* statusWidget = new QWidget;
   statusWidget->setObjectName("StatusBar");
   statusWidget->setFixedHeight(48);
-
   QHBoxLayout* statusLayout = new QHBoxLayout(statusWidget);
   statusLayout->setContentsMargins(20, 0, 20, 0);
-
   m_startStopBtn = new QPushButton(tr("Start"));
   m_startStopBtn->setFixedHeight(36);
   m_startStopBtn->setMinimumWidth(88);
@@ -216,10 +189,8 @@ void MainWindow::setupStatusBar() {
   m_startStopBtn->setObjectName("StartStopBtn");
   m_startStopBtn->setProperty("state", "start");
   applyStartStopStyle();
-
   statusLayout->addStretch();
   statusLayout->addWidget(m_startStopBtn);
-
   QWidget* contentContainer = findChild<QWidget*>("ContentContainer");
   if (contentContainer) {
     contentContainer->layout()->addWidget(statusWidget);
@@ -245,7 +216,6 @@ void MainWindow::setupConnections() {
 }
 void MainWindow::setupNavigationConnections() {
   connect(m_navList, &QListWidget::itemClicked, this, &MainWindow::onNavigationItemClicked);
-
   connect(m_startStopBtn, &QPushButton::clicked, this, &MainWindow::onStartStopClicked);
 }
 void MainWindow::setupThemeConnections() {
@@ -255,7 +225,6 @@ void MainWindow::setupThemeConnections() {
 }
 void MainWindow::setupSubscriptionConnections() {
   if (!m_subscriptionService) return;
-
   connect(m_subscriptionService, &SubscriptionService::applyConfigRequested, this,
           [this](const QString& configPath, bool restart) {
             if (configPath.isEmpty()) return;
@@ -269,7 +238,6 @@ void MainWindow::setupSubscriptionConnections() {
 }
 void MainWindow::setupProxyUiBindings() {
   if (!m_proxyUiController || !m_homeView) return;
-
   connect(m_proxyUiController, &ProxyUiController::systemProxyStateChanged, m_homeView,
           &HomeView::setSystemProxyEnabled);
   connect(m_proxyUiController, &ProxyUiController::tunModeStateChanged, m_homeView, &HomeView::setTunModeEnabled);
@@ -277,7 +245,6 @@ void MainWindow::setupProxyUiBindings() {
 }
 void MainWindow::setupHomeViewConnections() {
   if (!m_homeView) return;
-
   connect(m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled) {
     if (!m_proxyUiController) return;
     QString error;
@@ -289,7 +256,6 @@ void MainWindow::setupHomeViewConnections() {
       m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
     }
   });
-
   connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled) {
     if (!m_proxyUiController) return;
     const auto result = m_proxyUiController->setTunModeEnabled(enabled, [this]() {
@@ -305,16 +271,13 @@ void MainWindow::setupHomeViewConnections() {
       box.exec();
       return box.clickedButton() == restartBtn;
     });
-
     if (result == ProxyUiController::TunResult::Failed || result == ProxyUiController::TunResult::Cancelled) {
       m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
       m_homeView->setSystemProxyEnabled(m_proxyUiController->systemProxyEnabled());
     }
   });
-
   connect(m_homeView, &HomeView::proxyModeChanged, this, [this](const QString& mode) {
     if (!m_proxyUiController) return;
-
     QString error;
     if (m_proxyUiController->switchProxyMode(mode, &error)) {
       const QString msg = QStringLiteral("Proxy mode switched to: %1").arg(mode);
@@ -390,7 +353,6 @@ void MainWindow::updateStyle() {
   if (m_themeService) {
     setStyleSheet(m_themeService->loadStyleSheet(":/styles/main_window.qss"));
   }
-
   updateNavIcons();
   applyStartStopStyle();
 }
@@ -425,13 +387,11 @@ void MainWindow::updateNavIcons() {
   if (!m_navList || m_navList->count() <= 1) {
     return;
   }
-
   QColor iconColor;
   if (m_themeService) {
     iconColor = m_themeService->color("text-primary");
   }
   const int iconSize = 20;
-
   if (QListWidgetItem* homeItem = m_navList->item(0)) {
     homeItem->setIcon(svgIcon(":/icons/house.svg", iconSize, iconColor));
   }

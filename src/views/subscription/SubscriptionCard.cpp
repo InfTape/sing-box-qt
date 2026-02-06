@@ -1,5 +1,4 @@
 ﻿#include "views/subscription/SubscriptionCard.h"
-
 #include <QAction>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -10,7 +9,6 @@
 #include <QStyle>
 #include <QVBoxLayout>
 #include <QtMath>
-
 #include "app/interfaces/ThemeService.h"
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"
@@ -20,7 +18,6 @@ SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info, bool active, Th
     : QFrame(parent), m_subId(info.id), m_active(active), m_themeService(themeService) {
   setupUI(info);
   updateInfo(info, active);
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, &SubscriptionCard::updateStyle);
   }
@@ -35,31 +32,23 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   setObjectName("SubscriptionCard");
   setAttribute(Qt::WA_StyledBackground, true);
   setFrameShape(QFrame::NoFrame);
-
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(18, 16, 18, 16);
   mainLayout->setSpacing(12);
-
   QHBoxLayout* headerLayout = new QHBoxLayout;
   headerLayout->setSpacing(10);
-
   m_nameLabel = new QLabel(info.name, this);
   m_nameLabel->setObjectName("CardName");
-
   m_typeTag = new QLabel(tr("Manual"), this);
   m_typeTag->setObjectName("CardTag");
-
   m_statusTag = new QLabel(this);
   m_statusTag->setAttribute(Qt::WA_StyledBackground, true);
-
   m_scheduleTag = new QLabel(this);
   m_scheduleTag->setObjectName("CardTagSchedule");
-
   QPushButton* menuBtn = new QPushButton("...");
   menuBtn->setObjectName("CardMenuBtn");
   menuBtn->setFixedSize(32, 28);
   menuBtn->setCursor(Qt::PointingHandCursor);
-
   RoundedMenu* menu = new RoundedMenu(this);
   menu->setObjectName("SubscriptionMenu");
   ThemeService* ts = m_themeService;
@@ -77,10 +66,8 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   menu->addSeparator();
   QAction* deleteAction = menu->addAction(tr("Delete Subscription"));
   deleteAction->setObjectName("DeleteAction");
-
   connect(menuBtn, &QPushButton::clicked,
           [menuBtn, menu]() { menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height()))); });
-
   connect(copyAction, &QAction::triggered, [this]() { emit copyLinkClicked(m_subId); });
   connect(editAction, &QAction::triggered, [this]() { emit editClicked(m_subId); });
   connect(m_editConfigAction, &QAction::triggered, [this]() { emit editConfigClicked(m_subId); });
@@ -88,43 +75,34 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   connect(refreshApplyAction, &QAction::triggered, [this]() { emit refreshClicked(m_subId, true); });
   connect(rollbackAction, &QAction::triggered, [this]() { emit rollbackClicked(m_subId); });
   connect(deleteAction, &QAction::triggered, [this]() { emit deleteClicked(m_subId); });
-
   headerLayout->addWidget(m_nameLabel);
   headerLayout->addWidget(m_typeTag);
   headerLayout->addWidget(m_statusTag);
   headerLayout->addWidget(m_scheduleTag);
   headerLayout->addStretch();
   headerLayout->addWidget(menuBtn);
-
   QFrame* infoPanel = new QFrame(this);
   infoPanel->setObjectName("CardInfoPanel");
   QVBoxLayout* infoPanelLayout = new QVBoxLayout(infoPanel);
   infoPanelLayout->setContentsMargins(12, 10, 12, 10);
   infoPanelLayout->setSpacing(6);
-
   m_urlLabel = new QLabel(infoPanel);
   m_urlLabel->setObjectName("CardInfoText");
-
   m_timeLabel = new QLabel(infoPanel);
   m_timeLabel->setObjectName("CardInfoText");
-
   m_trafficLabel = new QLabel(infoPanel);
   m_trafficLabel->setObjectName("CardInfoText");
-
   m_expireLabel = new QLabel(infoPanel);
   m_expireLabel->setObjectName("CardInfoText");
-
   infoPanelLayout->addWidget(m_urlLabel);
   infoPanelLayout->addWidget(m_timeLabel);
   infoPanelLayout->addWidget(m_trafficLabel);
   infoPanelLayout->addWidget(m_expireLabel);
-
   m_useBtn = new QPushButton(this);
   m_useBtn->setCursor(Qt::PointingHandCursor);
   m_useBtn->setMinimumHeight(38);
   m_useBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   connect(m_useBtn, &QPushButton::clicked, [this]() { emit useClicked(m_subId); });
-
   mainLayout->addLayout(headerLayout);
   mainLayout->addWidget(infoPanel);
   mainLayout->addStretch();
@@ -169,7 +147,6 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
       m_scheduleTag->setVisible(false);
     }
   }
-
   QString urlText = info.isManual ? tr("Manual config content") : info.url;
   if (urlText.length() > 45) {
     urlText = urlText.left(45) + "...";
@@ -180,7 +157,6 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
   if (m_timeLabel) {
     m_timeLabel->setText(tr("Updated: ") + SubscriptionFormat::formatTimestamp(info.lastUpdate));
   }
-
   if (m_trafficLabel) {
     if (info.subscriptionUpload >= 0 || info.subscriptionDownload >= 0) {
       qint64  used = qMax<qint64>(0, info.subscriptionUpload) + qMax<qint64>(0, info.subscriptionDownload);
@@ -200,7 +176,6 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
       m_trafficLabel->setVisible(false);
     }
   }
-
   if (m_expireLabel) {
     if (info.subscriptionExpire > 0) {
       m_expireLabel->setText(tr("Expires: ") + SubscriptionFormat::formatExpireTime(info.subscriptionExpire));
@@ -209,7 +184,6 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
       m_expireLabel->setVisible(false);
     }
   }
-
   m_active = active;
   applyActiveState();
   updateStyle();
@@ -217,7 +191,6 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
 void SubscriptionCard::updateStyle() {
   ThemeService* ts = m_themeService;
   if (!ts) return;
-
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   if (qss.isEmpty()) {
     qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // Fallback

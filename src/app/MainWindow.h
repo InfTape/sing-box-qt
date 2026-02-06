@@ -1,13 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
 #include <QLabel>
 #include <QListWidget>
 #include <QMainWindow>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <memory>
-
 class HomeView;
 class ProxyView;
 class SubscriptionView;
@@ -24,15 +22,12 @@ class ThemeService;
 class AdminActions;
 class SettingsController;
 class RuntimeUiBinder;
-
 class AppContext;
 class MainWindow : public QMainWindow {
   Q_OBJECT
-
  public:
   explicit MainWindow(AppContext& ctx, QWidget* parent = nullptr);
   ~MainWindow();
-
   void             showAndActivate();
   bool             isKernelRunning() const;
   QString          currentProxyMode() const;
@@ -42,7 +37,6 @@ class MainWindow : public QMainWindow {
 
  protected:
   void closeEvent(QCloseEvent* event) override;
-
  private slots:
   void onNavigationItemClicked(QListWidgetItem* item);
   void onKernelStatusChanged(bool running);
@@ -64,15 +58,12 @@ class MainWindow : public QMainWindow {
   void updateNavIcons();
   void applyStartStopStyle();
   void showStopFailedToast();
-
   // UI components.
   QWidget*        m_centralWidget;
   QListWidget*    m_navList;
   QStackedWidget* m_stackedWidget;
-
   // Status bar components.
   QPushButton* m_startStopBtn;
-
   // Views.
   HomeView*         m_homeView;
   ProxyView*        m_proxyView;
@@ -81,7 +72,6 @@ class MainWindow : public QMainWindow {
   RulesView*        m_rulesView;
   LogView*          m_logView;
   SettingsView*     m_settingsView;
-
   // Services.
   AppContext&                      m_ctx;
   ProxyController*                 m_proxyController;

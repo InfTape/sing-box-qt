@@ -1,5 +1,4 @@
 #include "ProxyUiController.h"
-
 #include "app/interfaces/AdminActions.h"
 #include "app/interfaces/SettingsStore.h"
 #include "core/KernelService.h"
@@ -66,14 +65,12 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool          
   if (!m_proxyController || !m_settings) {
     return TunResult::Failed;
   }
-
   if (!enabled) {
     const bool ok = m_proxyController->setTunModeEnabled(false);
     emit       tunModeStateChanged(m_settings->tunEnabled());
     emit       systemProxyStateChanged(m_settings->systemProxyEnabled());
     return ok ? TunResult::Applied : TunResult::Failed;
   }
-
   const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
   if (!isAdmin) {
     if (confirmRestartAdmin && confirmRestartAdmin()) {
@@ -90,13 +87,11 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(bool          
       emit systemProxyStateChanged(m_settings->systemProxyEnabled());
       return TunResult::Applied;
     }
-
     m_settings->setTunEnabled(false);
     emit tunModeStateChanged(false);
     emit systemProxyStateChanged(m_settings->systemProxyEnabled());
     return TunResult::Cancelled;
   }
-
   const bool ok = m_proxyController->setTunModeEnabled(true);
   emit       tunModeStateChanged(m_settings->tunEnabled());
   emit       systemProxyStateChanged(m_settings->systemProxyEnabled());
@@ -113,7 +108,6 @@ void ProxyUiController::broadcastCurrentStates() {
         m_settings->setSystemProxyEnabled(true);
       }
     }
-
     emit systemProxyStateChanged(m_settings->systemProxyEnabled());
     emit tunModeStateChanged(m_settings->tunEnabled());
   }

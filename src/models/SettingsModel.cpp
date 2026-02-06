@@ -1,17 +1,14 @@
 #include "SettingsModel.h"
-
 #include <QJsonObject>
-
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"
 SettingsModel::Data SettingsModel::load() {
   SettingsModel::Data d;
   QJsonObject         config = DatabaseService::instance().getAppConfig();
-
-  d.mixedPort = config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
-  d.apiPort   = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
-  d.autoStart = config.value("autoStart").toBool(false);
+  d.mixedPort                = config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
+  d.apiPort                  = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
+  d.autoStart                = config.value("autoStart").toBool(false);
   if (config.contains("systemProxyEnabled")) {
     d.systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
   } else {
@@ -32,7 +29,6 @@ SettingsModel::Data SettingsModel::load() {
   d.dnsCn             = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
   d.dnsResolver       = config.value("dnsResolver").toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
   d.urltestUrl        = config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
-
   return d;
 }
 bool SettingsModel::save(const SettingsModel::Data& data, QString* errorMessage) {
@@ -44,7 +40,6 @@ bool SettingsModel::save(const SettingsModel::Data& data, QString* errorMessage)
     if (errorMessage) *errorMessage = QObject::tr("Please enter system proxy bypass domains");
     return false;
   }
-
   QJsonObject config           = DatabaseService::instance().getAppConfig();
   config["mixedPort"]          = data.mixedPort;
   config["apiPort"]            = data.apiPort;
@@ -66,12 +61,10 @@ bool SettingsModel::save(const SettingsModel::Data& data, QString* errorMessage)
   config["dnsCn"]              = data.dnsCn;
   config["dnsResolver"]        = data.dnsResolver;
   config["urltestUrl"]         = data.urltestUrl;
-
   if (!DatabaseService::instance().saveAppConfig(config)) {
     if (errorMessage) *errorMessage = QObject::tr("Failed to save settings");
     return false;
   }
-
   AppSettings::instance().load();
   return true;
 }

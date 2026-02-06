@@ -1,5 +1,4 @@
 #include "ConfigRepositoryAdapter.h"
-
 #include "services/config/ConfigManager.h"
 QString ConfigRepositoryAdapter::getConfigDir() const {
   return ConfigManager::instance().getConfigDir();

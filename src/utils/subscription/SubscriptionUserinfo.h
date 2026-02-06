@@ -1,6 +1,5 @@
 #ifndef SUBSCRIPTIONUSERINFO_H
 #define SUBSCRIPTIONUSERINFO_H
-
 #include <QByteArray>
 #include <QJsonObject>
 namespace SubscriptionUserinfo {

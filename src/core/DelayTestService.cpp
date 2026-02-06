@@ -1,5 +1,4 @@
 #include "DelayTestService.h"
-
 #include <QAtomicInt>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -11,7 +10,6 @@
 #include <QUrlQuery>
 #include <QtConcurrent>
 #include <algorithm>
-
 #include "storage/AppSettings.h"
 DelayTestService::DelayTestService(QObject* parent)
     : QObject(parent), m_apiPort(9090), m_stopping(false), m_semaphore(nullptr), m_activeTasks(0) {}
@@ -38,21 +36,17 @@ void DelayTestService::stopAllTests() {
 QString DelayTestService::buildClashDelayUrl(const QString& proxy, int timeoutMs, const QString& testUrl) const {
   // Build Clash API delay URL.
   // /proxies/{name}/delay?timeout=xxx&url=xxx
-
   // Percent-encode proxy name (keep UTF-8).
   QString encodedProxy = QString::fromUtf8(QUrl::toPercentEncoding(proxy));
-
-  QUrl url;
+  QUrl    url;
   url.setScheme("http");
   url.setHost("127.0.0.1");
   url.setPort(m_apiPort);
   url.setPath(QString("/proxies/%1/delay").arg(encodedProxy));
-
   QUrlQuery query;
   query.addQueryItem("timeout", QString::number(timeoutMs));
   query.addQueryItem("url", testUrl);
   url.setQuery(query);
-
   return url.toString();
 }
 namespace {
@@ -71,9 +65,7 @@ int DelayTestService::fetchSingleDelay(const QString& proxy, int timeoutMs, cons
       return -1;
     }
   }
-
   QString url = buildClashDelayUrl(proxy, timeoutMs, testUrl);
-
   // Create a local QNetworkAccessManager to avoid cross-thread issues.
   QNetworkAccessManager manager;
   QNetworkRequest       request(url);
@@ -82,23 +74,17 @@ int DelayTestService::fetchSingleDelay(const QString& proxy, int timeoutMs, cons
     request.setRawHeader("Authorization", QByteArray("Bearer ").append(m_apiToken.toUtf8()));
   }
   request.setTransferTimeout(timeoutMs + 2000);
-
   QNetworkReply* reply = manager.get(request);
-
   // Wait for request to finish.
   QEventLoop loop;
   QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
   // Set timeout.
   QTimer timer;
   timer.setSingleShot(true);
   QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
   timer.start(timeoutMs + 3000);
-
   loop.exec();
-
   int result = -1;
-
   if (reply->isFinished() && reply->error() == QNetworkReply::NoError) {
     QByteArray    data = reply->readAll();
     QJsonDocument doc  = QJsonDocument::fromJson(data);
@@ -109,7 +95,6 @@ int DelayTestService::fetchSingleDelay(const QString& proxy, int timeoutMs, cons
       }
     }
   }
-
   // Delete reply directly since manager is local.
   delete reply;
   return result;
@@ -123,15 +108,11 @@ int DelayTestService::medianValue(QVector<int>& values) {
 }
 ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString& proxy, const DelayTestOptions& options) {
   ProxyDelayTestResult result;
-  result.proxy = proxy;
-
+  result.proxy          = proxy;
   const QString testUrl = resolveTestUrl(options);
-
-  QVector<int> okValues;
-  QString      lastError;
-
-  int samples = qMax(1, options.samples);
-
+  QVector<int>  okValues;
+  QString       lastError;
+  int           samples = qMax(1, options.samples);
   for (int i = 0; i < samples; ++i) {
     // Check stop flag.
     {
@@ -141,21 +122,17 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString& proxy, c
         return result;
       }
     }
-
     int delay = fetchSingleDelay(proxy, options.timeoutMs, testUrl);
-
     if (delay > 0) {
       okValues.append(delay);
     } else {
       lastError = tr("Request failed");
     }
-
     // Sample interval to avoid spikes on the same proxy.
     if (i < samples - 1) {
       QThread::msleep(80);
     }
   }
-
   if (!okValues.isEmpty()) {
     result.delay          = medianValue(okValues);
     result.ok             = true;
@@ -166,15 +143,12 @@ ProxyDelayTestResult DelayTestService::measureProxyDelay(const QString& proxy, c
     result.error          = lastError.isEmpty() ? tr("No valid result") : lastError;
     result.successSamples = 0;
   }
-
   return result;
 }
 void DelayTestService::testNodeDelay(const QString& proxy, const DelayTestOptions& options) {
   m_activeTasks.store(1);
-
   m_lastFuture = QtConcurrent::run([this, proxy, options]() {
     ProxyDelayTestResult result = measureProxyDelay(proxy, options);
-
     // Emit on the main thread.
     QMetaObject::invokeMethod(
         this,
@@ -190,27 +164,21 @@ void DelayTestService::testNodesDelay(const QStringList& proxies, const DelayTes
     emit testCompleted();
     return;
   }
-
   // Reset stop flag.
   {
     QMutexLocker locker(&m_mutex);
     m_stopping = false;
   }
-
   // Concurrency consistent with Throne-dev: default 10, max 100, min 1.
   const int maxConcurrency = std::clamp(options.concurrency, 1, 100);
-
   // Create semaphore for concurrency control.
   delete m_semaphore;
   m_semaphore = new QSemaphore(maxConcurrency);
-
-  int total = proxies.size();
+  int total   = proxies.size();
   m_activeTasks.store(total);
-
   m_lastFuture = QtConcurrent::run([this, proxies, options, total]() {
     QAtomicInt           completed(0);
     QList<QFuture<void>> futures;
-
     for (const QString& proxy : proxies) {
       // Check stop flag.
       {
@@ -219,18 +187,13 @@ void DelayTestService::testNodesDelay(const QStringList& proxies, const DelayTes
           break;
         }
       }
-
       // Acquire semaphore (limit concurrency).
       m_semaphore->acquire();
-
       auto future = QtConcurrent::run([this, proxy, options, total, &completed]() {
         ProxyDelayTestResult result = measureProxyDelay(proxy, options);
-
         // Release semaphore.
         m_semaphore->release();
-
         int current = completed.fetchAndAddRelaxed(1) + 1;
-
         // Emit on the main thread.
         QMetaObject::invokeMethod(
             this,
@@ -241,15 +204,12 @@ void DelayTestService::testNodesDelay(const QStringList& proxies, const DelayTes
             },
             Qt::QueuedConnection);
       });
-
       futures.append(future);
     }
-
     // Wait for all tasks to finish.
     for (auto& future : futures) {
       future.waitForFinished();
     }
-
     // Emit completion.
     QMetaObject::invokeMethod(
         this,

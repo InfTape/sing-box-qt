@@ -1,5 +1,4 @@
 #include "utils/layout/CardGridLayoutHelper.h"
-
 #include <QtGlobal>
 int CardGridLayoutHelper::computeColumns(int availableWidth, int spacing) {
   return qMax(1, (availableWidth + spacing) / (kCardWidth + spacing));

@@ -1,11 +1,9 @@
 #ifndef SUBSCRIPTIONCONTROLLER_H
 #define SUBSCRIPTIONCONTROLLER_H
-
 #include <QJsonArray>
 #include <QList>
 #include <QString>
 #include <QStringList>
-
 class SubscriptionService;
 struct SubscriptionInfo;
 /**
@@ -19,13 +17,10 @@ class SubscriptionController {
   int                     activeIndex() const;
   QString                 activeConfigPath() const;
   QString                 currentConfig() const;
-
   void addUrl(const QString& url, const QString& name, bool useOriginalConfig, int autoUpdateIntervalMinutes,
               bool applyRuntime, bool enableSharedRules, const QStringList& ruleSets);
-
   void addManual(const QString& content, const QString& name, bool useOriginalConfig, bool isUriList, bool applyRuntime,
                  bool enableSharedRules, const QStringList& ruleSets);
-
   void refresh(const QString& id, bool applyRuntime);
   bool rollback(const QString& id);
   void remove(const QString& id);
@@ -33,7 +28,6 @@ class SubscriptionController {
   void updateSubscription(const QString& id, const QString& name, const QString& url, bool isManual,
                           const QString& content, bool useOriginalConfig, int autoUpdateIntervalMinutes,
                           bool enableSharedRules, const QStringList& ruleSets);
-
   bool saveCurrentConfig(const QString& content, bool applyRuntime);
 
  private:

@@ -1,5 +1,4 @@
 #include "utils/LogParser.h"
-
 #include <QRegularExpression>
 namespace LogParser {
 QString stripAnsiSequences(const QString& text) {
@@ -17,7 +16,6 @@ LogKind parseLogKind(const QString& message) {
     info.isDns     = true;
     return info;
   }
-
   if (message.contains("inbound connection")) {
     info.direction = "inbound";
   } else if (message.contains("outbound connection")) {
@@ -25,13 +23,11 @@ LogKind parseLogKind(const QString& message) {
   } else {
     return info;
   }
-
   static const QRegularExpression kConnHost(R"(connection (?:from|to) ([^\s]+))");
   const QRegularExpressionMatch   match = kConnHost.match(message);
   if (match.hasMatch()) {
     info.host = match.captured(1);
   }
-
   if (info.direction == "outbound") {
     const QRegularExpressionMatch nodeMatch = kOutboundNode.match(message);
     if (nodeMatch.hasMatch()) {
@@ -39,7 +35,6 @@ LogKind parseLogKind(const QString& message) {
       info.nodeName = nodeMatch.captured(2).trimmed();
     }
   }
-
   info.isConnection = true;
   return info;
 }
@@ -53,7 +48,6 @@ QString detectLogType(const QString& message) {
   static const QRegularExpression kDebugRe("\\bDEBUG\\b");
   static const QRegularExpression kTraceRe("\\bTRACE\\b");
   static const QRegularExpression kInfoRe("\\bINFO\\b");
-
   if (upper.contains(kPanicRe)) return "panic";
   if (upper.contains(kFatalRe)) return "fatal";
   if (upper.contains(kErrorRe)) return "error";

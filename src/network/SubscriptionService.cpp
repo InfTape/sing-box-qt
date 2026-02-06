@@ -1,6 +1,5 @@
 
 #include "SubscriptionService.h"
-
 #include <QDateTime>
 #include <QFile>
 #include <QJsonArray>
@@ -12,7 +11,6 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QUuid>
-
 #include "app/interfaces/ConfigRepository.h"
 #include "services/config/ConfigMutator.h"
 #include "services/rules/SharedRulesStore.h"
@@ -64,10 +62,8 @@ SubscriptionService::SubscriptionService(ConfigRepository* configRepo, QObject* 
     if (info.ruleSets.isEmpty()) info.ruleSets << "default";
     m_subscriptions.append(info);
   }
-
   m_activeIndex      = DatabaseService::instance().getActiveSubscriptionIndex();
   m_activeConfigPath = DatabaseService::instance().getActiveConfigPath();
-
   if (m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count()) {
     syncSharedRulesToConfig(m_subscriptions[m_activeIndex]);
   }
@@ -126,7 +122,6 @@ void SubscriptionService::updateSubscriptionUserinfo(SubscriptionInfo& info, con
     info.subscriptionExpire   = kUnsetValue;
     return;
   }
-
   info.subscriptionUpload   = headers.value("upload").toVariant().toLongLong();
   info.subscriptionDownload = headers.value("download").toVariant().toLongLong();
   info.subscriptionTotal    = headers.value("total").toVariant().toLongLong();
@@ -140,7 +135,6 @@ void SubscriptionService::syncSharedRulesToConfig(const SubscriptionInfo& info) 
   if (!m_configRepo) return;
   QJsonObject config = m_configRepo->loadConfig(info.configPath);
   if (config.isEmpty()) return;
-
   QJsonArray merged;
   if (info.enableSharedRules) {
     const QStringList setNames = info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets;
@@ -160,7 +154,6 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
     emit errorOccurred(tr("Please enter a subscription URL"));
     return;
   }
-
   QString       subName    = name.trimmed().isEmpty() ? QUrl(trimmedUrl).host() : name.trimmed();
   QString       id         = generateId();
   const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
@@ -169,14 +162,11 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
     emit errorOccurred(tr("Config directory not available"));
     return;
   }
-
   Logger::info(QString("Add subscription: %1 (%2)").arg(subName, trimmedUrl));
-
   QNetworkRequest request{QUrl(trimmedUrl)};
   request.setTransferTimeout(30000);
   QNetworkAccessManager* manager = new QNetworkAccessManager(this);
   QNetworkReply*         reply   = manager->get(request);
-
   connect(reply, &QNetworkReply::finished, this, [=]() {
     reply->deleteLater();
     manager->deleteLater();
@@ -184,10 +174,8 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
       emit errorOccurred(tr("Failed to fetch subscription"));
       return;
     }
-
     const QByteArray data           = reply->readAll();
     const QByteArray userinfoHeader = reply->rawHeader("subscription-userinfo");
-
     SubscriptionInfo info;
     info.id       = id;
     info.name     = subName;
@@ -201,8 +189,7 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
     info.backupPath                = configPath + ".bak";
     info.enableSharedRules         = enableSharedRules;
     info.ruleSets                  = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
-
-    bool saved = false;
+    bool saved                     = false;
     if (useOriginalConfig) {
       if (!isJsonContent(QString::fromUtf8(data))) {
         emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
@@ -227,22 +214,17 @@ void SubscriptionService::addUrlSubscription(const QString& url, const QString& 
         DatabaseService::instance().saveSubscriptionNodes(id, nodes);
       }
     }
-
     if (!saved) {
       emit errorOccurred(tr("Failed to save subscription config"));
       return;
     }
-
     info.lastUpdate = QDateTime::currentMSecsSinceEpoch();
     updateSubscriptionUserinfoFromHeader(info, userinfoHeader);
-
     syncSharedRulesToConfig(info);
-
     m_subscriptions.append(info);
     m_activeIndex      = m_subscriptions.count() - 1;
     m_activeConfigPath = configPath;
     saveToDatabase();
-
     emit subscriptionAdded(info);
     emit activeSubscriptionChanged(info.id, info.configPath);
     if (applyRuntime) {
@@ -254,18 +236,15 @@ void SubscriptionService::addManualSubscription(const QString& content, const QS
                                                 bool isUriList, bool applyRuntime, bool enableSharedRules,
                                                 const QStringList& ruleSets) {
   Q_UNUSED(isUriList)
-
   const QString trimmed = content.trimmed();
   if (trimmed.isEmpty()) {
     emit errorOccurred(tr("Please enter subscription content"));
     return;
   }
-
   if (useOriginalConfig && !isJsonContent(trimmed)) {
     emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
     return;
   }
-
   QString       subName    = name.trimmed().isEmpty() ? tr("Manual subscription") : name.trimmed();
   QString       id         = generateId();
   const QString configName = SubscriptionConfigStore::generateConfigFileName(subName);
@@ -274,7 +253,6 @@ void SubscriptionService::addManualSubscription(const QString& content, const QS
     emit errorOccurred(tr("Config directory not available"));
     return;
   }
-
   SubscriptionInfo info;
   info.id   = id;
   info.name = subName;
@@ -288,8 +266,7 @@ void SubscriptionService::addManualSubscription(const QString& content, const QS
   info.backupPath                = configPath + ".bak";
   info.enableSharedRules         = enableSharedRules;
   info.ruleSets                  = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
-
-  bool saved = false;
+  bool saved                     = false;
   if (useOriginalConfig) {
     saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, trimmed, configPath);
   } else {
@@ -307,25 +284,20 @@ void SubscriptionService::addManualSubscription(const QString& content, const QS
       DatabaseService::instance().saveSubscriptionNodes(id, nodes);
     }
   }
-
   if (!saved) {
     emit errorOccurred(tr("Failed to save subscription config"));
     return;
   }
-
   info.lastUpdate           = QDateTime::currentMSecsSinceEpoch();
   info.subscriptionUpload   = kUnsetValue;
   info.subscriptionDownload = kUnsetValue;
   info.subscriptionTotal    = kUnsetValue;
   info.subscriptionExpire   = kUnsetValue;
-
   syncSharedRulesToConfig(info);
-
   m_subscriptions.append(info);
   m_activeIndex      = m_subscriptions.count() - 1;
   m_activeConfigPath = configPath;
   saveToDatabase();
-
   emit subscriptionAdded(info);
   emit activeSubscriptionChanged(info.id, info.configPath);
   if (applyRuntime) {
@@ -358,7 +330,6 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
     emit errorOccurred(tr("Subscription not found"));
     return;
   }
-
   if (sub->isManual) {
     if (sub->manualContent.trimmed().isEmpty()) {
       emit errorOccurred(tr("Manual subscription content is empty"));
@@ -368,7 +339,6 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
       emit errorOccurred(tr("Original subscription only supports sing-box JSON config"));
       return;
     }
-
     bool saved = false;
     if (sub->useOriginalConfig) {
       saved = SubscriptionConfigStore::saveOriginalConfig(m_configRepo, sub->manualContent, sub->configPath);
@@ -406,13 +376,11 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
     }
     return;
   }
-
   const QString url = sub->url.trimmed();
   if (url.isEmpty()) {
     emit errorOccurred(tr("Subscription URL is empty"));
     return;
   }
-
   QNetworkRequest request{QUrl(url)};
   request.setTransferTimeout(30000);
   QNetworkAccessManager* manager = new QNetworkAccessManager(this);
@@ -424,7 +392,6 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
       emit errorOccurred(tr("Failed to update subscription"));
       return;
     }
-
     const QByteArray data           = reply->readAll();
     const QByteArray userinfoHeader = reply->rawHeader("subscription-userinfo");
     bool             saved          = false;
@@ -451,12 +418,10 @@ void SubscriptionService::refreshSubscription(const QString& id, bool applyRunti
         DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
       }
     }
-
     if (!saved) {
       emit errorOccurred(tr("Failed to save subscription config"));
       return;
     }
-
     sub->lastUpdate = QDateTime::currentMSecsSinceEpoch();
     updateSubscriptionUserinfoFromHeader(*sub, userinfoHeader);
     syncSharedRulesToConfig(*sub);
@@ -483,7 +448,6 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id, const QStrin
     emit errorOccurred(tr("Subscription not found"));
     return;
   }
-
   sub->name                      = name.trimmed();
   sub->url                       = url.trimmed();
   sub->isManual                  = isManual;
@@ -524,7 +488,6 @@ QString SubscriptionService::getCurrentConfig() const {
   if (path.isEmpty()) {
     return QString();
   }
-
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) {
     return QString();
@@ -541,17 +504,14 @@ bool SubscriptionService::saveCurrentConfig(const QString& content, bool applyRu
   if (targetPath.isEmpty()) {
     return false;
   }
-
   QJsonParseError err;
   QJsonDocument   doc = QJsonDocument::fromJson(content.toUtf8(), &err);
   if (err.error != QJsonParseError::NoError || !doc.isObject()) {
     return false;
   }
-
   if (!m_configRepo || !m_configRepo->saveConfig(targetPath, doc.object())) {
     return false;
   }
-
   if (applyRuntime) {
     emit applyConfigRequested(targetPath, true);
   }

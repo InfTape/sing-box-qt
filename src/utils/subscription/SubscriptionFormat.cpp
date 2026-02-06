@@ -1,5 +1,4 @@
 #include "utils/subscription/SubscriptionFormat.h"
-
 #include <QDateTime>
 #include <QObject>
 namespace SubscriptionFormat {

@@ -3,7 +3,6 @@ QString ProxyNodeHelper::delayStateFromText(const QString& delayText) {
   if (delayText.isEmpty() || delayText == "...") {
     return "loading";
   }
-
   QString delayStr = delayText;
   QString trimmed  = delayStr;
   trimmed.replace(" ms", "");

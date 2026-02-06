@@ -1,11 +1,9 @@
 #include "services/config/ConfigMutator.h"
-
 #include <QDir>
 #include <QHostAddress>
 #include <QSet>
 #include <QStringList>
 #include <limits>
-
 #include "services/config/ConfigBuilder.h"
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
@@ -33,21 +31,18 @@ int ensureOutboundIndex(QJsonArray& outbounds, const QString& tag) {
       return i;
     }
   }
-
   QJsonObject created;
   created["tag"] = tag;
   outbounds.append(created);
   return outbounds.size() - 1;
 }
 void updateUrltestAndSelector(QJsonArray& outbounds, const QStringList& nodeTags) {
-  const AppSettings& settings = AppSettings::instance();
-
-  const int autoIdx   = ensureOutboundIndex(outbounds, ConfigConstants::TAG_AUTO);
-  const int manualIdx = ensureOutboundIndex(outbounds, ConfigConstants::TAG_MANUAL);
-
-  QJsonObject autoOutbound = outbounds[autoIdx].toObject();
-  autoOutbound["type"]     = "urltest";
-  autoOutbound["tag"]      = ConfigConstants::TAG_AUTO;
+  const AppSettings& settings     = AppSettings::instance();
+  const int          autoIdx      = ensureOutboundIndex(outbounds, ConfigConstants::TAG_AUTO);
+  const int          manualIdx    = ensureOutboundIndex(outbounds, ConfigConstants::TAG_MANUAL);
+  QJsonObject        autoOutbound = outbounds[autoIdx].toObject();
+  autoOutbound["type"]            = "urltest";
+  autoOutbound["tag"]             = ConfigConstants::TAG_AUTO;
   if (nodeTags.isEmpty()) {
     autoOutbound["outbounds"] = QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_DIRECT);
   } else {
@@ -59,10 +54,9 @@ void updateUrltestAndSelector(QJsonArray& outbounds, const QStringList& nodeTags
   autoOutbound["interval"]                    = "10m";
   autoOutbound["tolerance"]                   = 50;
   outbounds[autoIdx]                          = autoOutbound;
-
-  QJsonObject manualOutbound = outbounds[manualIdx].toObject();
-  manualOutbound["type"]     = "selector";
-  manualOutbound["tag"]      = ConfigConstants::TAG_MANUAL;
+  QJsonObject manualOutbound                  = outbounds[manualIdx].toObject();
+  manualOutbound["type"]                      = "selector";
+  manualOutbound["tag"]                       = ConfigConstants::TAG_MANUAL;
   QStringList manualList;
   manualList << ConfigConstants::TAG_AUTO;
   for (const auto& tag : nodeTags) {
@@ -74,7 +68,6 @@ void updateUrltestAndSelector(QJsonArray& outbounds, const QStringList& nodeTags
 void updateAppGroupSelectors(QJsonArray& outbounds, const QStringList& nodeTags) {
   const QStringList groups = {ConfigConstants::TAG_TELEGRAM, ConfigConstants::TAG_YOUTUBE, ConfigConstants::TAG_NETFLIX,
                               ConfigConstants::TAG_OPENAI};
-
   for (const auto& groupTag : groups) {
     int idx = -1;
     for (int i = 0; i < outbounds.size(); ++i) {
@@ -87,13 +80,11 @@ void updateAppGroupSelectors(QJsonArray& outbounds, const QStringList& nodeTags)
     if (idx < 0) {
       continue;
     }
-
     QStringList groupList;
     groupList << ConfigConstants::TAG_MANUAL << ConfigConstants::TAG_AUTO;
     for (const auto& tag : nodeTags) {
       groupList << tag;
     }
-
     QJsonObject group  = outbounds[idx].toObject();
     group["outbounds"] = QJsonArray::fromStringList(groupList);
     outbounds[idx]     = group;
@@ -108,7 +99,6 @@ int findInsertIndex(const QJsonArray& rules) {
     }
     return -1;
   };
-
   const int directIndex = findIndex("direct");
   const int globalIndex = findIndex("global");
   int       insertIndex = rules.size();
@@ -132,8 +122,7 @@ void normalizeCacheFileConfig(QJsonObject& experimental) {
 }
 }  // namespace
 bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
-  QJsonArray outbounds = config.value("outbounds").toArray();
-
+  QJsonArray    outbounds = config.value("outbounds").toArray();
   QSet<QString> existingTags;
   for (const auto& obVal : outbounds) {
     if (!obVal.isObject()) continue;
@@ -143,18 +132,15 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
       existingTags.insert(tag);
     }
   }
-
   QStringList   groupNodeTags;
   QJsonArray    normalizedNodes;
   const QString resolverStrategy = AppSettings::instance().dnsStrategy();
-
   for (int i = 0; i < nodes.size(); ++i) {
     if (!nodes[i].isObject()) {
       Logger::warn(QString("Skip node: not an object, index=%1").arg(i));
       continue;
     }
-    QJsonObject node = nodes[i].toObject();
-
+    QJsonObject   node   = nodes[i].toObject();
     const QString rawTag = node.value("tag").toString().trimmed();
     if (rawTag.isEmpty()) {
       Logger::warn(QString("Skip node: missing tag, index=%1").arg(i));
@@ -164,7 +150,6 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
       Logger::warn(QString("Skip node: missing type, tag=%1, index=%2").arg(rawTag).arg(i));
       continue;
     }
-
     QString tag = rawTag;
     if (existingTags.contains(tag)) {
       QString candidate = QString("node-%1-%2").arg(rawTag).arg(i);
@@ -185,8 +170,7 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
       }
     }
     existingTags.insert(tag);
-    node["tag"] = tag;
-
+    node["tag"]          = tag;
     const QString server = node.value("server").toString().trimmed();
     if (!server.isEmpty() && server != "0.0.0.0" && !isIpAddress(server) && !node.contains("domain_resolver")) {
       QJsonObject resolver;
@@ -194,28 +178,22 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
       resolver["strategy"]    = resolverStrategy;
       node["domain_resolver"] = resolver;
     }
-
     if (shouldIncludeNodeInGroups(node)) {
       groupNodeTags.append(tag);
     }
     normalizedNodes.append(node);
   }
-
   updateUrltestAndSelector(outbounds, groupNodeTags);
   updateAppGroupSelectors(outbounds, groupNodeTags);
-
   for (const auto& nodeVal : normalizedNodes) {
     outbounds.append(nodeVal);
   }
-
   config["outbounds"] = outbounds;
   return true;
 }
 void ConfigMutator::applySettings(QJsonObject& config) {
-  const AppSettings& settings = AppSettings::instance();
-
-  config["inbounds"] = ConfigBuilder::buildInbounds();
-
+  const AppSettings& settings             = AppSettings::instance();
+  config["inbounds"]                      = ConfigBuilder::buildInbounds();
   QJsonObject experimental                = config.value("experimental").toObject();
   QJsonObject clashApi                    = experimental.value("clash_api").toObject();
   clashApi["external_controller"]         = QString("127.0.0.1:%1").arg(settings.apiPort());
@@ -223,10 +201,8 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   experimental["clash_api"]               = clashApi;
   normalizeCacheFileConfig(experimental);
   config["experimental"] = experimental;
-
-  QJsonObject dns = config.value("dns").toObject();
-  dns["strategy"] = settings.dnsStrategy();
-
+  QJsonObject dns        = config.value("dns").toObject();
+  dns["strategy"]        = settings.dnsStrategy();
   if (dns.contains("servers") && dns["servers"].isArray()) {
     QJsonArray servers = dns.value("servers").toArray();
     for (int i = 0; i < servers.size(); ++i) {
@@ -245,7 +221,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     }
     dns["servers"] = servers;
   }
-
   if (dns.contains("rules") && dns["rules"].isArray()) {
     QJsonArray rules    = dns.value("rules").toArray();
     int        adsIndex = -1;
@@ -257,7 +232,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         break;
       }
     }
-
     if (settings.blockAds()) {
       if (adsIndex < 0) {
         QJsonObject adsRule;
@@ -272,12 +246,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     } else if (adsIndex >= 0) {
       rules.removeAt(adsIndex);
     }
-
     dns["rules"] = rules;
   }
-
   config["dns"] = dns;
-
   if (config.contains("outbounds") && config["outbounds"].isArray()) {
     QJsonArray outbounds = config.value("outbounds").toArray();
     for (int i = 0; i < outbounds.size(); ++i) {
@@ -290,7 +261,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         outbounds[i]                      = ob;
       }
     }
-
     if (!settings.enableAppGroups()) {
       QJsonArray filtered;
       for (const auto& obVal : outbounds) {
@@ -306,15 +276,12 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       }
       outbounds = filtered;
     }
-
     config["outbounds"] = outbounds;
   }
-
   if (config.contains("route") && config["route"].isObject()) {
     QJsonObject route                = config.value("route").toObject();
     route["final"]                   = settings.normalizedDefaultOutbound();
     route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
-
     if (route.contains("rule_set") && route["rule_set"].isArray()) {
       QJsonArray ruleSets = route.value("rule_set").toArray();
       for (int i = 0; i < ruleSets.size(); ++i) {
@@ -325,7 +292,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         ruleSets[i] = rs;
       }
-
       if (!settings.blockAds()) {
         QJsonArray filtered;
         for (const auto& rsVal : ruleSets) {
@@ -339,7 +305,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         ruleSets = filtered;
       }
-
       if (!settings.enableAppGroups()) {
         QJsonArray filtered;
         for (const auto& rsVal : ruleSets) {
@@ -355,13 +320,10 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         ruleSets = filtered;
       }
-
       route["rule_set"] = ruleSets;
     }
-
     if (route.contains("rules") && route["rules"].isArray()) {
       QJsonArray rules = route.value("rules").toArray();
-
       for (int i = 0; i < rules.size(); ++i) {
         if (!rules[i].isObject()) continue;
         QJsonObject rule = rules[i].toObject();
@@ -373,7 +335,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         rules[i] = rule;
       }
-
       int hijackIndex = -1;
       for (int i = 0; i < rules.size(); ++i) {
         if (!rules[i].isObject()) continue;
@@ -393,7 +354,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       } else if (hijackIndex >= 0) {
         rules.removeAt(hijackIndex);
       }
-
       int adsIndex = -1;
       for (int i = 0; i < rules.size(); ++i) {
         if (!rules[i].isObject()) continue;
@@ -413,7 +373,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       } else if (adsIndex >= 0) {
         rules.removeAt(adsIndex);
       }
-
       if (!settings.enableAppGroups()) {
         QJsonArray filtered;
         for (const auto& ruleVal : rules) {
@@ -429,16 +388,13 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         rules = filtered;
       }
-
       route["rules"] = rules;
     }
-
     config["route"] = route;
   }
 }
 void ConfigMutator::applyPortSettings(QJsonObject& config) {
   const AppSettings& settings = AppSettings::instance();
-
   if (config.contains("experimental") && config["experimental"].isObject()) {
     QJsonObject experimental = config.value("experimental").toObject();
     if (experimental.contains("clash_api") && experimental["clash_api"].isObject()) {
@@ -450,7 +406,6 @@ void ConfigMutator::applyPortSettings(QJsonObject& config) {
     }
     config["experimental"] = experimental;
   }
-
   if (config.contains("inbounds") && config["inbounds"].isArray()) {
     QJsonArray inbounds = config.value("inbounds").toArray();
     for (int i = 0; i < inbounds.size(); ++i) {
@@ -472,7 +427,6 @@ bool ConfigMutator::updateClashDefaultMode(QJsonObject& config, const QString& m
     if (error) *error = QString("Invalid proxy mode: %1").arg(mode);
     return false;
   }
-
   QJsonObject experimental = config.value("experimental").toObject();
   QJsonObject clashApi     = experimental.value("clash_api").toObject();
   clashApi["default_mode"] = normalized;
@@ -480,9 +434,7 @@ bool ConfigMutator::updateClashDefaultMode(QJsonObject& config, const QString& m
     clashApi["external_ui"] = "metacubexd";
   }
   experimental["clash_api"] = clashApi;
-
   normalizeCacheFileConfig(experimental);
-
   config["experimental"] = experimental;
   return true;
 }
@@ -490,7 +442,6 @@ QString ConfigMutator::readClashDefaultMode(const QJsonObject& config) {
   if (config.isEmpty()) {
     return "rule";
   }
-
   const QJsonObject experimental = config.value("experimental").toObject();
   const QJsonObject clashApi     = experimental.value("clash_api").toObject();
   const QString     mode         = clashApi.value("default_mode").toString().trimmed().toLower();
@@ -503,24 +454,20 @@ void ConfigMutator::applySharedRules(QJsonObject& config, const QJsonArray& shar
   if (!config.contains("route") || !config["route"].isObject()) {
     return;
   }
-
   QJsonObject route = config.value("route").toObject();
   QJsonArray  rules = route.value("rules").toArray();
-
   // helper: normalize rule for comparison (strip shared/source markers)
   auto normalize = [](QJsonObject obj) {
     obj.remove("shared");
     obj.remove("source");
     return obj;
   };
-
   // Remove existing rules that are identical to any shared rules (avoid duplication)
   QSet<QString> sharedSig;
   for (const auto& rv : sharedRules) {
     if (!rv.isObject()) continue;
     sharedSig.insert(QString::fromUtf8(QJsonDocument(normalize(rv.toObject())).toJson(QJsonDocument::Compact)));
   }
-
   if (!sharedSig.isEmpty()) {
     QJsonArray filtered;
     for (const auto& ruleVal : rules) {
@@ -537,7 +484,6 @@ void ConfigMutator::applySharedRules(QJsonObject& config, const QJsonArray& shar
     }
     rules = filtered;
   }
-
   if (enabled && !sharedRules.isEmpty()) {
     int           insertIndex = findInsertIndex(rules);
     QSet<QString> dedup;
@@ -555,7 +501,6 @@ void ConfigMutator::applySharedRules(QJsonObject& config, const QJsonArray& shar
       }
     }
   }
-
   route["rules"]  = rules;
   config["route"] = route;
 }

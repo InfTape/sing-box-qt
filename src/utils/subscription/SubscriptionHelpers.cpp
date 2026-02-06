@@ -1,13 +1,10 @@
 #include "utils/subscription/SubscriptionHelpers.h"
-
 #include <QJsonArray>
 #include <QJsonDocument>
-
 #include "network/SubscriptionService.h"
 namespace SubscriptionHelpers {
 bool isSingleManualNode(const SubscriptionInfo& info, QJsonObject* outNode) {
   if (!info.isManual || info.useOriginalConfig) return false;
-
   QJsonDocument doc = QJsonDocument::fromJson(info.manualContent.toUtf8());
   if (doc.isArray()) {
     QJsonArray arr = doc.array();

@@ -1,5 +1,4 @@
 #include "ProxyViewController.h"
-
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QNetworkAccessManager>
@@ -9,7 +8,6 @@
 #include <QThreadPool>
 #include <QTimer>
 #include <QtConcurrent>
-
 #include "app/interfaces/ConfigRepository.h"
 #include "core/DelayTestService.h"
 #include "core/ProxyService.h"
@@ -24,11 +22,8 @@ void ProxyViewController::setProxyService(ProxyService* service) {
     disconnect(m_proxyService, nullptr, this, nullptr);
   }
   m_proxyService = service;
-
   if (!m_proxyService) return;
-
   updateDelayTesterAuth();
-
   connect(m_proxyService, &ProxyService::proxiesReceived, this, &ProxyViewController::proxiesUpdated);
   connect(m_proxyService, &ProxyService::proxySelected, this, &ProxyViewController::proxySelected);
   connect(m_proxyService, &ProxyService::proxySelectFailed, this, &ProxyViewController::proxySelectFailed);
@@ -115,23 +110,18 @@ QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   QNetworkAccessManager manager;
   QNetworkProxy         proxy(QNetworkProxy::Socks5Proxy, "127.0.0.1", AppSettings::instance().mixedPort());
   manager.setProxy(proxy);
-
-  const QString testUrl   = QStringLiteral("https://speed.cloudflare.com/__down?bytes=5000000");
-  const int     timeoutMs = 15000;
-
+  const QString   testUrl   = QStringLiteral("https://speed.cloudflare.com/__down?bytes=5000000");
+  const int       timeoutMs = 15000;
   const QUrl      testQUrl(testUrl);
   QNetworkRequest request(testQUrl);
-
-  QElapsedTimer timer;
+  QElapsedTimer   timer;
   timer.start();
-
   QNetworkReply* reply      = manager.get(request);
   qint64         totalBytes = 0;
   QObject::connect(reply, &QNetworkReply::readyRead, [&]() {
     totalBytes += reply->bytesAvailable();
     reply->readAll();
   });
-
   QEventLoop loop;
   QTimer     timeout;
   timeout.setSingleShot(true);
@@ -139,7 +129,6 @@ QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
   timeout.start(timeoutMs + 2000);
   loop.exec();
-
   if (!reply->isFinished() || reply->error() != QNetworkReply::NoError) {
     reply->abort();
     reply->deleteLater();
@@ -148,13 +137,10 @@ QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   totalBytes += reply->bytesAvailable();
   reply->readAll();
   reply->deleteLater();
-
   const qint64 ms = timer.elapsed();
   if (ms <= 0) return QString();
-
   const double bytesPerSec = (static_cast<double>(totalBytes) * 1000.0) / ms;
   const double mbps        = (bytesPerSec * 8.0) / (1024.0 * 1024.0);
-
   return tr("%1 Mbps").arg(QString::number(mbps, 'f', 1));
 }
 void ProxyViewController::startSpeedTest(const QString& nodeName, const QString& groupName) {
@@ -162,9 +148,7 @@ void ProxyViewController::startSpeedTest(const QString& nodeName, const QString&
     emit speedTestResult(nodeName, QString());
     return;
   }
-
   ProxyActions::selectProxy(m_proxyService, groupName, nodeName);
-
   QThreadPool::globalInstance()->start([this, nodeName]() {
     const QString result = runBandwidthTest(nodeName);
     QMetaObject::invokeMethod(

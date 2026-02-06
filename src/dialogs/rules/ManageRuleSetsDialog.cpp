@@ -1,5 +1,4 @@
 ﻿#include "dialogs/rules/ManageRuleSetsDialog.h"
-
 #include <QAbstractItemView>
 #include <QHBoxLayout>
 #include <QInputDialog>
@@ -9,7 +8,6 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QVBoxLayout>
-
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/rules/RuleEditorDialog.h"
 #include "services/rules/RuleConfigService.h"
@@ -24,7 +22,6 @@ ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeSe
   setWindowTitle(tr("Manage Rule Sets"));
   setModal(true);
   resize(520, 380);
-
   QVBoxLayout* layout     = new QVBoxLayout(this);
   QHBoxLayout* listLayout = new QHBoxLayout;
   QVBoxLayout* setLayout  = new QVBoxLayout;
@@ -38,15 +35,12 @@ ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeSe
   listLayout->addLayout(setLayout, 1);
   listLayout->addLayout(ruleLayout, 2);
   layout->addLayout(listLayout);
-
   // Context menus
   m_list->setContextMenuPolicy(Qt::CustomContextMenu);
   m_ruleList->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(m_list, &QListWidget::customContextMenuRequested, this, &ManageRuleSetsDialog::onSetContextMenu);
   connect(m_ruleList, &QListWidget::customContextMenuRequested, this, &ManageRuleSetsDialog::onRuleContextMenu);
-
   connect(m_list, &QListWidget::currentRowChanged, this, &ManageRuleSetsDialog::onSetChanged);
-
   reload();
 }
 void ManageRuleSetsDialog::reload() {
@@ -162,12 +156,10 @@ void ManageRuleSetsDialog::onRuleAdd() {
     QMessageBox::warning(this, tr("Add Rule"), error);
     return;
   }
-
   RuleEditorDialog dlg(RuleEditorDialog::Mode::Add, this);
   dlg.setOutboundTags(outboundTags);
   dlg.setRuleSetName(set);
   if (dlg.exec() != QDialog::Accepted) return;
-
   RuleConfigService::RuleEditData data = dlg.editData();
   data.ruleSet                         = set;
   addRuleToSet(set, data);
@@ -190,8 +182,7 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
   const QString set     = selectedName();
   const bool    hasSet  = !set.isEmpty();
   const bool    canEdit = hasSet && set != "default";
-
-  RoundedMenu menu(this);
+  RoundedMenu   menu(this);
   menu.setObjectName("TrayMenu");
   ThemeService* ts = m_themeService;
   if (ts) {
@@ -199,13 +190,11 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
     connect(ts, &ThemeService::themeChanged, &menu,
             [&menu, ts]() { menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
   }
-
   QAction* addAct    = menu.addAction(tr("Add"));
   QAction* renameAct = menu.addAction(tr("Rename"));
   QAction* delAct    = menu.addAction(tr("Delete"));
   renameAct->setEnabled(canEdit);
   delAct->setEnabled(canEdit);
-
   QAction* chosen = menu.exec(m_list->viewport()->mapToGlobal(pos));
   if (!chosen) return;
   if (chosen == addAct)
@@ -218,8 +207,7 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
 void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
   const QString set = selectedName();
   if (set.isEmpty()) return;
-  const bool hasRule = !m_ruleList->selectedItems().isEmpty();
-
+  const bool  hasRule = !m_ruleList->selectedItems().isEmpty();
   RoundedMenu menu(this);
   menu.setObjectName("TrayMenu");
   ThemeService* ts = m_themeService;
@@ -228,11 +216,9 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
     connect(ts, &ThemeService::themeChanged, &menu,
             [&menu, ts]() { menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
   }
-
   QAction* addAct = menu.addAction(tr("Add Rule"));
   QAction* delAct = menu.addAction(tr("Delete Rule"));
   delAct->setEnabled(hasRule);
-
   QAction* chosen = menu.exec(m_ruleList->viewport()->mapToGlobal(pos));
   if (!chosen) return;
   if (chosen == addAct)

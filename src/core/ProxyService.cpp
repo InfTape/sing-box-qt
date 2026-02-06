@@ -1,8 +1,6 @@
 #include "ProxyService.h"
-
 #include <QJsonDocument>
 #include <QUrl>
-
 #include "network/HttpClient.h"
 #include "network/WebSocketClient.h"
 #include "utils/Logger.h"
@@ -37,7 +35,6 @@ QString ProxyService::buildApiUrl(const QString& path) const {
 }
 void ProxyService::fetchProxies() {
   QString url = buildApiUrl("/proxies");
-
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
     if (success) {
       QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -51,7 +48,6 @@ void ProxyService::fetchProxies() {
 }
 void ProxyService::fetchRules() {
   QString url = buildApiUrl("/rules");
-
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
     if (success) {
       QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -65,7 +61,6 @@ void ProxyService::fetchRules() {
 }
 void ProxyService::fetchConnections() {
   QString url = buildApiUrl("/connections");
-
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
     if (success) {
       QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -80,10 +75,8 @@ void ProxyService::fetchConnections() {
 void ProxyService::selectProxy(const QString& group, const QString& proxy) {
   const QString groupPath = QString::fromUtf8(QUrl::toPercentEncoding(group));
   QString       url       = buildApiUrl(QString("/proxies/%1").arg(groupPath));
-
-  QJsonObject body;
+  QJsonObject   body;
   body["name"] = proxy;
-
   m_httpClient->put(url, QJsonDocument(body).toJson(), [this, group, proxy](bool success, const QByteArray&) {
     if (success) {
       Logger::info(QString("Proxy switched to: %1").arg(proxy));
@@ -100,11 +93,9 @@ void ProxyService::setProxyMode(const QString& mode) {
   if (normalized.isEmpty()) {
     return;
   }
-
   QString     url = buildApiUrl("/configs");
   QJsonObject body;
   body["mode"] = normalized;
-
   m_httpClient->put(url, QJsonDocument(body).toJson(), [this, normalized](bool success, const QByteArray&) {
     if (success) {
       Logger::info(QString("Proxy mode switched: %1").arg(normalized));
@@ -115,7 +106,6 @@ void ProxyService::setProxyMode(const QString& mode) {
 }
 void ProxyService::closeConnection(const QString& id) {
   QString url = buildApiUrl(QString("/connections/%1").arg(id));
-
   m_httpClient->del(url, [this](bool success, const QByteArray&) {
     if (!success) {
       emit errorOccurred(tr("Failed to close connection"));
@@ -124,7 +114,6 @@ void ProxyService::closeConnection(const QString& id) {
 }
 void ProxyService::closeAllConnections() {
   QString url = buildApiUrl("/connections");
-
   m_httpClient->del(url, [this](bool success, const QByteArray&) {
     if (success) {
       Logger::info("Closed all connections");
@@ -138,12 +127,10 @@ void ProxyService::startTrafficMonitor() {
   if (!m_apiToken.isEmpty()) {
     url += QString("?token=%1").arg(m_apiToken);
   }
-
   // Disconnect old connection if any.
   if (m_wsClient->isConnected()) {
     m_wsClient->disconnect();
   }
-
   m_wsClient->connect(url);
 }
 void ProxyService::stopTrafficMonitor() {

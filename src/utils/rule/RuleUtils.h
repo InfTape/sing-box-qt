@@ -1,6 +1,5 @@
 #ifndef RULEUTILS_H
 #define RULEUTILS_H
-
 #include <QString>
 namespace RuleUtils {
 QString normalizeRuleTypeKey(const QString& type);

@@ -1,5 +1,4 @@
 #include "utils/rule/RuleUtils.h"
-
 #include <QObject>
 namespace RuleUtils {
 QString normalizeRuleTypeKey(const QString& type) {

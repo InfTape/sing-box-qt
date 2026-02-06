@@ -1,6 +1,5 @@
 #ifndef AUTOSTART_H
 #define AUTOSTART_H
-
 #include <QString>
 class AutoStart {
  public:

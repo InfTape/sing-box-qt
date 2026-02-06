@@ -1,12 +1,10 @@
 #include "DatabaseService.h"
-
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStandardPaths>
-
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 DatabaseService& DatabaseService::instance() {
@@ -21,27 +19,21 @@ bool DatabaseService::init() {
   if (m_initialized) {
     return true;
   }
-
   QString dbPath = getDatabasePath();
-
   // Ensure the directory exists.
   QDir dir(QFileInfo(dbPath).absolutePath());
   if (!dir.exists()) {
     dir.mkpath(".");
   }
-
   m_db = QSqlDatabase::addDatabase("QSQLITE");
   m_db.setDatabaseName(dbPath);
-
   if (!m_db.open()) {
     Logger::error(QString("Failed to open database: %1").arg(m_db.lastError().text()));
     return false;
   }
-
   if (!createTables()) {
     return false;
   }
-
   m_initialized = true;
   Logger::info(QString("Database initialized: %1").arg(dbPath));
   return true;
@@ -54,7 +46,6 @@ void DatabaseService::close() {
 }
 bool DatabaseService::createTables() {
   QSqlQuery query(m_db);
-
   // Key-value store table.
   QString sql = R"(
         CREATE TABLE IF NOT EXISTS kv_store (
@@ -63,18 +54,15 @@ bool DatabaseService::createTables() {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     )";
-
   if (!query.exec(sql)) {
     Logger::error(QString("Failed to create table: %1").arg(query.lastError().text()));
     return false;
   }
-
   return true;
 }
 QString DatabaseService::getDatabasePath() const {
   const QString newDir  = appDataDir();
   const QString newPath = QDir(newDir).filePath("sing-box.db");
-
   if (!QFile::exists(newPath)) {
     const QString oldBase  = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const QString oldPath1 = QDir(oldBase).filePath("sing-box-qt/sing-box.db");
@@ -85,18 +73,15 @@ QString DatabaseService::getDatabasePath() const {
       QFile::copy(oldPath2, newPath);
     }
   }
-
   return newPath;
 }
 QString DatabaseService::getValue(const QString& key, const QString& defaultValue) {
   QSqlQuery query(m_db);
   query.prepare("SELECT value FROM kv_store WHERE key = ?");
   query.addBindValue(key);
-
   if (query.exec() && query.next()) {
     return query.value(0).toString();
   }
-
   return defaultValue;
 }
 bool DatabaseService::setValue(const QString& key, const QString& value) {
@@ -107,12 +92,10 @@ bool DatabaseService::setValue(const QString& key, const QString& value) {
     )");
   query.addBindValue(key);
   query.addBindValue(value);
-
   if (!query.exec()) {
     Logger::error(QString("Failed to save data: %1").arg(query.lastError().text()));
     return false;
   }
-
   return true;
 }
 QJsonObject DatabaseService::getAppConfig() {
@@ -167,7 +150,6 @@ bool DatabaseService::saveSubscriptionNodes(const QString& id, const QJsonArray&
   QString json = QString::fromUtf8(QJsonDocument(nodes).toJson(QJsonDocument::Compact));
   return setValue(key, json);
 }
-
 QJsonObject DatabaseService::getDataUsage() {
   QString json = getValue("data_usage_v1", "{}");
   return QJsonDocument::fromJson(json.toUtf8()).object();

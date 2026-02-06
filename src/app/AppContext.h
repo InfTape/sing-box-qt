@@ -1,14 +1,11 @@
 #ifndef APPCONTEXT_H
 #define APPCONTEXT_H
-
 #include <memory>
-
 #include "app/interfaces/AdminActions.h"
 #include "app/interfaces/ConfigRepository.h"
 #include "app/interfaces/SettingsStore.h"
 #include "app/interfaces/SystemProxyGateway.h"
 #include "app/interfaces/ThemeService.h"
-
 class KernelService;
 class ProxyService;
 class ProxyController;
@@ -23,7 +20,6 @@ class AppContext {
  public:
   AppContext();
   ~AppContext();
-
   KernelService*          kernelService() const;
   ProxyService*           proxyService() const;
   ProxyController*        proxyController() const;

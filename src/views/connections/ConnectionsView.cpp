@@ -1,5 +1,4 @@
 #include "ConnectionsView.h"
-
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -7,7 +6,6 @@
 #include <QLabel>
 #include <QStyledItemDelegate>
 #include <QVBoxLayout>
-
 #include "app/interfaces/ThemeService.h"
 #include "core/ProxyService.h"
 namespace {
@@ -29,10 +27,8 @@ ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
       m_autoRefreshEnabled(false),
       m_themeService(themeService) {
   setupUI();
-
   m_refreshTimer->setInterval(1000);
   connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, &ConnectionsView::updateStyle);
   }
@@ -41,32 +37,25 @@ void ConnectionsView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
   mainLayout->setSpacing(12);
-
   // Header (align with Rules page style)
   QHBoxLayout* headerLayout = new QHBoxLayout;
   QVBoxLayout* titleLayout  = new QVBoxLayout;
   titleLayout->setSpacing(4);
-
   QLabel* titleLabel = new QLabel(tr("Connections"));
   titleLabel->setObjectName("PageTitle");
   QLabel* subtitleLabel = new QLabel(tr("View and manage active connections"));
   subtitleLabel->setObjectName("PageSubtitle");
-
   titleLayout->addWidget(titleLabel);
   titleLayout->addWidget(subtitleLabel);
   headerLayout->addLayout(titleLayout);
   m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
   m_closeAllBtn      = new QPushButton(tr("Close All"));
-
   m_closeSelectedBtn->setObjectName("CloseSelectedBtn");
   m_closeAllBtn->setObjectName("CloseAllBtn");
-
   headerLayout->addStretch();
   headerLayout->addWidget(m_closeSelectedBtn);
   headerLayout->addWidget(m_closeAllBtn);
-
   mainLayout->addLayout(headerLayout);
-
   // Connections table.
   m_tableWidget = new QTableWidget;
   m_tableWidget->setObjectName("ConnectionsTable");
@@ -77,22 +66,17 @@ void ConnectionsView::setupUI() {
   m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
   m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
-
   mainLayout->addWidget(m_tableWidget, 1);
-
   connect(m_closeSelectedBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseSelected);
   connect(m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
-
   updateStyle();
 }
 void ConnectionsView::setProxyService(ProxyService* service) {
   m_proxyService = service;
-
   if (m_proxyService) {
     connect(m_proxyService, &ProxyService::connectionsReceived, this, [this](const QJsonObject& connections) {
       QJsonArray conns = connections["connections"].toArray();
       m_tableWidget->setRowCount(conns.count());
-
       auto setCell = [this](int row, int col, const QString& text) {
         QTableWidgetItem* item = m_tableWidget->item(row, col);
         if (!item) {
@@ -101,17 +85,14 @@ void ConnectionsView::setProxyService(ProxyService* service) {
         }
         item->setText(text);
       };
-
       for (int i = 0; i < conns.count(); ++i) {
         QJsonObject conn     = conns[i].toObject();
         QJsonObject metadata = conn["metadata"].toObject();
-
         setCell(i, 0, metadata["sourceIP"].toString());
         QString host = metadata["host"].toString();
         if (host.isEmpty()) host = metadata["destinationIP"].toString();
         if (host.isEmpty()) host = metadata["destinationIp"].toString();
         if (host.isEmpty()) host = tr("Unknown");
-
         auto readPort = [](const QJsonValue& value) -> int {
           if (value.isString()) {
             bool      ok     = false;
@@ -125,7 +106,6 @@ void ConnectionsView::setProxyService(ProxyService* service) {
           const int parsed = value.toVariant().toInt(&ok);
           return ok ? parsed : 0;
         };
-
         QJsonValue portValue = metadata.value("destinationPort");
         if (portValue.isUndefined()) {
           portValue = metadata.value("destination_port");
@@ -140,7 +120,6 @@ void ConnectionsView::setProxyService(ProxyService* service) {
         setCell(i, 3, conn["rule"].toString());
         setCell(i, 4, QString::number(conn["upload"].toVariant().toLongLong() / 1024) + " KB");
         setCell(i, 5, QString::number(conn["download"].toVariant().toLongLong() / 1024) + " KB");
-
         // Store connection ID.
         QTableWidgetItem* idItem = m_tableWidget->item(i, 0);
         if (idItem) {
@@ -168,13 +147,11 @@ void ConnectionsView::onRefresh() {
 }
 void ConnectionsView::onCloseSelected() {
   if (!m_proxyService) return;
-
   QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
   QSet<int>                rows;
   for (auto item : selected) {
     rows.insert(item->row());
   }
-
   for (int row : rows) {
     QString id = m_tableWidget->item(row, 0)->data(Qt::UserRole).toString();
     m_proxyService->closeConnection(id);

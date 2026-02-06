@@ -1,5 +1,4 @@
 #include "widgets/common/RoundedMenu.h"
-
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -17,14 +16,11 @@ void RoundedMenu::setThemeColors(const QColor& bg, const QColor& border) {
 void RoundedMenu::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
-
   QRectF       rect = this->rect().adjusted(1, 1, -1, -1);
   QPainterPath path;
   path.addRoundedRect(rect, 10, 10);
-
   painter.fillPath(path, m_bgColor);
   painter.setPen(QPen(m_borderColor, 1));
   painter.drawPath(path);
-
   QMenu::paintEvent(event);
 }

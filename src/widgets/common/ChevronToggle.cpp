@@ -1,5 +1,4 @@
 #include "widgets/common/ChevronToggle.h"
-
 #include <QEasingCurve>
 #include <QMouseEvent>
 #include <QPainter>
@@ -41,33 +40,26 @@ void ChevronToggle::mousePressEvent(QMouseEvent* event) {
 }
 void ChevronToggle::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event)
-
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing, true);
-
   QStyleOption opt;
   opt.initFrom(this);
   style()->drawPrimitive(QStyle::PE_Widget, &opt, &painter, this);
-
   const qreal   w    = width();
   const qreal   h    = height();
   const qreal   size = qMin(w, h) * 0.25;
   const QPointF center(w * 0.5, h * 0.5);
-
-  QPen pen(palette().color(QPalette::WindowText));
+  QPen          pen(palette().color(QPalette::WindowText));
   pen.setWidthF(1.8);
   pen.setCapStyle(Qt::RoundCap);
   pen.setJoinStyle(Qt::RoundJoin);
   painter.setPen(pen);
   painter.setBrush(Qt::NoBrush);
-
   painter.save();
   painter.translate(center);
   painter.rotate(90.0 * m_progress);
-
   QPolygonF points;
   points << QPointF(-size * 0.5, -size) << QPointF(size * 0.5, 0) << QPointF(-size * 0.5, size);
-
   painter.drawPolyline(points);
   painter.restore();
 }

@@ -1,12 +1,10 @@
 #include "AppBootstrapper.h"
-
 #include <QApplication>
 #include <QFont>
 #include <QIcon>
 #include <QLocale>
 #include <QStringList>
 #include <QStyleFactory>
-
 #include "app/AppContext.h"
 #include "app/MainWindow.h"
 #include "app/ProxyUiController.h"
@@ -18,34 +16,27 @@ AppBootstrapper::~AppBootstrapper() = default;
 bool AppBootstrapper::initialize() {
   setupMeta();
   setupStyle();
-
   Logger::instance().init();
   Logger::info("Application is starting...");
-
   setupFont();
   if (!setupDatabase()) {
     return false;
   }
-
   if (!m_context) {
     m_context = std::make_unique<AppContext>();
   }
-
   if (m_context->themeService()) {
     m_context->themeService()->init();
   }
   loadTranslations();
-
   return true;
 }
 bool AppBootstrapper::createUI() {
   if (!m_context && !initialize()) {
     return false;
   }
-
   m_mainWindow = std::make_unique<MainWindow>(*m_context);
   m_mainWindow->setWindowIcon(QIcon(":/icons/app.png"));
-
   auto showWindow = [this]() {
     if (m_mainWindow) {
       m_mainWindow->showAndActivate();
@@ -55,12 +46,10 @@ bool AppBootstrapper::createUI() {
                                           m_context ? m_context->kernelService() : nullptr,
                                           m_context ? m_context->themeService() : nullptr, showWindow, &m_app);
   m_trayIcon->show();
-
   if (m_context && m_context->proxyUiController() && m_mainWindow) {
     QObject::connect(m_context->proxyUiController(), &ProxyUiController::proxyModeChanged, m_mainWindow.get(),
                      &MainWindow::setProxyModeUI);
   }
-
   Logger::info("Application initialized, UI ready");
   return true;
 }
@@ -94,12 +83,10 @@ void AppBootstrapper::setupFont() {
            << "Segoe UI"
            << "PingFang SC"
            << "Noto Sans SC";
-
   QFont defaultFont("Microsoft YaHei", 10);
   defaultFont.setStyleStrategy(QFont::PreferAntialias);
   defaultFont.setFamilies(families);
   m_app.setFont(defaultFont);
-
   m_app.setProperty("appFontFamily", "Microsoft YaHei");
   m_app.setProperty("appFontFamilyList", families.join("','"));
   Logger::info("Default font set: Microsoft YaHei");

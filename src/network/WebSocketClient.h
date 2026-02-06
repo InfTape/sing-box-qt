@@ -1,30 +1,24 @@
 #ifndef WEBSOCKETCLIENT_H
 #define WEBSOCKETCLIENT_H
-
 #include <QObject>
 #include <QTimer>
 #include <QWebSocket>
 class WebSocketClient : public QObject {
   Q_OBJECT
-
  public:
   explicit WebSocketClient(QObject* parent = nullptr);
   ~WebSocketClient();
-
   void connect(const QString& url);
   void disconnect();
   bool isConnected() const;
-
   void setAutoReconnect(bool enabled);
   void setReconnectInterval(int msecs);
-
  signals:
   void connected();
   void disconnected();
   void messageReceived(const QString& message);
   void binaryMessageReceived(const QByteArray& data);
   void errorOccurred(const QString& error);
-
  private slots:
   void onConnected();
   void onDisconnected();

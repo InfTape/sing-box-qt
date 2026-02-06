@@ -1,9 +1,7 @@
 #ifndef SUBSCRIPTIONCARD_H
 #define SUBSCRIPTIONCARD_H
-
 #include <QFrame>
 #include <QString>
-
 class QAction;
 class QLabel;
 class QPushButton;
@@ -11,14 +9,12 @@ class ThemeService;
 struct SubscriptionInfo;
 class SubscriptionCard : public QFrame {
   Q_OBJECT
-
  public:
   explicit SubscriptionCard(const SubscriptionInfo& info, bool active, ThemeService* themeService,
                             QWidget* parent = nullptr);
   QString subscriptionId() const { return m_subId; }
   void    setActive(bool active);
   void    updateInfo(const SubscriptionInfo& info, bool active);
-
  signals:
   void useClicked(const QString& id);
   void editClicked(const QString& id);
@@ -29,10 +25,9 @@ class SubscriptionCard : public QFrame {
   void copyLinkClicked(const QString& id);
 
  private:
-  void setupUI(const SubscriptionInfo& info);
-  void applyActiveState();
-  void updateStyle();
-
+  void          setupUI(const SubscriptionInfo& info);
+  void          applyActiveState();
+  void          updateStyle();
   QString       m_subId;
   bool          m_active           = false;
   QLabel*       m_nameLabel        = nullptr;

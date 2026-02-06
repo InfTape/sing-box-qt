@@ -1,22 +1,18 @@
 ﻿#include "widgets/common/ToggleSwitch.h"
-
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QtMath>
 #include <algorithm>
-
 #include "app/interfaces/ThemeService.h"
 ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   setCursor(Qt::PointingHandCursor);
   setFocusPolicy(Qt::StrongFocus);
   setMinimumSize(sizeHint());
-
   m_anim = new QPropertyAnimation(this, "offset", this);
   m_anim->setDuration(140);
   m_anim->setEasingCurve(QEasingCurve::InOutCubic);
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&ToggleSwitch::update));
   }
@@ -64,43 +60,34 @@ void ToggleSwitch::animateTo(bool checked) {
 void ToggleSwitch::paintEvent(QPaintEvent*) {
   QPainter p(this);
   p.setRenderHint(QPainter::Antialiasing, true);
-
   const QRectF tr = trackRect();
   const QRectF th = thumbRectForOffset(m_offset);
-
   // Colors from theme
   ThemeService* ts = m_themeService;
   const bool    en = isEnabled();
-
   // Use text-tertiary for day mode only, fallback to gray for dark mode
   const ThemeService::ThemeMode mode    = ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
   const bool                    isLight = mode == ThemeService::ThemeMode::Light ||
                        (mode == ThemeService::ThemeMode::Auto && ts && ts->color("bg-primary") == QColor("#f8fafc"));
   QColor trackOff = (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
-
-  QColor trackOn = ts ? ts->color("primary") : QColor(0, 0, 200);
+  QColor trackOn  = ts ? ts->color("primary") : QColor(0, 0, 200);
   QColor thumb(255, 255, 255);
-
   QColor track = m_checked ? trackOn : trackOff;
   if (!en) {
     track.setAlpha(80);
     thumb.setAlpha(120);
   }
-
   p.setPen(Qt::NoPen);
   p.setBrush(track);
   p.drawRoundedRect(tr, tr.height() / 2.0, tr.height() / 2.0);
-
   if (en) {
     QColor shadow(0, 0, 0, 40);
     QRectF sh = th.translated(0, 1.2);
     p.setBrush(shadow);
     p.drawEllipse(sh);
   }
-
   p.setBrush(thumb);
   p.drawEllipse(th);
-
   if (hasFocus() && en) {
     QColor ringColor = track;
     ringColor.setAlpha(120);
@@ -122,34 +109,28 @@ void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
 }
 void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
   if (!m_dragging) return;
-
   QRectF      tr     = trackRect();
   const qreal margin = tr.height() * 0.12;
   const qreal d      = tr.height() - 2 * margin;
   const qreal x0     = tr.left() + margin;
   const qreal x1     = tr.right() - margin - d;
-
-  const qreal dx    = e->pos().x() - m_pressPos.x();
-  const qreal range = (x1 - x0);
-  qreal       off   = m_pressOffset + (range > 1e-6 ? dx / range : 0.0);
+  const qreal dx     = e->pos().x() - m_pressPos.x();
+  const qreal range  = (x1 - x0);
+  qreal       off    = m_pressOffset + (range > 1e-6 ? dx / range : 0.0);
   setOffset(off);
-
   const bool preview = (m_offset >= 0.5);
   if (preview != m_checked) {
     m_checked = preview;
     update();
   }
-
   e->accept();
 }
 void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
   if (!m_dragging || e->button() != Qt::LeftButton) return;
-  m_dragging = false;
-
+  m_dragging       = false;
   const int moved  = (e->pos() - m_pressPos).manhattanLength();
   bool      target = m_checked;
   if (moved < 4) target = !m_checked;
-
   animateTo(target);
   setCheckedInternal(target, true);
   e->accept();

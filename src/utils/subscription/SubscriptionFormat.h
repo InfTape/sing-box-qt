@@ -1,6 +1,5 @@
 #ifndef SUBSCRIPTIONFORMAT_H
 #define SUBSCRIPTIONFORMAT_H
-
 #include <QString>
 namespace SubscriptionFormat {
 QString formatBytes(qint64 bytes);

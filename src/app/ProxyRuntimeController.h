@@ -1,8 +1,6 @@
 #ifndef PROXYRUNTIMECONTROLLER_H
 #define PROXYRUNTIMECONTROLLER_H
-
 #include <QObject>
-
 class KernelService;
 class ProxyService;
 class ProxyController;
@@ -19,10 +17,8 @@ class ProxyRuntimeController : public QObject {
  public:
   explicit ProxyRuntimeController(KernelService* kernelService, ProxyService* proxyService,
                                   ProxyController* proxyController, QObject* parent = nullptr);
-
   bool isKernelRunning() const;
   void broadcastStates();
-
  signals:
   void kernelRunningChanged(bool running);
   void trafficUpdated(qint64 upload, qint64 download);
@@ -31,10 +27,8 @@ class ProxyRuntimeController : public QObject {
   void logMessage(const QString& message, bool isError);
   void refreshProxyViewRequested();
   void refreshRulesViewRequested();
-
  public slots:
   void clearDataUsage();
-
  private slots:
   void onKernelStatusChanged(bool running);
   void handleConnectionsJson(const QJsonObject& connections);

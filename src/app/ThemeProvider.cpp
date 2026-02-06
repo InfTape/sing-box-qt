@@ -1,5 +1,4 @@
 #include "ThemeProvider.h"
-
 ThemeService* ThemeProvider::s_instance = nullptr;
 ThemeService* ThemeProvider::instance() {
   return s_instance;

@@ -1,6 +1,5 @@
 #ifndef APPSETTINGS_H
 #define APPSETTINGS_H
-
 #include <QObject>
 #include <QString>
 /**
@@ -11,7 +10,6 @@
  */
 class AppSettings : public QObject {
   Q_OBJECT
-
  public:
   static AppSettings& instance();
   // Port config.
@@ -72,27 +70,22 @@ class AppSettings : public QObject {
   QString downloadDetour() const { return m_downloadDetour; }
   void    setDefaultOutbound(const QString& outbound);
   void    setDownloadDetour(const QString& detour);
-
   // Helper methods.
   QString normalizedDefaultOutbound() const;
   QString normalizedDownloadDetour() const;
   QString dnsStrategy() const;
-
   // Load and save.
   void load();
   void save();
-
  signals:
   void settingsChanged();
 
  private:
   explicit AppSettings(QObject* parent = nullptr);
   ~AppSettings() = default;
-
   // Ports.
   int m_mixedPort;
   int m_apiPort;
-
   // TUN.
   bool    m_tunEnabled;
   bool    m_tunAutoRoute;
@@ -102,12 +95,10 @@ class AppSettings : public QObject {
   QString m_tunIpv4;
   QString m_tunIpv6;
   bool    m_tunEnableIpv6;
-
   // DNS.
   QString m_dnsProxy;
   QString m_dnsCn;
   QString m_dnsResolver;
-
   // Feature flags.
   bool    m_blockAds;
   bool    m_enableAppGroups;
@@ -115,13 +106,11 @@ class AppSettings : public QObject {
   bool    m_dnsHijack;
   bool    m_systemProxyEnabled;
   QString m_systemProxyBypass;
-
   // URL test.
   QString m_urltestUrl;
   int     m_urltestTimeoutMs;
   int     m_urltestConcurrency;
   int     m_urltestSamples;
-
   // Outbound selection.
   QString m_defaultOutbound;
   QString m_downloadDetour;

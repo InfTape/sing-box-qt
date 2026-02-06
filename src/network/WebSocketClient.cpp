@@ -1,5 +1,4 @@
 #include "WebSocketClient.h"
-
 #include "utils/Logger.h"
 WebSocketClient::WebSocketClient(QObject* parent)
     : QObject(parent),
@@ -13,7 +12,6 @@ WebSocketClient::WebSocketClient(QObject* parent)
   QObject::connect(m_socket, &QWebSocket::textMessageReceived, this, &WebSocketClient::onTextMessageReceived);
   QObject::connect(m_socket, &QWebSocket::binaryMessageReceived, this, &WebSocketClient::onBinaryMessageReceived);
   QObject::connect(m_socket, &QWebSocket::errorOccurred, this, &WebSocketClient::onError);
-
   m_reconnectTimer->setSingleShot(true);
   QObject::connect(m_reconnectTimer, &QTimer::timeout, this, &WebSocketClient::attemptReconnect);
 }
@@ -48,7 +46,6 @@ void WebSocketClient::onConnected() {
 void WebSocketClient::onDisconnected() {
   Logger::info("WebSocket disconnected");
   emit disconnected();
-
   if (m_autoReconnect && !m_intentionalDisconnect) {
     m_reconnectTimer->start(m_reconnectInterval);
   }

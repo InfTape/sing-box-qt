@@ -1,6 +1,5 @@
 #ifndef CONFIGBUILDER_H
 #define CONFIGBUILDER_H
-
 #include <QJsonArray>
 #include <QJsonObject>
 class ConfigBuilder {

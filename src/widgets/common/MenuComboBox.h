@@ -1,16 +1,12 @@
 #ifndef MENUCOMBOBOX_H
 #define MENUCOMBOBOX_H
-
 #include <QComboBox>
-
 class QWheelEvent;
 class QPaintEvent;
 class ThemeService;
-
 class RoundedMenu;
 class MenuComboBox : public QComboBox {
   Q_OBJECT
-
  public:
   explicit MenuComboBox(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
   void setWheelEnabled(bool enabled);
@@ -24,8 +20,7 @@ class MenuComboBox : public QComboBox {
   void wheelEvent(QWheelEvent* event) override;
 
  private:
-  void updateMenuStyle();
-
+  void          updateMenuStyle();
   RoundedMenu*  m_menu         = nullptr;
   bool          m_wheelEnabled = true;
   ThemeService* m_themeService = nullptr;

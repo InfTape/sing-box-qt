@@ -1,5 +1,4 @@
 #include "dialogs/config/ConfigEditDialog.h"
-
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QTextEdit>
@@ -8,11 +7,9 @@ ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(
   setWindowTitle(tr("Edit current config"));
   setModal(true);
   setMinimumWidth(720);
-
   QVBoxLayout* layout = new QVBoxLayout(this);
   m_editor->setMinimumHeight(300);
   layout->addWidget(m_editor);
-
   QHBoxLayout* actions   = new QHBoxLayout;
   QPushButton* cancelBtn = new QPushButton(tr("Cancel"));
   QPushButton* okBtn     = new QPushButton(tr("Save and Apply"));
@@ -20,7 +17,6 @@ ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(
   actions->addWidget(cancelBtn);
   actions->addWidget(okBtn);
   layout->addLayout(actions);
-
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
 }

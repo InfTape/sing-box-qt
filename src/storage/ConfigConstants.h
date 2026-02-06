@@ -1,29 +1,24 @@
 ﻿#ifndef CONFIGCONSTANTS_H
 #define CONFIGCONSTANTS_H
-
 #include <QString>
 #include <QStringList>
 namespace ConfigConstants {
-
 // ==================== Outbound tags ====================
 // Proxy group/outbound tags exposed in Clash API (keep stable)
 const QString TAG_AUTO   = "auto";
 const QString TAG_MANUAL = "manual";
 const QString TAG_DIRECT = "direct";
 const QString TAG_BLOCK  = "block";
-
 // ==================== App routing groups ====================
 const QString TAG_TELEGRAM = "Telegram";
 const QString TAG_YOUTUBE  = "YouTube";
 const QString TAG_NETFLIX  = "Netflix";
 const QString TAG_OPENAI   = "OpenAI";
-
 // ==================== DNS server tags ====================
 const QString DNS_PROXY    = "dns_proxy";
 const QString DNS_CN       = "dns_cn";
 const QString DNS_RESOLVER = "dns_resolver";
 const QString DNS_BLOCK    = "dns_block";
-
 // ==================== Rule set tags ====================
 const QString RS_GEOSITE_CN                 = "geosite-cn";
 const QString RS_GEOSITE_GEOLOCATION_NOT_CN = "geosite-geolocation-!cn";
@@ -34,7 +29,6 @@ const QString RS_GEOSITE_YOUTUBE            = "geosite-youtube";
 const QString RS_GEOSITE_NETFLIX            = "geosite-netflix";
 const QString RS_GEOSITE_OPENAI             = "geosite-openai";
 const QString RS_GEOIP_CN                   = "geoip-cn";
-
 // ==================== Rule set URLs ====================
 const QString  RULE_SET_BASE = "https://raw.githubusercontent.com";
 inline QString ruleSetUrl(const QString& tag) {
@@ -84,12 +78,10 @@ const QString DEFAULT_TUN_IPV4  = "172.19.0.1/30";
 const QString DEFAULT_TUN_IPV6  = "fdfe:dcba:9876::1/126";
 const QString DEFAULT_TUN_STACK = "mixed";
 const int     DEFAULT_TUN_MTU   = 1500;
-
 // ==================== URL test defaults ====================
 // Throne-dev default values: 3s timeout, 10 concurrency, double sampling
 const int DEFAULT_URLTEST_TIMEOUT_MS  = 3000;
 const int DEFAULT_URLTEST_CONCURRENCY = 10;
 const int DEFAULT_URLTEST_SAMPLES     = 2;
-
 }  // namespace ConfigConstants
 #endif  // CONFIGCONSTANTS_H

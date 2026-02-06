@@ -1,9 +1,7 @@
 #ifndef APPBOOTSTRAPPER_H
 #define APPBOOTSTRAPPER_H
-
 #include <QTranslator>
 #include <memory>
-
 class QApplication;
 class MainWindow;
 class TrayIcon;
@@ -16,21 +14,18 @@ class AppBootstrapper {
  public:
   explicit AppBootstrapper(QApplication& app);
   ~AppBootstrapper();
-
-  bool initialize();
-  bool createUI();
-  void showMainWindow(bool startHidden);
-
+  bool        initialize();
+  bool        createUI();
+  void        showMainWindow(bool startHidden);
   MainWindow* mainWindow() const;
   AppContext* context() const;
 
  private:
-  void setupMeta();
-  void setupStyle();
-  void setupFont();
-  bool setupDatabase();
-  void loadTranslations();
-
+  void                        setupMeta();
+  void                        setupStyle();
+  void                        setupFont();
+  bool                        setupDatabase();
+  void                        loadTranslations();
   QApplication&               m_app;
   QTranslator                 m_translator;
   std::unique_ptr<AppContext> m_context;

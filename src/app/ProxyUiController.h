@@ -1,9 +1,7 @@
 #ifndef PROXYUICONTROLLER_H
 #define PROXYUICONTROLLER_H
-
 #include <QObject>
 #include <functional>
-
 class ProxyController;
 class KernelService;
 class SettingsStore;
@@ -17,22 +15,17 @@ class ProxyUiController : public QObject {
   Q_OBJECT
  public:
   enum class TunResult { Applied, Cancelled, Failed };
-
   explicit ProxyUiController(ProxyController* proxyController, KernelService* kernelService,
                              SettingsStore* settingsStore, AdminActions* adminActions, QObject* parent = nullptr);
-
-  bool    isKernelRunning() const;
-  QString currentProxyMode() const;
-  bool    systemProxyEnabled() const;
-  bool    tunModeEnabled() const;
-
+  bool      isKernelRunning() const;
+  QString   currentProxyMode() const;
+  bool      systemProxyEnabled() const;
+  bool      tunModeEnabled() const;
   bool      toggleKernel(QString* error = nullptr);
   bool      switchProxyMode(const QString& mode, QString* error = nullptr);
   bool      setSystemProxyEnabled(bool enabled, QString* error = nullptr);
   TunResult setTunModeEnabled(bool enabled, const std::function<bool()>& confirmRestartAdmin = {});
-
-  void broadcastCurrentStates();
-
+  void      broadcastCurrentStates();
  signals:
   void systemProxyStateChanged(bool enabled);
   void tunModeStateChanged(bool enabled);

@@ -1,5 +1,4 @@
 ﻿#include "dialogs/subscription/SubscriptionFormDialog.h"
-
 #include <QAction>
 #include <QCheckBox>
 #include <QFormLayout>
@@ -13,7 +12,6 @@
 #include <QTextEdit>
 #include <QToolButton>
 #include <QVBoxLayout>
-
 #include "app/interfaces/ThemeService.h"
 #include "network/SubscriptionService.h"
 #include "services/rules/SharedRulesStore.h"
@@ -37,16 +35,13 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget* parent, ThemeService* themeServi
   m_menu = new RoundedMenu(this);
   // Use tray menu styling so the checklist matches the tray menu look
   m_menu->setObjectName("TrayMenu");
-
   QHBoxLayout* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_button);
-
   connect(m_button, &QToolButton::clicked, this, [this]() {
     rebuildMenu();
     m_menu->popup(m_button->mapToGlobal(QPoint(0, m_button->height())));
   });
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, [this]() {
       if (m_themeService) {
@@ -112,36 +107,28 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidg
   setWindowTitle(tr("Subscription Manager"));
   setModal(true);
   setMinimumWidth(520);
-
-  QVBoxLayout* layout = new QVBoxLayout(this);
-
+  QVBoxLayout* layout     = new QVBoxLayout(this);
   QFormLayout* formLayout = new QFormLayout;
   formLayout->addRow(tr("Name"), m_nameEdit);
-
   m_tabs->addTab(createTextTab(m_urlEdit, tr("Subscription URL")), tr("Link"));
   m_tabs->addTab(createTextTab(m_manualEdit, tr("JSON Config")), tr("Manual Config"));
   m_tabs->addTab(createTextTab(m_uriEdit, tr("URI List")), tr("URI List"));
-
   m_autoUpdateCombo->addItem(tr("Off"), 0);
   m_autoUpdateCombo->addItem(tr("6 hours"), 360);
   m_autoUpdateCombo->addItem(tr("12 hours"), 720);
   m_autoUpdateCombo->addItem(tr("1 day"), 1440);
-
   m_hintLabel->setWordWrap(true);
   m_hintLabel->setObjectName("SubscriptionHint");
   m_hintLabel->setText(tr("Advanced templates are disabled when using the original config"));
   m_hintLabel->setVisible(false);
-
   QStringList initialSets = SharedRulesStore::listRuleSets();
   m_ruleSetsBox->setOptions(initialSets);
   m_ruleSetsBox->setSelected(QStringList() << "default");
-
   layout->addLayout(formLayout);
   layout->addWidget(m_tabs);
   layout->addWidget(m_useOriginalCheck);
   m_sharedRulesCheck->setChecked(true);
   layout->addWidget(m_sharedRulesCheck);
-
   QFormLayout* ruleSetForm = new QFormLayout;
   ruleSetForm->setLabelAlignment(Qt::AlignRight);
   ruleSetForm->addRow(tr("Rule sets"), m_ruleSetsBox);
@@ -150,7 +137,6 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidg
   QLabel* autoUpdateLabel = new QLabel(tr("Auto update"));
   layout->addWidget(autoUpdateLabel);
   layout->addWidget(m_autoUpdateCombo);
-
   QHBoxLayout* actions   = new QHBoxLayout;
   QPushButton* cancelBtn = new QPushButton(tr("Cancel"));
   QPushButton* okBtn     = new QPushButton(tr("OK"));
@@ -158,14 +144,12 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidg
   actions->addWidget(cancelBtn);
   actions->addWidget(okBtn);
   layout->addLayout(actions);
-
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
   connect(m_tabs, &QTabWidget::currentChanged, this, &SubscriptionFormDialog::updateState);
   connect(m_useOriginalCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
   connect(m_sharedRulesCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
   connect(m_ruleSetsBox, &MultiSelectMenuBox::selectionChanged, this, &SubscriptionFormDialog::updateState);
-
   updateState();
 }
 void SubscriptionFormDialog::setEditData(const SubscriptionInfo& info) {
@@ -230,7 +214,6 @@ bool SubscriptionFormDialog::validateInput(QString* error) const {
     if (error) *error = tr("Please enter a subscription name");
     return false;
   }
-
   if (m_tabs->currentIndex() == 0 && url().isEmpty()) {
     if (error) *error = tr("Please enter a subscription URL");
     return false;
@@ -243,7 +226,6 @@ bool SubscriptionFormDialog::validateInput(QString* error) const {
     if (error) *error = tr("Please enter URI content");
     return false;
   }
-
   if (useOriginalConfig() && m_tabs->currentIndex() != 0) {
     QString content = m_tabs->currentIndex() == 1 ? manualContent() : uriContent();
     if (!isJsonText(content)) {

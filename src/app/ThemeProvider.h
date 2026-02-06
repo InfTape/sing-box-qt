@@ -1,6 +1,5 @@
 #ifndef THEMEPROVIDER_H
 #define THEMEPROVIDER_H
-
 #include "app/interfaces/ThemeService.h"
 /**
  * @brief ThemeProvider provides global ThemeService access point, replacing direct dependency on ThemeManager

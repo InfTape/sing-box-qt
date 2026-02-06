@@ -1,9 +1,7 @@
 #ifndef UPDATESERVICE_H
 #define UPDATESERVICE_H
-
 #include <QObject>
 #include <QString>
-
 class HttpClient;
 struct UpdateInfo {
   QString version;
@@ -14,16 +12,12 @@ struct UpdateInfo {
 };
 class UpdateService : public QObject {
   Q_OBJECT
-
  public:
   explicit UpdateService(QObject* parent = nullptr);
   ~UpdateService();
-
-  void checkForUpdate();
-  void downloadUpdate(const QString& url, const QString& savePath);
-
+  void    checkForUpdate();
+  void    downloadUpdate(const QString& url, const QString& savePath);
   QString getCurrentVersion() const;
-
  signals:
   void updateAvailable(const UpdateInfo& info);
   void noUpdateAvailable();

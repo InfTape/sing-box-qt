@@ -1,5 +1,4 @@
 #include "SubscriptionView.h"
-
 #include <QAbstractAnimation>
 #include <QApplication>
 #include <QClipboard>
@@ -14,7 +13,6 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtGlobal>
-
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/config/ConfigEditDialog.h"
 #include "dialogs/subscription/NodeEditDialog.h"
@@ -28,7 +26,6 @@
 #include "views/subscription/SubscriptionController.h"
 #include "widgets/common/RoundedMenu.h"
 // ==================== SubscriptionView ====================
-
 SubscriptionView::SubscriptionView(SubscriptionService* service, ThemeService* themeService, QWidget* parent)
     : QWidget(parent),
       m_subscriptionService(service),
@@ -37,12 +34,10 @@ SubscriptionView::SubscriptionView(SubscriptionService* service, ThemeService* t
       m_themeService(themeService) {
   Q_ASSERT(m_subscriptionService);
   setupUI();
-
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, &SubscriptionView::updateStyle);
   }
   updateStyle();
-
   m_autoUpdateTimer->setInterval(30 * 60 * 1000);
   connect(m_autoUpdateTimer, &QTimer::timeout, this, &SubscriptionView::onAutoUpdateTimer);
   m_autoUpdateTimer->start();
@@ -54,51 +49,38 @@ void SubscriptionView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);
   mainLayout->setSpacing(16);
-
   QHBoxLayout* headerLayout = new QHBoxLayout;
   QVBoxLayout* titleLayout  = new QVBoxLayout;
-
-  QLabel* titleLabel = new QLabel(tr("Subscription Manager"));
+  QLabel*      titleLabel   = new QLabel(tr("Subscription Manager"));
   titleLabel->setObjectName("PageTitle");
-
   QLabel* subtitleLabel = new QLabel(tr("Manage your subscriptions and proxy nodes"));
   subtitleLabel->setObjectName("PageSubtitle");
-
   titleLayout->addWidget(titleLabel);
   titleLayout->addWidget(subtitleLabel);
   titleLayout->setSpacing(6);
-
   m_addBtn = new QPushButton(tr("+ Add Subscription"));
   m_addBtn->setCursor(Qt::PointingHandCursor);
   m_addBtn->setMinimumSize(110, 36);
   m_addBtn->setObjectName("AddSubscriptionBtn");
-
   headerLayout->addLayout(titleLayout);
   headerLayout->addStretch();
   headerLayout->addWidget(m_addBtn);
-
   mainLayout->addLayout(headerLayout);
-
   m_scrollArea = new QScrollArea;
   m_scrollArea->setObjectName("SubscriptionScroll");
   m_scrollArea->setWidgetResizable(true);
   m_scrollArea->setFrameShape(QFrame::NoFrame);
   m_scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
   m_cardsContainer = new QWidget;
   m_cardsContainer->setObjectName("SubscriptionCards");
   m_cardsLayout = new QGridLayout(m_cardsContainer);
   m_cardsLayout->setContentsMargins(0, 0, 0, 0);
   m_cardsLayout->setSpacing(16);
   m_cardsLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-
   m_scrollArea->setWidget(m_cardsContainer);
   m_scrollArea->viewport()->installEventFilter(this);
-
   mainLayout->addWidget(m_scrollArea, 1);
-
   connect(m_addBtn, &QPushButton::clicked, this, &SubscriptionView::onAddClicked);
-
   connect(m_subscriptionService, &SubscriptionService::subscriptionAdded, this, &SubscriptionView::refreshList);
   connect(m_subscriptionService, &SubscriptionService::subscriptionRemoved, this, &SubscriptionView::refreshList);
   connect(m_subscriptionService, &SubscriptionService::subscriptionUpdated, this,
@@ -107,7 +89,6 @@ void SubscriptionView::setupUI() {
           &SubscriptionView::handleActiveSubscriptionChanged);
   connect(m_subscriptionService, &SubscriptionService::errorOccurred, this,
           [this](const QString& err) { QMessageBox::warning(this, tr("Notice"), err); });
-
   refreshList();
 }
 void SubscriptionView::updateStyle() {
@@ -133,17 +114,14 @@ void SubscriptionView::openSubscriptionDialog() {
   if (dialog.exec() != QDialog::Accepted) {
     return;
   }
-
   QString error;
   if (!dialog.validateInput(&error)) {
     QMessageBox::warning(this, tr("Notice"), error);
     return;
   }
-
   const bool isManual    = dialog.isManual();
   const bool useOriginal = dialog.useOriginalConfig();
   const int  interval    = dialog.autoUpdateIntervalMinutes();
-
   if (isManual) {
     const QString content = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
     m_subscriptionController->addManual(content, dialog.name(), useOriginal, dialog.isUriList(), true,
@@ -161,8 +139,7 @@ void SubscriptionView::onAddNodeClicked() {
     arr.append(node);
     QJsonDocument doc(arr);
     QString       content = doc.toJson(QJsonDocument::Compact);
-
-    QString name = node["tag"].toString();
+    QString       name    = node["tag"].toString();
     m_subscriptionController->addManual(content, name, false, false, true, dialog.sharedRulesEnabled(),
                                         dialog.ruleSets());
   }
@@ -171,7 +148,6 @@ void SubscriptionView::onAutoUpdateTimer() {
   const QList<SubscriptionInfo> subs        = m_subscriptionController->subscriptions();
   const int                     activeIndex = m_subscriptionController->activeIndex();
   const qint64                  now         = QDateTime::currentMSecsSinceEpoch();
-
   for (int i = 0; i < subs.count(); ++i) {
     const SubscriptionInfo& item = subs[i];
     if (item.isManual) continue;
@@ -204,22 +180,18 @@ void SubscriptionView::handleUseSubscription(const QString& id) {
 void SubscriptionView::handleEditSubscription(const QString& id) {
   SubscriptionInfo target;
   if (!getSubscriptionById(id, &target)) return;
-
   QJsonObject singleNodeObj;
   const bool  isSingleNode = SubscriptionHelpers::isSingleManualNode(target, &singleNodeObj);
-
   if (isSingleNode) {
     NodeEditDialog dialog(m_themeService, this);
     dialog.setRuleSets(target.ruleSets, target.enableSharedRules);
     dialog.setNodeData(singleNodeObj);
     if (dialog.exec() != QDialog::Accepted) return;
-
     QJsonObject newNode = dialog.nodeData();
     QJsonArray  arr;
     arr.append(newNode);
     QString content = QJsonDocument(arr).toJson(QJsonDocument::Compact);
     QString name    = newNode["tag"].toString();
-
     m_subscriptionController->updateSubscription(id, name, target.url,
                                                  true,  // isManual
                                                  content, target.useOriginalConfig, target.autoUpdateIntervalMinutes,
@@ -228,13 +200,11 @@ void SubscriptionView::handleEditSubscription(const QString& id) {
     SubscriptionFormDialog dialog(m_themeService, this);
     dialog.setEditData(target);
     if (dialog.exec() != QDialog::Accepted) return;
-
     QString error;
     if (!dialog.validateInput(&error)) {
       QMessageBox::warning(this, tr("Notice"), error);
       return;
     }
-
     const bool    isManual = dialog.isManual();
     const QString content  = dialog.isUriList() ? dialog.uriContent() : dialog.manualContent();
     m_subscriptionController->updateSubscription(id, dialog.name(), dialog.url(), isManual, content,
@@ -287,7 +257,6 @@ void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
     refreshList();
     return;
   }
-
   QString                       activeId;
   const QList<SubscriptionInfo> subs        = m_subscriptionController->subscriptions();
   const int                     activeIndex = m_subscriptionController->activeIndex();
@@ -336,51 +305,42 @@ void SubscriptionView::refreshList() {
     delete item;
   }
   m_cards.clear();
-
   const QList<SubscriptionInfo> subs        = m_subscriptionController->subscriptions();
   const int                     activeIndex = m_subscriptionController->activeIndex();
   for (int i = 0; i < subs.count(); ++i) {
     SubscriptionCard* card = createSubscriptionCard(subs[i], i == activeIndex);
     m_cards.append(card);
   }
-
   m_skipNextAnimation = true;
   QTimer::singleShot(0, this, [this]() { layoutCards(); });
 }
 void SubscriptionView::layoutCards() {
   if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) return;
-
-  const int previousColumns = m_columnCount;
-
+  const int  previousColumns   = m_columnCount;
   const auto runningAnimations = m_cardsContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
     if (!anim) continue;
     anim->stop();
     anim->deleteLater();
   }
-
   QHash<QWidget*, QRect> oldGeometries;
   oldGeometries.reserve(m_cards.size());
   for (SubscriptionCard* card : std::as_const(m_cards)) {
     oldGeometries.insert(card, card->geometry());
   }
-
   while (m_cardsLayout->count() > 0) {
     QLayoutItem* item = m_cardsLayout->takeAt(0);
     if (item) {
       delete item;
     }
   }
-
   if (m_cards.isEmpty()) return;
-
   const int spacing          = m_cardsLayout->spacing();
   const int availableWidth   = qMax(0, m_scrollArea->viewport()->width());
   const int columns          = CardGridLayoutHelper::computeColumns(availableWidth, spacing);
   m_columnCount              = columns;
   const int horizontalMargin = CardGridLayoutHelper::computeHorizontalMargin(availableWidth, spacing, columns);
   m_cardsLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
-
   int             row = 0;
   int             col = 0;
   QList<QWidget*> widgets;
@@ -395,9 +355,7 @@ void SubscriptionView::layoutCards() {
       ++row;
     }
   }
-
   m_cardsLayout->activate();
-
   if (m_skipNextAnimation) {
     m_skipNextAnimation = false;
   } else {
@@ -407,7 +365,6 @@ void SubscriptionView::layoutCards() {
 void SubscriptionView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   if (m_cards.isEmpty()) return;
-
   layoutCards();
 }
 bool SubscriptionView::eventFilter(QObject* watched, QEvent* event) {

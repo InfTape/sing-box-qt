@@ -1,6 +1,5 @@
 ﻿#ifndef APPPATHS_H
 #define APPPATHS_H
-
 #include <QDir>
 #include <QStandardPaths>
 #include <QString>

@@ -1,5 +1,4 @@
 #include "utils/settings/SettingsHelpers.h"
-
 #include <QLineEdit>
 #include <QRegularExpression>
 namespace SettingsHelpers {

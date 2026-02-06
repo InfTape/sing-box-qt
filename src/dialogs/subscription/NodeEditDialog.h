@@ -1,11 +1,8 @@
 ﻿#ifndef NODEEDITDIALOG_H
 #define NODEEDITDIALOG_H
-
 #include <QDialog>
 #include <QJsonObject>
-
 #include "widgets/common/MenuComboBox.h"
-
 class QVBoxLayout;
 class NodeEditor;
 class QTabWidget;
@@ -21,21 +18,18 @@ class NodeEditDialog : public QDialog {
  public:
   explicit NodeEditDialog(ThemeService* themeService, QWidget* parent = nullptr);
   ~NodeEditDialog();
-
   void        setNodeData(const QJsonObject& node);
   QJsonObject nodeData() const;
   void        setRuleSets(const QStringList& sets, bool enableShared = true);
   QStringList ruleSets() const;
   bool        sharedRulesEnabled() const;
-
  private slots:
   void onTypeChanged(const QString& type);
   void updatePreview();
 
  private:
-  void        setupUI();
-  NodeEditor* createEditor(const QString& type);
-
+  void          setupUI();
+  NodeEditor*   createEditor(const QString& type);
   MenuComboBox* m_typeCombo;
   QVBoxLayout*  m_editorContainer;
   NodeEditor*   m_currentEditor;

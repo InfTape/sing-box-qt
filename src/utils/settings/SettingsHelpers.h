@@ -1,9 +1,6 @@
 #pragma once
-
 #include <QString>
-
 #include "app/interfaces/ThemeService.h"
-
 class QLineEdit;
 namespace SettingsHelpers {
 int                     themeIndexFromMode(ThemeService::ThemeMode mode);

@@ -1,6 +1,5 @@
 ﻿#ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
-
 #include <QCheckBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -11,9 +10,7 @@
 #include <QString>
 #include <QStringList>
 #include <QWidget>
-
 #include "models/SettingsModel.h"
-
 class ToggleSwitch;
 class MenuComboBox;
 class ElideLineEdit;
@@ -22,7 +19,6 @@ class ThemeService;
 class QResizeEvent;
 class SettingsView : public QWidget {
   Q_OBJECT
-
  public:
   explicit SettingsView(ThemeService* themeService, SettingsController* controller = nullptr,
                         QWidget* parent = nullptr);
@@ -30,7 +26,6 @@ class SettingsView : public QWidget {
  protected:
   void showEvent(QShowEvent* event) override;
   void resizeEvent(QResizeEvent* event) override;
-
  private slots:
   void onSaveClicked();
   void onDownloadKernelClicked();
@@ -69,7 +64,6 @@ class SettingsView : public QWidget {
   QString        normalizeBypassText(const QString& text) const;
   void           updateKernelVersionLabelStatus();
   void           updateResponsiveUi();
-
   // Proxy settings.
   QSpinBox*       m_mixedPortSpin;
   QSpinBox*       m_apiPortSpin;
@@ -80,7 +74,6 @@ class SettingsView : public QWidget {
   ToggleSwitch*   m_tunEnableIpv6Switch;
   ToggleSwitch*   m_tunAutoRouteSwitch;
   ToggleSwitch*   m_tunStrictRouteSwitch;
-
   // Subscription profile (advanced).
   QLabel*       m_defaultOutboundLabel = nullptr;
   QLabel*       m_downloadDetourLabel  = nullptr;
@@ -95,11 +88,9 @@ class SettingsView : public QWidget {
   QLineEdit*    m_dnsCnEdit;
   QLineEdit*    m_dnsResolverEdit;
   QLineEdit*    m_urltestUrlEdit;
-
   // Appearance settings.
   MenuComboBox* m_themeCombo;
   MenuComboBox* m_languageCombo;
-
   // Kernel settings.
   QLabel*             m_kernelVersionLabel;
   QString             m_installedKernelVersion;
@@ -117,8 +108,7 @@ class SettingsView : public QWidget {
   bool                m_kernelInfoLoaded   = false;
   QString             m_inputStyleApplied;
   QString             m_comboStyle;
-
-  QPushButton*  m_saveBtn;
-  ThemeService* m_themeService = nullptr;
+  QPushButton*        m_saveBtn;
+  ThemeService*       m_themeService = nullptr;
 };
 #endif  // SETTINGSVIEW_H

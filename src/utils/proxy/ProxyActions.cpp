@@ -1,5 +1,4 @@
 #include "utils/proxy/ProxyActions.h"
-
 #include "core/DelayTestService.h"
 #include "core/ProxyService.h"
 namespace ProxyActions {

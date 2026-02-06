@@ -1,5 +1,4 @@
 #include "dialogs/rules/RuleEditorDialog.h"
-
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLabel>
@@ -9,7 +8,6 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QVBoxLayout>
-
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/MenuComboBox.h"
 RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
@@ -23,45 +21,36 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
       m_hintLabel(new QLabel(this)) {
   setModal(true);
   setWindowTitle(m_mode == Mode::Add ? tr("Add Rule") : tr("Edit Match Type"));
-
   QVBoxLayout* layout = new QVBoxLayout(this);
   QFormLayout* form   = new QFormLayout;
   form->setLabelAlignment(Qt::AlignRight);
   form->setFormAlignment(Qt::AlignLeft);
   form->setHorizontalSpacing(12);
   form->setVerticalSpacing(10);
-
   for (const auto& field : m_fields) {
     m_typeCombo->addItem(field.label, field.key);
   }
-
   if (!m_fields.isEmpty()) {
     updatePlaceholder(0);
   }
-
   m_valueEdit->setFixedHeight(80);
-
   form->addRow(tr("Match Type:"), m_typeCombo);
   form->addRow(tr("Match Value:"), m_valueEdit);
   form->addRow(tr("Outbound:"), m_outboundCombo);
   m_ruleSetEdit->setPlaceholderText("default");
   form->addRow(tr("Rule Set:"), m_ruleSetEdit);
-
   m_hintLabel->setWordWrap(true);
   m_hintLabel->setObjectName("RuleHint");
   m_hintLabel->setText(
       tr("Note: rules are written to route.rules (1.11+ format). Restart "
          "kernel or app to apply."));
   m_hintLabel->setVisible(m_mode == Mode::Add);
-
   QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
   buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
-
   layout->addLayout(form);
   layout->addWidget(m_hintLabel);
   layout->addWidget(buttons);
-
   connect(m_typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RuleEditorDialog::updatePlaceholder);
   connect(buttons, &QDialogButtonBox::accepted, this, &RuleEditorDialog::accept);
   connect(buttons, &QDialogButtonBox::rejected, this, &RuleEditorDialog::reject);
@@ -79,7 +68,6 @@ bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
   if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, error)) {
     return false;
   }
-
   int index = -1;
   for (int i = 0; i < m_fields.size(); ++i) {
     if (m_fields[i].key == key) {
@@ -91,10 +79,8 @@ bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
     if (error) *error = tr("Failed to parse current rule content.");
     return false;
   }
-
   m_typeCombo->setCurrentIndex(index);
   m_valueEdit->setPlainText(values.join(","));
-
   const QString outbound      = RuleUtils::normalizeProxyValue(rule.proxy);
   const int     outboundIndex = m_outboundCombo->findText(outbound);
   if (outboundIndex >= 0) {
@@ -127,15 +113,12 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out, QStri
     if (error) *error = tr("Match type cannot be empty.");
     return false;
   }
-
-  const RuleConfigService::RuleFieldInfo field = m_fields[fieldIndex];
-
-  const QString rawText = m_valueEdit->toPlainText().trimmed();
+  const RuleConfigService::RuleFieldInfo field   = m_fields[fieldIndex];
+  const QString                          rawText = m_valueEdit->toPlainText().trimmed();
   if (rawText.isEmpty()) {
     if (error) *error = tr("Match value cannot be empty.");
     return false;
   }
-
   QStringList values = rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
   for (QString& v : values) v = v.trimmed();
   values.removeAll(QString());
@@ -143,7 +126,6 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out, QStri
     if (error) *error = tr("Match value cannot be empty.");
     return false;
   }
-
   if (field.key == "ip_is_private") {
     if (values.size() != 1) {
       if (error) *error = tr("ip_is_private allows only one value (true/false).");
@@ -165,13 +147,11 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out, QStri
       }
     }
   }
-
   const QString outboundTag = m_outboundCombo->currentText().trimmed();
   if (outboundTag.isEmpty()) {
     if (error) *error = tr("Outbound cannot be empty.");
     return false;
   }
-
   out->field       = field;
   out->values      = values;
   out->outboundTag = outboundTag;

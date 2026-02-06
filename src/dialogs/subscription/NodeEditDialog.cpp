@@ -1,5 +1,4 @@
 ﻿#include "dialogs/subscription/NodeEditDialog.h"
-
 #include <QAction>
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -13,7 +12,6 @@
 #include <QTextEdit>
 #include <QToolButton>
 #include <QVBoxLayout>
-
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/editors/GenericNodeEditor.h"
 #include "services/rules/SharedRulesStore.h"
@@ -32,9 +30,7 @@ void NodeEditDialog::setupUI() {
   setWindowTitle(tr("Edit Node"));
   setMinimumWidth(600);
   setMinimumHeight(500);
-
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
-
   // Type selection
   QHBoxLayout* typeLayout = new QHBoxLayout;
   typeLayout->addWidget(new QLabel(tr("Type:")));
@@ -42,39 +38,32 @@ void NodeEditDialog::setupUI() {
   m_typeCombo->addItems({"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
   m_typeCombo->setWheelEnabled(false);
   typeLayout->addWidget(m_typeCombo);
-
   // Rule set controls
   m_sharedRulesCheck = new QCheckBox(tr("Enable shared rule set"));
   m_sharedRulesCheck->setChecked(true);
   typeLayout->addWidget(m_sharedRulesCheck);
-
   m_ruleSetsBtn = new QToolButton(this);
   m_ruleSetsBtn->setText(tr("default"));
   m_ruleSetsBtn->setPopupMode(QToolButton::InstantPopup);
   m_ruleSetsBtn->setAutoRaise(true);
   typeLayout->addWidget(m_ruleSetsBtn);
-
   typeLayout->addStretch();
   mainLayout->addLayout(typeLayout);
-
   // Build rule set menu
   auto rebuildMenu = [this]() {
     if (QMenu* old = m_ruleSetsBtn->menu()) {
       old->deleteLater();
     }
-
     RoundedMenu* menu = new RoundedMenu(this);
     // Use tray menu style, reusing checkmark appearance
     menu->setObjectName("TrayMenu");
     if (m_themeService) menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
-
     QStringList options = SharedRulesStore::listRuleSets();
     for (const auto& name : m_ruleSets)
       if (!options.contains(name)) options << name;
     options.removeDuplicates();
     options.removeAll(QString());
     if (!options.contains("default")) options.prepend("default");
-
     for (const QString& name : options) {
       QAction* act = menu->addAction(name);
       act->setCheckable(true);
@@ -96,35 +85,28 @@ void NodeEditDialog::setupUI() {
   rebuildMenu();
   connect(m_ruleSetsBtn, &QToolButton::clicked, this, rebuildMenu);
   connect(m_sharedRulesCheck, &QCheckBox::toggled, this, [this](bool on) { m_ruleSetsBtn->setEnabled(on); });
-
   // Tabs
   m_tabs = new QTabWidget;
   mainLayout->addWidget(m_tabs);
-
   // Editor Tab
   QWidget*     editorTab    = new QWidget;
   QVBoxLayout* editorLayout = new QVBoxLayout(editorTab);
   editorLayout->setContentsMargins(0, 10, 0, 0);
-
   m_scrollArea = new QScrollArea(editorTab);
   m_scrollArea->setWidgetResizable(true);
   m_scrollArea->setFrameStyle(QFrame::NoFrame);
-
   m_editorPage      = new QWidget;
   m_editorContainer = new QVBoxLayout(m_editorPage);
   m_editorContainer->setContentsMargins(0, 0, 0, 0);
   m_editorContainer->setSpacing(12);
   m_editorContainer->addStretch();
-
   m_scrollArea->setWidget(m_editorPage);
   editorLayout->addWidget(m_scrollArea);
   m_tabs->addTab(editorTab, tr("Settings"));
-
   // Preview Tab
   m_jsonPreview = new QTextEdit;
   m_jsonPreview->setReadOnly(true);
   m_tabs->addTab(m_jsonPreview, tr("JSON Preview"));
-
   // Buttons
   QHBoxLayout* btnLayout = new QHBoxLayout;
   QPushButton* cancelBtn = new QPushButton(tr("Cancel"));
@@ -133,14 +115,12 @@ void NodeEditDialog::setupUI() {
   btnLayout->addWidget(cancelBtn);
   btnLayout->addWidget(okBtn);
   mainLayout->addLayout(btnLayout);
-
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
   connect(m_typeCombo, &QComboBox::currentTextChanged, this, &NodeEditDialog::onTypeChanged);
   connect(m_tabs, &QTabWidget::currentChanged, this, [this](int index) {
     if (index == 1) updatePreview();
   });
-
   // Initial editor
   onTypeChanged(m_typeCombo->currentText());
 }
@@ -153,7 +133,6 @@ void NodeEditDialog::onTypeChanged(const QString& type) {
     m_editorContainer->removeWidget(m_currentEditor);
     m_currentEditor->deleteLater();
   }
-
   m_currentEditor = createEditor(type);
   if (m_currentEditor) {
     // Insert editor before bottom stretch to keep bottom spacing
@@ -175,18 +154,15 @@ void NodeEditDialog::setNodeData(const QJsonObject& node) {
   if (index >= 0) {
     m_typeCombo->setCurrentIndex(index);
   }
-
   // Force editor creation if type didn't change but we need to set data
   // (Actually setCurrentIndex triggers signal if changed, but we should be
   // safe)
   if (!m_currentEditor || m_typeCombo->currentText() != type) {
     onTypeChanged(type);
   }
-
   if (m_currentEditor) {
     m_currentEditor->setOutbound(node);
   }
-
   // restore rule set selections if provided in node comment/tag? not present,
   // keep current
 }
@@ -206,14 +182,12 @@ void NodeEditDialog::setRuleSets(const QStringList& sets, bool enableShared) {
         menu->setObjectName("TrayMenu");
         if (m_themeService)
           menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
-
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto& name : m_ruleSets)
           if (!options.contains(name)) options << name;
         options.removeDuplicates();
         options.removeAll(QString());
         if (!options.contains("default")) options.prepend("default");
-
         for (const QString& name : options) {
           QAction* act = menu->addAction(name);
           act->setCheckable(true);

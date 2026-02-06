@@ -1,9 +1,7 @@
 #ifndef PROXYCONTROLLER_H
 #define PROXYCONTROLLER_H
-
 #include <QObject>
 #include <QString>
-
 class KernelService;
 class SubscriptionService;
 class ConfigRepository;
@@ -15,12 +13,9 @@ class ProxyController : public QObject {
   explicit ProxyController(KernelService* kernel, SubscriptionService* subscription = nullptr,
                            ConfigRepository* configRepo = nullptr, SettingsStore* settings = nullptr,
                            SystemProxyGateway* systemProxy = nullptr, QObject* parent = nullptr);
-
-  void setSubscriptionService(SubscriptionService* service);
-
-  QString activeConfigPath() const;
-  QString currentProxyMode() const;
-
+  void           setSubscriptionService(SubscriptionService* service);
+  QString        activeConfigPath() const;
+  QString        currentProxyMode() const;
   bool           startKernel();
   void           stopKernel();
   bool           toggleKernel();
@@ -32,9 +27,8 @@ class ProxyController : public QObject {
   KernelService* kernel() const { return m_kernel; }
 
  private:
-  bool ensureConfigExists(QString* outPath = nullptr);
-  bool applySettingsToActiveConfig(bool restartIfRunning = true);
-
+  bool                 ensureConfigExists(QString* outPath = nullptr);
+  bool                 applySettingsToActiveConfig(bool restartIfRunning = true);
   KernelService*       m_kernel;
   SubscriptionService* m_subscription;
   ConfigRepository*    m_configRepo;

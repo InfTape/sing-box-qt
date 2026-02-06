@@ -1,6 +1,5 @@
 #ifndef LOGPARSER_H
 #define LOGPARSER_H
-
 #include <QDateTime>
 #include <QString>
 namespace LogParser {
@@ -22,6 +21,5 @@ QString stripAnsiSequences(const QString& text);
 LogKind parseLogKind(const QString& message);
 QString detectLogType(const QString& message);
 QString logTypeLabel(const QString& type);
-
 }  // namespace LogParser
 #endif  // LOGPARSER_H

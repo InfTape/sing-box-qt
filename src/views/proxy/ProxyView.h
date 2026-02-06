@@ -1,6 +1,5 @@
 #ifndef PROXYVIEW_H
 #define PROXYVIEW_H
-
 #include <QHash>
 #include <QJsonObject>
 #include <QPushButton>
@@ -8,7 +7,6 @@
 #include <QTreeWidget>
 #include <QWidget>
 #include <memory>
-
 class ThemeService;
 struct ProxyDelayTestResult;
 class ProxyViewController;
@@ -17,13 +15,10 @@ class ProxyTreePanel;
 class ProxyTreePresenter;
 class ProxyView : public QWidget {
   Q_OBJECT
-
  public:
   explicit ProxyView(ThemeService* themeService, QWidget* parent = nullptr);
-
   void setController(ProxyViewController* controller);
   void refresh();
-
  private slots:
   void updateStyle();
   void onProxiesReceived(const QJsonObject& proxies);
@@ -42,16 +37,15 @@ class ProxyView : public QWidget {
   void onSpeedTestResult(const QString& nodeName, const QString& result);
 
  private:
-  void        setupUI();
-  void        handleNodeActivation(QTreeWidgetItem* item);
-  QString     formatDelay(int delay) const;
-  void        onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
-  void        updateTestButtonStyle(bool testing);
-  QJsonObject loadNodeOutbound(const QString& tag) const;
-  bool        isTesting() const;
-
-  ProxyToolbar*                       m_toolbar   = nullptr;
-  ProxyTreePanel*                     m_treePanel = nullptr;
+  void            setupUI();
+  void            handleNodeActivation(QTreeWidgetItem* item);
+  QString         formatDelay(int delay) const;
+  void            onSelectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+  void            updateTestButtonStyle(bool testing);
+  QJsonObject     loadNodeOutbound(const QString& tag) const;
+  bool            isTesting() const;
+  ProxyToolbar*   m_toolbar   = nullptr;
+  ProxyTreePanel* m_treePanel = nullptr;
   std::unique_ptr<ProxyTreePresenter> m_treePresenter;
   QTreeWidget*                        m_treeWidget;
   QPushButton*                        m_testSelectedBtn;

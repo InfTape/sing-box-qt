@@ -1,21 +1,17 @@
 #ifndef CONNECTIONSVIEW_H
 #define CONNECTIONSVIEW_H
-
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTimer>
 #include <QWidget>
-
 class ProxyService;
 class ThemeService;
 class ConnectionsView : public QWidget {
   Q_OBJECT
-
  public:
   explicit ConnectionsView(ThemeService* themeService, QWidget* parent = nullptr);
   void setProxyService(ProxyService* service);
   void setAutoRefreshEnabled(bool enabled);
-
  private slots:
   void onRefresh();
   void onCloseSelected();
@@ -23,8 +19,7 @@ class ConnectionsView : public QWidget {
   void updateStyle();
 
  private:
-  void setupUI();
-
+  void          setupUI();
   QTableWidget* m_tableWidget;
   QPushButton*  m_closeSelectedBtn;
   QPushButton*  m_closeAllBtn;

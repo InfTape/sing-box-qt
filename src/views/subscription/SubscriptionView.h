@@ -1,6 +1,5 @@
 #ifndef SUBSCRIPTIONVIEW_H
 #define SUBSCRIPTIONVIEW_H
-
 #include <QGridLayout>
 #include <QLabel>
 #include <QList>
@@ -10,7 +9,6 @@
 #include <QString>
 #include <QTimer>
 #include <QWidget>
-
 class QScrollArea;
 class QEvent;
 class QShowEvent;
@@ -21,11 +19,9 @@ class ThemeService;
 struct SubscriptionInfo;
 class SubscriptionView : public QWidget {
   Q_OBJECT
-
  public:
   explicit SubscriptionView(SubscriptionService* service, ThemeService* themeService, QWidget* parent = nullptr);
   SubscriptionService* getService() const;
-
  private slots:
   void onAddClicked();
   void onAutoUpdateTimer();
@@ -46,20 +42,17 @@ class SubscriptionView : public QWidget {
   void              handleRollbackSubscription(const QString& id);
   void              handleDeleteSubscription(const QString& id);
   void              handleCopyLink(const QString& id);
-
   // New slots
-  void onAddNodeClicked();
-  void openSubscriptionDialog();
-
+  void              onAddNodeClicked();
+  void              openSubscriptionDialog();
   SubscriptionCard* findCardById(const QString& id) const;
   void              updateActiveCards(const QString& activeId);
   bool              getSubscriptionById(const QString& id, SubscriptionInfo* out) const;
 
  protected:
-  void resizeEvent(QResizeEvent* event) override;
-  bool eventFilter(QObject* watched, QEvent* event) override;
-  void showEvent(QShowEvent* event) override;
-
+  void                          resizeEvent(QResizeEvent* event) override;
+  bool                          eventFilter(QObject* watched, QEvent* event) override;
+  void                          showEvent(QShowEvent* event) override;
   QPushButton*                  m_addBtn;
   QScrollArea*                  m_scrollArea;
   QWidget*                      m_cardsContainer;

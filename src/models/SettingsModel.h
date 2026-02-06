@@ -1,6 +1,5 @@
 #ifndef SETTINGSMODEL_H
 #define SETTINGSMODEL_H
-
 #include <QString>
 class SettingsModel {
  public:

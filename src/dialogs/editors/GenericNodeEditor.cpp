@@ -1,5 +1,4 @@
 #include "GenericNodeEditor.h"
-
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -14,7 +13,6 @@ GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent) : Nod
 void GenericNodeEditor::setupUI() {
   QFormLayout* layout = new QFormLayout(this);
   layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-
   // Common
   m_nameEdit   = new QLineEdit;
   m_serverEdit = new QLineEdit;
@@ -22,11 +20,9 @@ void GenericNodeEditor::setupUI() {
   m_portScan->setRange(1, 65535);
   m_portScan->setValue(443);
   m_portScan->setButtonSymbols(QAbstractSpinBox::NoButtons);
-
   layout->addRow(tr("Name"), m_nameEdit);
   layout->addRow(tr("Server"), m_serverEdit);
   layout->addRow(tr("Port"), m_portScan);
-
   // Auth
   m_uuidEdit     = new QLineEdit;
   m_passwordEdit = new QLineEdit;
@@ -35,7 +31,6 @@ void GenericNodeEditor::setupUI() {
   m_alterIdEdit->setText("0");
   m_methodEdit   = new QLineEdit;
   m_securityEdit = new QLineEdit;
-
   if (m_type == "vmess" || m_type == "vless" || m_type == "tuic" || m_type == "hysteria2") {
     layout->addRow(m_type == "tuic" ? tr("UUID") : (m_type == "hysteria2" ? tr("Password") : tr("UUID")),
                    m_type == "hysteria2" ? m_passwordEdit : m_uuidEdit);
@@ -57,18 +52,15 @@ void GenericNodeEditor::setupUI() {
     m_flowCombo->setWheelEnabled(false);
     layout->addRow(tr("Flow"), m_flowCombo);
   }
-
   // Transport / Stream Settings
   if (m_type == "vmess" || m_type == "vless" || m_type == "trojan" || m_type == "shadowsocks" ||
       m_type == "hysteria2") {
     QGroupBox*   transportGroup  = new QGroupBox(tr("Transport && Security"));
     QFormLayout* transportLayout = new QFormLayout(transportGroup);
-
-    m_networkCombo = new MenuComboBox;
+    m_networkCombo               = new MenuComboBox;
     m_networkCombo->addItems({"tcp", "ws", "grpc", "http"});
     m_networkCombo->setWheelEnabled(false);
     transportLayout->addRow(tr("Network"), m_networkCombo);
-
     if (m_type == "vless") {
       m_securityCombo = new MenuComboBox;
       m_securityCombo->addItems({"none", "tls", "reality"});
@@ -78,23 +70,19 @@ void GenericNodeEditor::setupUI() {
     } else {
       m_securityCombo = nullptr;
     }
-
     m_tlsCheck = new QCheckBox(tr("TLS"));
     if (m_type == "vless") {
       m_tlsCheck->setChecked(true);
     }
     transportLayout->addRow(tr("Security"), m_tlsCheck);
-
     m_serverNameEdit  = new QLineEdit;
     m_alpnEdit        = new QLineEdit;
     m_fingerprintEdit = new QLineEdit;
     m_insecureCheck   = new QCheckBox(tr("Allow Insecure"));
-
     transportLayout->addRow(tr("SNI"), m_serverNameEdit);
     transportLayout->addRow(tr("ALPN"), m_alpnEdit);
     transportLayout->addRow(tr("Fingerprint"), m_fingerprintEdit);
     transportLayout->addRow(tr(""), m_insecureCheck);
-
     // Path/Host/ServiceName
     m_pathEdit        = new QLineEdit;
     m_hostEdit        = new QLineEdit;
@@ -102,7 +90,6 @@ void GenericNodeEditor::setupUI() {
     transportLayout->addRow(tr("Path"), m_pathEdit);
     transportLayout->addRow(tr("Host"), m_hostEdit);
     transportLayout->addRow(tr("Service Name"), m_serviceNameEdit);
-
     // Reality
     if (m_type == "vless" || m_type == "trojan") {
       m_publicKeyEdit = new QLineEdit;
@@ -112,16 +99,13 @@ void GenericNodeEditor::setupUI() {
       transportLayout->addRow(tr("Reality Short ID"), m_shortIdEdit);
       transportLayout->addRow(tr("Reality SpiderX"), m_spiderXEdit);
     }
-
     layout->addRow(transportGroup);
-
     connect(m_networkCombo, &QComboBox::currentTextChanged, this, &GenericNodeEditor::updateVisibility);
     connect(m_tlsCheck, &QCheckBox::toggled, this, &GenericNodeEditor::updateVisibility);
     if (m_securityCombo) {
       connect(m_securityCombo, &QComboBox::currentTextChanged, this, &GenericNodeEditor::updateVisibility);
     }
   }
-
   // Connect signals
   QList<QWidget*> widgets = findChildren<QWidget*>();
   for (auto w : widgets) {
@@ -138,11 +122,10 @@ void GenericNodeEditor::setupUI() {
 }
 void GenericNodeEditor::updateVisibility() {
   if (m_networkCombo) {
-    QString net    = m_networkCombo->currentText();
-    bool    isWs   = net == "ws";
-    bool    isGrpc = net == "grpc";
-    bool    isHttp = net == "http";
-
+    QString      net    = m_networkCombo->currentText();
+    bool         isWs   = net == "ws";
+    bool         isGrpc = net == "grpc";
+    bool         isHttp = net == "http";
     QFormLayout* layout = nullptr;
     if (m_pathEdit && m_pathEdit->parentWidget()) {
       layout = qobject_cast<QFormLayout*>(m_pathEdit->parentWidget()->layout());
@@ -156,11 +139,9 @@ void GenericNodeEditor::updateVisibility() {
           lbl->setVisible(visible);
         }
       };
-
       safeSetVisible(m_pathEdit, isWs || isHttp);
       safeSetVisible(m_hostEdit, isWs || isHttp);
       safeSetVisible(m_serviceNameEdit, isGrpc);
-
       // Reality fields only shown when security=reality
       const bool isReality = m_securityCombo && m_securityCombo->currentText() == "reality";
       safeSetVisible(m_publicKeyEdit, isReality);
@@ -168,7 +149,6 @@ void GenericNodeEditor::updateVisibility() {
       safeSetVisible(m_spiderXEdit, isReality);
     }
   }
-
   // When security=none, automatically uncheck TLS
   if (m_securityCombo && m_tlsCheck) {
     const QString sec = m_securityCombo->currentText();
@@ -189,7 +169,6 @@ QJsonObject GenericNodeEditor::getOutbound() const {
   outbound["tag"]         = m_nameEdit->text();
   outbound["server"]      = m_serverEdit->text();
   outbound["server_port"] = m_portScan->value();
-
   if (m_type == "vmess") {
     outbound["uuid"] = m_uuidEdit->text();
     // VMess security defaults to auto, avoiding invalid config due to empty string
@@ -213,7 +192,6 @@ QJsonObject GenericNodeEditor::getOutbound() const {
   } else if (m_type == "hysteria2") {
     outbound["password"] = m_passwordEdit->text();
   }
-
   // Hysteria2 enforces TLS, SNI required
   if (m_type == "hysteria2") {
     QJsonObject tls;
@@ -225,7 +203,6 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     }
     outbound["tls"] = tls;
   }
-
   // Transport & TLS
   if (m_networkCombo && m_type != "hysteria2") {
     QString net = m_networkCombo->currentText().trimmed().toLower();
@@ -233,7 +210,6 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     if (!net.isEmpty() && net != "tcp") {
       QJsonObject transport;
       transport["type"] = net;
-
       if (net == "ws") {
         transport["path"] = m_pathEdit->text();
         if (!m_hostEdit->text().isEmpty()) {
@@ -250,22 +226,17 @@ QJsonObject GenericNodeEditor::getOutbound() const {
       outbound["transport"] = transport;
     }
   }
-
   const QString vlessSecurity = m_securityCombo ? m_securityCombo->currentText() : QString();
-
-  auto lineText  = [](QLineEdit* w) -> QString { return w ? w->text() : QString(); };
-  auto comboText = [](QComboBox* c) -> QString { return c ? c->currentText() : QString(); };
-
+  auto          lineText      = [](QLineEdit* w) -> QString { return w ? w->text() : QString(); };
+  auto          comboText     = [](QComboBox* c) -> QString { return c ? c->currentText() : QString(); };
   // Enable TLS condition: Checked, explicit security=tls/reality, or Reality fields non-empty
   const bool hasRealityField = m_publicKeyEdit && !m_publicKeyEdit->text().isEmpty();
   const bool shouldEnableTls = (m_tlsCheck && m_tlsCheck->isChecked()) || (vlessSecurity == "reality") ||
                                (vlessSecurity == "tls") || hasRealityField;
-
   if (shouldEnableTls && m_serverNameEdit && m_networkCombo) {
     QJsonObject tls;
     tls["enabled"] = true;
-
-    QString sni = lineText(m_serverNameEdit);
+    QString sni    = lineText(m_serverNameEdit);
     if (sni.isEmpty() && m_networkCombo->isVisible()) {
       // If SNI is empty, try to use Host/ServiceName as fallback
       const QString net = comboText(m_networkCombo);
@@ -276,7 +247,6 @@ QJsonObject GenericNodeEditor::getOutbound() const {
       }
     }
     tls["server_name"] = sni;
-
     if (m_insecureCheck) {
       tls["insecure"] = m_insecureCheck->isChecked();
     }
@@ -299,14 +269,12 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     }
     outbound["tls"] = tls;
   }
-
   return outbound;
 }
 void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
   m_nameEdit->setText(outbound["tag"].toString());
   m_serverEdit->setText(outbound["server"].toString());
   m_portScan->setValue(outbound["server_port"].toInt());
-
   if (m_type == "vmess") {
     m_uuidEdit->setText(outbound["uuid"].toString());
     m_securityEdit->setText(outbound["security"].toString());
@@ -331,13 +299,11 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
   } else if (m_type == "hysteria2") {
     m_passwordEdit->setText(outbound["password"].toString());
   }
-
   if (outbound.contains("transport")) {
     QJsonObject t = outbound["transport"].toObject();
     m_networkCombo->setCurrentText(t["type"].toString());
     m_pathEdit->setText(t["path"].toString());
     m_serviceNameEdit->setText(t["service_name"].toString());
-
     // Handle loading host
     if (t.contains("headers")) {
       QJsonObject headers = t["headers"].toObject();
@@ -351,21 +317,18 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
       }
     }
   }
-
   QString detectedSecurity;
   if (outbound.contains("tls")) {
     QJsonObject t = outbound["tls"].toObject();
     m_tlsCheck->setChecked(t["enabled"].toBool());
     m_serverNameEdit->setText(t["server_name"].toString());
     m_insecureCheck->setChecked(t["insecure"].toBool());
-
     if (t.contains("reality")) {
       QJsonObject r = t["reality"].toObject();
       m_publicKeyEdit->setText(r["public_key"].toString());
       m_shortIdEdit->setText(r["short_id"].toString());
       detectedSecurity = "reality";
     }
-
     if (t.contains("utls")) {
       QJsonObject u = t["utls"].toObject();
       m_fingerprintEdit->setText(u["fingerprint"].toString());
@@ -376,7 +339,6 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
   } else {
     detectedSecurity = "none";
   }
-
   if (m_securityCombo) {
     if (!detectedSecurity.isEmpty()) {
       m_securityCombo->setCurrentText(detectedSecurity);

@@ -1,5 +1,4 @@
 #include "Crypto.h"
-
 #include <QCryptographicHash>
 #include <QUuid>
 QString Crypto::base64Encode(const QByteArray& data) {
@@ -29,10 +28,8 @@ QByteArray Crypto::base64UrlDecode(const QString& base64) {
   QString data = base64;
   data.replace('-', '+');
   data.replace('_', '/');
-
   // Fix padding.
   int padding = (4 - data.length() % 4) % 4;
   data.append(QString(padding, '='));
-
   return QByteArray::fromBase64(data.toLatin1());
 }

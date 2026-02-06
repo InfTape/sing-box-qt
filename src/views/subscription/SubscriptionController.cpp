@@ -1,5 +1,4 @@
 #include "SubscriptionController.h"
-
 #include "network/SubscriptionService.h"
 SubscriptionController::SubscriptionController(SubscriptionService* service) : m_service(service) {}
 QList<SubscriptionInfo> SubscriptionController::subscriptions() const {

@@ -1,7 +1,6 @@
 
 #include "ProcessManager.h"
 #include "utils/Logger.h"
-
 #ifdef Q_OS_WIN
 #include <windows.h>  // must be first for Windows types/macros
 #include <psapi.h>
@@ -10,16 +9,13 @@
 ProcessManager::ProcessManager(QObject* parent) : QObject(parent) {}
 QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
   QList<ProcessInfo> processes;
-
 #ifdef Q_OS_WIN
   HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hSnapshot == INVALID_HANDLE_VALUE) {
     return processes;
   }
-
   PROCESSENTRY32W pe32;
   pe32.dwSize = sizeof(pe32);
-
   if (Process32FirstW(hSnapshot, &pe32)) {
     do {
       QString processName = QString::fromWCharArray(pe32.szExeFile);
@@ -31,10 +27,8 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
       }
     } while (Process32NextW(hSnapshot, &pe32));
   }
-
   CloseHandle(hSnapshot);
 #endif
-
   return processes;
 }
 bool ProcessManager::isProcessRunning(const QString& name) {
@@ -78,31 +72,25 @@ bool ProcessManager::killProcess(qint64 pid) {
 bool ProcessManager::killProcessByName(const QString& name) {
   QList<ProcessInfo> processes = findProcessesByName(name);
   bool               allKilled = true;
-
   for (const ProcessInfo& proc : processes) {
     if (!killProcess(proc.pid)) {
       allKilled = false;
     }
   }
-
   return allKilled;
 }
 void ProcessManager::cleanupKernelProcesses() {
   Logger::info("Cleaning up leftover kernel processes...");
-
 #ifdef Q_OS_WIN
   QString kernelName = "sing-box.exe";
 #else
   QString kernelName = "sing-box";
 #endif
-
   QList<ProcessInfo> processes = findProcessesByName(kernelName);
-
   if (processes.isEmpty()) {
     Logger::info("No leftover kernel processes found");
     return;
   }
-
   for (const ProcessInfo& proc : processes) {
     Logger::info(QString("Leftover process found: %1 (PID: %2)").arg(proc.name).arg(proc.pid));
     killProcess(proc.pid);

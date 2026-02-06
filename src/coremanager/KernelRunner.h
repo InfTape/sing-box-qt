@@ -1,17 +1,13 @@
 #ifndef KERNELRUNNER_H
 #define KERNELRUNNER_H
-
 #include <QObject>
 #include <QProcess>
 #include <QString>
-
 class KernelRunner : public QObject {
   Q_OBJECT
-
  public:
   explicit KernelRunner(QObject* parent = nullptr);
   ~KernelRunner();
-
   bool    start(const QString& configPath = QString());
   void    stop();
   void    restart();
@@ -22,13 +18,11 @@ class KernelRunner : public QObject {
   QString getVersion() const;
   QString getKernelPath() const;
   QString lastError() const;
-
  signals:
   void statusChanged(bool running);
   void outputReceived(const QString& output);
   void errorOutputReceived(const QString& output);
   void errorOccurred(const QString& error);
-
  private slots:
   void onProcessStarted();
   void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -37,9 +31,8 @@ class KernelRunner : public QObject {
   void onReadyReadStandardError();
 
  private:
-  QString findKernelPath() const;
-  QString getDefaultConfigPath() const;
-
+  QString   findKernelPath() const;
+  QString   getDefaultConfigPath() const;
   QProcess* m_process;
   QString   m_kernelPath;
   QString   m_configPath;
@@ -48,5 +41,4 @@ class KernelRunner : public QObject {
   bool      m_restartPending = false;
   QString   m_lastError;
 };
-
 #endif  // KERNELRUNNER_H

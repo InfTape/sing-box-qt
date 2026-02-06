@@ -1,10 +1,8 @@
 #include "ProxyController.h"
-
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QObject>
-
 #include "KernelService.h"
 #include "app/interfaces/ConfigRepository.h"
 #include "app/interfaces/SettingsStore.h"
@@ -47,7 +45,6 @@ bool ProxyController::ensureConfigExists(QString* outPath) {
     if (outPath) *outPath = configPath;
     return true;
   }
-
   if (!m_configRepo) {
     Logger::error(QStringLiteral("Config repository not available"));
     return false;
@@ -62,12 +59,10 @@ bool ProxyController::ensureConfigExists(QString* outPath) {
 }
 bool ProxyController::startKernel() {
   if (!m_kernel) return false;
-
   QString configPath;
   if (!ensureConfigExists(&configPath)) {
     return false;
   }
-
   m_kernel->setConfigPath(configPath);
   return m_kernel->start(configPath);
 }
@@ -90,7 +85,6 @@ bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, Q
     if (error) *error = QObject::tr("Failed to resolve config path");
     return false;
   }
-
   if (!m_configRepo) {
     if (error) *error = QObject::tr("Config repository not available");
     return false;
@@ -130,13 +124,10 @@ bool ProxyController::setTunModeEnabled(bool enabled) {
 bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
   QString configPath = activeConfigPath();
   if (configPath.isEmpty() || !m_configRepo) return false;
-
   QJsonObject config = m_configRepo->loadConfig(configPath);
   if (config.isEmpty()) return false;
-
   m_configRepo->applySettingsToConfig(config);
   m_configRepo->saveConfig(configPath, config);
-
   if (restartIfRunning && m_kernel && m_kernel->isRunning()) {
     m_kernel->restartWithConfig(configPath);
   }
@@ -148,7 +139,6 @@ void ProxyController::updateSystemProxyForKernelState(bool running) {
     m_systemProxy->clearProxy();
     return;
   }
-
   if (running) {
     const int port = m_configRepo ? m_configRepo->mixedPort() : 1080;
     m_systemProxy->setProxy("127.0.0.1", port);

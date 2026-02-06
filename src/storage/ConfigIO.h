@@ -1,6 +1,5 @@
 #ifndef CONFIGIO_H
 #define CONFIGIO_H
-
 #include <QJsonObject>
 #include <QString>
 namespace ConfigIO {

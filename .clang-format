@@ -26,3 +26,4 @@ AlignConsecutiveMacros:
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLoopsOnASingleLine: true
+MaxEmptyLinesToKeep: 0

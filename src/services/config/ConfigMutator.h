@@ -1,6 +1,5 @@
 #ifndef CONFIGMUTATOR_H
 #define CONFIGMUTATOR_H
-
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
