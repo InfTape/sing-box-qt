@@ -90,10 +90,19 @@ jobs:
       - name: Prepare build environment
         shell: pwsh
         run: |
-          if (-not $env:Qt6_DIR) {
-            throw "Qt6_DIR is missing after Qt installation."
+          $qtRoot = $env:QT_ROOT_DIR
+          if ([string]::IsNullOrWhiteSpace($qtRoot) -and -not [string]::IsNullOrWhiteSpace($env:Qt6_DIR)) {
+            $qtRoot = (Resolve-Path (Join-Path $env:Qt6_DIR "..\\..\\..")).Path
           }
-          $qtRoot = (Resolve-Path (Join-Path $env:Qt6_DIR "..\\..\\..")).Path
+          if ([string]::IsNullOrWhiteSpace($qtRoot)) {
+            Write-Host "QT_ROOT_DIR=$env:QT_ROOT_DIR"
+            Write-Host "Qt6_DIR=$env:Qt6_DIR"
+            throw "Neither QT_ROOT_DIR nor Qt6_DIR is available after Qt installation."
+          }
+          $windeployqt = Join-Path $qtRoot "bin\\windeployqt.exe"
+          if (!(Test-Path $windeployqt)) {
+            throw "windeployqt not found under QT_ROOT: $qtRoot"
+          }
           $cmakeExe = (Get-Command cmake).Source
           "QT_ROOT=$qtRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
           "CMAKE_BIN=$cmakeExe" | Out-File -FilePath $env:GITHUB_ENV -Append
