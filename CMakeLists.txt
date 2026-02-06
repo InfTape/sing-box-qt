@@ -8,6 +8,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # Qt6 configuration.
+set(Qt6_DIR "C:/Qt/6.10.1/msvc2022_64/lib/cmake/Qt6")
+
 find_package(Qt6 REQUIRED COMPONENTS
     Core
     Widgets
@@ -33,7 +35,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 FetchContent_Declare(
     yaml-cpp
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-    GIT_TAG 0.8.0
+    GIT_TAG f0329d0efd2e62ceda5ee899c343ee445f6f7bd2
 )
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
@@ -101,6 +103,8 @@ set(SOURCES
     src/services/settings/SettingsService.cpp
     src/models/SettingsModel.cpp
     src/widgets/common/MenuComboBox.cpp
+    src/widgets/common/ElideLineEdit.cpp
+    src/widgets/common/FlowLayout.cpp
     src/widgets/logs/LogRowWidget.cpp
     src/widgets/rules/RuleCard.cpp
     src/widgets/common/ToggleSwitch.cpp
@@ -190,6 +194,8 @@ set(HEADERS
     src/services/settings/SettingsService.h
     src/models/SettingsModel.h
     src/widgets/common/MenuComboBox.h
+    src/widgets/common/ElideLineEdit.h
+    src/widgets/common/FlowLayout.h
     src/widgets/logs/LogRowWidget.h
     src/widgets/rules/RuleCard.h
     src/widgets/common/ToggleSwitch.h

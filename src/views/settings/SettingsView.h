@@ -16,8 +16,10 @@
 
 class ToggleSwitch;
 class MenuComboBox;
+class ElideLineEdit;
 class SettingsController;
 class ThemeService;
+class QResizeEvent;
 class SettingsView : public QWidget {
   Q_OBJECT
 
@@ -28,6 +30,7 @@ class SettingsView : public QWidget {
 
  protected:
   void showEvent(QShowEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
 
  private slots:
   void onSaveClicked();
@@ -57,12 +60,17 @@ class SettingsView : public QWidget {
   QLabel*  createSectionTitle(const QString& text);
   QFrame*  createCard();
   QLabel*  createFormLabel(const QString& text);
-  void     matchLabelWidth(QLabel* left, QLabel* right);
+  QSpinBox* createSpinBox(int min, int max, int value, bool blockWheel);
+  MenuComboBox* createMenuComboBox(bool expanding = false);
+  ElideLineEdit* createElideLineEdit(const QString& placeholder);
+  void     prepareFormLabelPair(QLabel* left, QLabel* right);
   void     applySettingsToUi(const SettingsModel::Data& data);
   void     fillGeneralFromUi(SettingsModel::Data& data) const;
   void     fillAdvancedFromUi(SettingsModel::Data& data) const;
   void     fillProfileFromUi(SettingsModel::Data& data) const;
   QString  normalizeBypassText(const QString& text) const;
+  void     updateKernelVersionLabelStatus();
+  void     updateResponsiveUi();
 
   // Proxy settings.
   QSpinBox*       m_mixedPortSpin;
@@ -76,11 +84,15 @@ class SettingsView : public QWidget {
   ToggleSwitch*   m_tunStrictRouteSwitch;
 
   // Subscription profile (advanced).
+  QLabel*      m_defaultOutboundLabel = nullptr;
+  QLabel*      m_downloadDetourLabel  = nullptr;
   MenuComboBox* m_defaultOutboundCombo;
   MenuComboBox* m_downloadDetourCombo;
   ToggleSwitch* m_blockAdsSwitch;
   ToggleSwitch* m_dnsHijackSwitch;
   ToggleSwitch* m_enableAppGroupsSwitch;
+  QLabel*       m_dnsResolverLabel = nullptr;
+  QLabel*       m_urltestLabel     = nullptr;
   QLineEdit*    m_dnsProxyEdit;
   QLineEdit*    m_dnsCnEdit;
   QLineEdit*    m_dnsResolverEdit;
@@ -92,6 +104,8 @@ class SettingsView : public QWidget {
 
   // Kernel settings.
   QLabel*        m_kernelVersionLabel;
+  QString        m_installedKernelVersion;
+  QString        m_latestKernelVersion;
   MenuComboBox*  m_kernelVersionCombo;
   QProgressBar*  m_kernelDownloadProgress;
   QLabel*        m_kernelDownloadStatus;

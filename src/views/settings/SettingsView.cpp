@@ -7,10 +7,12 @@
 #include <QLabel>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QResizeEvent>
 #include <QScrollArea>
 #include <QShowEvent>
 #include <QSignalBlocker>
 #include <QSizePolicy>
+#include <QStyle>
 #include <QVBoxLayout>
 #include <QWheelEvent>
 #include <algorithm>
@@ -20,12 +22,36 @@
 #include "utils/Logger.h"
 #include "utils/settings/SettingsHelpers.h"
 #include "views/settings/SettingsController.h"
+#include "widgets/common/ElideLineEdit.h"
+#include "widgets/common/FlowLayout.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
 namespace {
 
 constexpr int kLanguageDefaultIndex = 1;
 constexpr int kSpinBoxHeight        = 34;
+constexpr int kControlMinWidth      = 150;
+constexpr int kControlMinWidthCompact = 110;
+constexpr int kCardMargin             = 20;
+constexpr int kSectionSpacing         = 12;
+constexpr int kCardSpacing            = 16;
+constexpr int kGridHorizontalSpacing  = 16;
+constexpr int kGridVerticalSpacing    = 12;
+constexpr int kGridVerticalCompactSpacing = 10;
+constexpr int kToggleCardMarginH      = 16;
+constexpr int kToggleCardMarginV      = 10;
+constexpr int kToggleCardSpacing      = 30;
+constexpr int kProfileToggleHSpacing  = 20;
+constexpr int kProfileToggleVSpacing  = 10;
+constexpr int kPageMargin             = 24;
+constexpr int kTitleSpacing           = 4;
+constexpr int kBypassEditHeight       = 96;
+constexpr int kSaveButtonHeight       = 36;
+constexpr int kSaveButtonWidth        = 110;
+constexpr int kKernelFormSpacing      = 15;
+constexpr int kSectionPaddingReserve  = 170;
+constexpr int kMinRoutingWrapWidth    = 1200;
+constexpr int kMinDnsWrapWidth        = 1180;
 class NoWheelSpinBox : public QSpinBox {
  public:
   explicit NoWheelSpinBox(QWidget* parent = nullptr) : QSpinBox(parent) {}
@@ -68,7 +94,12 @@ SettingsView::SettingsView(ThemeService* themeService,
 }
 void SettingsView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
+  updateResponsiveUi();
   ensureKernelInfoLoaded();
+}
+void SettingsView::resizeEvent(QResizeEvent* event) {
+  QWidget::resizeEvent(event);
+  updateResponsiveUi();
 }
 void SettingsView::ensureKernelInfoLoaded() {
   if (m_kernelInfoLoaded) {
@@ -93,56 +124,76 @@ QFrame* SettingsView::createCard() {
 QLabel* SettingsView::createFormLabel(const QString& text) {
   QLabel* label = new QLabel(text);
   label->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+  label->setWordWrap(true);
+  label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
   return label;
 }
-void SettingsView::matchLabelWidth(QLabel* left, QLabel* right) {
+QSpinBox* SettingsView::createSpinBox(int min, int max, int value,
+                                      bool blockWheel) {
+  QSpinBox* spin =
+      blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox) : new QSpinBox;
+  spin->setButtonSymbols(QAbstractSpinBox::NoButtons);
+  spin->setRange(min, max);
+  spin->setValue(value);
+  spin->setMinimumWidth(kControlMinWidth);
+  spin->setFixedHeight(kSpinBoxHeight);
+  spin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  return spin;
+}
+MenuComboBox* SettingsView::createMenuComboBox(bool expanding) {
+  MenuComboBox* combo = new MenuComboBox(this, m_themeService);
+  combo->setWheelEnabled(false);
+  combo->setFixedHeight(kSpinBoxHeight);
+  combo->setMinimumWidth(kControlMinWidth);
+  if (expanding) {
+    combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  }
+  return combo;
+}
+ElideLineEdit* SettingsView::createElideLineEdit(const QString& placeholder) {
+  ElideLineEdit* edit = new ElideLineEdit;
+  edit->setPlaceholderText(placeholder);
+  edit->setFixedHeight(kSpinBoxHeight);
+  edit->setMinimumWidth(kControlMinWidth);
+  return edit;
+}
+void SettingsView::prepareFormLabelPair(QLabel* left, QLabel* right) {
   if (!left || !right) {
     return;
   }
-  const int width =
-      std::max(left->sizeHint().width(), right->sizeHint().width());
-  left->setFixedWidth(width);
-  right->setFixedWidth(width);
+  // Keep labels flexible so narrow windows can reflow instead of clipping.
+  left->setMinimumWidth(0);
+  right->setMinimumWidth(0);
+  left->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+  right->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
 }
 QWidget* SettingsView::buildProxySection() {
   QWidget*     proxySection       = new QWidget;
   QVBoxLayout* proxySectionLayout = new QVBoxLayout(proxySection);
   proxySectionLayout->setContentsMargins(0, 0, 0, 0);
-  proxySectionLayout->setSpacing(12);
+  proxySectionLayout->setSpacing(kSectionSpacing);
 
   proxySectionLayout->addWidget(createSectionTitle(tr("Proxy Settings")));
 
   QFrame* proxyCard = createCard();
 
   QGridLayout* proxyLayout = new QGridLayout(proxyCard);
-  proxyLayout->setContentsMargins(20, 20, 20, 20);
-  proxyLayout->setHorizontalSpacing(16);
-  proxyLayout->setVerticalSpacing(12);
+  proxyLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin,
+                                  kCardMargin);
+  proxyLayout->setHorizontalSpacing(kGridHorizontalSpacing);
+  proxyLayout->setVerticalSpacing(kGridVerticalSpacing);
   proxyLayout->setColumnStretch(1, 1);
   proxyLayout->setColumnStretch(3, 1);
 
-  m_mixedPortSpin = new QSpinBox;
-  m_mixedPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
-  m_mixedPortSpin->setRange(1, 65535);
-  m_mixedPortSpin->setValue(7890);
-  m_mixedPortSpin->setMinimumWidth(150);
-  m_mixedPortSpin->setFixedHeight(kSpinBoxHeight);
-  m_mixedPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
-  m_apiPortSpin = new QSpinBox;
-  m_apiPortSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
-  m_apiPortSpin->setRange(1, 65535);
-  m_apiPortSpin->setValue(9090);
-  m_apiPortSpin->setMinimumWidth(150);
-  m_apiPortSpin->setFixedHeight(kSpinBoxHeight);
-  m_apiPortSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_mixedPortSpin = createSpinBox(1, 65535, 7890, false);
+  m_apiPortSpin   = createSpinBox(1, 65535, 9090, false);
 
   m_autoStartCheck = new QCheckBox(tr("Auto start on boot"));
 
 
   QLabel* mixedPortLabel = createFormLabel(tr("Mixed port:"));
   QLabel* apiPortLabel   = createFormLabel(tr("API port:"));
-  matchLabelWidth(mixedPortLabel, apiPortLabel);
+  prepareFormLabelPair(mixedPortLabel, apiPortLabel);
 
   proxyLayout->addWidget(mixedPortLabel, 0, 0);
   proxyLayout->addWidget(m_mixedPortSpin, 0, 1);
@@ -160,20 +211,23 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   QWidget*     proxyAdvancedSection = new QWidget;
   QVBoxLayout* proxyAdvancedLayout  = new QVBoxLayout(proxyAdvancedSection);
   proxyAdvancedLayout->setContentsMargins(0, 0, 0, 0);
-  proxyAdvancedLayout->setSpacing(12);
+  proxyAdvancedLayout->setSpacing(kSectionSpacing);
   proxyAdvancedLayout->addWidget(
       createSectionTitle(tr("Proxy Advanced Settings")));
 
   QFrame*      proxyAdvancedCard = createCard();
   QVBoxLayout* advancedLayout    = new QVBoxLayout(proxyAdvancedCard);
-  advancedLayout->setContentsMargins(20, 20, 20, 20);
-  advancedLayout->setSpacing(16);
+  advancedLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin,
+                                     kCardMargin);
+  advancedLayout->setSpacing(kCardSpacing);
 
   QLabel* bypassLabel     = new QLabel(tr("System proxy bypass domains"));
   m_systemProxyBypassEdit = new QPlainTextEdit;
   m_systemProxyBypassEdit->setPlaceholderText(
       ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
-  m_systemProxyBypassEdit->setMinimumHeight(80);
+  m_systemProxyBypassEdit->setFixedHeight(kBypassEditHeight);
+  m_systemProxyBypassEdit->setSizePolicy(QSizePolicy::Expanding,
+                                         QSizePolicy::Fixed);
 
   advancedLayout->addWidget(bypassLabel);
   advancedLayout->addWidget(m_systemProxyBypassEdit);
@@ -181,45 +235,32 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   QLabel* tunTitle = new QLabel(tr("TUN Virtual Adapter"));
   advancedLayout->addWidget(tunTitle);
 
-  QHBoxLayout* tunRow   = new QHBoxLayout;
-  QFormLayout* tunLeft  = new QFormLayout;
-  QFormLayout* tunRight = new QFormLayout;
-  tunLeft->setSpacing(10);
-  tunRight->setSpacing(10);
-  tunLeft->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-  tunRight->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-  tunLeft->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
-  tunRight->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  QGridLayout* tunGrid = new QGridLayout;
+  tunGrid->setHorizontalSpacing(kGridHorizontalSpacing);
+  tunGrid->setVerticalSpacing(kGridVerticalCompactSpacing);
+  tunGrid->setColumnStretch(1, 1);
+  tunGrid->setColumnStretch(3, 1);
 
-  m_tunMtuSpin = new NoWheelSpinBox;
-  m_tunMtuSpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
-  m_tunMtuSpin->setRange(576, 9000);
-  m_tunMtuSpin->setValue(ConfigConstants::DEFAULT_TUN_MTU);
-  m_tunMtuSpin->setMinimumWidth(150);
-  m_tunMtuSpin->setFixedHeight(kSpinBoxHeight);
-  m_tunMtuSpin->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_tunMtuSpin = createSpinBox(576, 9000, ConfigConstants::DEFAULT_TUN_MTU,
+                               true);
 
-  m_tunStackCombo = new MenuComboBox(this, m_themeService);
+  m_tunStackCombo = createMenuComboBox(true);
   m_tunStackCombo->addItems({tr("Mixed"), tr("System"), tr("gVisor")});
-  m_tunStackCombo->setWheelEnabled(false);
-  m_tunStackCombo->setFixedHeight(kSpinBoxHeight);
-  m_tunStackCombo->setMinimumWidth(150);
 
   QLabel* mtuLabel   = createFormLabel(tr("MTU:"));
   QLabel* stackLabel = createFormLabel(tr("Protocol stack:"));
-  matchLabelWidth(mtuLabel, stackLabel);
-
-  tunLeft->addRow(mtuLabel, m_tunMtuSpin);
-  tunRight->addRow(stackLabel, m_tunStackCombo);
-  tunRow->addLayout(tunLeft, 1);
-  tunRow->addLayout(tunRight, 1);
-  advancedLayout->addLayout(tunRow);
+  tunGrid->addWidget(mtuLabel, 0, 0);
+  tunGrid->addWidget(m_tunMtuSpin, 0, 1);
+  tunGrid->addWidget(stackLabel, 0, 2);
+  tunGrid->addWidget(m_tunStackCombo, 0, 3);
+  advancedLayout->addLayout(tunGrid);
 
   QWidget* toggleCard = new QWidget;
   toggleCard->setObjectName("SettingsToggleCard");
   QHBoxLayout* toggleLayout = new QHBoxLayout(toggleCard);
-  toggleLayout->setContentsMargins(16, 10, 16, 10);
-  toggleLayout->setSpacing(30);
+  toggleLayout->setContentsMargins(kToggleCardMarginH, kToggleCardMarginV,
+                                   kToggleCardMarginH, kToggleCardMarginV);
+  toggleLayout->setSpacing(kToggleCardSpacing);
 
   auto addToggle = [this, toggleLayout](const QString& text,
                                         ToggleSwitch*& toggle) {
@@ -256,56 +297,54 @@ QWidget* SettingsView::buildProfileSection() {
   QWidget*     singboxProfileSection = new QWidget;
   QVBoxLayout* singboxProfileLayout  = new QVBoxLayout(singboxProfileSection);
   singboxProfileLayout->setContentsMargins(0, 0, 0, 0);
-  singboxProfileLayout->setSpacing(12);
+  singboxProfileLayout->setSpacing(kSectionSpacing);
   singboxProfileLayout->addWidget(
       createSectionTitle(tr("Subscription Config Profile (Advanced)")));
 
   QFrame*      singboxProfileCard       = createCard();
   QVBoxLayout* singboxProfileCardLayout = new QVBoxLayout(singboxProfileCard);
-  singboxProfileCardLayout->setContentsMargins(20, 20, 20, 20);
-  singboxProfileCardLayout->setSpacing(16);
+  singboxProfileCardLayout->setContentsMargins(kCardMargin, kCardMargin,
+                                               kCardMargin, kCardMargin);
+  singboxProfileCardLayout->setSpacing(kCardSpacing);
 
   QLabel* routingTitle = new QLabel(tr("Routing & Downloads"));
   routingTitle->setProperty("class", "SettingsSectionSubTitle");
   singboxProfileCardLayout->addWidget(routingTitle);
 
   QGridLayout* routingGrid = new QGridLayout;
-  routingGrid->setHorizontalSpacing(16);
-  routingGrid->setVerticalSpacing(12);
+  routingGrid->setHorizontalSpacing(kGridHorizontalSpacing);
+  routingGrid->setVerticalSpacing(kGridVerticalSpacing);
   routingGrid->setColumnStretch(1, 1);
   routingGrid->setColumnStretch(3, 1);
 
-  m_defaultOutboundCombo = new MenuComboBox(this, m_themeService);
+  m_defaultOutboundCombo = createMenuComboBox();
   m_defaultOutboundCombo->addItems(
-      {tr("Manual selector (recommended)"), tr("Auto select (URLTest)")});
-  m_defaultOutboundCombo->setWheelEnabled(false);
-  m_defaultOutboundCombo->setFixedHeight(kSpinBoxHeight);
-  m_defaultOutboundCombo->setMinimumWidth(150);
+      {tr("Manual selector"), tr("Auto select (URLTest)")});
 
-  m_downloadDetourCombo = new MenuComboBox(this, m_themeService);
+  m_downloadDetourCombo = createMenuComboBox();
   m_downloadDetourCombo->addItems({tr("Manual selector"), tr("Direct")});
-  m_downloadDetourCombo->setWheelEnabled(false);
-  m_downloadDetourCombo->setFixedHeight(kSpinBoxHeight);
-  m_downloadDetourCombo->setMinimumWidth(150);
 
-  QLabel* defaultOutboundLabel =
+  m_defaultOutboundLabel =
       createFormLabel(tr("Default outbound for non-CN traffic"));
-  QLabel* downloadDetourLabel =
-      createFormLabel(tr("Rule-set/UI download detour"));
-  matchLabelWidth(defaultOutboundLabel, downloadDetourLabel);
+  m_downloadDetourLabel = createFormLabel(tr("Rule-set/UI download detour"));
+  prepareFormLabelPair(m_defaultOutboundLabel, m_downloadDetourLabel);
 
-  routingGrid->addWidget(defaultOutboundLabel, 0, 0);
+  routingGrid->addWidget(m_defaultOutboundLabel, 0, 0);
   routingGrid->addWidget(m_defaultOutboundCombo, 0, 1);
-  routingGrid->addWidget(downloadDetourLabel, 0, 2);
+  routingGrid->addWidget(m_downloadDetourLabel, 0, 2);
   routingGrid->addWidget(m_downloadDetourCombo, 0, 3);
 
   singboxProfileCardLayout->addLayout(routingGrid);
 
   QWidget* profileToggleCard = new QWidget;
   profileToggleCard->setObjectName("SettingsToggleCard");
-  QHBoxLayout* profileToggleLayout = new QHBoxLayout(profileToggleCard);
-  profileToggleLayout->setContentsMargins(16, 10, 16, 10);
-  profileToggleLayout->setSpacing(30);
+  FlowLayout* profileToggleLayout =
+      new FlowLayout(profileToggleCard, 0, kProfileToggleHSpacing,
+                     kProfileToggleVSpacing);
+  profileToggleLayout->setContentsMargins(kToggleCardMarginH,
+                                          kToggleCardMarginV,
+                                          kToggleCardMarginH,
+                                          kToggleCardMarginV);
 
   auto addProfileToggle = [this, profileToggleLayout](const QString& text,
                                                       ToggleSwitch*& toggle) {
@@ -326,7 +365,6 @@ QWidget* SettingsView::buildProfileSection() {
   addProfileToggle(tr("DNS hijack (hijack-dns)"), m_dnsHijackSwitch);
   addProfileToggle(tr("Enable app groups (TG/YouTube/Netflix/OpenAI)"),
                    m_enableAppGroupsSwitch);
-  profileToggleLayout->addStretch();
   singboxProfileCardLayout->addWidget(profileToggleCard);
 
   QLabel* dnsTitle = new QLabel(tr("DNS"));
@@ -334,47 +372,36 @@ QWidget* SettingsView::buildProfileSection() {
   singboxProfileCardLayout->addWidget(dnsTitle);
 
   QGridLayout* dnsGrid = new QGridLayout;
-  dnsGrid->setHorizontalSpacing(16);
-  dnsGrid->setVerticalSpacing(12);
+  dnsGrid->setHorizontalSpacing(kGridHorizontalSpacing);
+  dnsGrid->setVerticalSpacing(kGridVerticalSpacing);
   dnsGrid->setColumnStretch(1, 1);
   dnsGrid->setColumnStretch(3, 1);
 
-  m_dnsProxyEdit = new QLineEdit;
-  m_dnsProxyEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_PROXY);
-  m_dnsProxyEdit->setFixedHeight(kSpinBoxHeight);
-  m_dnsProxyEdit->setMinimumWidth(150);
+  m_dnsProxyEdit = createElideLineEdit(ConfigConstants::DEFAULT_DNS_PROXY);
 
-  m_dnsCnEdit = new QLineEdit;
-  m_dnsCnEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_CN);
-  m_dnsCnEdit->setFixedHeight(kSpinBoxHeight);
-  m_dnsCnEdit->setMinimumWidth(150);
+  m_dnsCnEdit = createElideLineEdit(ConfigConstants::DEFAULT_DNS_CN);
 
-  m_dnsResolverEdit = new QLineEdit;
-  m_dnsResolverEdit->setPlaceholderText(ConfigConstants::DEFAULT_DNS_RESOLVER);
-  m_dnsResolverEdit->setFixedHeight(kSpinBoxHeight);
-  m_dnsResolverEdit->setMinimumWidth(150);
+  m_dnsResolverEdit =
+      createElideLineEdit(ConfigConstants::DEFAULT_DNS_RESOLVER);
 
-  m_urltestUrlEdit = new QLineEdit;
-  m_urltestUrlEdit->setPlaceholderText(ConfigConstants::DEFAULT_URLTEST_URL);
-  m_urltestUrlEdit->setFixedHeight(kSpinBoxHeight);
-  m_urltestUrlEdit->setMinimumWidth(150);
+  m_urltestUrlEdit = createElideLineEdit(ConfigConstants::DEFAULT_URLTEST_URL);
 
   QLabel* dnsProxyLabel = createFormLabel(tr("Proxy DNS (non-CN)"));
   QLabel* dnsCnLabel    = createFormLabel(tr("CN DNS"));
-  matchLabelWidth(dnsProxyLabel, dnsCnLabel);
+  prepareFormLabelPair(dnsProxyLabel, dnsCnLabel);
 
-  QLabel* dnsResolverLabel =
+  m_dnsResolverLabel =
       createFormLabel(tr("Resolver DNS (for DoH hostname resolving)"));
-  QLabel* urltestLabel = createFormLabel(tr("URLTest URL"));
-  matchLabelWidth(dnsResolverLabel, urltestLabel);
+  m_urltestLabel = createFormLabel(tr("URLTest URL"));
+  prepareFormLabelPair(m_dnsResolverLabel, m_urltestLabel);
 
   dnsGrid->addWidget(dnsProxyLabel, 0, 0);
   dnsGrid->addWidget(m_dnsProxyEdit, 0, 1);
   dnsGrid->addWidget(dnsCnLabel, 0, 2);
   dnsGrid->addWidget(m_dnsCnEdit, 0, 3);
-  dnsGrid->addWidget(dnsResolverLabel, 1, 0);
+  dnsGrid->addWidget(m_dnsResolverLabel, 1, 0);
   dnsGrid->addWidget(m_dnsResolverEdit, 1, 1);
-  dnsGrid->addWidget(urltestLabel, 1, 2);
+  dnsGrid->addWidget(m_urltestLabel, 1, 2);
   dnsGrid->addWidget(m_urltestUrlEdit, 1, 3);
 
   singboxProfileCardLayout->addLayout(dnsGrid);
@@ -386,35 +413,28 @@ QWidget* SettingsView::buildAppearanceSection() {
   QWidget*     appearanceSection       = new QWidget;
   QVBoxLayout* appearanceSectionLayout = new QVBoxLayout(appearanceSection);
   appearanceSectionLayout->setContentsMargins(0, 0, 0, 0);
-  appearanceSectionLayout->setSpacing(12);
+  appearanceSectionLayout->setSpacing(kSectionSpacing);
   appearanceSectionLayout->addWidget(createSectionTitle(tr("Appearance")));
 
   QFrame*      appearanceCard   = createCard();
   QGridLayout* appearanceLayout = new QGridLayout(appearanceCard);
-  appearanceLayout->setContentsMargins(20, 20, 20, 20);
-  appearanceLayout->setHorizontalSpacing(16);
-  appearanceLayout->setVerticalSpacing(12);
+  appearanceLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin,
+                                       kCardMargin);
+  appearanceLayout->setHorizontalSpacing(kGridHorizontalSpacing);
+  appearanceLayout->setVerticalSpacing(kGridVerticalSpacing);
   appearanceLayout->setColumnStretch(1, 1);
   appearanceLayout->setColumnStretch(3, 1);
 
   QLabel* themeLabel    = createFormLabel(tr("Theme:"));
   QLabel* languageLabel = createFormLabel(tr("Language:"));
-  matchLabelWidth(themeLabel, languageLabel);
+  prepareFormLabelPair(themeLabel, languageLabel);
 
-  m_themeCombo = new MenuComboBox(this, m_themeService);
+  m_themeCombo = createMenuComboBox(true);
   m_themeCombo->addItems({tr("Dark"), tr("Light"), tr("Follow System")});
-  m_themeCombo->setWheelEnabled(false);
-  m_themeCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_themeCombo->setFixedHeight(kSpinBoxHeight);
-  m_themeCombo->setMinimumWidth(150);
 
-  m_languageCombo = new MenuComboBox(this, m_themeService);
+  m_languageCombo = createMenuComboBox(true);
   m_languageCombo->addItems(
       {tr("Simplified Chinese"), "English", tr("Japanese"), tr("Russian")});
-  m_languageCombo->setWheelEnabled(false);
-  m_languageCombo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_languageCombo->setFixedHeight(kSpinBoxHeight);
-  m_languageCombo->setMinimumWidth(150);
 
   appearanceLayout->addWidget(themeLabel, 0, 0);
   appearanceLayout->addWidget(m_themeCombo, 0, 1);
@@ -431,30 +451,25 @@ QWidget* SettingsView::buildKernelSection() {
   QWidget*     kernelSection       = new QWidget;
   QVBoxLayout* kernelSectionLayout = new QVBoxLayout(kernelSection);
   kernelSectionLayout->setContentsMargins(0, 0, 0, 0);
-  kernelSectionLayout->setSpacing(12);
+  kernelSectionLayout->setSpacing(kSectionSpacing);
   kernelSectionLayout->addWidget(createSectionTitle(tr("Kernel Settings")));
 
   QFrame*      kernelCard   = createCard();
   QFormLayout* kernelLayout = new QFormLayout(kernelCard);
-  kernelLayout->setContentsMargins(20, 20, 20, 20);
-  kernelLayout->setSpacing(15);
+  kernelLayout->setContentsMargins(kCardMargin, kCardMargin, kCardMargin,
+                                   kCardMargin);
+  kernelLayout->setSpacing(kKernelFormSpacing);
   kernelLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
   m_kernelVersionLabel = new QLabel(tr("Not installed"));
   m_kernelVersionLabel->setObjectName("KernelVersionLabel");
   m_kernelVersionLabel->setProperty("status", "error");
 
-  m_kernelVersionCombo = new MenuComboBox(this, m_themeService);
+  m_kernelVersionCombo = createMenuComboBox();
   m_kernelVersionCombo->addItem(tr("Latest version"));
-  m_kernelVersionCombo->setWheelEnabled(false);
-  m_kernelVersionCombo->setFixedHeight(kSpinBoxHeight);
-  m_kernelVersionCombo->setMinimumWidth(150);
 
-  m_kernelPathEdit = new QLineEdit;
+  m_kernelPathEdit = createElideLineEdit(tr("Kernel path"));
   m_kernelPathEdit->setReadOnly(true);
-  m_kernelPathEdit->setPlaceholderText(tr("Kernel path"));
-  m_kernelPathEdit->setFixedHeight(kSpinBoxHeight);
-  m_kernelPathEdit->setMinimumWidth(150);
 
   m_kernelDownloadProgress = new QProgressBar;
   m_kernelDownloadProgress->setObjectName("KernelProgress");
@@ -513,13 +528,14 @@ void SettingsView::setupUI() {
 
   QWidget*     contentWidget = new QWidget;
   QVBoxLayout* mainLayout    = new QVBoxLayout(contentWidget);
-  mainLayout->setContentsMargins(24, 24, 24, 24);
-  mainLayout->setSpacing(16);
+  mainLayout->setContentsMargins(kPageMargin, kPageMargin, kPageMargin,
+                                 kPageMargin);
+  mainLayout->setSpacing(kCardSpacing);
 
   // Header (match Rules page layout spacing)
   QHBoxLayout* headerLayout = new QHBoxLayout;
   QVBoxLayout* titleLayout  = new QVBoxLayout;
-  titleLayout->setSpacing(4);
+  titleLayout->setSpacing(kTitleSpacing);
 
   QLabel* titleLabel = new QLabel(tr("Settings"));
   titleLabel->setObjectName("PageTitle");
@@ -542,8 +558,8 @@ void SettingsView::setupUI() {
 
   m_saveBtn = new QPushButton(tr("Save"));
   m_saveBtn->setObjectName("SaveBtn");
-  m_saveBtn->setFixedHeight(36);
-  m_saveBtn->setFixedWidth(110);
+  m_saveBtn->setFixedHeight(kSaveButtonHeight);
+  m_saveBtn->setFixedWidth(kSaveButtonWidth);
   mainLayout->addWidget(m_saveBtn, 0, Qt::AlignHCenter);
 
   scrollArea->setWidget(contentWidget);
@@ -573,6 +589,102 @@ void SettingsView::setupUI() {
             QSignalBlocker blocker(m_languageCombo);
             m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
           });
+
+  updateResponsiveUi();
+}
+void SettingsView::updateResponsiveUi() {
+  int routingRequiredWidth = 0;
+  if (m_defaultOutboundLabel && m_downloadDetourLabel) {
+    const int text1 = m_defaultOutboundLabel->fontMetrics().horizontalAdvance(
+        m_defaultOutboundLabel->text());
+    const int text2 = m_downloadDetourLabel->fontMetrics().horizontalAdvance(
+        m_downloadDetourLabel->text());
+    const int control1 =
+        m_defaultOutboundCombo
+            ? std::max(m_defaultOutboundCombo->sizeHint().width(),
+                       kControlMinWidth)
+            : kControlMinWidth;
+    const int control2 =
+        m_downloadDetourCombo
+            ? std::max(m_downloadDetourCombo->sizeHint().width(),
+                       kControlMinWidth)
+            : kControlMinWidth;
+    routingRequiredWidth = std::max(
+        text1 + text2 + control1 + control2 +
+            kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
+        kMinRoutingWrapWidth);
+  }
+  const bool narrow = routingRequiredWidth > 0 && width() < routingRequiredWidth;
+
+  auto applyRoutingLabelMode = [narrow](QLabel* label) {
+    if (!label) {
+      return;
+    }
+    label->setWordWrap(narrow);
+    label->setSizePolicy(narrow ? QSizePolicy::Preferred : QSizePolicy::Minimum,
+                         narrow ? QSizePolicy::Minimum : QSizePolicy::Fixed);
+    label->updateGeometry();
+  };
+
+  applyRoutingLabelMode(m_defaultOutboundLabel);
+  applyRoutingLabelMode(m_downloadDetourLabel);
+
+  const int compactMinWidth =
+      narrow ? kControlMinWidthCompact : kControlMinWidth;
+  if (m_mixedPortSpin) {
+    m_mixedPortSpin->setMinimumWidth(compactMinWidth);
+  }
+  if (m_apiPortSpin) {
+    m_apiPortSpin->setMinimumWidth(compactMinWidth);
+  }
+  if (m_tunMtuSpin) {
+    m_tunMtuSpin->setMinimumWidth(compactMinWidth);
+  }
+  if (m_tunStackCombo) {
+    m_tunStackCombo->setMinimumWidth(compactMinWidth);
+  }
+  if (m_defaultOutboundCombo) {
+    m_defaultOutboundCombo->setMinimumWidth(compactMinWidth);
+  }
+  if (m_downloadDetourCombo) {
+    m_downloadDetourCombo->setMinimumWidth(compactMinWidth);
+  }
+
+  int dnsRequiredWidth = 0;
+  if (m_dnsResolverLabel && m_urltestLabel) {
+    const int dnsText1 =
+        m_dnsResolverLabel->fontMetrics().horizontalAdvance(
+            m_dnsResolverLabel->text());
+    const int dnsText2 =
+        m_urltestLabel->fontMetrics().horizontalAdvance(m_urltestLabel->text());
+    const int dnsControl1 =
+        m_dnsResolverEdit
+            ? std::max(m_dnsResolverEdit->sizeHint().width(), compactMinWidth)
+            : compactMinWidth;
+    const int dnsControl2 =
+        m_urltestUrlEdit
+            ? std::max(m_urltestUrlEdit->sizeHint().width(), compactMinWidth)
+            : compactMinWidth;
+    dnsRequiredWidth =
+        std::max(dnsText1 + dnsText2 + dnsControl1 + dnsControl2 +
+                     kGridHorizontalSpacing * 3 + kSectionPaddingReserve,
+                 kMinDnsWrapWidth);
+  }
+  const bool dnsNarrow = dnsRequiredWidth > 0 && width() < dnsRequiredWidth;
+
+  auto applyDnsLabelMode = [dnsNarrow](QLabel* label) {
+    if (!label) {
+      return;
+    }
+    label->setWordWrap(dnsNarrow);
+    label->setSizePolicy(
+        dnsNarrow ? QSizePolicy::Preferred : QSizePolicy::Minimum,
+        dnsNarrow ? QSizePolicy::Minimum : QSizePolicy::Fixed);
+    label->updateGeometry();
+  };
+
+  applyDnsLabelMode(m_dnsResolverLabel);
+  applyDnsLabelMode(m_urltestLabel);
 }
 void SettingsView::updateStyle() {
   ThemeService* ts = m_themeService;
@@ -732,31 +844,34 @@ void SettingsView::onCheckUpdateClicked() {
 void SettingsView::onKernelInstalledReady(const QString& path,
                                           const QString& version) {
   setDownloadUi(false, tr("Installation check finished"));
+  m_installedKernelVersion = version.trimmed();
   if (m_kernelPathEdit) {
     m_kernelPathEdit->setText(path);
   }
   if (m_kernelVersionLabel) {
-    if (version.isEmpty()) {
+    if (m_installedKernelVersion.isEmpty()) {
       m_kernelVersionLabel->setText(tr("Not installed"));
-      m_kernelVersionLabel->setProperty("status", "error");
     } else {
-      m_kernelVersionLabel->setText(version);
-      m_kernelVersionLabel->setProperty("status", "success");
+      m_kernelVersionLabel->setText(m_installedKernelVersion);
     }
   }
+  updateKernelVersionLabelStatus();
   if (m_checkingInstall) {
     m_checkingInstall = false;
     const QString msg =
-        version.isEmpty()
+        m_installedKernelVersion.isEmpty()
             ? tr("Kernel is not installed.")
             : tr("Kernel installed. Version: %1\nPath: %2")
-                  .arg(version, path.isEmpty() ? tr("Unknown") : path);
+                  .arg(m_installedKernelVersion,
+                       path.isEmpty() ? tr("Unknown") : path);
     QMessageBox::information(this, tr("Check Installation"), msg);
   }
 }
 void SettingsView::onKernelReleasesReady(const QStringList& versions,
                                          const QString&     latest) {
   setDownloadUi(false);
+  m_latestKernelVersion = latest.trimmed();
+  updateKernelVersionLabelStatus();
   if (!m_kernelVersionCombo) return;
   m_kernelVersionCombo->clear();
   m_kernelVersionCombo->addItem(tr("Latest version"));
@@ -767,20 +882,49 @@ void SettingsView::onKernelReleasesReady(const QStringList& versions,
 void SettingsView::onKernelLatestReady(const QString& latest,
                                        const QString& installed) {
   setDownloadUi(false);
-  if (installed.isEmpty()) {
+  m_latestKernelVersion    = latest.trimmed();
+  m_installedKernelVersion = installed.trimmed();
+  if (m_kernelVersionLabel) {
+    if (m_installedKernelVersion.isEmpty()) {
+      m_kernelVersionLabel->setText(tr("Not installed"));
+    } else {
+      m_kernelVersionLabel->setText(m_installedKernelVersion);
+    }
+  }
+  updateKernelVersionLabelStatus();
+
+  if (m_installedKernelVersion.isEmpty()) {
     QMessageBox::information(
         this, tr("Check Updates"),
-        tr("Kernel not installed. Latest version is %1").arg(latest));
+        tr("Kernel not installed. Latest version is %1")
+            .arg(m_latestKernelVersion));
     return;
   }
-  if (installed == latest) {
+  if (m_installedKernelVersion == m_latestKernelVersion) {
     QMessageBox::information(this, tr("Check Updates"),
                              tr("Already on the latest version"));
   } else {
     QMessageBox::information(this, tr("Check Updates"),
                              tr("New kernel version %1 available, current %2")
-                                 .arg(latest, installed));
+                                 .arg(m_latestKernelVersion,
+                                      m_installedKernelVersion));
   }
+}
+void SettingsView::updateKernelVersionLabelStatus() {
+  if (!m_kernelVersionLabel) {
+    return;
+  }
+
+  const bool hasInstalled = !m_installedKernelVersion.isEmpty();
+  const bool hasLatest    = !m_latestKernelVersion.isEmpty();
+  const bool isLatest =
+      hasInstalled && hasLatest &&
+      (m_installedKernelVersion == m_latestKernelVersion);
+
+  m_kernelVersionLabel->setProperty("status", isLatest ? "success" : "error");
+  m_kernelVersionLabel->style()->unpolish(m_kernelVersionLabel);
+  m_kernelVersionLabel->style()->polish(m_kernelVersionLabel);
+  m_kernelVersionLabel->update();
 }
 void SettingsView::onKernelDownloadProgress(int percent) {
   if (m_kernelDownloadProgress) {

@@ -6,6 +6,9 @@
 #include <QPen>
 #include <QPixmap>
 #include <QPoint>
+#include <QStyle>
+#include <QStyleOptionComboBox>
+#include <QStylePainter>
 #include <QWheelEvent>
 #include <QtMath>
 
@@ -34,6 +37,20 @@ void MenuComboBox::setThemeService(ThemeService* themeService) {
             &MenuComboBox::updateMenuStyle);
   }
   updateMenuStyle();
+}
+void MenuComboBox::paintEvent(QPaintEvent* event) {
+  Q_UNUSED(event);
+  QStylePainter painter(this);
+  QStyleOptionComboBox opt;
+  initStyleOption(&opt);
+
+  const QRect textRect = style()->subControlRect(
+      QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
+  opt.currentText = fontMetrics().elidedText(
+      opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
+
+  painter.drawComplexControl(QStyle::CC_ComboBox, opt);
+  painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
 }
 void MenuComboBox::showPopup() {
   if (!m_menu) return;

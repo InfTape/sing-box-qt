@@ -4,6 +4,7 @@
 #include <QComboBox>
 
 class QWheelEvent;
+class QPaintEvent;
 class ThemeService;
 
 class RoundedMenu;
@@ -18,6 +19,7 @@ class MenuComboBox : public QComboBox {
   void setThemeService(ThemeService* themeService);
 
  protected:
+  void paintEvent(QPaintEvent* event) override;
   void showPopup() override;
   void hidePopup() override;
   void wheelEvent(QWheelEvent* event) override;
