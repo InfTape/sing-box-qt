@@ -1,5 +1,4 @@
 #include "KernelPlatform.h"
-#include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
@@ -7,7 +6,6 @@
 #include <QOperatingSystemVersion>
 #include <QProcess>
 #include <QRegularExpression>
-#include <QStandardPaths>
 #include <QSysInfo>
 #include "utils/AppPaths.h"
 

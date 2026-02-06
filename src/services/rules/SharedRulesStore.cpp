@@ -1,5 +1,4 @@
 #include "services/rules/SharedRulesStore.h"
-#include <QFile>
 #include <QJsonDocument>
 #include "storage/ConfigIO.h"
 #include "utils/Logger.h"

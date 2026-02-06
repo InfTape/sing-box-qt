@@ -1,13 +1,8 @@
 #include "DelayTestService.h"
 #include <QAtomicInt>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QThread>
-#include <QTimer>
 #include <QUrl>
-#include <QUrlQuery>
 #include <QtConcurrent>
 #include <algorithm>
 #include "storage/AppSettings.h"

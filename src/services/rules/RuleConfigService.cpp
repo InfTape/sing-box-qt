@@ -1,10 +1,8 @@
 #include "services/rules/RuleConfigService.h"
-#include <QJsonArray>
 #include <QJsonObject>
 #include <QObject>
 #include <QSet>
 #include <QtMath>
-#include <algorithm>
 #include "app/interfaces/ConfigRepository.h"
 #include "services/rules/SharedRulesStore.h"
 #include "storage/DatabaseService.h"

@@ -1,4 +1,3 @@
-
 #include "ProcessManager.h"
 #include "utils/Logger.h"
 #ifdef Q_OS_WIN
