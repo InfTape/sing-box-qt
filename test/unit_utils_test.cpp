@@ -14,11 +14,18 @@ class UnitUtilsTest : public QObject {
  private slots:
   void ruleUtils_shouldNormalizeTypeAndProxy();
   void ruleUtils_shouldDetectCustomPayload();
+  void ruleUtils_shouldHandleAdditionalProxyShapes();
   void homeFormat_shouldFormatBytesAndDuration();
+  void homeFormat_shouldCoverAdditionalUnits();
   void proxyNodeHelper_shouldMapDelayState();
+  void proxyNodeHelper_shouldHandleAdditionalDelayForms();
   void logParser_shouldParseAndDetectTypes();
+  void logParser_shouldHandleFallbackPaths();
+  void logParser_shouldMapLabels();
   void subscriptionUserinfo_shouldParseHeader();
+  void subscriptionUserinfo_shouldIgnoreInvalidSegments();
   void subscriptionFormat_shouldFormatFields();
+  void subscriptionFormat_shouldHandleAdditionalRanges();
 };
 
 void UnitUtilsTest::ruleUtils_shouldNormalizeTypeAndProxy() {
@@ -41,7 +48,17 @@ void UnitUtilsTest::ruleUtils_shouldDetectCustomPayload() {
   QVERIFY(RuleUtils::isCustomPayload("domain_suffix=example.com"));
   QVERIFY(RuleUtils::isCustomPayload("IP_CIDR=1.1.1.0/24"));
   QVERIFY(RuleUtils::isCustomPayload("process_name=foo.exe"));
+  QVERIFY(RuleUtils::isCustomPayload("package_name=com.demo.app"));
+  QVERIFY(RuleUtils::isCustomPayload("port=443"));
+  QVERIFY(RuleUtils::isCustomPayload("source=192.168.0.1"));
   QVERIFY(!RuleUtils::isCustomPayload("geoip-cn"));
+}
+
+void UnitUtilsTest::ruleUtils_shouldHandleAdditionalProxyShapes() {
+  QCOMPARE(RuleUtils::normalizeProxyValue("[route(node-c)]"), QString("node-c"));
+  QCOMPARE(RuleUtils::normalizeProxyValue("Proxy(Node-D)"), QString("Node-D"));
+  QCOMPARE(RuleUtils::normalizeProxyValue("[Node-E]"), QString("Node-E"));
+  QCOMPARE(RuleUtils::displayProxyLabel("Node-F"), QString("Node-F"));
 }
 
 void UnitUtilsTest::homeFormat_shouldFormatBytesAndDuration() {
@@ -55,6 +72,15 @@ void UnitUtilsTest::homeFormat_shouldFormatBytesAndDuration() {
   QCOMPARE(HomeFormat::duration(3661), QString("1:01:01"));
 }
 
+void UnitUtilsTest::homeFormat_shouldCoverAdditionalUnits() {
+  QCOMPARE(HomeFormat::bytes(1048576), QString("1.00 MB"));
+  QCOMPARE(HomeFormat::bytes(1073741824), QString("1.00 GB"));
+  QCOMPARE(HomeFormat::bytes(1099511627776), QString("1.00 TB"));
+
+  QCOMPARE(HomeFormat::duration(0), QString("00:00"));
+  QCOMPARE(HomeFormat::duration(61), QString("01:01"));
+}
+
 void UnitUtilsTest::proxyNodeHelper_shouldMapDelayState() {
   QCOMPARE(ProxyNodeHelper::delayStateFromText(""), QString("loading"));
   QCOMPARE(ProxyNodeHelper::delayStateFromText("..."), QString("loading"));
@@ -63,6 +89,13 @@ void UnitUtilsTest::proxyNodeHelper_shouldMapDelayState() {
   QCOMPARE(ProxyNodeHelper::delayStateFromText("300 ms"), QString("bad"));
   QCOMPARE(ProxyNodeHelper::delayStateFromText("-1"), QString("bad"));
   QCOMPARE(ProxyNodeHelper::delayStateFromText("not-a-number"), QString(""));
+}
+
+void UnitUtilsTest::proxyNodeHelper_shouldHandleAdditionalDelayForms() {
+  QCOMPARE(ProxyNodeHelper::delayStateFromText("0 ms"), QString("bad"));
+  QCOMPARE(ProxyNodeHelper::delayStateFromText("100 ms"), QString("warn"));
+  QCOMPARE(ProxyNodeHelper::delayStateFromText("299 ms"), QString("warn"));
+  QCOMPARE(ProxyNodeHelper::delayStateFromText("250"), QString("warn"));
 }
 
 void UnitUtilsTest::logParser_shouldParseAndDetectTypes() {
@@ -74,6 +107,7 @@ void UnitUtilsTest::logParser_shouldParseAndDetectTypes() {
   QCOMPARE(LogParser::detectLogType("error happened"), QString("error"));
   QCOMPARE(LogParser::detectLogType("warning message"), QString("warning"));
   QCOMPARE(LogParser::detectLogType("debug trace"), QString("debug"));
+  QCOMPARE(LogParser::detectLogType("TRACE packet"), QString("trace"));
   QCOMPARE(LogParser::detectLogType("info message"), QString("info"));
 
   const LogParser::LogKind dns = LogParser::parseLogKind("dns: query example");
@@ -96,6 +130,35 @@ void UnitUtilsTest::logParser_shouldParseAndDetectTypes() {
   QCOMPARE(outbound.nodeName, QString("Node-A"));
 }
 
+void UnitUtilsTest::logParser_shouldHandleFallbackPaths() {
+  const LogParser::LogKind unknown = LogParser::parseLogKind("just a plain log");
+  QVERIFY(!unknown.isConnection);
+  QVERIFY(!unknown.isDns);
+  QVERIFY(unknown.direction.isEmpty());
+  QVERIFY(unknown.host.isEmpty());
+
+  const LogParser::LogKind outboundNoNode =
+      LogParser::parseLogKind("outbound connection to 8.8.8.8:53");
+  QVERIFY(outboundNoNode.isConnection);
+  QCOMPARE(outboundNoNode.direction, QString("outbound"));
+  QCOMPARE(outboundNoNode.host, QString("8.8.8.8:53"));
+  QVERIFY(outboundNoNode.protocol.isEmpty());
+  QVERIFY(outboundNoNode.nodeName.isEmpty());
+
+  QCOMPARE(LogParser::detectLogType("plain message"), QString("info"));
+}
+
+void UnitUtilsTest::logParser_shouldMapLabels() {
+  QCOMPARE(LogParser::logTypeLabel("trace"), QString("TRACE"));
+  QCOMPARE(LogParser::logTypeLabel("debug"), QString("DEBUG"));
+  QCOMPARE(LogParser::logTypeLabel("info"), QString("INFO"));
+  QCOMPARE(LogParser::logTypeLabel("warning"), QString("WARN"));
+  QCOMPARE(LogParser::logTypeLabel("error"), QString("ERROR"));
+  QCOMPARE(LogParser::logTypeLabel("fatal"), QString("FATAL"));
+  QCOMPARE(LogParser::logTypeLabel("panic"), QString("PANIC"));
+  QCOMPARE(LogParser::logTypeLabel("unknown"), QString("INFO"));
+}
+
 void UnitUtilsTest::subscriptionUserinfo_shouldParseHeader() {
   const QByteArray goodHeader =
       "upload=1024; download=2048; total=4096; expire=1735689600";
@@ -115,6 +178,15 @@ void UnitUtilsTest::subscriptionUserinfo_shouldParseHeader() {
   QVERIFY(SubscriptionUserinfo::parseUserinfoHeader(QByteArray()).isEmpty());
 }
 
+void UnitUtilsTest::subscriptionUserinfo_shouldIgnoreInvalidSegments() {
+  const QJsonObject invalid = SubscriptionUserinfo::parseUserinfoHeader(
+      "upload=10=20;justtext;download=abc;expire=-1;total=5");
+  QVERIFY(!invalid.contains("upload"));
+  QCOMPARE(invalid.value("download").toInteger(), 0);
+  QVERIFY(!invalid.contains("expire"));
+  QCOMPARE(invalid.value("total").toInteger(), 5);
+}
+
 void UnitUtilsTest::subscriptionFormat_shouldFormatFields() {
   QCOMPARE(SubscriptionFormat::formatBytes(0), QString("0 B"));
   QCOMPARE(SubscriptionFormat::formatBytes(1024), QString("1.00 KB"));
@@ -128,6 +200,15 @@ void UnitUtilsTest::subscriptionFormat_shouldFormatFields() {
   QCOMPARE(SubscriptionFormat::formatExpireTime(0), QString());
   QVERIFY(SubscriptionFormat::formatExpireTime(1700000000)
               .startsWith(QString("Expires: ")));
+}
+
+void UnitUtilsTest::subscriptionFormat_shouldHandleAdditionalRanges() {
+  QCOMPARE(SubscriptionFormat::formatBytes(1024LL * 1024), QString("1.00 MB"));
+  QCOMPARE(SubscriptionFormat::formatBytes(1024LL * 1024 * 1024),
+           QString("1.00 GB"));
+
+  QVERIFY(!SubscriptionFormat::formatTimestamp(1).isEmpty());
+  QCOMPARE(SubscriptionFormat::formatExpireTime(-1), QString());
 }
 
 QTEST_APPLESS_MAIN(UnitUtilsTest)
