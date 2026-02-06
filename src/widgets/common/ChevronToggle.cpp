@@ -66,10 +66,11 @@ void ChevronToggle::paintEvent(QPaintEvent* event) {
   painter.rotate(90.0 * m_progress);
 
   QPolygonF points;
-  points << QPointF(-size * 0.5, -size) << QPointF(size * 0.5, 0)
-         << QPointF(-size * 0.5, size);
+  points << QPointF(-size * 0.5, -size) << QPointF(size * 0.5, 0) << QPointF(-size * 0.5, size);
 
   painter.drawPolyline(points);
   painter.restore();
 }
-QSize ChevronToggle::sizeHint() const { return QSize(28, 28); }
+QSize ChevronToggle::sizeHint() const {
+  return QSize(28, 28);
+}

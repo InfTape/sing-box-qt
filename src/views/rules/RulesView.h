@@ -24,8 +24,7 @@ class RulesView : public QWidget {
   Q_OBJECT
 
  public:
-  explicit RulesView(ConfigRepository* configRepo, ThemeService* themeService,
-                     QWidget* parent = nullptr);
+  explicit RulesView(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent = nullptr);
   void setProxyService(ProxyService* service);
   void refresh();
 
@@ -45,7 +44,7 @@ class RulesView : public QWidget {
   void onAddRuleClicked();
 
  private:
- void setupUI();
+  void setupUI();
   void applyFilters();
   void updateFilterOptions();
   void sortRules();
@@ -66,9 +65,9 @@ class RulesView : public QWidget {
   MenuComboBox* m_typeFilter    = nullptr;
   MenuComboBox* m_proxyFilter   = nullptr;
 
-  QScrollArea* m_scrollArea    = nullptr;
-  QWidget*     m_gridContainer = nullptr;
-  QGridLayout* m_gridLayout    = nullptr;
+  QScrollArea*     m_scrollArea    = nullptr;
+  QWidget*         m_gridContainer = nullptr;
+  QGridLayout*     m_gridLayout    = nullptr;
   QList<RuleCard*> m_cards;
 
   QFrame*      m_emptyState  = nullptr;
@@ -77,10 +76,10 @@ class RulesView : public QWidget {
 
   QVector<RuleItem> m_rules;
   QVector<RuleItem> m_filteredRules;
-  bool              m_loading      = false;
-  int               m_columnCount  = 0;
+  bool              m_loading           = false;
+  int               m_columnCount       = 0;
   bool              m_skipNextAnimation = false;
-  ConfigRepository* m_configRepo   = nullptr;
-  ThemeService*     m_themeService = nullptr;
+  ConfigRepository* m_configRepo        = nullptr;
+  ThemeService*     m_themeService      = nullptr;
 };
 #endif  // RULESVIEW_H

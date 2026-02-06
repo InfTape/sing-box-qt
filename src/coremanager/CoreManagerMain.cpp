@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
   Logger::instance().init();
   Logger::info("Core manager starting...");
 
-  QString serverName = coreManagerServerName();
-  const QStringList args = app.arguments();
+  QString           serverName = coreManagerServerName();
+  const QStringList args       = app.arguments();
   for (int i = 1; i < args.size(); ++i) {
     if (args[i] == "--control-name" && i + 1 < args.size()) {
       serverName = args[i + 1];

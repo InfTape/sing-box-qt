@@ -41,23 +41,17 @@ inline QString ruleSetUrl(const QString& tag) {
   if (tag == RS_GEOSITE_CN) {
     return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-cn.srs";
   } else if (tag == RS_GEOSITE_GEOLOCATION_NOT_CN) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs";
   } else if (tag == RS_GEOSITE_PRIVATE) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-private.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-private.srs";
   } else if (tag == RS_GEOSITE_ADS) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs";
   } else if (tag == RS_GEOSITE_TELEGRAM) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-telegram.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-telegram.srs";
   } else if (tag == RS_GEOSITE_YOUTUBE) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-youtube.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-youtube.srs";
   } else if (tag == RS_GEOSITE_NETFLIX) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-netflix.srs";
+    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-netflix.srs";
   } else if (tag == RS_GEOSITE_OPENAI) {
     return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-openai.srs";
   } else if (tag == RS_GEOIP_CN) {
@@ -67,14 +61,12 @@ inline QString ruleSetUrl(const QString& tag) {
 }
 // ==================== Private IP ranges ====================
 inline QStringList privateIpCidrs() {
-  return {"10.0.0.0/8",     "100.64.0.0/10", "127.0.0.0/8",
-          "169.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16",
-          "::1/128",        "fc00::/7",      "fe80::/10"};
+  return {"10.0.0.0/8",     "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12",
+          "192.168.0.0/16", "::1/128",       "fc00::/7",    "fe80::/10"};
 }
 // ==================== TUN route excludes ====================
 inline QStringList tunRouteExcludes() {
-  return {"127.0.0.0/8",    "10.0.0.0/8", "172.16.0.0/12",
-          "192.168.0.0/16", "::1/128",    "fc00::/7"};
+  return {"127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "::1/128", "fc00::/7"};
 }
 // ==================== Default configuration ====================
 const int     DEFAULT_MIXED_PORT   = 7890;

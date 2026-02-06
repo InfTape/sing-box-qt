@@ -23,8 +23,7 @@ bool useSubscription(SubscriptionService* service, const QString& id) {
   }
   return true;
 }
-void refreshSubscription(SubscriptionService* service, const QString& id,
-                         bool applyRuntime) {
+void refreshSubscription(SubscriptionService* service, const QString& id, bool applyRuntime) {
   if (!service) return;
   service->refreshSubscription(id, applyRuntime);
 }

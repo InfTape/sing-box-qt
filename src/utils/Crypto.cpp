@@ -12,7 +12,9 @@ QString Crypto::sha256(const QByteArray& data) {
   QByteArray hash = QCryptographicHash::hash(data, QCryptographicHash::Sha256);
   return QString::fromLatin1(hash.toHex());
 }
-QString Crypto::sha256(const QString& text) { return sha256(text.toUtf8()); }
+QString Crypto::sha256(const QString& text) {
+  return sha256(text.toUtf8());
+}
 QString Crypto::generateUUID() {
   return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }

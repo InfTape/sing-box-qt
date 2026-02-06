@@ -7,25 +7,19 @@ QString ConfigRepositoryAdapter::getConfigDir() const {
 QString ConfigRepositoryAdapter::getActiveConfigPath() const {
   return ConfigManager::instance().getActiveConfigPath();
 }
-bool ConfigRepositoryAdapter::generateConfigWithNodes(
-    const QJsonArray& nodes, const QString& targetPath) {
+bool ConfigRepositoryAdapter::generateConfigWithNodes(const QJsonArray& nodes, const QString& targetPath) {
   return ConfigManager::instance().generateConfigWithNodes(nodes, targetPath);
 }
-bool ConfigRepositoryAdapter::updateClashDefaultMode(const QString& configPath,
-                                                     const QString& mode,
-                                                     QString*       error) {
-  return ConfigManager::instance().updateClashDefaultMode(configPath, mode,
-                                                          error);
+bool ConfigRepositoryAdapter::updateClashDefaultMode(const QString& configPath, const QString& mode, QString* error) {
+  return ConfigManager::instance().updateClashDefaultMode(configPath, mode, error);
 }
-QString ConfigRepositoryAdapter::readClashDefaultMode(
-    const QString& configPath) const {
+QString ConfigRepositoryAdapter::readClashDefaultMode(const QString& configPath) const {
   return ConfigManager::instance().readClashDefaultMode(configPath);
 }
 QJsonObject ConfigRepositoryAdapter::loadConfig(const QString& path) {
   return ConfigManager::instance().loadConfig(path);
 }
-bool ConfigRepositoryAdapter::saveConfig(const QString&     path,
-                                         const QJsonObject& config) {
+bool ConfigRepositoryAdapter::saveConfig(const QString& path, const QJsonObject& config) {
   return ConfigManager::instance().saveConfig(path, config);
 }
 void ConfigRepositoryAdapter::applySettingsToConfig(QJsonObject& config) {

@@ -18,8 +18,7 @@ ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
   m_anim->setEasingCurve(QEasingCurve::InOutCubic);
 
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            qOverload<>(&ToggleSwitch::update));
+    connect(m_themeService, &ThemeService::themeChanged, this, qOverload<>(&ToggleSwitch::update));
   }
 }
 void ToggleSwitch::setChecked(bool checked) {
@@ -39,7 +38,7 @@ void ToggleSwitch::setOffset(qreal v) {
   update();
 }
 QRectF ToggleSwitch::trackRect() const {
-  QRectF r = rect().adjusted(2, 2, -2, -2);  // Leave padding to avoid clipping
+  QRectF      r = rect().adjusted(2, 2, -2, -2);  // Leave padding to avoid clipping
   const qreal h = r.height() * 0.70;
   const qreal w = qMax(h * 1.8, r.width() * 0.90);
   const qreal x = r.center().x() - w / 2.0;
@@ -74,14 +73,10 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
   const bool    en = isEnabled();
 
   // Use text-tertiary for day mode only, fallback to gray for dark mode
-  const ThemeService::ThemeMode mode =
-      ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
-  const bool isLight =
-      mode == ThemeService::ThemeMode::Light ||
-      (mode == ThemeService::ThemeMode::Auto && ts &&
-       ts->color("bg-primary") == QColor("#f8fafc"));
-  QColor trackOff =
-      (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
+  const ThemeService::ThemeMode mode    = ts ? ts->themeMode() : ThemeService::ThemeMode::Dark;
+  const bool                    isLight = mode == ThemeService::ThemeMode::Light ||
+                       (mode == ThemeService::ThemeMode::Auto && ts && ts->color("bg-primary") == QColor("#f8fafc"));
+  QColor trackOff = (isLight && ts) ? ts->color("text-tertiary") : QColor(120, 120, 120);
 
   QColor trackOn = ts ? ts->color("primary") : QColor(0, 0, 200);
   QColor thumb(255, 255, 255);
@@ -161,8 +156,7 @@ void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
 }
 void ToggleSwitch::keyPressEvent(QKeyEvent* e) {
   if (!isEnabled()) return;
-  if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return ||
-      e->key() == Qt::Key_Enter) {
+  if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
     setChecked(!m_checked);
     e->accept();
     return;

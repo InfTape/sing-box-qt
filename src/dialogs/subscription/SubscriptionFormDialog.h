@@ -19,8 +19,7 @@ class ThemeService;
 class MultiSelectMenuBox : public QWidget {
   Q_OBJECT
  public:
-  explicit MultiSelectMenuBox(QWidget*      parent       = nullptr,
-                              ThemeService* themeService = nullptr);
+  explicit MultiSelectMenuBox(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
   void        setOptions(const QStringList& options);
   void        setSelected(const QStringList& selected);
   QStringList selected() const;
@@ -44,8 +43,7 @@ class SubscriptionFormDialog : public QDialog {
   Q_OBJECT
 
  public:
-  explicit SubscriptionFormDialog(ThemeService* themeService,
-                                  QWidget*      parent = nullptr);
+  explicit SubscriptionFormDialog(ThemeService* themeService, QWidget* parent = nullptr);
 
   void setEditData(const SubscriptionInfo& info);
 

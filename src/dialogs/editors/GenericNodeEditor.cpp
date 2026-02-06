@@ -7,8 +7,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QSpinBox>
-GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent)
-    : NodeEditor(parent), m_type(type) {
+GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent) : NodeEditor(parent), m_type(type) {
   setupUI();
   updateVisibility();
 }
@@ -37,11 +36,8 @@ void GenericNodeEditor::setupUI() {
   m_methodEdit   = new QLineEdit;
   m_securityEdit = new QLineEdit;
 
-  if (m_type == "vmess" || m_type == "vless" || m_type == "tuic" ||
-      m_type == "hysteria2") {
-    layout->addRow(m_type == "tuic"
-                       ? tr("UUID")
-                       : (m_type == "hysteria2" ? tr("Password") : tr("UUID")),
+  if (m_type == "vmess" || m_type == "vless" || m_type == "tuic" || m_type == "hysteria2") {
+    layout->addRow(m_type == "tuic" ? tr("UUID") : (m_type == "hysteria2" ? tr("Password") : tr("UUID")),
                    m_type == "hysteria2" ? m_passwordEdit : m_uuidEdit);
   }
   if (m_type == "shadowsocks" || m_type == "trojan" || m_type == "tuic") {
@@ -63,8 +59,8 @@ void GenericNodeEditor::setupUI() {
   }
 
   // Transport / Stream Settings
-  if (m_type == "vmess" || m_type == "vless" || m_type == "trojan" ||
-      m_type == "shadowsocks" || m_type == "hysteria2") {
+  if (m_type == "vmess" || m_type == "vless" || m_type == "trojan" || m_type == "shadowsocks" ||
+      m_type == "hysteria2") {
     QGroupBox*   transportGroup  = new QGroupBox(tr("Transport && Security"));
     QFormLayout* transportLayout = new QFormLayout(transportGroup);
 
@@ -119,13 +115,10 @@ void GenericNodeEditor::setupUI() {
 
     layout->addRow(transportGroup);
 
-    connect(m_networkCombo, &QComboBox::currentTextChanged, this,
-            &GenericNodeEditor::updateVisibility);
-    connect(m_tlsCheck, &QCheckBox::toggled, this,
-            &GenericNodeEditor::updateVisibility);
+    connect(m_networkCombo, &QComboBox::currentTextChanged, this, &GenericNodeEditor::updateVisibility);
+    connect(m_tlsCheck, &QCheckBox::toggled, this, &GenericNodeEditor::updateVisibility);
     if (m_securityCombo) {
-      connect(m_securityCombo, &QComboBox::currentTextChanged, this,
-              &GenericNodeEditor::updateVisibility);
+      connect(m_securityCombo, &QComboBox::currentTextChanged, this, &GenericNodeEditor::updateVisibility);
     }
   }
 
@@ -133,18 +126,13 @@ void GenericNodeEditor::setupUI() {
   QList<QWidget*> widgets = findChildren<QWidget*>();
   for (auto w : widgets) {
     if (qobject_cast<QLineEdit*>(w)) {
-      connect(qobject_cast<QLineEdit*>(w), &QLineEdit::textChanged, this,
-              &NodeEditor::dataChanged);
+      connect(qobject_cast<QLineEdit*>(w), &QLineEdit::textChanged, this, &NodeEditor::dataChanged);
     } else if (qobject_cast<QSpinBox*>(w)) {
-      connect(qobject_cast<QSpinBox*>(w),
-              QOverload<int>::of(&QSpinBox::valueChanged), this,
-              &NodeEditor::dataChanged);
+      connect(qobject_cast<QSpinBox*>(w), QOverload<int>::of(&QSpinBox::valueChanged), this, &NodeEditor::dataChanged);
     } else if (qobject_cast<QCheckBox*>(w)) {
-      connect(qobject_cast<QCheckBox*>(w), &QCheckBox::toggled, this,
-              &NodeEditor::dataChanged);
+      connect(qobject_cast<QCheckBox*>(w), &QCheckBox::toggled, this, &NodeEditor::dataChanged);
     } else if (qobject_cast<QComboBox*>(w)) {
-      connect(qobject_cast<QComboBox*>(w), &QComboBox::currentTextChanged, this,
-              &NodeEditor::dataChanged);
+      connect(qobject_cast<QComboBox*>(w), &QComboBox::currentTextChanged, this, &NodeEditor::dataChanged);
     }
   }
 }
@@ -174,8 +162,7 @@ void GenericNodeEditor::updateVisibility() {
       safeSetVisible(m_serviceNameEdit, isGrpc);
 
       // Reality fields only shown when security=reality
-      const bool isReality =
-          m_securityCombo && m_securityCombo->currentText() == "reality";
+      const bool isReality = m_securityCombo && m_securityCombo->currentText() == "reality";
       safeSetVisible(m_publicKeyEdit, isReality);
       safeSetVisible(m_shortIdEdit, isReality);
       safeSetVisible(m_spiderXEdit, isReality);
@@ -230,11 +217,9 @@ QJsonObject GenericNodeEditor::getOutbound() const {
   // Hysteria2 enforces TLS, SNI required
   if (m_type == "hysteria2") {
     QJsonObject tls;
-    tls["enabled"] = true;
-    const QString sni =
-        m_serverNameEdit ? m_serverNameEdit->text().trimmed() : QString();
-    tls["server_name"] = sni.isEmpty() ? m_serverEdit->text().trimmed()
-                                       : sni;  // Empty falls back to server domain
+    tls["enabled"]     = true;
+    const QString sni  = m_serverNameEdit ? m_serverNameEdit->text().trimmed() : QString();
+    tls["server_name"] = sni.isEmpty() ? m_serverEdit->text().trimmed() : sni;  // Empty falls back to server domain
     if (m_insecureCheck) {
       tls["insecure"] = m_insecureCheck->isChecked();
     }
@@ -266,21 +251,14 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     }
   }
 
-  const QString vlessSecurity =
-      m_securityCombo ? m_securityCombo->currentText() : QString();
+  const QString vlessSecurity = m_securityCombo ? m_securityCombo->currentText() : QString();
 
-  auto lineText = [](QLineEdit* w) -> QString {
-    return w ? w->text() : QString();
-  };
-  auto comboText = [](QComboBox* c) -> QString {
-    return c ? c->currentText() : QString();
-  };
+  auto lineText  = [](QLineEdit* w) -> QString { return w ? w->text() : QString(); };
+  auto comboText = [](QComboBox* c) -> QString { return c ? c->currentText() : QString(); };
 
   // Enable TLS condition: Checked, explicit security=tls/reality, or Reality fields non-empty
-  const bool hasRealityField =
-      m_publicKeyEdit && !m_publicKeyEdit->text().isEmpty();
-  const bool shouldEnableTls = (m_tlsCheck && m_tlsCheck->isChecked()) ||
-                               (vlessSecurity == "reality") ||
+  const bool hasRealityField = m_publicKeyEdit && !m_publicKeyEdit->text().isEmpty();
+  const bool shouldEnableTls = (m_tlsCheck && m_tlsCheck->isChecked()) || (vlessSecurity == "reality") ||
                                (vlessSecurity == "tls") || hasRealityField;
 
   if (shouldEnableTls && m_serverNameEdit && m_networkCombo) {

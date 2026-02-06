@@ -7,8 +7,7 @@
 #include "storage/ConfigConstants.h"
 #include "utils/AppPaths.h"
 namespace {
-QJsonObject makeRemoteRuleSet(const QString& tag, const QString& url,
-                              const QString& downloadDetour,
+QJsonObject makeRemoteRuleSet(const QString& tag, const QString& url, const QString& downloadDetour,
                               const QString& updateInterval) {
   QJsonObject rs;
   rs["tag"]             = tag;
@@ -173,8 +172,7 @@ QJsonObject ConfigBuilder::buildRouteConfig() {
   rules.append(privateRuleSet);
 
   QJsonObject privateIpRule;
-  privateIpRule["ip_cidr"] =
-      QJsonArray::fromStringList(ConfigConstants::privateIpCidrs());
+  privateIpRule["ip_cidr"]  = QJsonArray::fromStringList(ConfigConstants::privateIpCidrs());
   privateIpRule["outbound"] = ConfigConstants::TAG_DIRECT;
   rules.append(privateIpRule);
 
@@ -206,11 +204,11 @@ QJsonArray ConfigBuilder::buildInbounds() {
   QJsonArray inbounds;
 
   QJsonObject mixed;
-  mixed["type"]             = "mixed";
-  mixed["tag"]              = "mixed-in";
-  mixed["listen"]           = "127.0.0.1";
-  mixed["listen_port"]      = settings.mixedPort();
-  mixed["sniff"]            = true;
+  mixed["type"]        = "mixed";
+  mixed["tag"]         = "mixed-in";
+  mixed["listen"]      = "127.0.0.1";
+  mixed["listen_port"] = settings.mixedPort();
+  mixed["sniff"]       = true;
   inbounds.append(mixed);
 
   if (settings.tunEnabled()) {
@@ -232,8 +230,7 @@ QJsonArray ConfigBuilder::buildInbounds() {
     tun["mtu"]                        = settings.tunMtu();
     tun["sniff"]                      = true;
     tun["sniff_override_destination"] = true;
-    tun["route_exclude_address"] =
-        QJsonArray::fromStringList(ConfigConstants::tunRouteExcludes());
+    tun["route_exclude_address"]      = QJsonArray::fromStringList(ConfigConstants::tunRouteExcludes());
     inbounds.append(tun);
   }
 
@@ -245,11 +242,10 @@ QJsonArray ConfigBuilder::buildOutbounds() {
   QJsonArray outbounds;
 
   QJsonObject autoOutbound;
-  autoOutbound["type"] = "urltest";
-  autoOutbound["tag"]  = ConfigConstants::TAG_AUTO;
-  autoOutbound["outbounds"] =
-      QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_DIRECT);
-  autoOutbound["url"]                         = settings.urltestUrl();
+  autoOutbound["type"]      = "urltest";
+  autoOutbound["tag"]       = ConfigConstants::TAG_AUTO;
+  autoOutbound["outbounds"] = QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_DIRECT);
+  autoOutbound["url"]       = settings.urltestUrl();
   autoOutbound["interrupt_exist_connections"] = true;
   autoOutbound["idle_timeout"]                = "10m";
   autoOutbound["interval"]                    = "10m";
@@ -257,16 +253,14 @@ QJsonArray ConfigBuilder::buildOutbounds() {
   outbounds.append(autoOutbound);
 
   QJsonObject manualOutbound;
-  manualOutbound["type"] = "selector";
-  manualOutbound["tag"]  = ConfigConstants::TAG_MANUAL;
-  manualOutbound["outbounds"] =
-      QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_AUTO);
+  manualOutbound["type"]      = "selector";
+  manualOutbound["tag"]       = ConfigConstants::TAG_MANUAL;
+  manualOutbound["outbounds"] = QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_AUTO);
   outbounds.append(manualOutbound);
 
   if (settings.enableAppGroups()) {
     const QJsonArray base =
-        QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_MANUAL
-                                                 << ConfigConstants::TAG_AUTO);
+        QJsonArray::fromStringList(QStringList() << ConfigConstants::TAG_MANUAL << ConfigConstants::TAG_AUTO);
 
     // Helper lambda to create selector outbounds.
     auto createSelector = [&base](const QString& tag) {
@@ -302,28 +296,22 @@ QJsonArray ConfigBuilder::buildRuleSets() {
   QJsonArray ruleSets;
 
   if (settings.blockAds()) {
-    ruleSets.append(makeRemoteRuleSet(
-        ConfigConstants::RS_GEOSITE_ADS,
-        ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_ADS),
-        downloadDetour, "1d"));
+    ruleSets.append(makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_ADS,
+                                      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_ADS), downloadDetour,
+                                      "1d"));
   }
 
-  ruleSets.append(makeRemoteRuleSet(
-      ConfigConstants::RS_GEOSITE_CN,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_CN),
-      downloadDetour, "1d"));
+  ruleSets.append(makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_CN,
+                                    ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_CN), downloadDetour, "1d"));
 
-  ruleSets.append(
-      makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN,
-                        ConfigConstants::ruleSetUrl(
-                            ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN),
-                        downloadDetour, "1d"));
+  ruleSets.append(makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN,
+                                    ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN),
+                                    downloadDetour, "1d"));
 
   if (settings.enableAppGroups()) {
     // Helper lambda to add app-specific rule sets.
     auto addAppRuleSet = [&ruleSets, &downloadDetour](const QString& tag) {
-      ruleSets.append(makeRemoteRuleSet(tag, ConfigConstants::ruleSetUrl(tag),
-                                        downloadDetour, "7d"));
+      ruleSets.append(makeRemoteRuleSet(tag, ConfigConstants::ruleSetUrl(tag), downloadDetour, "7d"));
     };
 
     addAppRuleSet(ConfigConstants::RS_GEOSITE_TELEGRAM);
@@ -332,15 +320,12 @@ QJsonArray ConfigBuilder::buildRuleSets() {
     addAppRuleSet(ConfigConstants::RS_GEOSITE_OPENAI);
   }
 
-  ruleSets.append(makeRemoteRuleSet(
-      ConfigConstants::RS_GEOSITE_PRIVATE,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE),
-      ConfigConstants::TAG_DIRECT, "7d"));
+  ruleSets.append(makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_PRIVATE,
+                                    ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE),
+                                    ConfigConstants::TAG_DIRECT, "7d"));
 
-  ruleSets.append(makeRemoteRuleSet(
-      ConfigConstants::RS_GEOIP_CN,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN), downloadDetour,
-      "1d"));
+  ruleSets.append(makeRemoteRuleSet(ConfigConstants::RS_GEOIP_CN,
+                                    ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN), downloadDetour, "1d"));
 
   return ruleSets;
 }
@@ -348,11 +333,9 @@ QJsonObject ConfigBuilder::buildExperimental() {
   const AppSettings& settings = AppSettings::instance();
 
   QJsonObject clashApi;
-  clashApi["external_controller"] =
-      QString("127.0.0.1:%1").arg(settings.apiPort());
-  clashApi["external_ui"] = "metacubexd";
-  clashApi["external_ui_download_url"] =
-      "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip";
+  clashApi["external_controller"]         = QString("127.0.0.1:%1").arg(settings.apiPort());
+  clashApi["external_ui"]                 = "metacubexd";
+  clashApi["external_ui_download_url"]    = "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip";
   clashApi["external_ui_download_detour"] = settings.normalizedDownloadDetour();
   clashApi["default_mode"]                = "rule";
 

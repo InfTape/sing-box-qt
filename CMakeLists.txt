@@ -86,8 +86,16 @@ set(SOURCES
     src/system/UpdateService.cpp
     src/system/AdminHelper.cpp
     src/views/home/HomeView.cpp
+    src/views/components/DataUsageCard.cpp
+    src/views/components/DataUsageBar.cpp
+    src/views/components/ProxyModeSection.cpp
+    src/views/components/ProxyToolbar.cpp
+    src/views/components/ProxyTreePanel.cpp
+    src/views/components/StatCard.cpp
     src/views/components/TrafficChart.cpp
     src/views/proxy/ProxyView.cpp
+    src/views/proxy/ProxyTreeUtils.cpp
+    src/views/proxy/ProxyTreePresenter.cpp
     src/views/proxy/ProxyViewController.cpp
     src/views/subscription/SubscriptionView.cpp
     src/views/subscription/SubscriptionCard.cpp
@@ -179,8 +187,16 @@ set(HEADERS
     src/system/UpdateService.h
     src/system/AdminHelper.h
     src/views/home/HomeView.h
+    src/views/components/DataUsageCard.h
+    src/views/components/DataUsageBar.h
+    src/views/components/ProxyModeSection.h
+    src/views/components/ProxyToolbar.h
+    src/views/components/ProxyTreePanel.h
+    src/views/components/StatCard.h
     src/views/components/TrafficChart.h
     src/views/proxy/ProxyView.h
+    src/views/proxy/ProxyTreeUtils.h
+    src/views/proxy/ProxyTreePresenter.h
     src/views/proxy/ProxyViewController.h
     src/views/subscription/SubscriptionView.h
     src/views/subscription/SubscriptionCard.h

@@ -13,7 +13,9 @@
 
 #include "utils/AppPaths.h"
 namespace KernelPlatform {
-QString kernelInstallDir() { return appDataDir(); }
+QString kernelInstallDir() {
+  return appDataDir();
+}
 QString detectKernelPath() {
 #ifdef Q_OS_WIN
   const QString kernelName = "sing-box.exe";
@@ -41,8 +43,7 @@ QString queryKernelVersion(const QString& kernelPath) {
     return QString();
   }
 
-  const QString output =
-      QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  const QString           output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
   QRegularExpression      re("(\\d+\\.\\d+\\.\\d+)");
   QRegularExpressionMatch match = re.match(output);
   if (match.hasMatch()) {
@@ -56,8 +57,7 @@ QString getKernelArch() {
   if (arch.contains("arm64") || arch.contains("aarch64")) {
     return "arm64";
   }
-  if (arch.contains("amd64") || arch.contains("x86_64") ||
-      arch.contains("x64") || arch.contains("64")) {
+  if (arch.contains("amd64") || arch.contains("x86_64") || arch.contains("x64") || arch.contains("64")) {
     return "amd64";
   }
   return "386";
@@ -82,8 +82,7 @@ QString buildKernelFilename(const QString& version) {
 #endif
 
   if (useLegacy && (arch == "amd64" || arch == "386")) {
-    return QString("sing-box-%1-windows-%2-legacy-windows-7.zip")
-        .arg(cleanVersion, arch);
+    return QString("sing-box-%1-windows-%2-legacy-windows-7.zip").arg(cleanVersion, arch);
   }
 
   return QString("sing-box-%1-windows-%2.zip").arg(cleanVersion, arch);
@@ -94,9 +93,7 @@ QStringList buildDownloadUrls(const QString& version, const QString& filename) {
     tag = "v" + tag;
   }
 
-  const QString base =
-      QString("https://github.com/SagerNet/sing-box/releases/download/%1/%2")
-          .arg(tag, filename);
+  const QString base = QString("https://github.com/SagerNet/sing-box/releases/download/%1/%2").arg(tag, filename);
 
   QStringList urls;
   urls << base;
@@ -115,8 +112,7 @@ QString findExecutableInDir(const QString& dirPath, const QString& exeName) {
   }
   return QString();
 }
-bool extractZipArchive(const QString& zipPath, const QString& destDir,
-                       QString* errorMessage) {
+bool extractZipArchive(const QString& zipPath, const QString& destDir, QString* errorMessage) {
 #ifdef Q_OS_WIN
   QDir dest(destDir);
   if (dest.exists()) {
@@ -125,13 +121,10 @@ bool extractZipArchive(const QString& zipPath, const QString& destDir,
   QDir().mkpath(destDir);
 
   const QString command =
-      QString(
-          "Expand-Archive -Force -LiteralPath \"%1\" -DestinationPath \"%2\"")
-          .arg(zipPath, destDir);
+      QString("Expand-Archive -Force -LiteralPath \"%1\" -DestinationPath \"%2\"").arg(zipPath, destDir);
 
   QProcess proc;
-  proc.start("powershell",
-             {"-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command});
+  proc.start("powershell", {"-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command});
   if (!proc.waitForFinished(300000)) {
     if (errorMessage) {
       *errorMessage = QObject::tr("Extraction timed out");

@@ -17,9 +17,9 @@ class RuleEditorDialog : public QDialog {
 
   explicit RuleEditorDialog(Mode mode, QWidget* parent = nullptr);
 
-  void setOutboundTags(const QStringList& tags);
-  void setRuleSetName(const QString& name);
-  bool setEditRule(const RuleItem& rule, QString* error);
+  void                            setOutboundTags(const QStringList& tags);
+  void                            setRuleSetName(const QString& name);
+  bool                            setEditRule(const RuleItem& rule, QString* error);
   RuleConfigService::RuleEditData editData() const;
 
  protected:
@@ -27,8 +27,7 @@ class RuleEditorDialog : public QDialog {
 
  private:
   void updatePlaceholder(int index);
-  bool buildEditData(RuleConfigService::RuleEditData* out,
-                     QString*                         error) const;
+  bool buildEditData(RuleConfigService::RuleEditData* out, QString* error) const;
 
   Mode                                    m_mode;
   QList<RuleConfigService::RuleFieldInfo> m_fields;

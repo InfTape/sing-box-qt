@@ -3,19 +3,14 @@
 #include <QJsonDocument>
 #include <QJsonValue>
 
-CoreManagerClient::CoreManagerClient(QObject* parent)
-    : QObject(parent), m_socket(new QLocalSocket(this)) {
-  connect(m_socket, &QLocalSocket::readyRead, this,
-          &CoreManagerClient::onReadyRead);
-  connect(m_socket, &QLocalSocket::connected, this,
-          &CoreManagerClient::connected);
-  connect(m_socket, &QLocalSocket::disconnected, this,
-          &CoreManagerClient::onDisconnected);
+CoreManagerClient::CoreManagerClient(QObject* parent) : QObject(parent), m_socket(new QLocalSocket(this)) {
+  connect(m_socket, &QLocalSocket::readyRead, this, &CoreManagerClient::onReadyRead);
+  connect(m_socket, &QLocalSocket::connected, this, &CoreManagerClient::connected);
+  connect(m_socket, &QLocalSocket::disconnected, this, &CoreManagerClient::onDisconnected);
 }
 
 void CoreManagerClient::connectToServer(const QString& name) {
-  if (m_socket->state() == QLocalSocket::ConnectedState ||
-      m_socket->state() == QLocalSocket::ConnectingState) {
+  if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState) {
     return;
   }
   m_socket->connectToServer(name);
@@ -35,18 +30,18 @@ bool CoreManagerClient::waitForConnected(int timeoutMs) {
   return m_socket->waitForConnected(timeoutMs);
 }
 
-void CoreManagerClient::abort() { m_socket->abort(); }
+void CoreManagerClient::abort() {
+  m_socket->abort();
+}
 
-void CoreManagerClient::sendRequest(int id, const QString& method,
-                                    const QJsonObject& params) {
+void CoreManagerClient::sendRequest(int id, const QString& method, const QJsonObject& params) {
   QJsonObject obj;
   obj["id"]     = id;
   obj["method"] = method;
   if (!params.isEmpty()) {
     obj["params"] = params;
   }
-  const QByteArray payload =
-      QJsonDocument(obj).toJson(QJsonDocument::Compact) + "\n";
+  const QByteArray payload = QJsonDocument(obj).toJson(QJsonDocument::Compact) + "\n";
   m_socket->write(payload);
   m_socket->flush();
 }
@@ -61,7 +56,7 @@ void CoreManagerClient::onReadyRead() {
     line = line.trimmed();
     if (line.isEmpty()) continue;
     QJsonParseError err;
-    QJsonDocument  doc = QJsonDocument::fromJson(line, &err);
+    QJsonDocument   doc = QJsonDocument::fromJson(line, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
       continue;
     }
@@ -69,7 +64,9 @@ void CoreManagerClient::onReadyRead() {
   }
 }
 
-void CoreManagerClient::onDisconnected() { emit disconnected(); }
+void CoreManagerClient::onDisconnected() {
+  emit disconnected();
+}
 
 void CoreManagerClient::handleMessage(const QJsonObject& obj) {
   const QString event = obj.value("event").toString();
@@ -77,8 +74,7 @@ void CoreManagerClient::handleMessage(const QJsonObject& obj) {
     if (event == "status") {
       emit statusEvent(obj.value("running").toBool());
     } else if (event == "log") {
-      emit logEvent(obj.value("stream").toString(),
-                    obj.value("message").toString());
+      emit logEvent(obj.value("stream").toString(), obj.value("message").toString());
     } else if (event == "error") {
       emit errorEvent(obj.value("message").toString());
     }

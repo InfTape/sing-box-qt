@@ -13,9 +13,8 @@ class SubscriptionCard : public QFrame {
   Q_OBJECT
 
  public:
-  explicit SubscriptionCard(const SubscriptionInfo& info, bool active,
-                            ThemeService* themeService,
-                            QWidget*      parent = nullptr);
+  explicit SubscriptionCard(const SubscriptionInfo& info, bool active, ThemeService* themeService,
+                            QWidget* parent = nullptr);
   QString subscriptionId() const { return m_subId; }
   void    setActive(bool active);
   void    updateInfo(const SubscriptionInfo& info, bool active);

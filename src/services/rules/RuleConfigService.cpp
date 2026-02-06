@@ -12,8 +12,7 @@
 #include "storage/DatabaseService.h"
 #include "utils/rule/RuleUtils.h"
 namespace {
-bool buildRouteRule(const RuleConfigService::RuleEditData& data,
-                    QJsonObject* out, QString* error) {
+bool buildRouteRule(const RuleConfigService::RuleEditData& data, QJsonObject* out, QString* error) {
   if (!out) return false;
   const QString key = data.field.key.trimmed();
   if (key.isEmpty()) {
@@ -31,9 +30,7 @@ bool buildRouteRule(const RuleConfigService::RuleEditData& data,
   QJsonObject rule;
   if (key == "ip_is_private") {
     if (values.size() != 1) {
-      if (error)
-        *error =
-            QObject::tr("ip_is_private allows only one value (true/false).");
+      if (error) *error = QObject::tr("ip_is_private allows only one value (true/false).");
       return false;
     }
     const QString raw = values.first().toLower();
@@ -96,14 +93,11 @@ int findInsertIndex(const QJsonArray& rules) {
     insertIndex = 0;
   return insertIndex;
 }
-bool ruleObjectMatches(const QJsonObject& obj, const RuleItem& rule,
-                       const QString& key, const QStringList& values) {
-  if (obj.contains("action") && obj.value("action").toString() != "route")
-    return false;
+bool ruleObjectMatches(const QJsonObject& obj, const RuleItem& rule, const QString& key, const QStringList& values) {
+  if (obj.contains("action") && obj.value("action").toString() != "route") return false;
   if (!obj.contains(key)) return false;
 
-  const QString objOutbound =
-      RuleUtils::normalizeProxyValue(obj.value("outbound").toString());
+  const QString objOutbound = RuleUtils::normalizeProxyValue(obj.value("outbound").toString());
   if (RuleUtils::normalizeProxyValue(rule.proxy) != objOutbound) return false;
 
   const QJsonValue v = obj.value(key);
@@ -125,19 +119,16 @@ bool ruleObjectMatches(const QJsonObject& obj, const RuleItem& rule,
   }
   if (v.isBool()) {
     return values.size() == 1 &&
-           ((v.toBool() && values.first().toLower() == "true") ||
-            (!v.toBool() && values.first().toLower() == "false"));
+           ((v.toBool() && values.first().toLower() == "true") || (!v.toBool() && values.first().toLower() == "false"));
   }
   return values.size() == 1 && v.toString().trimmed() == values.first();
 }
-bool removeRuleFromArray(QJsonArray* rules, const RuleItem& rule,
-                         QString* error) {
+bool removeRuleFromArray(QJsonArray* rules, const RuleItem& rule, QString* error) {
   if (!rules) return false;
 
   QString     key;
   QStringList values;
-  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values,
-                                           error)) {
+  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, error)) {
     return false;
   }
 
@@ -158,8 +149,7 @@ bool removeRuleFromArray(QJsonArray* rules, const RuleItem& rule,
 QJsonObject buildRouteRuleFromItem(const RuleItem& rule, QString* error) {
   QString     key;
   QStringList values;
-  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values,
-                                           error)) {
+  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, error)) {
     return QJsonObject();
   }
 
@@ -177,40 +167,27 @@ QJsonObject buildRouteRuleFromItem(const RuleItem& rule, QString* error) {
   return obj;
 }
 }  // namespace
-bool RuleConfigService::buildRouteRulePublic(const RuleEditData& data,
-                                             QJsonObject* out, QString* error) {
+bool RuleConfigService::buildRouteRulePublic(const RuleEditData& data, QJsonObject* out, QString* error) {
   return buildRouteRule(data, out, error);
 }
 QList<RuleConfigService::RuleFieldInfo> RuleConfigService::fieldInfos() {
   return {
       {QObject::tr("Domain"), "domain", QObject::tr("Example: example.com")},
-      {QObject::tr("Domain Suffix"), "domain_suffix",
-       QObject::tr("Example: example.com")},
-      {QObject::tr("Domain Keyword"), "domain_keyword",
-       QObject::tr("Example: google")},
-      {QObject::tr("Domain Regex"), "domain_regex",
-       QObject::tr("Example: ^.*\\\\.example\\\\.com$")},
-      {QObject::tr("IP CIDR"), "ip_cidr",
-       QObject::tr("Example: 192.168.0.0/16")},
-      {QObject::tr("Private IP"), "ip_is_private",
-       QObject::tr("Example: true / false")},
-      {QObject::tr("Source IP CIDR"), "source_ip_cidr",
-       QObject::tr("Example: 10.0.0.0/8")},
+      {QObject::tr("Domain Suffix"), "domain_suffix", QObject::tr("Example: example.com")},
+      {QObject::tr("Domain Keyword"), "domain_keyword", QObject::tr("Example: google")},
+      {QObject::tr("Domain Regex"), "domain_regex", QObject::tr("Example: ^.*\\\\.example\\\\.com$")},
+      {QObject::tr("IP CIDR"), "ip_cidr", QObject::tr("Example: 192.168.0.0/16")},
+      {QObject::tr("Private IP"), "ip_is_private", QObject::tr("Example: true / false")},
+      {QObject::tr("Source IP CIDR"), "source_ip_cidr", QObject::tr("Example: 10.0.0.0/8")},
       {QObject::tr("Port"), "port", QObject::tr("Example: 80,443"), true},
-      {QObject::tr("Source Port"), "source_port",
-       QObject::tr("Example: 80,443"), true},
-      {QObject::tr("Port Range"), "port_range",
-       QObject::tr("Example: 10000:20000")},
-      {QObject::tr("Source Port Range"), "source_port_range",
-       QObject::tr("Example: 10000:20000")},
-      {QObject::tr("Process Name"), "process_name",
-       QObject::tr("Example: chrome.exe")},
-      {QObject::tr("Process Path"), "process_path",
-       QObject::tr("Example: C:\\\\Program Files\\\\App\\\\app.exe")},
+      {QObject::tr("Source Port"), "source_port", QObject::tr("Example: 80,443"), true},
+      {QObject::tr("Port Range"), "port_range", QObject::tr("Example: 10000:20000")},
+      {QObject::tr("Source Port Range"), "source_port_range", QObject::tr("Example: 10000:20000")},
+      {QObject::tr("Process Name"), "process_name", QObject::tr("Example: chrome.exe")},
+      {QObject::tr("Process Path"), "process_path", QObject::tr("Example: C:\\\\Program Files\\\\App\\\\app.exe")},
       {QObject::tr("Process Path Regex"), "process_path_regex",
        QObject::tr("Example: ^C:\\\\\\\\Program Files\\\\\\\\.+")},
-      {QObject::tr("Package Name"), "package_name",
-       QObject::tr("Example: com.example.app")},
+      {QObject::tr("Package Name"), "package_name", QObject::tr("Example: com.example.app")},
   };
 }
 QString RuleConfigService::activeConfigPath(ConfigRepository* cfgRepo) {
@@ -218,19 +195,15 @@ QString RuleConfigService::activeConfigPath(ConfigRepository* cfgRepo) {
   if (!subPath.isEmpty()) return subPath;
   return cfgRepo ? cfgRepo->getActiveConfigPath() : QString();
 }
-QString RuleConfigService::findRuleSet(ConfigRepository* /*cfgRepo*/,
-                                       const RuleItem& rule) {
+QString RuleConfigService::findRuleSet(ConfigRepository* /*cfgRepo*/, const RuleItem& rule) {
   const QJsonObject obj = buildRouteRuleFromItem(rule, nullptr);
   return SharedRulesStore::findSetOfRule(obj);
 }
-QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo,
-                                                const QString&    extraTag,
-                                                QString*          error) {
+QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo, const QString& extraTag, QString* error) {
   QSet<QString> tags;
   const QString path = activeConfigPath(cfgRepo);
   if (!path.isEmpty()) {
-    const QJsonObject configOut =
-        cfgRepo ? cfgRepo->loadConfig(path) : QJsonObject();
+    const QJsonObject configOut = cfgRepo ? cfgRepo->loadConfig(path) : QJsonObject();
     if (configOut.isEmpty()) {
       if (error) {
         *error = QObject::tr("Failed to read config file: %1").arg(path);
@@ -254,9 +227,7 @@ QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo,
   list.sort();
   return list;
 }
-bool RuleConfigService::addRule(ConfigRepository*   cfgRepo,
-                                const RuleEditData& data, RuleItem* added,
-                                QString* error) {
+bool RuleConfigService::addRule(ConfigRepository* cfgRepo, const RuleEditData& data, RuleItem* added, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
   if (path.isEmpty()) {
     if (error) *error = QObject::tr("Active config not found.");
@@ -322,10 +293,8 @@ bool RuleConfigService::addRule(ConfigRepository*   cfgRepo,
   SharedRulesStore::addRule(setName, routeRule);
   return true;
 }
-bool RuleConfigService::updateRule(ConfigRepository*   cfgRepo,
-                                   const RuleItem&     existing,
-                                   const RuleEditData& data, RuleItem* updated,
-                                   QString* error) {
+bool RuleConfigService::updateRule(ConfigRepository* cfgRepo, const RuleItem& existing, const RuleEditData& data,
+                                   RuleItem* updated, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
   if (path.isEmpty()) {
     if (error) *error = QObject::tr("Active config not found.");
@@ -373,16 +342,15 @@ bool RuleConfigService::updateRule(ConfigRepository*   cfgRepo,
   }
 
   const QJsonObject oldRouteRule = buildRouteRuleFromItem(existing, nullptr);
-  const QString     oldSet = SharedRulesStore::findSetOfRule(oldRouteRule);
-  const QString targetSet  = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
+  const QString     oldSet       = SharedRulesStore::findSetOfRule(oldRouteRule);
+  const QString     targetSet    = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   if (!oldSet.isEmpty() && oldSet != targetSet) {
     SharedRulesStore::removeRule(oldSet, oldRouteRule);
   }
   SharedRulesStore::replaceRule(targetSet, oldRouteRule, routeRule);
   return true;
 }
-bool RuleConfigService::removeRule(ConfigRepository* cfgRepo,
-                                   const RuleItem& rule, QString* error) {
+bool RuleConfigService::removeRule(ConfigRepository* cfgRepo, const RuleItem& rule, QString* error) {
   const QString path = activeConfigPath(cfgRepo);
   if (path.isEmpty()) {
     if (error) *error = QObject::tr("Active config not found.");
@@ -413,7 +381,7 @@ bool RuleConfigService::removeRule(ConfigRepository* cfgRepo,
   }
 
   const QJsonObject oldRouteRule = buildRouteRuleFromItem(rule, nullptr);
-  const QString     set = SharedRulesStore::findSetOfRule(oldRouteRule);
+  const QString     set          = SharedRulesStore::findSetOfRule(oldRouteRule);
   if (!set.isEmpty()) {
     SharedRulesStore::removeRule(set, oldRouteRule);
   } else {
@@ -421,8 +389,7 @@ bool RuleConfigService::removeRule(ConfigRepository* cfgRepo,
   }
   return true;
 }
-bool RuleConfigService::parseRulePayload(const QString& payload, QString* key,
-                                         QStringList* values, QString* error) {
+bool RuleConfigService::parseRulePayload(const QString& payload, QString* key, QStringList* values, QString* error) {
   if (key) key->clear();
   if (values) values->clear();
 

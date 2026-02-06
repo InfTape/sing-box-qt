@@ -4,8 +4,7 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <QVBoxLayout>
-ConfigEditDialog::ConfigEditDialog(QWidget* parent)
-    : QDialog(parent), m_editor(new QTextEdit) {
+ConfigEditDialog::ConfigEditDialog(QWidget* parent) : QDialog(parent), m_editor(new QTextEdit) {
   setWindowTitle(tr("Edit current config"));
   setModal(true);
   setMinimumWidth(720);
@@ -28,4 +27,6 @@ ConfigEditDialog::ConfigEditDialog(QWidget* parent)
 void ConfigEditDialog::setContent(const QString& content) {
   m_editor->setPlainText(content);
 }
-QString ConfigEditDialog::content() const { return m_editor->toPlainText(); }
+QString ConfigEditDialog::content() const {
+  return m_editor->toPlainText();
+}

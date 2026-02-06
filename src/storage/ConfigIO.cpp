@@ -9,8 +9,7 @@
 #include "utils/Logger.h"
 namespace ConfigIO {
 QString getConfigDir() {
-  const QString baseDir =
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  const QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
   const QString dataDir = appDataDir();
   QDir          dir(dataDir);
   if (!dir.exists()) {
@@ -29,7 +28,9 @@ QString getConfigDir() {
   }
   return dataDir;
 }
-QString     getActiveConfigPath() { return getConfigDir() + "/config.json"; }
+QString getActiveConfigPath() {
+  return getConfigDir() + "/config.json";
+}
 QJsonObject loadConfig(const QString& path) {
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) {

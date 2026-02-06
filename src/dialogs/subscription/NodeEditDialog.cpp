@@ -39,8 +39,7 @@ void NodeEditDialog::setupUI() {
   QHBoxLayout* typeLayout = new QHBoxLayout;
   typeLayout->addWidget(new QLabel(tr("Type:")));
   m_typeCombo = new MenuComboBox(this, m_themeService);
-  m_typeCombo->addItems(
-      {"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
+  m_typeCombo->addItems({"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
   m_typeCombo->setWheelEnabled(false);
   typeLayout->addWidget(m_typeCombo);
 
@@ -67,9 +66,7 @@ void NodeEditDialog::setupUI() {
     RoundedMenu* menu = new RoundedMenu(this);
     // Use tray menu style, reusing checkmark appearance
     menu->setObjectName("TrayMenu");
-    if (m_themeService)
-      menu->setThemeColors(m_themeService->color("bg-secondary"),
-                           m_themeService->color("primary"));
+    if (m_themeService) menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
 
     QStringList options = SharedRulesStore::listRuleSets();
     for (const auto& name : m_ruleSets)
@@ -81,8 +78,7 @@ void NodeEditDialog::setupUI() {
     for (const QString& name : options) {
       QAction* act = menu->addAction(name);
       act->setCheckable(true);
-      act->setChecked(m_ruleSets.contains(name) ||
-                      (m_ruleSets.isEmpty() && name == "default"));
+      act->setChecked(m_ruleSets.contains(name) || (m_ruleSets.isEmpty() && name == "default"));
       connect(act, &QAction::triggered, this, [this, name, act]() {
         if (act->isChecked()) {
           if (!m_ruleSets.contains(name)) m_ruleSets << name;
@@ -99,8 +95,7 @@ void NodeEditDialog::setupUI() {
   m_ruleSets = QStringList{"default"};
   rebuildMenu();
   connect(m_ruleSetsBtn, &QToolButton::clicked, this, rebuildMenu);
-  connect(m_sharedRulesCheck, &QCheckBox::toggled, this,
-          [this](bool on) { m_ruleSetsBtn->setEnabled(on); });
+  connect(m_sharedRulesCheck, &QCheckBox::toggled, this, [this](bool on) { m_ruleSetsBtn->setEnabled(on); });
 
   // Tabs
   m_tabs = new QTabWidget;
@@ -141,8 +136,7 @@ void NodeEditDialog::setupUI() {
 
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
-  connect(m_typeCombo, &QComboBox::currentTextChanged, this,
-          &NodeEditDialog::onTypeChanged);
+  connect(m_typeCombo, &QComboBox::currentTextChanged, this, &NodeEditDialog::onTypeChanged);
   connect(m_tabs, &QTabWidget::currentChanged, this, [this](int index) {
     if (index == 1) updatePreview();
   });
@@ -211,8 +205,7 @@ void NodeEditDialog::setRuleSets(const QStringList& sets, bool enableShared) {
         RoundedMenu* menu = new RoundedMenu(this);
         menu->setObjectName("TrayMenu");
         if (m_themeService)
-          menu->setThemeColors(m_themeService->color("bg-secondary"),
-                               m_themeService->color("primary"));
+          menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
 
         QStringList options = SharedRulesStore::listRuleSets();
         for (const auto& name : m_ruleSets)

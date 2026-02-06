@@ -54,8 +54,7 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
          "kernel or app to apply."));
   m_hintLabel->setVisible(m_mode == Mode::Add);
 
-  QDialogButtonBox* buttons = new QDialogButtonBox(
-      QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+  QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
   buttons->button(QDialogButtonBox::Ok)->setText(tr("OK"));
   buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
 
@@ -63,12 +62,9 @@ RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
   layout->addWidget(m_hintLabel);
   layout->addWidget(buttons);
 
-  connect(m_typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          this, &RuleEditorDialog::updatePlaceholder);
-  connect(buttons, &QDialogButtonBox::accepted, this,
-          &RuleEditorDialog::accept);
-  connect(buttons, &QDialogButtonBox::rejected, this,
-          &RuleEditorDialog::reject);
+  connect(m_typeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RuleEditorDialog::updatePlaceholder);
+  connect(buttons, &QDialogButtonBox::accepted, this, &RuleEditorDialog::accept);
+  connect(buttons, &QDialogButtonBox::rejected, this, &RuleEditorDialog::reject);
 }
 void RuleEditorDialog::setOutboundTags(const QStringList& tags) {
   m_outboundCombo->clear();
@@ -80,8 +76,7 @@ void RuleEditorDialog::setRuleSetName(const QString& name) {
 bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
   QString     key;
   QStringList values;
-  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values,
-                                           error)) {
+  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, error)) {
     return false;
   }
 
@@ -114,8 +109,7 @@ void RuleEditorDialog::accept() {
   RuleConfigService::RuleEditData data;
   QString                         error;
   if (!buildEditData(&data, &error)) {
-    const QString title =
-        m_mode == Mode::Add ? tr("Add Rule") : tr("Edit Match Type");
+    const QString title = m_mode == Mode::Add ? tr("Add Rule") : tr("Edit Match Type");
     QMessageBox::warning(this, title, error);
     return;
   }
@@ -124,11 +118,9 @@ void RuleEditorDialog::accept() {
 }
 void RuleEditorDialog::updatePlaceholder(int index) {
   if (index < 0 || index >= m_fields.size()) return;
-  m_valueEdit->setPlaceholderText(m_fields[index].placeholder +
-                                  tr(" (separate by commas or new lines)"));
+  m_valueEdit->setPlaceholderText(m_fields[index].placeholder + tr(" (separate by commas or new lines)"));
 }
-bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out,
-                                     QString* error) const {
+bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out, QString* error) const {
   if (!out) return false;
   const int fieldIndex = m_typeCombo->currentIndex();
   if (fieldIndex < 0 || fieldIndex >= m_fields.size()) {
@@ -144,8 +136,7 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out,
     return false;
   }
 
-  QStringList values =
-      rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
+  QStringList values = rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
   for (QString& v : values) v = v.trimmed();
   values.removeAll(QString());
   if (values.isEmpty()) {
@@ -155,8 +146,7 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out,
 
   if (field.key == "ip_is_private") {
     if (values.size() != 1) {
-      if (error)
-        *error = tr("ip_is_private allows only one value (true/false).");
+      if (error) *error = tr("ip_is_private allows only one value (true/false).");
       return false;
     }
     const QString raw = values.first().toLower();

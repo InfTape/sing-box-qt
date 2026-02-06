@@ -13,7 +13,7 @@ class CoreManagerServer : public QObject {
 
  public:
   explicit CoreManagerServer(QObject* parent = nullptr);
-  bool startListening(const QString& name, QString* error = nullptr);
+  bool    startListening(const QString& name, QString* error = nullptr);
   QString serverName() const;
 
  private slots:
@@ -28,8 +28,7 @@ class CoreManagerServer : public QObject {
 
  private:
   void handleMessage(const QJsonObject& obj);
-  void sendResponse(int id, bool ok, const QJsonObject& result,
-                    const QString& error);
+  void sendResponse(int id, bool ok, const QJsonObject& result, const QString& error);
   void sendEvent(const QJsonObject& event);
 
   QLocalServer* m_server;

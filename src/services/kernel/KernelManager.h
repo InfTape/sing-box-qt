@@ -24,8 +24,7 @@ class KernelManager : public QObject {
   void finished(bool ok, const QString& message);
 
  private:
-  void        tryDownloadUrl(int index, const QStringList& urls,
-                             const QString& savePath, const QString& extractDir,
+  void        tryDownloadUrl(int index, const QStringList& urls, const QString& savePath, const QString& extractDir,
                              const QString& version);
   QString     normalizedLatest(const QString& rawTag) const;
   QStringList latestKernelApiUrls() const;

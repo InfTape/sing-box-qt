@@ -17,10 +17,8 @@ class QTimer;
 class ProxyRuntimeController : public QObject {
   Q_OBJECT
  public:
-  explicit ProxyRuntimeController(KernelService*   kernelService,
-                                  ProxyService*    proxyService,
-                                  ProxyController* proxyController,
-                                  QObject*         parent = nullptr);
+  explicit ProxyRuntimeController(KernelService* kernelService, ProxyService* proxyService,
+                                  ProxyController* proxyController, QObject* parent = nullptr);
 
   bool isKernelRunning() const;
   void broadcastStates();
@@ -42,9 +40,9 @@ class ProxyRuntimeController : public QObject {
   void handleConnectionsJson(const QJsonObject& connections);
 
  private:
-  KernelService*   m_kernelService   = nullptr;
-  ProxyService*    m_proxyService    = nullptr;
-  ProxyController* m_proxyController = nullptr;
+  KernelService*    m_kernelService    = nullptr;
+  ProxyService*     m_proxyService     = nullptr;
+  ProxyController*  m_proxyController  = nullptr;
   DataUsageTracker* m_dataUsageTracker = nullptr;
   QTimer*           m_connectionsTimer = nullptr;
 };

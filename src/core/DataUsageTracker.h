@@ -46,21 +46,19 @@ class DataUsageTracker : public QObject {
   static QString     typeKey(Type type);
   static QList<Type> allTypes();
 
-  void              addDelta(Type type, const QString& label, qint64 upload,
-                             qint64 download, qint64 nowMs);
-  void              loadFromStorage();
-  void              persistToStorage() const;
-  void              restoreFromPayload(const QJsonObject& payload);
-  QJsonObject       buildPersistPayload() const;
-  QVector<Entry>    sortedEntries(const QHash<QString, Entry>& map,
-                                  int limit) const;
-  Totals            buildTotals(const QHash<QString, Entry>& map) const;
-  QJsonObject       buildTypeSnapshot(Type type, int limit) const;
+  void           addDelta(Type type, const QString& label, qint64 upload, qint64 download, qint64 nowMs);
+  void           loadFromStorage();
+  void           persistToStorage() const;
+  void           restoreFromPayload(const QJsonObject& payload);
+  QJsonObject    buildPersistPayload() const;
+  QVector<Entry> sortedEntries(const QHash<QString, Entry>& map, int limit) const;
+  Totals         buildTotals(const QHash<QString, Entry>& map) const;
+  QJsonObject    buildTypeSnapshot(Type type, int limit) const;
 
   QHash<QString, Entry>                 m_entries[4];
   QHash<QString, QPair<qint64, qint64>> m_lastById;
-  bool                                 m_initialized       = false;
-  bool                                 m_loadedFromStorage = false;
+  bool                                  m_initialized       = false;
+  bool                                  m_loadedFromStorage = false;
 };
 
 #endif  // DATAUSAGETRACKER_H

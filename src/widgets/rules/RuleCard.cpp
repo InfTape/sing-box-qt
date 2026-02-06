@@ -13,18 +13,13 @@
 #include "app/interfaces/ThemeService.h"
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/RoundedMenu.h"
-RuleCard::RuleCard(const RuleItem& rule, int index, ThemeService* themeService,
-                   QWidget* parent)
-    : QFrame(parent),
-      m_rule(rule),
-      m_index(index),
-      m_themeService(themeService) {
+RuleCard::RuleCard(const RuleItem& rule, int index, ThemeService* themeService, QWidget* parent)
+    : QFrame(parent), m_rule(rule), m_index(index), m_themeService(themeService) {
   setupUI();
   updateStyle();
 
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            &RuleCard::updateStyle);
+    connect(m_themeService, &ThemeService::themeChanged, this, &RuleCard::updateStyle);
   }
 }
 void RuleCard::setupUI() {
@@ -39,8 +34,7 @@ void RuleCard::setupUI() {
   QHBoxLayout* headerLayout = new QHBoxLayout;
   headerLayout->setSpacing(6);
 
-  QLabel* statusTag =
-      new QLabel(m_rule.isCustom ? tr("Custom") : tr("Default"));
+  QLabel* statusTag = new QLabel(m_rule.isCustom ? tr("Custom") : tr("Default"));
   statusTag->setObjectName(m_rule.isCustom ? "CardTagActive" : "CardTag");
   statusTag->setAttribute(Qt::WA_StyledBackground, true);
   statusTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -59,21 +53,17 @@ void RuleCard::setupUI() {
     m_menu->setObjectName("RuleMenu");
     updateMenuTheme();
     if (m_themeService) {
-      connect(m_themeService, &ThemeService::themeChanged, this,
-              &RuleCard::updateMenuTheme);
+      connect(m_themeService, &ThemeService::themeChanged, this, &RuleCard::updateMenuTheme);
     }
 
     QAction* editTypeAct = m_menu->addAction(tr("Edit Match Type"));
     QAction* removeAct   = m_menu->addAction(tr("Delete Rule"));
     removeAct->setObjectName("DeleteAction");
 
-    connect(menuBtn, &QPushButton::clicked, [menuBtn, menu = m_menu]() {
-      menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
-    });
-    connect(editTypeAct, &QAction::triggered, this,
-            [this]() { emit editRequested(m_rule); });
-    connect(removeAct, &QAction::triggered, this,
-            [this]() { emit deleteRequested(m_rule); });
+    connect(menuBtn, &QPushButton::clicked,
+            [menuBtn, menu = m_menu]() { menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height()))); });
+    connect(editTypeAct, &QAction::triggered, this, [this]() { emit editRequested(m_rule); });
+    connect(removeAct, &QAction::triggered, this, [this]() { emit deleteRequested(m_rule); });
 
     headerLayout->addWidget(menuBtn);
   }
@@ -97,12 +87,10 @@ void RuleCard::setupUI() {
   infoLayout->addWidget(payloadLabel);
   infoLayout->addWidget(typeLabel);
 
-  QPushButton* proxyBtn =
-      new QPushButton(RuleUtils::displayProxyLabel(m_rule.proxy), this);
+  QPushButton*  proxyBtn       = new QPushButton(RuleUtils::displayProxyLabel(m_rule.proxy), this);
   const QString proxyKey       = RuleUtils::normalizeProxyValue(m_rule.proxy);
   const bool    highlightProxy = proxyKey == "direct" || proxyKey == "manual";
-  proxyBtn->setObjectName(highlightProxy ? "CardActionBtnActive"
-                                         : "CardActionBtn");
+  proxyBtn->setObjectName(highlightProxy ? "CardActionBtnActive" : "CardActionBtn");
   proxyBtn->setCursor(Qt::ArrowCursor);
   proxyBtn->setFocusPolicy(Qt::NoFocus);
   proxyBtn->setMinimumHeight(38);

@@ -19,8 +19,7 @@ QJsonObject SharedRulesStore::loadDocument() {
     return QJsonObject{{"sets", QJsonArray()}};
   }
   if (!file.open(QIODevice::ReadOnly)) {
-    Logger::warn(
-        QString("Failed to open shared rules file: %1").arg(storagePath()));
+    Logger::warn(QString("Failed to open shared rules file: %1").arg(storagePath()));
     return QJsonObject{{"sets", QJsonArray()}};
   }
   QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
@@ -50,8 +49,7 @@ QJsonObject SharedRulesStore::loadDocument() {
 bool SharedRulesStore::saveDocument(const QJsonObject& doc) {
   QFile file(storagePath());
   if (!file.open(QIODevice::WriteOnly)) {
-    Logger::error(
-        QString("Failed to write shared rules file: %1").arg(storagePath()));
+    Logger::error(QString("Failed to write shared rules file: %1").arg(storagePath()));
     return false;
   }
   file.write(QJsonDocument(doc).toJson(QJsonDocument::Indented));
@@ -63,9 +61,8 @@ bool SharedRulesStore::ruleEquals(const QJsonObject& a, const QJsonObject& b) {
 }
 void SharedRulesStore::normalizeRule(QJsonObject* rule) {
   if (!rule) return;
-  rule->insert(
-      "shared",
-      true);  // internal marker, will be stripped before writing config
+  rule->insert("shared",
+               true);  // internal marker, will be stripped before writing config
   if (!rule->contains("source")) {
     rule->insert("source", "custom");
   }
@@ -158,8 +155,7 @@ QJsonArray SharedRulesStore::loadRules(const QString& setName) {
   }
   return QJsonArray();
 }
-bool SharedRulesStore::saveRules(const QString&    setName,
-                                 const QJsonArray& rules) {
+bool SharedRulesStore::saveRules(const QString& setName, const QJsonArray& rules) {
   const QString target = setName.isEmpty() ? "default" : setName;
   QJsonObject   doc    = loadDocument();
   QJsonArray    sets   = doc.value("sets").toArray();
@@ -184,13 +180,11 @@ bool SharedRulesStore::saveRules(const QString&    setName,
   doc["sets"] = sets;
   return saveDocument(doc);
 }
-bool SharedRulesStore::addRule(const QString&     setName,
-                               const QJsonObject& rule) {
+bool SharedRulesStore::addRule(const QString& setName, const QJsonObject& rule) {
   QJsonObject normalized = rule;
   normalizeRule(&normalized);
-  const QString target =
-      setName.trimmed().isEmpty() ? "default" : setName.trimmed();
-  QJsonArray rules = loadRules(target);
+  const QString target = setName.trimmed().isEmpty() ? "default" : setName.trimmed();
+  QJsonArray    rules  = loadRules(target);
   for (const auto& val : rules) {
     if (!val.isObject()) continue;
     if (ruleEquals(val.toObject(), normalized)) {
@@ -200,18 +194,15 @@ bool SharedRulesStore::addRule(const QString&     setName,
   rules.append(normalized);
   return saveRules(target, rules);
 }
-bool SharedRulesStore::replaceRule(const QString&     setName,
-                                   const QJsonObject& oldRule,
-                                   const QJsonObject& newRule) {
+bool SharedRulesStore::replaceRule(const QString& setName, const QJsonObject& oldRule, const QJsonObject& newRule) {
   QJsonObject oldNormalized = oldRule;
   QJsonObject newNormalized = newRule;
   normalizeRule(&oldNormalized);
   normalizeRule(&newNormalized);
 
-  const QString target =
-      setName.trimmed().isEmpty() ? "default" : setName.trimmed();
-  QJsonArray rules    = loadRules(target);
-  bool       replaced = false;
+  const QString target   = setName.trimmed().isEmpty() ? "default" : setName.trimmed();
+  QJsonArray    rules    = loadRules(target);
+  bool          replaced = false;
   for (int i = 0; i < rules.size(); ++i) {
     if (!rules[i].isObject()) continue;
     if (ruleEquals(rules[i].toObject(), oldNormalized)) {
@@ -225,14 +216,12 @@ bool SharedRulesStore::replaceRule(const QString&     setName,
   }
   return saveRules(target, rules);
 }
-bool SharedRulesStore::removeRule(const QString&     setName,
-                                  const QJsonObject& rule) {
+bool SharedRulesStore::removeRule(const QString& setName, const QJsonObject& rule) {
   QJsonObject normalized = rule;
   normalizeRule(&normalized);
 
-  const QString target =
-      setName.trimmed().isEmpty() ? "default" : setName.trimmed();
-  QJsonArray rules = loadRules(target);
+  const QString target = setName.trimmed().isEmpty() ? "default" : setName.trimmed();
+  QJsonArray    rules  = loadRules(target);
   for (int i = 0; i < rules.size(); ++i) {
     if (!rules[i].isObject()) continue;
     if (ruleEquals(rules[i].toObject(), normalized)) {

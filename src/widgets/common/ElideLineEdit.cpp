@@ -27,10 +27,8 @@ void ElideLineEdit::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   style()->drawPrimitive(QStyle::PE_PanelLineEdit, &panel, &painter, this);
 
-  QRect textRect =
-      style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
-  const QString elided =
-      fontMetrics().elidedText(text(), m_elideMode, qMax(0, textRect.width()));
+  QRect         textRect = style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
+  const QString elided   = fontMetrics().elidedText(text(), m_elideMode, qMax(0, textRect.width()));
 
   painter.setPen(palette().color(QPalette::Text));
   painter.setFont(font());

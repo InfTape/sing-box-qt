@@ -6,8 +6,7 @@
 class QPropertyAnimation;
 class ChevronToggle : public QWidget {
   Q_OBJECT
-  Q_PROPERTY(
-      bool expanded READ isExpanded WRITE setExpanded NOTIFY expandedChanged)
+  Q_PROPERTY(bool expanded READ isExpanded WRITE setExpanded NOTIFY expandedChanged)
   Q_PROPERTY(qreal progress READ progress WRITE setProgress)
 
  public:

@@ -11,12 +11,11 @@ class SegmentedControl : public QWidget {
   Q_PROPERTY(qreal selectionOffset READ selectionOffset WRITE setSelectionOffset)
 
  public:
-  explicit SegmentedControl(QWidget* parent = nullptr,
-                            ThemeService* themeService = nullptr);
+  explicit SegmentedControl(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
 
-  void setItems(const QStringList& labels, const QStringList& values);
-  void setCurrentIndex(int index);
-  int  currentIndex() const { return m_currentIndex; }
+  void    setItems(const QStringList& labels, const QStringList& values);
+  void    setCurrentIndex(int index);
+  int     currentIndex() const { return m_currentIndex; }
   QString currentValue() const;
 
   void setThemeService(ThemeService* themeService);
@@ -38,11 +37,11 @@ class SegmentedControl : public QWidget {
   void resizeEvent(QResizeEvent* event) override;
 
  private:
-  int indexAtPos(const QPoint& pos) const;
+  int    indexAtPos(const QPoint& pos) const;
   QRectF itemRect(int index) const;
   QRectF selectionRect() const;
-  void animateToIndex(int index);
-  void recalculateLayout() const;
+  void   animateToIndex(int index);
+  void   recalculateLayout() const;
 
  private:
   QStringList m_labels;
@@ -50,9 +49,9 @@ class SegmentedControl : public QWidget {
   int         m_currentIndex    = 0;
   int         m_pressedIndex    = -1;
   qreal       m_selectionOffset = 0.0;
-  
+
   mutable QVector<qreal> m_itemWidths;
-  mutable qreal           m_totalWidth = 0;
+  mutable qreal          m_totalWidth = 0;
 
   QPropertyAnimation* m_anim         = nullptr;
   ThemeService*       m_themeService = nullptr;

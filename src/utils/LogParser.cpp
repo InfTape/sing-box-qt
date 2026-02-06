@@ -11,8 +11,7 @@ QString stripAnsiSequences(const QString& text) {
 LogKind parseLogKind(const QString& message) {
   LogKind                         info;
   static const QRegularExpression kDnsPattern("\\bdns\\s*:");
-  static const QRegularExpression kOutboundNode(
-      R"(outbound/([^\[]+)\[([^\]]+)\])");
+  static const QRegularExpression kOutboundNode(R"(outbound/([^\[]+)\[([^\]]+)\])");
   if (message.contains(kDnsPattern)) {
     info.direction = "dns";
     info.isDns     = true;
@@ -27,9 +26,8 @@ LogKind parseLogKind(const QString& message) {
     return info;
   }
 
-  static const QRegularExpression kConnHost(
-      R"(connection (?:from|to) ([^\s]+))");
-  const QRegularExpressionMatch match = kConnHost.match(message);
+  static const QRegularExpression kConnHost(R"(connection (?:from|to) ([^\s]+))");
+  const QRegularExpressionMatch   match = kConnHost.match(message);
   if (match.hasMatch()) {
     info.host = match.captured(1);
   }

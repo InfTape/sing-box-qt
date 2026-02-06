@@ -1,0 +1,4 @@
+Checks: >
+  -*,
+  google-*
+FormatStyle: '{BasedOnStyle: Google, SortIncludes: false}'

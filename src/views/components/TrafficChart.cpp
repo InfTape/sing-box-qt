@@ -6,9 +6,7 @@
 
 #include "app/interfaces/ThemeService.h"
 TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
-    : QWidget(parent),
-      m_themeService(themeService),
-      m_updateTimer(new QTimer(this)) {
+    : QWidget(parent), m_themeService(themeService), m_updateTimer(new QTimer(this)) {
   setMinimumHeight(150);
 
   // Initialize data arrays
@@ -24,8 +22,7 @@ TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
     m_timeLabels.removeFirst();
 
     // Add new data point
-    m_uploadData.append(m_lastUploadSpeed / 1024.0 /
-                        1024.0);  // Convert to MB/s
+    m_uploadData.append(m_lastUploadSpeed / 1024.0 / 1024.0);  // Convert to MB/s
     m_downloadData.append(m_lastDownloadSpeed / 1024.0 / 1024.0);
 
     // Add time label
@@ -40,11 +37,12 @@ TrafficChart::TrafficChart(ThemeService* themeService, QWidget* parent)
 
   // Connect to theme changes
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            &TrafficChart::updateStyle);
+    connect(m_themeService, &ThemeService::themeChanged, this, &TrafficChart::updateStyle);
   }
 }
-TrafficChart::~TrafficChart() { m_updateTimer->stop(); }
+TrafficChart::~TrafficChart() {
+  m_updateTimer->stop();
+}
 void TrafficChart::updateData(qint64 uploadSpeed, qint64 downloadSpeed) {
   m_lastUploadSpeed   = uploadSpeed;
   m_lastDownloadSpeed = downloadSpeed;
@@ -103,8 +101,7 @@ void TrafficChart::drawChart(QPainter& painter) {
   const int paddingBottom = 28;
   const int paddingLeft   = 75;
 
-  QRect chartRect(paddingLeft, paddingTop, width() - paddingLeft - paddingRight,
-                  height() - paddingTop - paddingBottom);
+  QRect chartRect(paddingLeft, paddingTop, width() - paddingLeft - paddingRight, height() - paddingTop - paddingBottom);
 
   drawGrid(painter, chartRect);
 
@@ -124,21 +121,18 @@ void TrafficChart::drawGrid(QPainter& painter, const QRect& chartRect) {
 
   const int yAxisSteps = 4;
   for (int i = 0; i <= yAxisSteps; i++) {
-    double y = chartRect.bottom() -
-               (static_cast<double>(i) / yAxisSteps) * chartRect.height();
+    double y     = chartRect.bottom() - (static_cast<double>(i) / yAxisSteps) * chartRect.height();
     double value = (static_cast<double>(i) / yAxisSteps) * maxValue;
 
     // Grid line
     QPen gridPen(m_gridColor, 0.5, Qt::DashLine);
     painter.setPen(gridPen);
-    painter.drawLine(QPointF(chartRect.left(), y),
-                     QPointF(chartRect.right(), y));
+    painter.drawLine(QPointF(chartRect.left(), y), QPointF(chartRect.right(), y));
 
     // Y label
     painter.setPen(m_textColor);
     QString label = formatSpeed(value * 1024 * 1024);
-    painter.drawText(QRectF(0, y - 10, chartRect.left() - 10, 20),
-                     Qt::AlignRight | Qt::AlignVCenter, label);
+    painter.drawText(QRectF(0, y - 10, chartRect.left() - 10, 20), Qt::AlignRight | Qt::AlignVCenter, label);
   }
 
   // Draw X axis
@@ -152,16 +146,13 @@ void TrafficChart::drawGrid(QPainter& painter, const QRect& chartRect) {
   const int labelInterval = MAX_DATA_POINTS / 5;
   for (int i = MAX_DATA_POINTS - 1; i >= 0; i -= labelInterval) {
     if (!m_timeLabels[i].isEmpty()) {
-      double x =
-          chartRect.left() +
-          (static_cast<double>(i) / (MAX_DATA_POINTS - 1)) * chartRect.width();
-      painter.drawText(QRectF(x - 25, chartRect.bottom() + 5, 50, 20),
-                       Qt::AlignCenter, m_timeLabels[i]);
+      double x = chartRect.left() + (static_cast<double>(i) / (MAX_DATA_POINTS - 1)) * chartRect.width();
+      painter.drawText(QRectF(x - 25, chartRect.bottom() + 5, 50, 20), Qt::AlignCenter, m_timeLabels[i]);
     }
   }
 }
-void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect,
-                             const QVector<double>& data, const QColor& color) {
+void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect, const QVector<double>& data,
+                             const QColor& color) {
   if (data.isEmpty()) return;
 
   double maxValue = calculateMaxValue();
@@ -171,9 +162,7 @@ void TrafficChart::drawCurve(QPainter& painter, const QRect& chartRect,
   QPainterPath path;
 
   auto getPoint = [&](int i) -> QPointF {
-    double x =
-        chartRect.left() +
-        (static_cast<double>(i) / (MAX_DATA_POINTS - 1)) * chartRect.width();
+    double x = chartRect.left() + (static_cast<double>(i) / (MAX_DATA_POINTS - 1)) * chartRect.width();
     double y = chartRect.bottom() - (data[i] / maxValue) * chartRect.height();
     return QPointF(x, y);
   };
@@ -219,8 +208,7 @@ void TrafficChart::drawLegend(QPainter& painter) {
   const int legendHeight = 22;
   const int margin       = 12;
 
-  QRect legendRect(width() - legendWidth - margin, margin, legendWidth,
-                   legendHeight);
+  QRect legendRect(width() - legendWidth - margin, margin, legendWidth, legendHeight);
 
   // Legend background
   painter.setPen(Qt::NoPen);
@@ -241,8 +229,7 @@ void TrafficChart::drawLegend(QPainter& painter) {
   painter.drawEllipse(QPoint(itemX, centerY), 4, 4);
 
   painter.setPen(m_textColor);
-  painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight),
-                   Qt::AlignVCenter, tr("Up"));
+  painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight), Qt::AlignVCenter, tr("Up"));
 
   // Download legend
   itemX += 55;
@@ -251,8 +238,7 @@ void TrafficChart::drawLegend(QPainter& painter) {
   painter.drawEllipse(QPoint(itemX, centerY), 4, 4);
 
   painter.setPen(m_textColor);
-  painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight),
-                   Qt::AlignVCenter, tr("Down"));
+  painter.drawText(QRect(itemX + 10, legendRect.top(), 50, legendHeight), Qt::AlignVCenter, tr("Down"));
 }
 QString TrafficChart::formatSpeed(double bytesPerSecond) const {
   const char* units[]   = {"B/s", "KB/s", "MB/s", "GB/s"};

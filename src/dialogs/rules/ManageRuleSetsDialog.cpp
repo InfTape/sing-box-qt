@@ -15,9 +15,7 @@
 #include "services/rules/RuleConfigService.h"
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/RoundedMenu.h"
-ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo,
-                                           ThemeService*     themeService,
-                                           QWidget*          parent)
+ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent)
     : QDialog(parent),
       m_list(new QListWidget(this)),
       m_ruleList(new QListWidget(this)),
@@ -44,13 +42,10 @@ ManageRuleSetsDialog::ManageRuleSetsDialog(ConfigRepository* configRepo,
   // Context menus
   m_list->setContextMenuPolicy(Qt::CustomContextMenu);
   m_ruleList->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(m_list, &QListWidget::customContextMenuRequested, this,
-          &ManageRuleSetsDialog::onSetContextMenu);
-  connect(m_ruleList, &QListWidget::customContextMenuRequested, this,
-          &ManageRuleSetsDialog::onRuleContextMenu);
+  connect(m_list, &QListWidget::customContextMenuRequested, this, &ManageRuleSetsDialog::onSetContextMenu);
+  connect(m_ruleList, &QListWidget::customContextMenuRequested, this, &ManageRuleSetsDialog::onRuleContextMenu);
 
-  connect(m_list, &QListWidget::currentRowChanged, this,
-          &ManageRuleSetsDialog::onSetChanged);
+  connect(m_list, &QListWidget::currentRowChanged, this, &ManageRuleSetsDialog::onSetChanged);
 
   reload();
 }
@@ -98,19 +93,16 @@ void ManageRuleSetsDialog::reloadRules() {
       break;
     }
     const QString    outbound = obj.value("outbound").toString();
-    const QString    text = QString("%1=%2  -> %3").arg(key, payload, outbound);
-    QListWidgetItem* item = new QListWidgetItem(text, m_ruleList);
+    const QString    text     = QString("%1=%2  -> %3").arg(key, payload, outbound);
+    QListWidgetItem* item     = new QListWidgetItem(text, m_ruleList);
     item->setData(Qt::UserRole, obj);
   }
 }
 bool ManageRuleSetsDialog::confirmDelete(const QString& name) {
-  return QMessageBox::question(this, tr("Delete Rule Set"),
-                               tr("Delete rule set '%1'?").arg(name),
-                               QMessageBox::Yes | QMessageBox::No,
-                               QMessageBox::No) == QMessageBox::Yes;
+  return QMessageBox::question(this, tr("Delete Rule Set"), tr("Delete rule set '%1'?").arg(name),
+                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
 }
-void ManageRuleSetsDialog::addRuleToSet(
-    const QString& setName, const RuleConfigService::RuleEditData& dataIn) {
+void ManageRuleSetsDialog::addRuleToSet(const QString& setName, const RuleConfigService::RuleEditData& dataIn) {
   QString                         error;
   RuleConfigService::RuleEditData normalized = dataIn;
   normalized.ruleSet                         = setName;
@@ -124,13 +116,10 @@ void ManageRuleSetsDialog::addRuleToSet(
 void ManageRuleSetsDialog::onSetAdd() {
   bool          ok = false;
   const QString name =
-      QInputDialog::getText(this, tr("Add Rule Set"), tr("Rule set name"),
-                            QLineEdit::Normal, "default", &ok)
-          .trimmed();
+      QInputDialog::getText(this, tr("Add Rule Set"), tr("Rule set name"), QLineEdit::Normal, "default", &ok).trimmed();
   if (!ok || name.isEmpty()) return;
   if (!SharedRulesStore::ensureRuleSet(name)) {
-    QMessageBox::warning(this, tr("Add Rule Set"),
-                         tr("Failed to create rule set."));
+    QMessageBox::warning(this, tr("Add Rule Set"), tr("Failed to create rule set."));
     return;
   }
   reload();
@@ -141,13 +130,10 @@ void ManageRuleSetsDialog::onSetRename() {
   if (current.isEmpty() || current == "default") return;
   bool          ok = false;
   const QString name =
-      QInputDialog::getText(this, tr("Rename Rule Set"), tr("New name"),
-                            QLineEdit::Normal, current, &ok)
-          .trimmed();
+      QInputDialog::getText(this, tr("Rename Rule Set"), tr("New name"), QLineEdit::Normal, current, &ok).trimmed();
   if (!ok || name.isEmpty() || name == current) return;
   if (!SharedRulesStore::renameRuleSet(current, name)) {
-    QMessageBox::warning(this, tr("Rename Rule Set"),
-                         tr("Failed to rename rule set."));
+    QMessageBox::warning(this, tr("Rename Rule Set"), tr("Failed to rename rule set."));
     return;
   }
   reload();
@@ -158,20 +144,20 @@ void ManageRuleSetsDialog::onSetDelete() {
   if (current.isEmpty() || current == "default") return;
   if (!confirmDelete(current)) return;
   if (!SharedRulesStore::removeRuleSet(current)) {
-    QMessageBox::warning(this, tr("Delete Rule Set"),
-                         tr("Failed to delete rule set."));
+    QMessageBox::warning(this, tr("Delete Rule Set"), tr("Failed to delete rule set."));
     return;
   }
   reload();
   emit ruleSetsChanged();
 }
-void ManageRuleSetsDialog::onSetChanged() { reloadRules(); }
+void ManageRuleSetsDialog::onSetChanged() {
+  reloadRules();
+}
 void ManageRuleSetsDialog::onRuleAdd() {
   const QString set = selectedName();
   if (set.isEmpty()) return;
   QString     error;
-  QStringList outboundTags =
-      RuleConfigService::loadOutboundTags(m_configRepo, "direct", &error);
+  QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, "direct", &error);
   if (!error.isEmpty()) {
     QMessageBox::warning(this, tr("Add Rule"), error);
     return;
@@ -210,9 +196,8 @@ void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
   ThemeService* ts = m_themeService;
   if (ts) {
     menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
-      menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    });
+    connect(ts, &ThemeService::themeChanged, &menu,
+            [&menu, ts]() { menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
   }
 
   QAction* addAct    = menu.addAction(tr("Add"));
@@ -240,9 +225,8 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
   ThemeService* ts = m_themeService;
   if (ts) {
     menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    connect(ts, &ThemeService::themeChanged, &menu, [&menu, ts]() {
-      menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
-    });
+    connect(ts, &ThemeService::themeChanged, &menu,
+            [&menu, ts]() { menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary")); });
   }
 
   QAction* addAct = menu.addAction(tr("Add Rule"));

@@ -9,13 +9,10 @@ class ToggleSwitch : public QWidget {
   Q_PROPERTY(qreal offset READ offset WRITE setOffset)
 
  public:
-  explicit ToggleSwitch(QWidget*      parent       = nullptr,
-                        ThemeService* themeService = nullptr);
-  bool isChecked() const { return m_checked; }
-  void setChecked(bool checked);
-  void setThemeService(ThemeService* themeService) {
-    m_themeService = themeService;
-  }
+  explicit ToggleSwitch(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
+  bool  isChecked() const { return m_checked; }
+  void  setChecked(bool checked);
+  void  setThemeService(ThemeService* themeService) { m_themeService = themeService; }
   qreal offset() const { return m_offset; }
   void  setOffset(qreal v);
   QSize sizeHint() const override { return {52, 30}; }

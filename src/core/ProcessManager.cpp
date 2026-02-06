@@ -42,8 +42,7 @@ bool ProcessManager::isProcessRunning(const QString& name) {
 }
 bool ProcessManager::isProcessRunning(qint64 pid) {
 #ifdef Q_OS_WIN
-  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
-                                static_cast<DWORD>(pid));
+  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, static_cast<DWORD>(pid));
   if (hProcess) {
     DWORD exitCode;
     if (GetExitCodeProcess(hProcess, &exitCode)) {
@@ -60,8 +59,7 @@ bool ProcessManager::isProcessRunning(qint64 pid) {
 }
 bool ProcessManager::killProcess(qint64 pid) {
 #ifdef Q_OS_WIN
-  HANDLE hProcess =
-      OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
+  HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
   if (hProcess) {
     BOOL result = TerminateProcess(hProcess, 0);
     CloseHandle(hProcess);
@@ -106,9 +104,7 @@ void ProcessManager::cleanupKernelProcesses() {
   }
 
   for (const ProcessInfo& proc : processes) {
-    Logger::info(QString("Leftover process found: %1 (PID: %2)")
-                     .arg(proc.name)
-                     .arg(proc.pid));
+    Logger::info(QString("Leftover process found: %1 (PID: %2)").arg(proc.name).arg(proc.pid));
     killProcess(proc.pid);
   }
 }

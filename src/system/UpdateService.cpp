@@ -15,8 +15,10 @@ UpdateService::UpdateService(QObject* parent)
           "https://api.github.com/repos/xinggaoya/sing-box-windows/releases/"
           "latest") {}
 UpdateService::~UpdateService() {}
-QString UpdateService::getCurrentVersion() const { return m_currentVersion; }
-void    UpdateService::checkForUpdate() {
+QString UpdateService::getCurrentVersion() const {
+  return m_currentVersion;
+}
+void UpdateService::checkForUpdate() {
   Logger::info("Checking for updates...");
 
   m_httpClient->get(m_updateUrl, [this](bool success, const QByteArray& data) {
@@ -31,9 +33,9 @@ void    UpdateService::checkForUpdate() {
       return;
     }
 
-    QJsonObject release = doc.object();
-    QString     tagName = release["tag_name"].toString();
-    QString latestVersion = tagName.startsWith('v') ? tagName.mid(1) : tagName;
+    QJsonObject release       = doc.object();
+    QString     tagName       = release["tag_name"].toString();
+    QString     latestVersion = tagName.startsWith('v') ? tagName.mid(1) : tagName;
 
     // Compare versions.
     if (latestVersion > m_currentVersion) {
@@ -65,15 +67,11 @@ void    UpdateService::checkForUpdate() {
     }
   });
 }
-void UpdateService::downloadUpdate(const QString& url,
-                                   const QString& savePath) {
+void UpdateService::downloadUpdate(const QString& url, const QString& savePath) {
   Logger::info(QString("Downloading update: %1").arg(url));
 
   m_httpClient->download(
-      url, savePath,
-      [this](qint64 received, qint64 total) {
-        emit downloadProgress(received, total);
-      },
+      url, savePath, [this](qint64 received, qint64 total) { emit downloadProgress(received, total); },
       [this, savePath](bool success, const QByteArray&) {
         if (success) {
           Logger::info("Update download completed");

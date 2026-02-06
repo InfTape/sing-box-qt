@@ -83,16 +83,16 @@ class MainWindow : public QMainWindow {
   SettingsView*     m_settingsView;
 
   // Services.
-  AppContext&             m_ctx;
-  ProxyController*        m_proxyController;
-  ProxyUiController*      m_proxyUiController;
-  ProxyRuntimeController* m_proxyRuntimeController;
-  SubscriptionService*    m_subscriptionService;
-  SettingsStore*          m_settingsStore;
-  ThemeService*           m_themeService;
-  AdminActions*           m_adminActions;
-  SettingsController*     m_settingsController;
+  AppContext&                      m_ctx;
+  ProxyController*                 m_proxyController;
+  ProxyUiController*               m_proxyUiController;
+  ProxyRuntimeController*          m_proxyRuntimeController;
+  SubscriptionService*             m_subscriptionService;
+  SettingsStore*                   m_settingsStore;
+  ThemeService*                    m_themeService;
+  AdminActions*                    m_adminActions;
+  SettingsController*              m_settingsController;
   std::unique_ptr<RuntimeUiBinder> m_runtimeBinder;
-  int m_stopCheckSeq = 0;
+  int                              m_stopCheckSeq = 0;
 };
 #endif  // MAINWINDOW_H

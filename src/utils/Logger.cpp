@@ -12,7 +12,9 @@ Logger& Logger::instance() {
   return instance;
 }
 Logger::Logger() : m_initialized(false) {}
-Logger::~Logger() { close(); }
+Logger::~Logger() {
+  close();
+}
 void Logger::init() {
   if (m_initialized) {
     return;
@@ -44,9 +46,8 @@ QString Logger::getLogFilePath() const {
   return dataDir + "/logs/" + date + ".log";
 }
 void Logger::log(const QString& level, const QString& message) {
-  QString timestamp =
-      QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
-  QString logLine = QString("[%1] [%2] %3").arg(timestamp, level, message);
+  QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+  QString logLine   = QString("[%1] [%2] %3").arg(timestamp, level, message);
 
   // Output to console.
   qDebug().noquote() << logLine;
@@ -59,7 +60,15 @@ void Logger::log(const QString& level, const QString& message) {
     stream.flush();
   }
 }
-void Logger::debug(const QString& message) { instance().log("DEBUG", message); }
-void Logger::info(const QString& message) { instance().log("INFO", message); }
-void Logger::warn(const QString& message) { instance().log("WARN", message); }
-void Logger::error(const QString& message) { instance().log("ERROR", message); }
+void Logger::debug(const QString& message) {
+  instance().log("DEBUG", message);
+}
+void Logger::info(const QString& message) {
+  instance().log("INFO", message);
+}
+void Logger::warn(const QString& message) {
+  instance().log("WARN", message);
+}
+void Logger::error(const QString& message) {
+  instance().log("ERROR", message);
+}

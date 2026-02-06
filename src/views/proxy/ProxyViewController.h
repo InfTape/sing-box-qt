@@ -14,13 +14,13 @@ class ConfigRepository;
 struct ProxyDelayTestResult;
 /**
  * @brief ProxyViewController
- * Responsible for proxy node selection, latency/speed test logic, preventing ProxyView from touching core services directly.
+ * Responsible for proxy node selection, latency/speed test logic, preventing ProxyView from touching core services
+ * directly.
  */
 class ProxyViewController : public QObject {
   Q_OBJECT
  public:
-  explicit ProxyViewController(ConfigRepository* configRepository,
-                               QObject*          parent = nullptr);
+  explicit ProxyViewController(ConfigRepository* configRepository, QObject* parent = nullptr);
 
   void          setProxyService(ProxyService* service);
   ProxyService* proxyService() const;

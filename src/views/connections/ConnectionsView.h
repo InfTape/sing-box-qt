@@ -12,8 +12,7 @@ class ConnectionsView : public QWidget {
   Q_OBJECT
 
  public:
-  explicit ConnectionsView(ThemeService* themeService,
-                           QWidget*      parent = nullptr);
+  explicit ConnectionsView(ThemeService* themeService, QWidget* parent = nullptr);
   void setProxyService(ProxyService* service);
   void setAutoRefreshEnabled(bool enabled);
 

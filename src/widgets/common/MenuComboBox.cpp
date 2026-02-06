@@ -21,11 +21,12 @@ MenuComboBox::MenuComboBox(QWidget* parent, ThemeService* themeService)
   updateMenuStyle();
 
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            &MenuComboBox::updateMenuStyle);
+    connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
   }
 }
-void MenuComboBox::setWheelEnabled(bool enabled) { m_wheelEnabled = enabled; }
+void MenuComboBox::setWheelEnabled(bool enabled) {
+  m_wheelEnabled = enabled;
+}
 void MenuComboBox::setThemeService(ThemeService* themeService) {
   if (m_themeService == themeService) return;
   if (m_themeService) {
@@ -33,21 +34,18 @@ void MenuComboBox::setThemeService(ThemeService* themeService) {
   }
   m_themeService = themeService;
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            &MenuComboBox::updateMenuStyle);
+    connect(m_themeService, &ThemeService::themeChanged, this, &MenuComboBox::updateMenuStyle);
   }
   updateMenuStyle();
 }
 void MenuComboBox::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event);
-  QStylePainter painter(this);
+  QStylePainter        painter(this);
   QStyleOptionComboBox opt;
   initStyleOption(&opt);
 
-  const QRect textRect = style()->subControlRect(
-      QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
-  opt.currentText = fontMetrics().elidedText(
-      opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
+  const QRect textRect = style()->subControlRect(QStyle::CC_ComboBox, &opt, QStyle::SC_ComboBoxEditField, this);
+  opt.currentText      = fontMetrics().elidedText(opt.currentText, Qt::ElideRight, qMax(0, textRect.width()));
 
   painter.drawComplexControl(QStyle::CC_ComboBox, opt);
   painter.drawControl(QStyle::CE_ComboBoxLabel, opt);
@@ -84,8 +82,7 @@ void MenuComboBox::showPopup() {
       action->setIcon(QIcon(pixmap));
     }
 
-    connect(action, &QAction::triggered, this,
-            [this, i]() { setCurrentIndex(i); });
+    connect(action, &QAction::triggered, this, [this, i]() { setCurrentIndex(i); });
   }
 
   const int menuWidth = qMax(width(), 180);
@@ -107,6 +104,5 @@ void MenuComboBox::wheelEvent(QWheelEvent* event) {
 void MenuComboBox::updateMenuStyle() {
   if (!m_menu) return;
   ThemeService* ts = m_themeService;
-  if (ts)
-    m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+  if (ts) m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
 }

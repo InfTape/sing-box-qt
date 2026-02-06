@@ -23,9 +23,8 @@ class HttpClient : public QObject {
   void del(const QString& url, Callback callback);
 
   // Download file.
-  void download(const QString& url, const QString& savePath,
-                std::function<void(qint64, qint64)> progressCallback,
-                Callback                            callback);
+  void download(const QString& url, const QString& savePath, std::function<void(qint64, qint64)> progressCallback,
+                Callback callback);
 
  private:
   QNetworkRequest createRequest(const QString& url);

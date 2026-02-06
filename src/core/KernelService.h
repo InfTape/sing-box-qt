@@ -38,8 +38,7 @@ class KernelService : public QObject {
 
  private:
   bool    ensureManagerReady(QString* error = nullptr);
-  bool    sendRequestAndWait(const QString& method, const QJsonObject& params,
-                             QJsonObject* result, QString* error);
+  bool    sendRequestAndWait(const QString& method, const QJsonObject& params, QJsonObject* result, QString* error);
   QString findKernelPath() const;
   QString getDefaultConfigPath() const;
   QString findCoreManagerPath() const;

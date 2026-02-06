@@ -5,12 +5,10 @@
 #include <QStandardPaths>
 #include <QString>
 inline QString appDataRoot() {
-  QString path =
-      QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #ifdef Q_OS_WIN
   QDir dir(path);
-  while (dir.exists() &&
-         dir.dirName().compare("Roaming", Qt::CaseInsensitive) != 0) {
+  while (dir.exists() && dir.dirName().compare("Roaming", Qt::CaseInsensitive) != 0) {
     if (!dir.cdUp()) {
       break;
     }

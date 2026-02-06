@@ -59,8 +59,7 @@ QList<DataUsageTracker::Type> DataUsageTracker::allTypes() {
   return {Type::SourceIP, Type::Host, Type::Process, Type::Outbound};
 }
 
-void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload,
-                                qint64 download, qint64 nowMs) {
+void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload, qint64 download, qint64 nowMs) {
   if (label.isEmpty()) return;
 
   auto& map  = m_entries[static_cast<int>(type)];
@@ -90,7 +89,7 @@ void DataUsageTracker::addDelta(Type type, const QString& label, qint64 upload,
 void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   const QJsonArray conns = connections.value("connections").toArray();
   QSet<QString>    activeIds;
-  const qint64     nowMs = QDateTime::currentMSecsSinceEpoch();
+  const qint64     nowMs        = QDateTime::currentMSecsSinceEpoch();
   const bool       skipBaseline = (!m_initialized && m_loadedFromStorage);
   bool             changed      = false;
 
@@ -104,15 +103,15 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
     const qint64 upload   = conn.value("upload").toVariant().toLongLong();
     const qint64 download = conn.value("download").toVariant().toLongLong();
 
-    const bool hasLast = m_lastById.contains(id);
-    const auto last = m_lastById.value(id, {0, 0});
-    qint64     deltaUp = 0;
+    const bool hasLast   = m_lastById.contains(id);
+    const auto last      = m_lastById.value(id, {0, 0});
+    qint64     deltaUp   = 0;
     qint64     deltaDown = 0;
     if (hasLast) {
-      deltaUp = std::max<qint64>(0, upload - last.first);
+      deltaUp   = std::max<qint64>(0, upload - last.first);
       deltaDown = std::max<qint64>(0, download - last.second);
     } else if (!skipBaseline) {
-      deltaUp = upload;
+      deltaUp   = upload;
       deltaDown = download;
     }
 
@@ -137,7 +136,7 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
     process = normalizeProcessLabel(process);
     if (process.isEmpty()) process = QStringLiteral("Unknown");
 
-    QString outbound;
+    QString          outbound;
     const QJsonArray chains = conn.value("chains").toArray();
     if (!chains.isEmpty()) outbound = chains.first().toString();
     if (outbound.isEmpty()) outbound = conn.value("outbound").toString();
@@ -162,7 +161,7 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
     }
   }
 
-  m_initialized = true;
+  m_initialized       = true;
   m_loadedFromStorage = false;
   if (changed) {
     persistToStorage();
@@ -170,8 +169,7 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   emit dataUsageUpdated(snapshot());
 }
 
-QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(
-    const QHash<QString, Entry>& map, int limit) const {
+QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(const QHash<QString, Entry>& map, int limit) const {
   QVector<Entry> entries;
   entries.reserve(map.size());
   for (const auto& entry : map) {
@@ -189,8 +187,7 @@ QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(
   return entries;
 }
 
-DataUsageTracker::Totals DataUsageTracker::buildTotals(
-    const QHash<QString, Entry>& map) const {
+DataUsageTracker::Totals DataUsageTracker::buildTotals(const QHash<QString, Entry>& map) const {
   Totals totals;
   totals.count = map.size();
   if (map.isEmpty()) return totals;
@@ -216,8 +213,8 @@ DataUsageTracker::Totals DataUsageTracker::buildTotals(
 }
 
 QJsonObject DataUsageTracker::buildTypeSnapshot(Type type, int limit) const {
-  const auto& map = m_entries[static_cast<int>(type)];
-  const auto  list = sortedEntries(map, limit);
+  const auto& map    = m_entries[static_cast<int>(type)];
+  const auto  list   = sortedEntries(map, limit);
   const auto  totals = buildTotals(map);
 
   QJsonArray entries;
@@ -271,7 +268,7 @@ QJsonObject DataUsageTracker::buildPersistPayload() const {
     const auto& map = m_entries[static_cast<int>(type)];
     for (auto it = map.begin(); it != map.end(); ++it) {
       const Entry& entry = it.value();
-      QJsonObject obj;
+      QJsonObject  obj;
       obj.insert("upload", QString::number(entry.upload));
       obj.insert("download", QString::number(entry.download));
       obj.insert("total", QString::number(entry.total));
@@ -300,7 +297,7 @@ void DataUsageTracker::restoreFromPayload(const QJsonObject& payload) {
     for (auto it = typeObj.begin(); it != typeObj.end(); ++it) {
       const QString     label = it.key();
       const QJsonObject obj   = it.value().toObject();
-      Entry entry;
+      Entry             entry;
       entry.label       = label;
       entry.upload      = readLongLong(obj.value("upload"));
       entry.download    = readLongLong(obj.value("download"));

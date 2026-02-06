@@ -20,7 +20,6 @@ QString formatTimestamp(qint64 ms) {
 }
 QString formatExpireTime(qint64 seconds) {
   if (seconds <= 0) return QString();
-  return QObject::tr("Expires: %1")
-      .arg(QDateTime::fromSecsSinceEpoch(seconds).toString("yyyy-MM-dd HH:mm"));
+  return QObject::tr("Expires: %1").arg(QDateTime::fromSecsSinceEpoch(seconds).toString("yyyy-MM-dd HH:mm"));
 }
 }  // namespace SubscriptionFormat

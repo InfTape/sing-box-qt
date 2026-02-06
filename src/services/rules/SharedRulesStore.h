@@ -13,8 +13,7 @@ class SharedRulesStore {
   static bool        saveRules(const QString& setName, const QJsonArray& rules);
 
   static bool addRule(const QString& setName, const QJsonObject& rule);
-  static bool replaceRule(const QString& setName, const QJsonObject& oldRule,
-                          const QJsonObject& newRule);
+  static bool replaceRule(const QString& setName, const QJsonObject& oldRule, const QJsonObject& newRule);
   static bool removeRule(const QString& setName, const QJsonObject& rule);
   static bool removeRuleFromAll(const QJsonObject& rule);
 

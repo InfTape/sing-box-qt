@@ -35,15 +35,13 @@
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/rules/RuleCard.h"
-RulesView::RulesView(ConfigRepository* configRepo, ThemeService* themeService,
-                     QWidget* parent)
+RulesView::RulesView(ConfigRepository* configRepo, ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_configRepo(configRepo), m_themeService(themeService) {
   setupUI();
   updateStyle();
 
   if (m_themeService) {
-    connect(m_themeService, &ThemeService::themeChanged, this,
-            &RulesView::updateStyle);
+    connect(m_themeService, &ThemeService::themeChanged, this, &RulesView::updateStyle);
   }
 }
 void RulesView::setupUI() {
@@ -154,8 +152,7 @@ void RulesView::setupUI() {
   mainLayout->addWidget(m_scrollArea, 1);
   mainLayout->addWidget(m_emptyState, 1);
 
-  connect(m_refreshBtn, &QPushButton::clicked, this,
-          &RulesView::onRefreshClicked);
+  connect(m_refreshBtn, &QPushButton::clicked, this, &RulesView::onRefreshClicked);
   connect(m_addBtn, &QPushButton::clicked, this, &RulesView::onAddRuleClicked);
   connect(m_ruleSetBtn, &QPushButton::clicked, this, [this]() {
     ManageRuleSetsDialog dlg(m_configRepo, m_themeService, this);
@@ -165,47 +162,42 @@ void RulesView::setupUI() {
     });
     dlg.exec();
   });
-  connect(m_emptyAction, &QPushButton::clicked, this,
-          &RulesView::onEmptyActionClicked);
-  connect(m_searchEdit, &QLineEdit::textChanged, this,
-          &RulesView::onSearchChanged);
-  connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          this, &RulesView::onFilterChanged);
-  connect(m_proxyFilter, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          this, &RulesView::onFilterChanged);
+  connect(m_emptyAction, &QPushButton::clicked, this, &RulesView::onEmptyActionClicked);
+  connect(m_searchEdit, &QLineEdit::textChanged, this, &RulesView::onSearchChanged);
+  connect(m_typeFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);
+  connect(m_proxyFilter, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RulesView::onFilterChanged);
 }
 void RulesView::setProxyService(ProxyService* service) {
   m_proxyService = service;
   if (!m_proxyService) return;
 
-  connect(m_proxyService, &ProxyService::rulesReceived, this,
-          [this](const QJsonArray& rules) {
-            m_rules.clear();
-            m_rules.reserve(rules.count());
-            for (const auto& item : rules) {
-              const QJsonObject rule = item.toObject();
-              RuleItem          data;
-              data.type            = rule.value("type").toString();
-              data.payload         = rule.value("payload").toString();
-              data.proxy           = rule.value("proxy").toString();
-              const QString source = rule.value("source").toString().toLower();
-              if (source == "user" || source == "custom") {
-                data.isCustom = true;
-              } else {
-                data.isCustom = RuleUtils::isCustomPayload(data.payload);
-              }
-              m_rules.push_back(data);
-            }
+  connect(m_proxyService, &ProxyService::rulesReceived, this, [this](const QJsonArray& rules) {
+    m_rules.clear();
+    m_rules.reserve(rules.count());
+    for (const auto& item : rules) {
+      const QJsonObject rule = item.toObject();
+      RuleItem          data;
+      data.type            = rule.value("type").toString();
+      data.payload         = rule.value("payload").toString();
+      data.proxy           = rule.value("proxy").toString();
+      const QString source = rule.value("source").toString().toLower();
+      if (source == "user" || source == "custom") {
+        data.isCustom = true;
+      } else {
+        data.isCustom = RuleUtils::isCustomPayload(data.payload);
+      }
+      m_rules.push_back(data);
+    }
 
-            sortRules();
-            rebuildCards();
+    sortRules();
+    rebuildCards();
 
-            m_loading = false;
-            m_refreshBtn->setEnabled(true);
-            m_refreshBtn->setText(tr("Fetch Rules"));
-            updateFilterOptions();
-            applyFilters();
-          });
+    m_loading = false;
+    m_refreshBtn->setEnabled(true);
+    m_refreshBtn->setText(tr("Fetch Rules"));
+    updateFilterOptions();
+    applyFilters();
+  });
 }
 void RulesView::refresh() {
   if (!m_proxyService) return;
@@ -214,7 +206,9 @@ void RulesView::refresh() {
   m_refreshBtn->setText(tr("Loading..."));
   m_proxyService->fetchRules();
 }
-void RulesView::onRefreshClicked() { refresh(); }
+void RulesView::onRefreshClicked() {
+  refresh();
+}
 void RulesView::onEmptyActionClicked() {
   const bool hasFilters = !m_searchEdit->text().trimmed().isEmpty() ||
                           !m_typeFilter->currentData().toString().isEmpty() ||
@@ -229,8 +223,7 @@ void RulesView::onEmptyActionClicked() {
 }
 void RulesView::onAddRuleClicked() {
   QString           error;
-  const QStringList outboundTags =
-      RuleConfigService::loadOutboundTags(m_configRepo, QString(), &error);
+  const QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, QString(), &error);
   if (!error.isEmpty()) {
     QMessageBox::warning(this, tr("Add Rule"), error);
     return;
@@ -255,15 +248,18 @@ void RulesView::onAddRuleClicked() {
   updateFilterOptions();
   applyFilters();
 
-  auto* box = new QMessageBox(
-      QMessageBox::Information, tr("Add Rule"),
-      tr("Rules written to route.rules.\nRestart kernel or app to apply."),
-      QMessageBox::Ok, this);
+  auto* box =
+      new QMessageBox(QMessageBox::Information, tr("Add Rule"),
+                      tr("Rules written to route.rules.\nRestart kernel or app to apply."), QMessageBox::Ok, this);
   box->setAttribute(Qt::WA_DeleteOnClose);
   box->open();
 }
-void RulesView::onSearchChanged() { applyFilters(); }
-void RulesView::onFilterChanged() { applyFilters(); }
+void RulesView::onSearchChanged() {
+  applyFilters();
+}
+void RulesView::onFilterChanged() {
+  applyFilters();
+}
 void RulesView::applyFilters() {
   const QString query      = m_searchEdit->text().trimmed();
   const QString typeValue  = m_typeFilter->currentData().toString();
@@ -271,21 +267,16 @@ void RulesView::applyFilters() {
 
   m_filteredRules.clear();
   for (int i = 0; i < m_rules.size(); ++i) {
-    const RuleItem& rule = m_rules[i];
-    const QString   typeLabel = RuleUtils::displayRuleTypeLabel(rule.type);
-    const bool      matchSearch =
-        query.isEmpty() || rule.payload.contains(query, Qt::CaseInsensitive) ||
-        rule.proxy.contains(query, Qt::CaseInsensitive) ||
-        typeLabel.contains(query, Qt::CaseInsensitive);
+    const RuleItem& rule        = m_rules[i];
+    const QString   typeLabel   = RuleUtils::displayRuleTypeLabel(rule.type);
+    const bool      matchSearch = query.isEmpty() || rule.payload.contains(query, Qt::CaseInsensitive) ||
+                             rule.proxy.contains(query, Qt::CaseInsensitive) ||
+                             typeLabel.contains(query, Qt::CaseInsensitive);
     const bool matchType =
-        typeValue.isEmpty() || (typeValue == "custom" && rule.isCustom) ||
-        (typeValue == "default" && !rule.isCustom) ||
-        (typeValue != "custom" && typeValue != "default" &&
-         RuleUtils::normalizeRuleTypeKey(rule.type) == typeValue);
-    const bool matchProxy =
-        proxyValue.isEmpty() ||
-        RuleUtils::normalizeProxyValue(rule.proxy) == proxyValue;
-    const bool match = matchSearch && matchType && matchProxy;
+        typeValue.isEmpty() || (typeValue == "custom" && rule.isCustom) || (typeValue == "default" && !rule.isCustom) ||
+        (typeValue != "custom" && typeValue != "default" && RuleUtils::normalizeRuleTypeKey(rule.type) == typeValue);
+    const bool matchProxy = proxyValue.isEmpty() || RuleUtils::normalizeProxyValue(rule.proxy) == proxyValue;
+    const bool match      = matchSearch && matchType && matchProxy;
 
     if (match) {
       m_filteredRules.push_back(rule);
@@ -298,12 +289,10 @@ void RulesView::applyFilters() {
     }
   }
 
-  std::stable_sort(m_filteredRules.begin(), m_filteredRules.end(),
-                   [](const RuleItem& a, const RuleItem& b) {
-                     if (a.isCustom != b.isCustom)
-                       return a.isCustom && !b.isCustom;
-                     return false;
-                   });
+  std::stable_sort(m_filteredRules.begin(), m_filteredRules.end(), [](const RuleItem& a, const RuleItem& b) {
+    if (a.isCustom != b.isCustom) return a.isCustom && !b.isCustom;
+    return false;
+  });
 
   layoutCards();
   if (m_scrollArea) {
@@ -371,18 +360,15 @@ void RulesView::updateFilterOptions() {
   m_proxyFilter->blockSignals(false);
 }
 void RulesView::sortRules() {
-  std::stable_sort(m_rules.begin(), m_rules.end(),
-                   [](const RuleItem& a, const RuleItem& b) {
-                     if (a.isCustom != b.isCustom)
-                       return a.isCustom && !b.isCustom;
-                     return false;
-                   });
+  std::stable_sort(m_rules.begin(), m_rules.end(), [](const RuleItem& a, const RuleItem& b) {
+    if (a.isCustom != b.isCustom) return a.isCustom && !b.isCustom;
+    return false;
+  });
 }
 void RulesView::rebuildCards() {
   if (!m_gridLayout || !m_gridContainer) return;
 
-  const auto runningAnimations =
-      m_gridContainer->findChildren<QAbstractAnimation*>();
+  const auto runningAnimations = m_gridContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
     if (!anim) continue;
     anim->stop();
@@ -402,11 +388,9 @@ void RulesView::rebuildCards() {
   m_cards.clear();
 
   for (int i = 0; i < m_rules.size(); ++i) {
-    RuleCard* card =
-        new RuleCard(m_rules[i], i + 1, m_themeService, m_gridContainer);
+    RuleCard* card = new RuleCard(m_rules[i], i + 1, m_themeService, m_gridContainer);
     connect(card, &RuleCard::editRequested, this, &RulesView::handleEditRule);
-    connect(card, &RuleCard::deleteRequested, this,
-            &RulesView::handleDeleteRule);
+    connect(card, &RuleCard::deleteRequested, this, &RulesView::handleDeleteRule);
     m_cards.append(card);
   }
 }
@@ -415,8 +399,7 @@ void RulesView::layoutCards() {
 
   const int previousColumns = m_columnCount;
 
-  const auto runningAnimations =
-      m_gridContainer->findChildren<QAbstractAnimation*>();
+  const auto runningAnimations = m_gridContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
     if (!anim) continue;
     anim->stop();
@@ -443,21 +426,18 @@ void RulesView::layoutCards() {
     return;
   }
 
-  const int spacing        = m_gridLayout->spacing();
-  const int availableWidth = qMax(0, m_scrollArea->viewport()->width());
-  const int columns =
-      CardGridLayoutHelper::computeColumns(availableWidth, spacing);
+  const int spacing          = m_gridLayout->spacing();
+  const int availableWidth   = qMax(0, m_scrollArea->viewport()->width());
+  const int columns          = CardGridLayoutHelper::computeColumns(availableWidth, spacing);
   m_columnCount              = columns;
-  const int horizontalMargin = CardGridLayoutHelper::computeHorizontalMargin(
-      availableWidth, spacing, columns);
+  const int horizontalMargin = CardGridLayoutHelper::computeHorizontalMargin(availableWidth, spacing, columns);
   m_gridLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
 
   int row = 0;
   int col = 0;
   for (QWidget* w : std::as_const(widgets)) {
     if (!w) continue;
-    w->setFixedSize(CardGridLayoutHelper::kCardWidth,
-                    CardGridLayoutHelper::kCardHeight);
+    w->setFixedSize(CardGridLayoutHelper::kCardWidth, CardGridLayoutHelper::kCardHeight);
     m_gridLayout->addWidget(w, row, col, Qt::AlignLeft | Qt::AlignTop);
     ++col;
     if (col >= columns) {
@@ -470,8 +450,7 @@ void RulesView::layoutCards() {
   if (m_skipNextAnimation) {
     m_skipNextAnimation = false;
   } else {
-    CardGridAnimation::animateReflow(m_gridContainer, widgets, oldGeometries,
-                                     previousColumns, columns);
+    CardGridAnimation::animateReflow(m_gridContainer, widgets, oldGeometries, previousColumns, columns);
   }
 }
 void RulesView::updateEmptyState() {
@@ -482,10 +461,8 @@ void RulesView::updateEmptyState() {
   if (m_filteredRules.isEmpty()) {
     m_emptyState->show();
     m_scrollArea->hide();
-    m_emptyTitle->setText(hasFilters ? tr("No matching rules")
-                                     : tr("No rules yet"));
-    m_emptyAction->setText(hasFilters ? tr("Clear Filters")
-                                      : tr("Fetch Rules"));
+    m_emptyTitle->setText(hasFilters ? tr("No matching rules") : tr("No rules yet"));
+    m_emptyAction->setText(hasFilters ? tr("Clear Filters") : tr("Fetch Rules"));
   } else {
     m_emptyState->hide();
     m_scrollArea->show();
@@ -493,9 +470,8 @@ void RulesView::updateEmptyState() {
 }
 void RulesView::handleEditRule(const RuleItem& rule) {
   QString           error;
-  const QString     outbound = RuleUtils::normalizeProxyValue(rule.proxy);
-  const QStringList outboundTags =
-      RuleConfigService::loadOutboundTags(m_configRepo, outbound, &error);
+  const QString     outbound     = RuleUtils::normalizeProxyValue(rule.proxy);
+  const QStringList outboundTags = RuleConfigService::loadOutboundTags(m_configRepo, outbound, &error);
   if (!error.isEmpty()) {
     QMessageBox::warning(this, tr("Edit Match Type"), error);
     return;
@@ -514,15 +490,13 @@ void RulesView::handleEditRule(const RuleItem& rule) {
 
   RuleConfigService::RuleEditData data = dialog.editData();
   RuleItem                        updated;
-  if (!RuleConfigService::updateRule(m_configRepo, rule, data, &updated,
-                                     &error)) {
+  if (!RuleConfigService::updateRule(m_configRepo, rule, data, &updated, &error)) {
     QMessageBox::warning(this, tr("Edit Match Type"), error);
     return;
   }
 
   for (auto& r : m_rules) {
-    if (r.payload == rule.payload && r.proxy == rule.proxy &&
-        r.type == rule.type) {
+    if (r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type) {
       r = updated;
       break;
     }
@@ -533,8 +507,8 @@ void RulesView::handleEditRule(const RuleItem& rule) {
   applyFilters();
 }
 void RulesView::handleDeleteRule(const RuleItem& rule) {
-  const QMessageBox::StandardButton btn = QMessageBox::question(
-      this, tr("Delete Rule"), tr("Delete this custom rule?"));
+  const QMessageBox::StandardButton btn =
+      QMessageBox::question(this, tr("Delete Rule"), tr("Delete this custom rule?"));
   if (btn != QMessageBox::Yes) return;
 
   QString error;
@@ -543,11 +517,9 @@ void RulesView::handleDeleteRule(const RuleItem& rule) {
     return;
   }
 
-  auto it = std::remove_if(
-      m_rules.begin(), m_rules.end(), [&rule](const RuleItem& r) {
-        return r.payload == rule.payload && r.proxy == rule.proxy &&
-               r.type == rule.type;
-      });
+  auto it = std::remove_if(m_rules.begin(), m_rules.end(), [&rule](const RuleItem& r) {
+    return r.payload == rule.payload && r.proxy == rule.proxy && r.type == rule.type;
+  });
   m_rules.erase(it, m_rules.end());
   sortRules();
   rebuildCards();
@@ -563,8 +535,7 @@ void RulesView::resizeEvent(QResizeEvent* event) {
   if (!m_cards.isEmpty()) layoutCards();
 }
 bool RulesView::eventFilter(QObject* watched, QEvent* event) {
-  if (m_scrollArea && watched == m_scrollArea->viewport() &&
-      event->type() == QEvent::Resize) {
+  if (m_scrollArea && watched == m_scrollArea->viewport() && event->type() == QEvent::Resize) {
     if (!m_cards.isEmpty()) layoutCards();
   }
   return QWidget::eventFilter(watched, event);

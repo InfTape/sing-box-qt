@@ -9,7 +9,9 @@ ConfigManager& ConfigManager::instance() {
   return instance;
 }
 ConfigManager::ConfigManager(QObject* parent) : QObject(parent) {}
-QString ConfigManager::getConfigDir() const { return ConfigIO::getConfigDir(); }
+QString ConfigManager::getConfigDir() const {
+  return ConfigIO::getConfigDir();
+}
 QString ConfigManager::getActiveConfigPath() const {
   return ConfigIO::getActiveConfigPath();
 }
@@ -18,15 +20,13 @@ QJsonObject ConfigManager::generateBaseConfig() {
   ConfigMutator::applySettings(config);
   return config;
 }
-bool ConfigManager::generateConfigWithNodes(const QJsonArray& nodes,
-                                            const QString&    targetPath) {
+bool ConfigManager::generateConfigWithNodes(const QJsonArray& nodes, const QString& targetPath) {
   QJsonObject config = generateBaseConfig();
   if (!ConfigMutator::injectNodes(config, nodes)) {
     return false;
   }
 
-  const QString path =
-      targetPath.isEmpty() ? getActiveConfigPath() : targetPath;
+  const QString path = targetPath.isEmpty() ? getActiveConfigPath() : targetPath;
   return ConfigIO::saveConfig(path, config);
 }
 bool ConfigManager::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
@@ -56,13 +56,10 @@ void ConfigManager::setMixedPort(int port) {
 void ConfigManager::setApiPort(int port) {
   AppSettings::instance().setApiPort(port);
 }
-bool ConfigManager::updateClashDefaultMode(const QString& configPath,
-                                           const QString& mode,
-                                           QString*       error) {
+bool ConfigManager::updateClashDefaultMode(const QString& configPath, const QString& mode, QString* error) {
   QJsonObject config = ConfigIO::loadConfig(configPath);
   if (config.isEmpty()) {
-    if (error)
-      *error = QString("Failed to load config file: %1").arg(configPath);
+    if (error) *error = QString("Failed to load config file: %1").arg(configPath);
     return false;
   }
 
@@ -71,8 +68,7 @@ bool ConfigManager::updateClashDefaultMode(const QString& configPath,
   }
 
   if (!ConfigIO::saveConfig(configPath, config)) {
-    if (error)
-      *error = QString("Failed to save config file: %1").arg(configPath);
+    if (error) *error = QString("Failed to save config file: %1").arg(configPath);
     return false;
   }
 

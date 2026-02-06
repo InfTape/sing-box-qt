@@ -24,9 +24,8 @@ class SettingsView : public QWidget {
   Q_OBJECT
 
  public:
-  explicit SettingsView(ThemeService* themeService,
-                        SettingsController* controller = nullptr,
-                        QWidget* parent                = nullptr);
+  explicit SettingsView(ThemeService* themeService, SettingsController* controller = nullptr,
+                        QWidget* parent = nullptr);
 
  protected:
   void showEvent(QShowEvent* event) override;
@@ -39,38 +38,37 @@ class SettingsView : public QWidget {
   void onCheckUpdateClicked();
   void updateStyle();
   void onKernelInstalledReady(const QString& path, const QString& version);
-  void onKernelReleasesReady(const QStringList& versions,
-                             const QString&     latest);
+  void onKernelReleasesReady(const QStringList& versions, const QString& latest);
   void onKernelLatestReady(const QString& latest, const QString& installed);
   void onKernelDownloadProgress(int percent);
   void onKernelStatusChanged(const QString& status);
   void onKernelFinished(bool ok, const QString& message);
 
  private:
-  void     setupUI();
-  void     loadSettings();
-  bool     saveSettings();
-  void     setDownloadUi(bool downloading, const QString& message = QString());
-  void     ensureKernelInfoLoaded();
-  QWidget* buildProxySection();
-  QWidget* buildProxyAdvancedSection();
-  QWidget* buildProfileSection();
-  QWidget* buildAppearanceSection();
-  QWidget* buildKernelSection();
-  QLabel*  createSectionTitle(const QString& text);
-  QFrame*  createCard();
-  QLabel*  createFormLabel(const QString& text);
-  QSpinBox* createSpinBox(int min, int max, int value, bool blockWheel);
-  MenuComboBox* createMenuComboBox(bool expanding = false);
+  void           setupUI();
+  void           loadSettings();
+  bool           saveSettings();
+  void           setDownloadUi(bool downloading, const QString& message = QString());
+  void           ensureKernelInfoLoaded();
+  QWidget*       buildProxySection();
+  QWidget*       buildProxyAdvancedSection();
+  QWidget*       buildProfileSection();
+  QWidget*       buildAppearanceSection();
+  QWidget*       buildKernelSection();
+  QLabel*        createSectionTitle(const QString& text);
+  QFrame*        createCard();
+  QLabel*        createFormLabel(const QString& text);
+  QSpinBox*      createSpinBox(int min, int max, int value, bool blockWheel);
+  MenuComboBox*  createMenuComboBox(bool expanding = false);
   ElideLineEdit* createElideLineEdit(const QString& placeholder);
-  void     prepareFormLabelPair(QLabel* left, QLabel* right);
-  void     applySettingsToUi(const SettingsModel::Data& data);
-  void     fillGeneralFromUi(SettingsModel::Data& data) const;
-  void     fillAdvancedFromUi(SettingsModel::Data& data) const;
-  void     fillProfileFromUi(SettingsModel::Data& data) const;
-  QString  normalizeBypassText(const QString& text) const;
-  void     updateKernelVersionLabelStatus();
-  void     updateResponsiveUi();
+  void           prepareFormLabelPair(QLabel* left, QLabel* right);
+  void           applySettingsToUi(const SettingsModel::Data& data);
+  void           fillGeneralFromUi(SettingsModel::Data& data) const;
+  void           fillAdvancedFromUi(SettingsModel::Data& data) const;
+  void           fillProfileFromUi(SettingsModel::Data& data) const;
+  QString        normalizeBypassText(const QString& text) const;
+  void           updateKernelVersionLabelStatus();
+  void           updateResponsiveUi();
 
   // Proxy settings.
   QSpinBox*       m_mixedPortSpin;
@@ -84,8 +82,8 @@ class SettingsView : public QWidget {
   ToggleSwitch*   m_tunStrictRouteSwitch;
 
   // Subscription profile (advanced).
-  QLabel*      m_defaultOutboundLabel = nullptr;
-  QLabel*      m_downloadDetourLabel  = nullptr;
+  QLabel*       m_defaultOutboundLabel = nullptr;
+  QLabel*       m_downloadDetourLabel  = nullptr;
   MenuComboBox* m_defaultOutboundCombo;
   MenuComboBox* m_downloadDetourCombo;
   ToggleSwitch* m_blockAdsSwitch;
@@ -103,18 +101,18 @@ class SettingsView : public QWidget {
   MenuComboBox* m_languageCombo;
 
   // Kernel settings.
-  QLabel*        m_kernelVersionLabel;
-  QString        m_installedKernelVersion;
-  QString        m_latestKernelVersion;
-  MenuComboBox*  m_kernelVersionCombo;
-  QProgressBar*  m_kernelDownloadProgress;
-  QLabel*        m_kernelDownloadStatus;
-  QLineEdit*     m_kernelPathEdit;
-  QPushButton*   m_downloadKernelBtn;
-  QPushButton*   m_checkKernelBtn;
-  QPushButton*   m_checkUpdateBtn;
-  bool                m_isDownloading    = false;
-  bool                m_checkingInstall  = false;
+  QLabel*             m_kernelVersionLabel;
+  QString             m_installedKernelVersion;
+  QString             m_latestKernelVersion;
+  MenuComboBox*       m_kernelVersionCombo;
+  QProgressBar*       m_kernelDownloadProgress;
+  QLabel*             m_kernelDownloadStatus;
+  QLineEdit*          m_kernelPathEdit;
+  QPushButton*        m_downloadKernelBtn;
+  QPushButton*        m_checkKernelBtn;
+  QPushButton*        m_checkUpdateBtn;
+  bool                m_isDownloading      = false;
+  bool                m_checkingInstall    = false;
   SettingsController* m_settingsController = nullptr;
   bool                m_kernelInfoLoaded   = false;
   QString             m_inputStyleApplied;

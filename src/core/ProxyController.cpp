@@ -11,12 +11,8 @@
 #include "app/interfaces/SystemProxyGateway.h"
 #include "network/SubscriptionService.h"
 #include "utils/Logger.h"
-ProxyController::ProxyController(KernelService*       kernel,
-                                 SubscriptionService* subscription,
-                                 ConfigRepository*    configRepo,
-                                 SettingsStore*       settings,
-                                 SystemProxyGateway*  systemProxy,
-                                 QObject*             parent)
+ProxyController::ProxyController(KernelService* kernel, SubscriptionService* subscription, ConfigRepository* configRepo,
+                                 SettingsStore* settings, SystemProxyGateway* systemProxy, QObject* parent)
     : QObject(parent),
       m_kernel(kernel),
       m_subscription(subscription),
@@ -88,8 +84,7 @@ bool ProxyController::toggleKernel() {
   }
   return startKernel();
 }
-bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning,
-                                   QString* error) {
+bool ProxyController::setProxyMode(const QString& mode, bool restartIfRunning, QString* error) {
   const QString configPath = activeConfigPath();
   if (configPath.isEmpty()) {
     if (error) *error = QObject::tr("Failed to resolve config path");

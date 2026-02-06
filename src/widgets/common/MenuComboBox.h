@@ -12,8 +12,7 @@ class MenuComboBox : public QComboBox {
   Q_OBJECT
 
  public:
-  explicit MenuComboBox(QWidget*      parent       = nullptr,
-                        ThemeService* themeService = nullptr);
+  explicit MenuComboBox(QWidget* parent = nullptr, ThemeService* themeService = nullptr);
   void setWheelEnabled(bool enabled);
   bool isWheelEnabled() const { return m_wheelEnabled; }
   void setThemeService(ThemeService* themeService);

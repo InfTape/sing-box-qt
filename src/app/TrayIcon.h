@@ -12,10 +12,8 @@ class TrayIcon : public QSystemTrayIcon {
   Q_OBJECT
 
  public:
-  explicit TrayIcon(ProxyUiController* proxyUiController,
-                    KernelService* kernelService, ThemeService* themeService,
-                    std::function<void()> showWindow,
-                    QObject*              parent = nullptr);
+  explicit TrayIcon(ProxyUiController* proxyUiController, KernelService* kernelService, ThemeService* themeService,
+                    std::function<void()> showWindow, QObject* parent = nullptr);
   ~TrayIcon();
 
  private slots:

@@ -4,15 +4,12 @@
 #include <QElapsedTimer>
 #include <QJsonObject>
 #include <QLabel>
-#include <QTableWidget>
-#include <QVBoxLayout>
 #include <QWidget>
 
-class QCheckBox;
-class QPushButton;
+class DataUsageCard;
+class ProxyModeSection;
+class StatCard;
 class TrafficChart;
-class ToggleSwitch;
-class SegmentedControl;
 class ThemeService;
 class HomeView : public QWidget {
   Q_OBJECT
@@ -41,54 +38,21 @@ class HomeView : public QWidget {
  public slots:
   void updateStyle();
 
- private slots:
-  void onSystemProxyToggled(bool checked);
-  void onTunModeToggled(bool checked);
-  void onGlobalModeClicked();
-  void onRuleModeClicked();
-
  private:
-  void     setupUI();
-  void     setCardActive(QWidget* card, bool active);
-  QString  formatDuration(int seconds) const;
-  QString  formatTimeRange(qint64 firstMs, qint64 lastMs) const;
-  void     refreshDataUsageTable();
-  QWidget* createStatCard(const QString& iconText, const QString& accentKey,
-                          const QString& title, QLabel** valueLabel,
-                          QLabel** subLabel);
-  QWidget* createModeItem(const QString& iconText, const QString& accentKey,
-                          const QString& title, const QString& desc,
-                          QWidget* control);
+  void    setupUI();
+  QString formatDuration(int seconds) const;
 
   QWidget* m_statusBadge = nullptr;
   QWidget* m_statusDot   = nullptr;
   QLabel*  m_statusText  = nullptr;
 
-  QLabel* m_uploadValue      = nullptr;
-  QLabel* m_uploadTotal      = nullptr;
-  QLabel* m_downloadValue    = nullptr;
-  QLabel* m_downloadTotal    = nullptr;
-  QLabel* m_connectionsValue = nullptr;
-  QLabel* m_memoryLabel      = nullptr;
+  StatCard* m_uploadCard      = nullptr;
+  StatCard* m_downloadCard    = nullptr;
+  StatCard* m_connectionsCard = nullptr;
 
-  TrafficChart* m_trafficChart = nullptr;
-
-  QWidget* m_systemProxyCard = nullptr;
-  QWidget* m_tunModeCard     = nullptr;
-  QWidget* m_globalModeCard  = nullptr;
-  QWidget* m_ruleModeCard    = nullptr;
-
-  ToggleSwitch* m_systemProxySwitch = nullptr;
-  ToggleSwitch* m_tunModeSwitch     = nullptr;
-  ToggleSwitch* m_globalModeSwitch  = nullptr;
-  ToggleSwitch* m_ruleModeSwitch    = nullptr;
-
-
-  SegmentedControl*  m_rankingModeSelector  = nullptr;
-  QPushButton*       m_dataUsageClearBtn    = nullptr;
-  QTableWidget*      m_dataUsageTopTable    = nullptr;
-  QLabel*            m_dataUsageEmpty       = nullptr;
-  QJsonObject   m_dataUsageSnapshot;
+  TrafficChart*     m_trafficChart     = nullptr;
+  ProxyModeSection* m_proxyModeSection = nullptr;
+  DataUsageCard*    m_dataUsageCard    = nullptr;
 
   bool          m_isRunning     = false;
   qint64        m_totalUpload   = 0;

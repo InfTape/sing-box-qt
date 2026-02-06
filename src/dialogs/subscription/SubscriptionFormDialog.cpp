@@ -27,8 +27,7 @@ bool isJsonText(const QString& text) {
 }
 }  // namespace
 // ===== MultiSelectMenuBox =====
-MultiSelectMenuBox::MultiSelectMenuBox(QWidget*      parent,
-                                       ThemeService* themeService)
+MultiSelectMenuBox::MultiSelectMenuBox(QWidget* parent, ThemeService* themeService)
     : QWidget(parent), m_themeService(themeService) {
   m_button = new QToolButton(this);
   m_button->setText(tr("default"));
@@ -51,12 +50,10 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget*      parent,
   if (m_themeService) {
     connect(m_themeService, &ThemeService::themeChanged, this, [this]() {
       if (m_themeService) {
-        m_menu->setThemeColors(m_themeService->color("bg-secondary"),
-                               m_themeService->color("primary"));
+        m_menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
       }
     });
-    m_menu->setThemeColors(m_themeService->color("bg-secondary"),
-                           m_themeService->color("primary"));
+    m_menu->setThemeColors(m_themeService->color("bg-secondary"), m_themeService->color("primary"));
   }
 }
 void MultiSelectMenuBox::setOptions(const QStringList& options) {
@@ -73,8 +70,10 @@ void MultiSelectMenuBox::setSelected(const QStringList& selected) {
   m_selected.removeDuplicates();
   updateButtonText();
 }
-QStringList MultiSelectMenuBox::selected() const { return m_selected; }
-void        MultiSelectMenuBox::rebuildMenu() {
+QStringList MultiSelectMenuBox::selected() const {
+  return m_selected;
+}
+void MultiSelectMenuBox::rebuildMenu() {
   m_menu->clear();
   for (const QString& name : m_options) {
     QAction* act = m_menu->addAction(name);
@@ -97,8 +96,7 @@ void MultiSelectMenuBox::updateButtonText() {
   if (text.isEmpty()) text = tr("default");
   m_button->setText(text);
 }
-SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
-                                               QWidget*      parent)
+SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService, QWidget* parent)
     : QDialog(parent),
       m_nameEdit(new QLineEdit),
       m_tabs(new QTabWidget),
@@ -121,8 +119,7 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
   formLayout->addRow(tr("Name"), m_nameEdit);
 
   m_tabs->addTab(createTextTab(m_urlEdit, tr("Subscription URL")), tr("Link"));
-  m_tabs->addTab(createTextTab(m_manualEdit, tr("JSON Config")),
-                 tr("Manual Config"));
+  m_tabs->addTab(createTextTab(m_manualEdit, tr("JSON Config")), tr("Manual Config"));
   m_tabs->addTab(createTextTab(m_uriEdit, tr("URI List")), tr("URI List"));
 
   m_autoUpdateCombo->addItem(tr("Off"), 0);
@@ -132,8 +129,7 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
 
   m_hintLabel->setWordWrap(true);
   m_hintLabel->setObjectName("SubscriptionHint");
-  m_hintLabel->setText(
-      tr("Advanced templates are disabled when using the original config"));
+  m_hintLabel->setText(tr("Advanced templates are disabled when using the original config"));
   m_hintLabel->setVisible(false);
 
   QStringList initialSets = SharedRulesStore::listRuleSets();
@@ -165,14 +161,10 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
 
   connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
   connect(okBtn, &QPushButton::clicked, this, &QDialog::accept);
-  connect(m_tabs, &QTabWidget::currentChanged, this,
-          &SubscriptionFormDialog::updateState);
-  connect(m_useOriginalCheck, &QCheckBox::toggled, this,
-          &SubscriptionFormDialog::updateState);
-  connect(m_sharedRulesCheck, &QCheckBox::toggled, this,
-          &SubscriptionFormDialog::updateState);
-  connect(m_ruleSetsBox, &MultiSelectMenuBox::selectionChanged, this,
-          &SubscriptionFormDialog::updateState);
+  connect(m_tabs, &QTabWidget::currentChanged, this, &SubscriptionFormDialog::updateState);
+  connect(m_useOriginalCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
+  connect(m_sharedRulesCheck, &QCheckBox::toggled, this, &SubscriptionFormDialog::updateState);
+  connect(m_ruleSetsBox, &MultiSelectMenuBox::selectionChanged, this, &SubscriptionFormDialog::updateState);
 
   updateState();
 }
@@ -196,10 +188,8 @@ void SubscriptionFormDialog::setEditData(const SubscriptionInfo& info) {
   for (const auto& name : info.ruleSets)
     if (!options.contains(name)) options << name;
   m_ruleSetsBox->setOptions(options);
-  m_ruleSetsBox->setSelected(info.ruleSets.isEmpty() ? QStringList{"default"}
-                                                     : info.ruleSets);
-  m_autoUpdateCombo->setCurrentIndex(
-      indexForInterval(info.autoUpdateIntervalMinutes));
+  m_ruleSetsBox->setSelected(info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets);
+  m_autoUpdateCombo->setCurrentIndex(indexForInterval(info.autoUpdateIntervalMinutes));
   updateState();
 }
 QString SubscriptionFormDialog::name() const {
@@ -255,18 +245,15 @@ bool SubscriptionFormDialog::validateInput(QString* error) const {
   }
 
   if (useOriginalConfig() && m_tabs->currentIndex() != 0) {
-    QString content =
-        m_tabs->currentIndex() == 1 ? manualContent() : uriContent();
+    QString content = m_tabs->currentIndex() == 1 ? manualContent() : uriContent();
     if (!isJsonText(content)) {
-      if (error)
-        *error = tr("Original subscription only supports sing-box JSON config");
+      if (error) *error = tr("Original subscription only supports sing-box JSON config");
       return false;
     }
   }
   return true;
 }
-QWidget* SubscriptionFormDialog::createTextTab(QTextEdit*     edit,
-                                               const QString& placeholder) {
+QWidget* SubscriptionFormDialog::createTextTab(QTextEdit* edit, const QString& placeholder) {
   QWidget*     widget = new QWidget;
   QVBoxLayout* layout = new QVBoxLayout(widget);
   edit->setPlaceholderText(placeholder + "...");

@@ -15,8 +15,7 @@ class ConfigManager : public QObject {
   QString getActiveConfigPath() const;
 
   QJsonObject generateBaseConfig();
-  bool        generateConfigWithNodes(const QJsonArray& nodes,
-                                      const QString&    targetPath = QString());
+  bool        generateConfigWithNodes(const QJsonArray& nodes, const QString& targetPath = QString());
   bool        injectNodes(QJsonObject& config, const QJsonArray& nodes);
 
   void applySettingsToConfig(QJsonObject& config);
@@ -30,8 +29,7 @@ class ConfigManager : public QObject {
   void setMixedPort(int port);
   void setApiPort(int port);
 
-  bool    updateClashDefaultMode(const QString& configPath, const QString& mode,
-                                 QString* error = nullptr);
+  bool    updateClashDefaultMode(const QString& configPath, const QString& mode, QString* error = nullptr);
   QString readClashDefaultMode(const QString& configPath) const;
 
  private:

@@ -51,15 +51,13 @@ bool AppBootstrapper::createUI() {
       m_mainWindow->showAndActivate();
     }
   };
-  m_trayIcon = std::make_unique<TrayIcon>(
-      m_context ? m_context->proxyUiController() : nullptr,
-      m_context ? m_context->kernelService() : nullptr,
-      m_context ? m_context->themeService() : nullptr, showWindow, &m_app);
+  m_trayIcon = std::make_unique<TrayIcon>(m_context ? m_context->proxyUiController() : nullptr,
+                                          m_context ? m_context->kernelService() : nullptr,
+                                          m_context ? m_context->themeService() : nullptr, showWindow, &m_app);
   m_trayIcon->show();
 
   if (m_context && m_context->proxyUiController() && m_mainWindow) {
-    QObject::connect(m_context->proxyUiController(),
-                     &ProxyUiController::proxyModeChanged, m_mainWindow.get(),
+    QObject::connect(m_context->proxyUiController(), &ProxyUiController::proxyModeChanged, m_mainWindow.get(),
                      &MainWindow::setProxyModeUI);
   }
 
@@ -73,8 +71,12 @@ void AppBootstrapper::showMainWindow(bool startHidden) {
   }
   Logger::info("Application started");
 }
-MainWindow* AppBootstrapper::mainWindow() const { return m_mainWindow.get(); }
-AppContext* AppBootstrapper::context() const { return m_context.get(); }
+MainWindow* AppBootstrapper::mainWindow() const {
+  return m_mainWindow.get();
+}
+AppContext* AppBootstrapper::context() const {
+  return m_context.get();
+}
 void AppBootstrapper::setupMeta() {
   m_app.setApplicationName("Sing-Box——Qt");
   m_app.setApplicationVersion("1.1.1");

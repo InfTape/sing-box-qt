@@ -35,12 +35,10 @@ class DelayTestService : public QObject {
   void setApiToken(const QString& token);
 
   // Test single proxy delay (median of samples).
-  void testNodeDelay(const QString&          proxy,
-                     const DelayTestOptions& options = DelayTestOptions());
+  void testNodeDelay(const QString& proxy, const DelayTestOptions& options = DelayTestOptions());
 
   // Test multiple proxies (with concurrency control).
-  void testNodesDelay(const QStringList&      proxies,
-                      const DelayTestOptions& options = DelayTestOptions());
+  void testNodesDelay(const QStringList& proxies, const DelayTestOptions& options = DelayTestOptions());
 
   // Stop all tests.
   void stopAllTests();
@@ -63,19 +61,16 @@ class DelayTestService : public QObject {
 
  private:
   // Run a single delay test (internal).
-  int fetchSingleDelay(const QString& proxy, int timeoutMs,
-                       const QString& testUrl);
+  int fetchSingleDelay(const QString& proxy, int timeoutMs, const QString& testUrl);
 
   // Compute median.
   int medianValue(QVector<int>& values);
 
   // Measure proxy delay with samples.
-  ProxyDelayTestResult measureProxyDelay(const QString&          proxy,
-                                         const DelayTestOptions& options);
+  ProxyDelayTestResult measureProxyDelay(const QString& proxy, const DelayTestOptions& options);
 
   // Build Clash API URL.
-  QString buildClashDelayUrl(const QString& proxy, int timeoutMs,
-                             const QString& testUrl) const;
+  QString buildClashDelayUrl(const QString& proxy, int timeoutMs, const QString& testUrl) const;
 
   int              m_apiPort;
   bool             m_stopping;

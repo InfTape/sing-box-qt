@@ -11,8 +11,7 @@ class TrafficChart : public QWidget {
   Q_OBJECT
 
  public:
-  explicit TrafficChart(ThemeService* themeService = nullptr,
-                        QWidget*      parent       = nullptr);
+  explicit TrafficChart(ThemeService* themeService = nullptr, QWidget* parent = nullptr);
   ~TrafficChart();
 
   void updateData(qint64 uploadSpeed, qint64 downloadSpeed);
@@ -25,8 +24,7 @@ class TrafficChart : public QWidget {
  private:
   void    drawChart(QPainter& painter);
   void    drawGrid(QPainter& painter, const QRect& chartRect);
-  void    drawCurve(QPainter& painter, const QRect& chartRect,
-                    const QVector<double>& data, const QColor& color);
+  void    drawCurve(QPainter& painter, const QRect& chartRect, const QVector<double>& data, const QColor& color);
   void    drawLegend(QPainter& painter);
   QString formatSpeed(double bytesPerSecond) const;
   double  calculateMaxValue() const;
