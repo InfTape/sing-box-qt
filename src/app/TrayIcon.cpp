@@ -88,8 +88,9 @@ void TrayIcon::onShowWindow() {
 }
 
 void TrayIcon::onToggleProxy() {
-  if (!m_proxyUiController)
+  if (!m_proxyUiController) {
     return;
+  }
   QString error;
   if (!m_proxyUiController->toggleKernel(&error)) {
     QMessageBox::warning(
@@ -103,8 +104,9 @@ void TrayIcon::onToggleProxy() {
 }
 
 void TrayIcon::onSelectGlobal() {
-  if (!m_proxyUiController)
+  if (!m_proxyUiController) {
     return;
+  }
   QString error;
   if (!m_proxyUiController->switchProxyMode("global", &error)) {
     QMessageBox::warning(
@@ -117,8 +119,9 @@ void TrayIcon::onSelectGlobal() {
 }
 
 void TrayIcon::onSelectRule() {
-  if (!m_proxyUiController)
+  if (!m_proxyUiController) {
     return;
+  }
   QString error;
   if (!m_proxyUiController->switchProxyMode("rule", &error)) {
     QMessageBox::warning(
@@ -131,7 +134,7 @@ void TrayIcon::onSelectRule() {
 }
 
 void TrayIcon::onQuit() {
-  // TODO: stop the kernel process
+  // TODO(sam): stop the kernel process
   QApplication::quit();
 }
 

@@ -11,8 +11,9 @@
 
 namespace ProxyTreeUtils {
 QString nodeDisplayName(QTreeWidgetItem* item) {
-  if (!item)
+  if (!item) {
     return QString();
+  }
   QString name = item->data(0, Qt::UserRole + 3).toString();
   if (name.isEmpty()) {
     name = item->text(0);
@@ -52,11 +53,13 @@ void updateNodeRowDelay(QTreeWidget*     treeWidget,
                         QTreeWidgetItem* item,
                         const QString&   delayText,
                         const QString&   state) {
-  if (!treeWidget || !item)
+  if (!treeWidget || !item) {
     return;
+  }
   QWidget* row = treeWidget->itemWidget(item, 0);
-  if (!row)
+  if (!row) {
     return;
+  }
   if (auto* delayLabel = row->findChild<QLabel*>("ProxyNodeDelay")) {
     delayLabel->setText(delayText);
     delayLabel->setProperty("state", state);
@@ -68,11 +71,13 @@ void updateNodeRowDelay(QTreeWidget*     treeWidget,
 void updateNodeRowSelected(QTreeWidget*     treeWidget,
                            QTreeWidgetItem* item,
                            bool             selected) {
-  if (!treeWidget || !item)
+  if (!treeWidget || !item) {
     return;
+  }
   QWidget* row = treeWidget->itemWidget(item, 0);
-  if (!row)
+  if (!row) {
     return;
+  }
   row->setProperty("selected", selected);
   row->style()->unpolish(row);
   row->style()->polish(row);
@@ -82,8 +87,9 @@ void markNodeState(QTreeWidget*     treeWidget,
                    QTreeWidgetItem* item,
                    const QString&   now,
                    const QString&   delayText) {
-  if (!treeWidget || !item)
+  if (!treeWidget || !item) {
     return;
+  }
   QString baseName = item->data(0, Qt::UserRole + 3).toString();
   if (baseName.isEmpty()) {
     baseName = item->text(0);
@@ -106,8 +112,9 @@ void markNodeState(QTreeWidget*     treeWidget,
 }
 
 void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
-  if (!treeWidget)
+  if (!treeWidget) {
     return;
+  }
   QTreeWidgetItemIterator it(treeWidget);
   while (*it) {
     QTreeWidgetItem* item = *it;
@@ -123,8 +130,9 @@ void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {
 }
 
 void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
-  if (!treeWidget)
+  if (!treeWidget) {
     return;
+  }
   QTreeWidgetItemIterator it(treeWidget);
   while (*it) {
     if ((*it)->data(0, Qt::UserRole).toString() == "node") {
@@ -134,8 +142,9 @@ void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
     }
     ++it;
   }
-  if (text.isEmpty())
+  if (text.isEmpty()) {
     return;
+  }
   it = QTreeWidgetItemIterator(treeWidget);
   while (*it) {
     if ((*it)->data(0, Qt::UserRole).toString() == "group") {
@@ -156,14 +165,17 @@ void filterTreeNodes(QTreeWidget* treeWidget, const QString& text) {
 void updateGroupCurrentLabel(QTreeWidget*     treeWidget,
                              QTreeWidgetItem* groupItem,
                              const QString&   text) {
-  if (!treeWidget || !groupItem)
+  if (!treeWidget || !groupItem) {
     return;
+  }
   QWidget* groupCard = treeWidget->itemWidget(groupItem, 0);
-  if (!groupCard)
+  if (!groupCard) {
     return;
+  }
   QLabel* currentLabel = groupCard->findChild<QLabel*>("ProxyGroupCurrent");
-  if (!currentLabel)
+  if (!currentLabel) {
     return;
+  }
   currentLabel->setText(text);
   currentLabel->setVisible(true);
 }

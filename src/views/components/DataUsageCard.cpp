@@ -38,8 +38,9 @@ qint64 readLongLong(const QJsonValue& value) {
 
 QString sanitizeHostLabel(const QString& raw) {
   QString text = raw.trimmed();
-  if (text.isEmpty())
+  if (text.isEmpty()) {
     return text;
+  }
   if (text.startsWith('[')) {
     const int end = text.indexOf(']');
     if (end > 1) {
@@ -133,8 +134,9 @@ void DataUsageCard::updateDataUsage(const QJsonObject& snapshot) {
 }
 
 void DataUsageCard::refreshTable() {
-  if (!m_topTable || !m_rankingModeSelector || !m_emptyLabel)
+  if (!m_topTable || !m_rankingModeSelector || !m_emptyLabel) {
     return;
+  }
   const QString     typeKey  = m_rankingModeSelector->currentValue();
   const QJsonObject typeObj  = m_snapshot.value(typeKey).toObject();
   const QJsonArray  entries  = typeObj.value("entries").toArray();
@@ -151,11 +153,13 @@ void DataUsageCard::refreshTable() {
   for (int i = 0; i < topCount; ++i) {
     const QJsonObject entry = entries.at(i).toObject();
     const qint64      total = readLongLong(entry.value("total"));
-    if (total > maxTotal)
+    if (total > maxTotal) {
       maxTotal = total;
+    }
   }
-  if (maxTotal <= 0)
+  if (maxTotal <= 0) {
     maxTotal = 1;
+  }
   for (int i = 0; i < topCount; ++i) {
     const QJsonObject entry    = entries.at(i).toObject();
     const QString     rawLabel = entry.value("label").toString();

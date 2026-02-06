@@ -47,27 +47,31 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
 }
 
 void ProxyToolbar::setTesting(bool testing) {
-  if (!m_testAllBtn)
+  if (!m_testAllBtn) {
     return;
+  }
   m_testAllBtn->setProperty("testing", testing);
   m_testAllBtn->style()->unpolish(m_testAllBtn);
   m_testAllBtn->style()->polish(m_testAllBtn);
 }
 
 void ProxyToolbar::setTestAllText(const QString& text) {
-  if (!m_testAllBtn)
+  if (!m_testAllBtn) {
     return;
+  }
   m_testAllBtn->setText(text);
 }
 
 void ProxyToolbar::setProgress(int progress) {
-  if (!m_progressBar)
+  if (!m_progressBar) {
     return;
+  }
   m_progressBar->setValue(progress);
 }
 
 void ProxyToolbar::showProgress(bool visible) {
-  if (!m_progressBar)
+  if (!m_progressBar) {
     return;
+  }
   m_progressBar->setVisible(visible);
 }

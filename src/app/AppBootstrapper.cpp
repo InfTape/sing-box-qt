@@ -64,8 +64,9 @@ bool AppBootstrapper::createUI() {
 }
 
 void AppBootstrapper::showMainWindow(bool startHidden) {
-  if (!m_mainWindow)
+  if (!m_mainWindow) {
     return;
+  }
   if (!startHidden) {
     m_mainWindow->show();
   }

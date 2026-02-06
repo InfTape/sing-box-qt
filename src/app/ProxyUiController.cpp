@@ -34,8 +34,9 @@ bool ProxyUiController::tunModeEnabled() const {
 
 bool ProxyUiController::toggleKernel(QString* error) {
   if (!m_proxyController) {
-    if (error)
+    if (error) {
       *error = tr("Proxy controller is unavailable.");
+    }
     return false;
   }
   if (!m_proxyController->toggleKernel()) {
@@ -50,8 +51,9 @@ bool ProxyUiController::toggleKernel(QString* error) {
 
 bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
   if (!m_proxyController) {
-    if (error)
+    if (error) {
       *error = tr("Proxy controller is unavailable.");
+    }
     return false;
   }
   const bool restartKernel = m_kernelService && m_kernelService->isRunning();
@@ -64,13 +66,15 @@ bool ProxyUiController::switchProxyMode(const QString& mode, QString* error) {
 
 bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
   if (!m_proxyController || !m_settings) {
-    if (error)
+    if (error) {
       *error = tr("Proxy components are unavailable.");
+    }
     return false;
   }
   if (!m_proxyController->setSystemProxyEnabled(enabled)) {
-    if (error)
+    if (error) {
       *error = tr("Failed to update system proxy settings.");
+    }
     return false;
   }
   emit systemProxyStateChanged(m_settings->systemProxyEnabled());

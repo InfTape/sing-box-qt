@@ -43,13 +43,15 @@ SettingsModel::Data SettingsModel::load() {
 bool SettingsModel::save(const SettingsModel::Data& data,
                          QString*                   errorMessage) {
   if (data.tunMtu < 576 || data.tunMtu > 9000) {
-    if (errorMessage)
+    if (errorMessage) {
       *errorMessage = QObject::tr("MTU must be between 576 and 9000");
+    }
     return false;
   }
   if (data.systemProxyBypass.trimmed().isEmpty()) {
-    if (errorMessage)
+    if (errorMessage) {
       *errorMessage = QObject::tr("Please enter system proxy bypass domains");
+    }
     return false;
   }
   QJsonObject config           = DatabaseService::instance().getAppConfig();
@@ -74,8 +76,9 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["dnsResolver"]        = data.dnsResolver;
   config["urltestUrl"]         = data.urltestUrl;
   if (!DatabaseService::instance().saveAppConfig(config)) {
-    if (errorMessage)
+    if (errorMessage) {
       *errorMessage = QObject::tr("Failed to save settings");
+    }
     return false;
   }
   AppSettings::instance().load();

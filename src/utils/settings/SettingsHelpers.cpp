@@ -33,8 +33,9 @@ QString normalizeBypassText(const QString& text) {
 }
 
 QString resolveTextOrDefault(const QLineEdit* edit, const QString& fallback) {
-  if (!edit)
+  if (!edit) {
     return fallback;
+  }
   const QString value = edit->text().trimmed();
   return value.isEmpty() ? fallback : value;
 }

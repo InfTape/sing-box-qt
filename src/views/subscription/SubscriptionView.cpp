@@ -121,8 +121,9 @@ void SubscriptionView::setupUI() {
 
 void SubscriptionView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (ts)
+  if (ts) {
     setStyleSheet(ts->loadStyleSheet(":/styles/subscription_view.qss"));
+  }
 }
 
 void SubscriptionView::onAddClicked() {
@@ -203,13 +204,16 @@ void SubscriptionView::onAutoUpdateTimer() {
   const qint64 now         = QDateTime::currentMSecsSinceEpoch();
   for (int i = 0; i < subs.count(); ++i) {
     const SubscriptionInfo& item = subs[i];
-    if (item.isManual)
+    if (item.isManual) {
       continue;
+    }
     const int interval = item.autoUpdateIntervalMinutes;
-    if (interval <= 0)
+    if (interval <= 0) {
       continue;
-    if (item.lastUpdate <= 0)
+    }
+    if (item.lastUpdate <= 0) {
       continue;
+    }
     if (now - item.lastUpdate >= static_cast<qint64>(interval) * 60 * 1000) {
       m_subscriptionController->refresh(item.id, i == activeIndex);
     }
@@ -262,8 +266,9 @@ void SubscriptionView::handleUseSubscription(const QString& id) {
 
 void SubscriptionView::handleEditSubscription(const QString& id) {
   SubscriptionInfo target;
-  if (!getSubscriptionById(id, &target))
+  if (!getSubscriptionById(id, &target)) {
     return;
+  }
   QJsonObject singleNodeObj;
   const bool  isSingleNode =
       SubscriptionHelpers::isSingleManualNode(target, &singleNodeObj);
@@ -271,8 +276,9 @@ void SubscriptionView::handleEditSubscription(const QString& id) {
     NodeEditDialog dialog(m_themeService, this);
     dialog.setRuleSets(target.ruleSets, target.enableSharedRules);
     dialog.setNodeData(singleNodeObj);
-    if (dialog.exec() != QDialog::Accepted)
+    if (dialog.exec() != QDialog::Accepted) {
       return;
+    }
     QJsonObject newNode = dialog.nodeData();
     QJsonArray  arr;
     arr.append(newNode);
@@ -291,8 +297,9 @@ void SubscriptionView::handleEditSubscription(const QString& id) {
   } else {
     SubscriptionFormDialog dialog(m_themeService, this);
     dialog.setEditData(target);
-    if (dialog.exec() != QDialog::Accepted)
+    if (dialog.exec() != QDialog::Accepted) {
       return;
+    }
     QString error;
     if (!dialog.validateInput(&error)) {
       QMessageBox::warning(this, tr("Notice"), error);
@@ -356,8 +363,9 @@ void SubscriptionView::handleDeleteSubscription(const QString& id) {
 
 void SubscriptionView::handleCopyLink(const QString& id) {
   SubscriptionInfo target;
-  if (!getSubscriptionById(id, &target))
+  if (!getSubscriptionById(id, &target)) {
     return;
+  }
   QApplication::clipboard()->setText(target.url);
 }
 
@@ -399,8 +407,9 @@ SubscriptionCard* SubscriptionView::findCardById(const QString& id) const {
 
 void SubscriptionView::updateActiveCards(const QString& activeId) {
   for (SubscriptionCard* card : m_cards) {
-    if (!card)
+    if (!card) {
       continue;
+    }
     const bool isActive =
         !activeId.isEmpty() && card->subscriptionId() == activeId;
     card->setActive(isActive);
@@ -413,8 +422,9 @@ bool SubscriptionView::getSubscriptionById(const QString&    id,
       m_subscriptionController->subscriptions();
   for (const auto& sub : subs) {
     if (sub.id == id) {
-      if (out)
+      if (out) {
         *out = sub;
+      }
       return true;
     }
   }
@@ -424,8 +434,9 @@ bool SubscriptionView::getSubscriptionById(const QString&    id,
 void SubscriptionView::refreshList() {
   while (m_cardsLayout->count() > 0) {
     QLayoutItem* item = m_cardsLayout->takeAt(0);
-    if (!item)
+    if (!item) {
       continue;
+    }
     if (QWidget* w = item->widget()) {
       w->hide();
       w->deleteLater();
@@ -445,14 +456,16 @@ void SubscriptionView::refreshList() {
 }
 
 void SubscriptionView::layoutCards() {
-  if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer)
+  if (!m_cardsLayout || !m_scrollArea || !m_cardsContainer) {
     return;
+  }
   const int  previousColumns = m_columnCount;
   const auto runningAnimations =
       m_cardsContainer->findChildren<QAbstractAnimation*>();
   for (QAbstractAnimation* anim : runningAnimations) {
-    if (!anim)
+    if (!anim) {
       continue;
+    }
     anim->stop();
     anim->deleteLater();
   }
@@ -467,8 +480,9 @@ void SubscriptionView::layoutCards() {
       delete item;
     }
   }
-  if (m_cards.isEmpty())
+  if (m_cards.isEmpty()) {
     return;
+  }
   const int spacing        = m_cardsLayout->spacing();
   const int availableWidth = qMax(0, m_scrollArea->viewport()->width());
   const int columns =
@@ -503,27 +517,31 @@ void SubscriptionView::layoutCards() {
 
 void SubscriptionView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
-  if (m_cards.isEmpty())
+  if (m_cards.isEmpty()) {
     return;
+  }
   layoutCards();
 }
 
 bool SubscriptionView::eventFilter(QObject* watched, QEvent* event) {
   if (m_scrollArea && watched == m_scrollArea->viewport() &&
       event->type() == QEvent::Resize) {
-    if (!m_cards.isEmpty())
+    if (!m_cards.isEmpty()) {
       layoutCards();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void SubscriptionView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
-  if (m_cards.isEmpty())
+  if (m_cards.isEmpty()) {
     return;
+  }
   m_skipNextAnimation = true;
   QTimer::singleShot(0, this, [this]() {
-    if (!m_cards.isEmpty())
+    if (!m_cards.isEmpty()) {
       layoutCards();
+    }
   });
 }

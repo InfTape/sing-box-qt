@@ -160,10 +160,12 @@ void GenericNodeEditor::updateVisibility() {
     }
     if (layout) {
       auto safeSetVisible = [layout](QWidget* field, bool visible) {
-        if (!field)
+        if (!field) {
           return;
-        if (layout->indexOf(field) < 0)
+        }
+        if (layout->indexOf(field) < 0) {
           return;  // not part of this form layout
+        }
         field->setVisible(visible);
         if (QWidget* lbl = layout->labelForField(field)) {
           lbl->setVisible(visible);
@@ -301,10 +303,12 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     if ((vlessSecurity == "reality") || hasRealityField) {
       QJsonObject reality;
       reality["enabled"] = true;
-      if (m_publicKeyEdit)
+      if (m_publicKeyEdit) {
         reality["public_key"] = m_publicKeyEdit->text();
-      if (m_shortIdEdit)
+      }
+      if (m_shortIdEdit) {
         reality["short_id"] = m_shortIdEdit->text();
+      }
       tls["reality"] = reality;
     }
     if (m_fingerprintEdit && !m_fingerprintEdit->text().isEmpty()) {
@@ -332,8 +336,9 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
       const QString flow = outbound["flow"].toString();
       if (!flow.isEmpty()) {
         int idx = m_flowCombo->findText(flow);
-        if (idx >= 0)
+        if (idx >= 0) {
           m_flowCombo->setCurrentIndex(idx);
+        }
       }
     }
   } else if (m_type == "shadowsocks") {
@@ -398,8 +403,9 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
 
 bool GenericNodeEditor::validate(QString* error) const {
   if (m_serverEdit->text().isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Server address is required");
+    }
     return false;
   }
   return true;

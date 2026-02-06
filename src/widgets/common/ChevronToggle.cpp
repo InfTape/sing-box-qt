@@ -13,8 +13,9 @@ ChevronToggle::ChevronToggle(QWidget* parent) : QWidget(parent) {
 }
 
 void ChevronToggle::setExpanded(bool expanded) {
-  if (m_expanded == expanded)
+  if (m_expanded == expanded) {
     return;
+  }
   m_expanded = expanded;
   if (!m_anim) {
     m_anim = new QPropertyAnimation(this, "progress", this);

@@ -54,8 +54,9 @@ QPixmap svgIconPixmap(const QString& resourcePath,
 }
 
 void polishWidget(QWidget* widget) {
-  if (!widget)
+  if (!widget) {
     return;
+  }
   widget->style()->unpolish(widget);
   widget->style()->polish(widget);
   widget->update();
@@ -237,13 +238,15 @@ QWidget* ProxyModeSection::createModeItem(const QString& iconText,
 }
 
 void ProxyModeSection::setCardActive(QWidget* card, bool active) {
-  if (!card)
+  if (!card) {
     return;
+  }
   card->setProperty("active", active);
   for (auto* label : card->findChildren<QLabel*>()) {
     const QVariant pathVar = label->property("iconPath");
-    if (!pathVar.isValid())
+    if (!pathVar.isValid()) {
       continue;
+    }
     const QString iconPath = pathVar.toString();
     const int     iconSize = label->property("iconSize").toInt();
     const QColor  color =
@@ -263,8 +266,9 @@ bool ProxyModeSection::isSystemProxyEnabled() const {
 }
 
 void ProxyModeSection::setSystemProxyEnabled(bool enabled) {
-  if (!m_systemProxySwitch)
+  if (!m_systemProxySwitch) {
     return;
+  }
   QSignalBlocker blocker(m_systemProxySwitch);
   m_systemProxySwitch->setChecked(enabled);
   setCardActive(m_systemProxyCard, enabled);
@@ -275,8 +279,9 @@ bool ProxyModeSection::isTunModeEnabled() const {
 }
 
 void ProxyModeSection::setTunModeEnabled(bool enabled) {
-  if (!m_tunModeSwitch)
+  if (!m_tunModeSwitch) {
     return;
+  }
   QSignalBlocker blocker(m_tunModeSwitch);
   m_tunModeSwitch->setChecked(enabled);
   setCardActive(m_tunModeCard, enabled);

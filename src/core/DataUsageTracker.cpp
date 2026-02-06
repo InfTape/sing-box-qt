@@ -8,8 +8,9 @@
 
 namespace {
 QString normalizeProcessLabel(const QString& process) {
-  if (process.isEmpty())
+  if (process.isEmpty()) {
     return QString();
+  }
   int lastSlash = process.lastIndexOf('/');
   int lastBack  = process.lastIndexOf('\\');
   int idx       = std::max(lastSlash, lastBack);
@@ -63,8 +64,9 @@ void DataUsageTracker::addDelta(Type           type,
                                 qint64         upload,
                                 qint64         download,
                                 qint64         nowMs) {
-  if (label.isEmpty())
+  if (label.isEmpty()) {
     return;
+  }
   auto& map  = m_entries[static_cast<int>(type)];
   auto  iter = map.find(label);
   if (iter == map.end()) {
@@ -97,8 +99,9 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   for (const QJsonValue& item : conns) {
     const QJsonObject conn = item.toObject();
     const QString     id   = conn.value("id").toString();
-    if (id.isEmpty())
+    if (id.isEmpty()) {
       continue;
+    }
     activeIds.insert(id);
     const qint64 upload    = conn.value("upload").toVariant().toLongLong();
     const qint64 download  = conn.value("download").toVariant().toLongLong();
@@ -114,38 +117,50 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
       deltaDown = download;
     }
     m_lastById[id] = {upload, download};
-    if (deltaUp == 0 && deltaDown == 0)
+    if (deltaUp == 0 && deltaDown == 0) {
       continue;
+    }
     changed                  = true;
     const QJsonObject meta   = conn.value("metadata").toObject();
     QString           source = meta.value("sourceIP").toString();
-    if (source.isEmpty())
+    if (source.isEmpty()) {
       source = QStringLiteral("Inner");
+    }
     QString host = meta.value("host").toString();
-    if (host.isEmpty())
+    if (host.isEmpty()) {
       host = meta.value("destinationIP").toString();
-    if (host.isEmpty())
+    }
+    if (host.isEmpty()) {
       host = meta.value("destinationIp").toString();
-    if (host.isEmpty())
+    }
+    if (host.isEmpty()) {
       host = QStringLiteral("Unknown");
+    }
     QString process = meta.value("process").toString();
-    if (process.isEmpty())
+    if (process.isEmpty()) {
       process = meta.value("processName").toString();
-    if (process.isEmpty())
+    }
+    if (process.isEmpty()) {
       process = meta.value("processPath").toString();
+    }
     process = normalizeProcessLabel(process);
-    if (process.isEmpty())
+    if (process.isEmpty()) {
       process = QStringLiteral("Unknown");
+    }
     QString          outbound;
     const QJsonArray chains = conn.value("chains").toArray();
-    if (!chains.isEmpty())
+    if (!chains.isEmpty()) {
       outbound = chains.first().toString();
-    if (outbound.isEmpty())
+    }
+    if (outbound.isEmpty()) {
       outbound = conn.value("outbound").toString();
-    if (outbound.isEmpty())
+    }
+    if (outbound.isEmpty()) {
       outbound = meta.value("outbound").toString();
-    if (outbound.isEmpty())
+    }
+    if (outbound.isEmpty()) {
       outbound = QStringLiteral("DIRECT");
+    }
     addDelta(Type::SourceIP, source, deltaUp, deltaDown, nowMs);
     addDelta(Type::Host, host, deltaUp, deltaDown, nowMs);
     addDelta(Type::Process, process, deltaUp, deltaDown, nowMs);
@@ -178,8 +193,9 @@ QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(
     entries.push_back(entry);
   }
   std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
-    if (a.total == b.total)
+    if (a.total == b.total) {
       return a.label < b.label;
+    }
     return a.total > b.total;
   });
   if (limit > 0 && entries.size() > limit) {
@@ -192,8 +208,9 @@ DataUsageTracker::Totals DataUsageTracker::buildTotals(
     const QHash<QString, Entry>& map) const {
   Totals totals;
   totals.count = map.size();
-  if (map.isEmpty())
+  if (map.isEmpty()) {
     return totals;
+  }
   bool hasTime = false;
   for (const auto& entry : map) {
     totals.upload += entry.upload;

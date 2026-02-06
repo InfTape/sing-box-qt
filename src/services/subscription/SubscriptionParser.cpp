@@ -49,12 +49,13 @@ QList<QString> splitContentEntries(const QString& text) {
       int         depth = 1;
       int         i     = idx + 1;
       for (; i < len; ++i) {
-        if (text[i] == open)
+        if (text[i] == open) {
           depth++;
-        else if (text[i] == close) {
+        } else if (text[i] == close) {
           depth--;
-          if (depth == 0)
+          if (depth == 0) {
             break;
+          }
         }
       }
       const int end = (i < len) ? i + 1 : len;
@@ -63,8 +64,9 @@ QList<QString> splitContentEntries(const QString& text) {
       continue;
     }
     int nl = text.indexOf('\n', idx);
-    if (nl == -1)
+    if (nl == -1) {
       nl = len;
+    }
     const QString segment = text.mid(idx, nl - idx).trimmed();
     if (!segment.isEmpty()) {
       entries.append(segment);
@@ -97,8 +99,9 @@ QJsonArray parseJsonContentToNodes(const QByteArray& content) {
   }
   if (doc.isArray()) {
     for (const auto& item : doc.array()) {
-      if (!item.isObject())
+      if (!item.isObject()) {
         continue;
+      }
       QJsonObject single =
           SubscriptionParser::parseSingleJsonNode(item.toObject());
       if (!single.isEmpty()) {
@@ -139,8 +142,9 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   }
   auto isProxyOutbound = [](const QJsonObject& ob) -> bool {
     const QString type = ob.value("type").toString().trimmed().toLower();
-    if (type.isEmpty())
+    if (type.isEmpty()) {
       return false;
+    }
     static const QSet<QString> proxyTypes = {"socks",
                                              "http",
                                              "shadowsocks",
@@ -166,20 +170,24 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
   QJsonObject      root      = doc.object();
   const QJsonArray outbounds = root.value("outbounds").toArray();
   for (const auto& ob : outbounds) {
-    if (!ob.isObject())
+    if (!ob.isObject()) {
       continue;
+    }
     QJsonObject outbound = ob.toObject();
-    if (!isProxyOutbound(outbound))
+    if (!isProxyOutbound(outbound)) {
       continue;
+    }
     nodes.append(outbound);
   }
   const QJsonArray endpoints = root.value("endpoints").toArray();
   for (const auto& ep : endpoints) {
-    if (!ep.isObject())
+    if (!ep.isObject()) {
       continue;
+    }
     QJsonObject endpoint = ep.toObject();
-    if (!isProxyOutbound(endpoint))
+    if (!isProxyOutbound(endpoint)) {
       continue;
+    }
     nodes.append(endpoint);
   }
   return nodes;
@@ -392,8 +400,9 @@ QJsonArray SubscriptionParser::parseSip008Config(const QJsonObject& obj) {
   }
   const QJsonArray servers = obj.value("servers").toArray();
   for (const auto& serverVal : servers) {
-    if (!serverVal.isObject())
+    if (!serverVal.isObject()) {
       continue;
+    }
     const QJsonObject serverObj = serverVal.toObject();
     QJsonObject       node;
     node["type"]        = "shadowsocks";
@@ -909,10 +918,12 @@ QJsonObject SubscriptionParser::parseHysteriaURI(const QString& uri) {
   }
   QString up   = query.queryItemValue("up");
   QString down = query.queryItemValue("down");
-  if (!up.isEmpty())
+  if (!up.isEmpty()) {
     node["up_mbps"] = up;
-  if (!down.isEmpty())
+  }
+  if (!down.isEmpty()) {
     node["down_mbps"] = down;
+  }
   QJsonObject tls;
   tls["enabled"] = true;
   QString sni    = query.queryItemValue("sni");
@@ -966,13 +977,16 @@ QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   node["tag"]            = tag;
   const QString uuid     = url.userName();
   const QString password = url.password();
-  if (!uuid.isEmpty())
+  if (!uuid.isEmpty()) {
     node["uuid"] = uuid;
-  if (!password.isEmpty())
+  }
+  if (!password.isEmpty()) {
     node["password"] = password;
+  }
   const QString token = query.queryItemValue("token");
-  if (!token.isEmpty())
+  if (!token.isEmpty()) {
     node["token"] = token;
+  }
   const QString congestion =
       query.queryItemValue("congestion_control").isEmpty()
           ? query.queryItemValue("congestion")

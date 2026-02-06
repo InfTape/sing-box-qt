@@ -55,8 +55,9 @@ QString CoreManagerServer::serverName() const {
 
 void CoreManagerServer::onNewConnection() {
   QLocalSocket* socket = m_server->nextPendingConnection();
-  if (!socket)
+  if (!socket) {
     return;
+  }
   if (m_client) {
     m_client->disconnectFromServer();
     m_client->deleteLater();
@@ -77,18 +78,21 @@ void CoreManagerServer::onNewConnection() {
 }
 
 void CoreManagerServer::onReadyRead() {
-  if (!m_client)
+  if (!m_client) {
     return;
+  }
   m_buffer.append(m_client->readAll());
   while (true) {
     const int idx = m_buffer.indexOf('\n');
-    if (idx < 0)
+    if (idx < 0) {
       break;
+    }
     QByteArray line = m_buffer.left(idx);
     m_buffer.remove(0, idx + 1);
     line = line.trimmed();
-    if (line.isEmpty())
+    if (line.isEmpty()) {
       continue;
+    }
     QJsonParseError err;
     QJsonDocument   doc = QJsonDocument::fromJson(line, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -192,8 +196,9 @@ void CoreManagerServer::sendResponse(int                id,
                                      bool               ok,
                                      const QJsonObject& result,
                                      const QString&     error) {
-  if (!m_client || id < 0)
+  if (!m_client || id < 0) {
     return;
+  }
   QJsonObject obj;
   obj["id"] = id;
   obj["ok"] = ok;
@@ -210,8 +215,9 @@ void CoreManagerServer::sendResponse(int                id,
 }
 
 void CoreManagerServer::sendEvent(const QJsonObject& event) {
-  if (!m_client)
+  if (!m_client) {
     return;
+  }
   const QByteArray payload =
       QJsonDocument(event).toJson(QJsonDocument::Compact) + "\n";
   m_client->write(payload);

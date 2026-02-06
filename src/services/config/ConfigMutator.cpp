@@ -29,8 +29,9 @@ bool shouldIncludeNodeInGroups(const QJsonObject& node) {
 
 int ensureOutboundIndex(QJsonArray& outbounds, const QString& tag) {
   for (int i = 0; i < outbounds.size(); ++i) {
-    if (!outbounds[i].isObject())
+    if (!outbounds[i].isObject()) {
       continue;
+    }
     if (outbounds[i].toObject().value("tag").toString() == tag) {
       return i;
     }
@@ -83,8 +84,9 @@ void updateAppGroupSelectors(QJsonArray&        outbounds,
   for (const auto& groupTag : groups) {
     int idx = -1;
     for (int i = 0; i < outbounds.size(); ++i) {
-      if (!outbounds[i].isObject())
+      if (!outbounds[i].isObject()) {
         continue;
+      }
       if (outbounds[i].toObject().value("tag").toString() == groupTag) {
         idx = i;
         break;
@@ -107,25 +109,28 @@ void updateAppGroupSelectors(QJsonArray&        outbounds,
 int findInsertIndex(const QJsonArray& rules) {
   auto findIndex = [&rules](const QString& mode) -> int {
     for (int i = 0; i < rules.size(); ++i) {
-      if (!rules[i].isObject())
+      if (!rules[i].isObject()) {
         continue;
+      }
       const QJsonObject obj = rules[i].toObject();
-      if (obj.value("clash_mode").toString() == mode)
+      if (obj.value("clash_mode").toString() == mode) {
         return i;
+      }
     }
     return -1;
   };
   const int directIndex = findIndex("direct");
   const int globalIndex = findIndex("global");
   int       insertIndex = rules.size();
-  if (directIndex >= 0 && globalIndex >= 0)
+  if (directIndex >= 0 && globalIndex >= 0) {
     insertIndex = qMax(directIndex, globalIndex) + 1;
-  else if (directIndex >= 0)
+  } else if (directIndex >= 0) {
     insertIndex = directIndex + 1;
-  else if (globalIndex >= 0)
+  } else if (globalIndex >= 0) {
     insertIndex = globalIndex + 1;
-  else if (!rules.isEmpty())
+  } else if (!rules.isEmpty()) {
     insertIndex = 0;
+  }
   return insertIndex;
 }
 
@@ -143,8 +148,9 @@ bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
   QJsonArray    outbounds = config.value("outbounds").toArray();
   QSet<QString> existingTags;
   for (const auto& obVal : outbounds) {
-    if (!obVal.isObject())
+    if (!obVal.isObject()) {
       continue;
+    }
     const QJsonObject ob  = obVal.toObject();
     const QString     tag = ob.value("tag").toString().trimmed();
     if (!tag.isEmpty()) {
@@ -230,8 +236,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   if (dns.contains("servers") && dns["servers"].isArray()) {
     QJsonArray servers = dns.value("servers").toArray();
     for (int i = 0; i < servers.size(); ++i) {
-      if (!servers[i].isObject())
+      if (!servers[i].isObject()) {
         continue;
+      }
       QJsonObject   server = servers[i].toObject();
       const QString tag    = server.value("tag").toString();
       if (tag == ConfigConstants::DNS_PROXY) {
@@ -250,8 +257,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     QJsonArray rules    = dns.value("rules").toArray();
     int        adsIndex = -1;
     for (int i = 0; i < rules.size(); ++i) {
-      if (!rules[i].isObject())
+      if (!rules[i].isObject()) {
         continue;
+      }
       const QJsonObject rule = rules[i].toObject();
       if (rule.value("rule_set").toString() ==
           ConfigConstants::RS_GEOSITE_ADS) {
@@ -279,8 +287,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   if (config.contains("outbounds") && config["outbounds"].isArray()) {
     QJsonArray outbounds = config.value("outbounds").toArray();
     for (int i = 0; i < outbounds.size(); ++i) {
-      if (!outbounds[i].isObject())
+      if (!outbounds[i].isObject()) {
         continue;
+      }
       QJsonObject ob = outbounds[i].toObject();
       if (ob.value("tag").toString() == ConfigConstants::TAG_AUTO) {
         ob["interrupt_exist_connections"] = true;
@@ -315,8 +324,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     if (route.contains("rule_set") && route["rule_set"].isArray()) {
       QJsonArray ruleSets = route.value("rule_set").toArray();
       for (int i = 0; i < ruleSets.size(); ++i) {
-        if (!ruleSets[i].isObject())
+        if (!ruleSets[i].isObject()) {
           continue;
+        }
         QJsonObject rs = ruleSets[i].toObject();
         if (rs.value("type").toString() == "remote") {
           rs["download_detour"] = settings.normalizedDownloadDetour();
@@ -359,8 +369,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     if (route.contains("rules") && route["rules"].isArray()) {
       QJsonArray rules = route.value("rules").toArray();
       for (int i = 0; i < rules.size(); ++i) {
-        if (!rules[i].isObject())
+        if (!rules[i].isObject()) {
           continue;
+        }
         QJsonObject rule = rules[i].toObject();
         if (rule.value("clash_mode").toString() == "global") {
           rule["outbound"] = settings.normalizedDefaultOutbound();
@@ -373,8 +384,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       }
       int hijackIndex = -1;
       for (int i = 0; i < rules.size(); ++i) {
-        if (!rules[i].isObject())
+        if (!rules[i].isObject()) {
           continue;
+        }
         const QJsonObject rule = rules[i].toObject();
         if (rule.value("protocol").toString() == "dns" &&
             rule.value("action").toString() == "hijack-dns") {
@@ -394,8 +406,9 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       }
       int adsIndex = -1;
       for (int i = 0; i < rules.size(); ++i) {
-        if (!rules[i].isObject())
+        if (!rules[i].isObject()) {
           continue;
+        }
         const QJsonObject rule = rules[i].toObject();
         if (rule.value("rule_set").toString() ==
                 ConfigConstants::RS_GEOSITE_ADS &&
@@ -455,8 +468,9 @@ void ConfigMutator::applyPortSettings(QJsonObject& config) {
   if (config.contains("inbounds") && config["inbounds"].isArray()) {
     QJsonArray inbounds = config.value("inbounds").toArray();
     for (int i = 0; i < inbounds.size(); ++i) {
-      if (!inbounds[i].isObject())
+      if (!inbounds[i].isObject()) {
         continue;
+      }
       QJsonObject   inbound = inbounds[i].toObject();
       const QString type    = inbound.value("type").toString();
       const QString tag     = inbound.value("tag").toString();
@@ -475,8 +489,9 @@ bool ConfigMutator::updateClashDefaultMode(QJsonObject&   config,
                                            QString*       error) {
   const QString normalized = mode.trimmed().toLower();
   if (normalized != "global" && normalized != "rule") {
-    if (error)
+    if (error) {
       *error = QString("Invalid proxy mode: %1").arg(mode);
+    }
     return false;
   }
   QJsonObject experimental = config.value("experimental").toObject();
@@ -523,8 +538,9 @@ void ConfigMutator::applySharedRules(QJsonObject&      config,
   // duplication)
   QSet<QString> sharedSig;
   for (const auto& rv : sharedRules) {
-    if (!rv.isObject())
+    if (!rv.isObject()) {
       continue;
+    }
     sharedSig.insert(QString::fromUtf8(QJsonDocument(normalize(rv.toObject()))
                                            .toJson(QJsonDocument::Compact)));
   }
@@ -549,13 +565,15 @@ void ConfigMutator::applySharedRules(QJsonObject&      config,
     int           insertIndex = findInsertIndex(rules);
     QSet<QString> dedup;
     for (const auto& ruleVal : sharedRules) {
-      if (!ruleVal.isObject())
+      if (!ruleVal.isObject()) {
         continue;
+      }
       QJsonObject   obj = normalize(ruleVal.toObject());
       const QString sig =
           QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
-      if (dedup.contains(sig))
+      if (dedup.contains(sig)) {
         continue;
+      }
       dedup.insert(sig);
       if (insertIndex < 0 || insertIndex > rules.size()) {
         rules.append(obj);

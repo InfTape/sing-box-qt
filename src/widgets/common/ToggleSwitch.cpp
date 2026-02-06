@@ -23,23 +23,26 @@ ToggleSwitch::ToggleSwitch(QWidget* parent, ThemeService* themeService)
 }
 
 void ToggleSwitch::setChecked(bool checked) {
-  if (m_checked == checked)
+  if (m_checked == checked) {
     return;
+  }
   animateTo(checked);
   setCheckedInternal(checked, true);
 }
 
 void ToggleSwitch::setCheckedInternal(bool checked, bool emitSignal) {
   m_checked = checked;
-  if (emitSignal)
+  if (emitSignal) {
     emit toggled(m_checked);
+  }
   update();
 }
 
 void ToggleSwitch::setOffset(qreal v) {
   v = std::clamp(v, 0.0, 1.0);
-  if (qFuzzyCompare(m_offset, v))
+  if (qFuzzyCompare(m_offset, v)) {
     return;
+  }
   m_offset = v;
   update();
 }
@@ -118,8 +121,9 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
 }
 
 void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
-  if (!isEnabled() || e->button() != Qt::LeftButton)
+  if (!isEnabled() || e->button() != Qt::LeftButton) {
     return;
+  }
   m_dragging    = true;
   m_pressPos    = e->pos();
   m_pressOffset = m_offset;
@@ -128,8 +132,9 @@ void ToggleSwitch::mousePressEvent(QMouseEvent* e) {
 }
 
 void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
-  if (!m_dragging)
+  if (!m_dragging) {
     return;
+  }
   QRectF      tr     = trackRect();
   const qreal margin = tr.height() * 0.12;
   const qreal d      = tr.height() - 2 * margin;
@@ -148,21 +153,24 @@ void ToggleSwitch::mouseMoveEvent(QMouseEvent* e) {
 }
 
 void ToggleSwitch::mouseReleaseEvent(QMouseEvent* e) {
-  if (!m_dragging || e->button() != Qt::LeftButton)
+  if (!m_dragging || e->button() != Qt::LeftButton) {
     return;
+  }
   m_dragging       = false;
   const int moved  = (e->pos() - m_pressPos).manhattanLength();
   bool      target = m_checked;
-  if (moved < 4)
+  if (moved < 4) {
     target = !m_checked;
+  }
   animateTo(target);
   setCheckedInternal(target, true);
   e->accept();
 }
 
 void ToggleSwitch::keyPressEvent(QKeyEvent* e) {
-  if (!isEnabled())
+  if (!isEnabled()) {
     return;
+  }
   if (e->key() == Qt::Key_Space || e->key() == Qt::Key_Return ||
       e->key() == Qt::Key_Enter) {
     setChecked(!m_checked);

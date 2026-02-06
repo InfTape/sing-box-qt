@@ -33,10 +33,12 @@ void SegmentedControl::setItems(const QStringList& labels,
 }
 
 void SegmentedControl::setCurrentIndex(int index) {
-  if (index < 0 || index >= m_labels.size())
+  if (index < 0 || index >= m_labels.size()) {
     return;
-  if (index == m_currentIndex)
+  }
+  if (index == m_currentIndex) {
     return;
+  }
   animateToIndex(index);
   m_currentIndex = index;
   emit currentIndexChanged(index);
@@ -62,8 +64,9 @@ void SegmentedControl::setThemeService(ThemeService* themeService) {
 }
 
 void SegmentedControl::setSelectionOffset(qreal offset) {
-  if (qFuzzyCompare(m_selectionOffset, offset))
+  if (qFuzzyCompare(m_selectionOffset, offset)) {
     return;
+  }
   m_selectionOffset = offset;
   update();
 }
@@ -90,8 +93,9 @@ void SegmentedControl::recalculateLayout() const {
 }
 
 int SegmentedControl::indexAtPos(const QPoint& pos) const {
-  if (m_labels.isEmpty())
+  if (m_labels.isEmpty()) {
     return -1;
+  }
   qreal x = 4;  // left margin
   for (int i = 0; i < m_itemWidths.size(); ++i) {
     if (pos.x() >= x && pos.x() < x + m_itemWidths[i]) {
@@ -103,8 +107,9 @@ int SegmentedControl::indexAtPos(const QPoint& pos) const {
 }
 
 QRectF SegmentedControl::itemRect(int index) const {
-  if (index < 0 || index >= m_itemWidths.size())
+  if (index < 0 || index >= m_itemWidths.size()) {
     return QRectF();
+  }
   qreal x = 4;  // left margin
   for (int i = 0; i < index; ++i) {
     x += m_itemWidths[i];
@@ -114,8 +119,9 @@ QRectF SegmentedControl::itemRect(int index) const {
 }
 
 QRectF SegmentedControl::selectionRect() const {
-  if (m_labels.isEmpty())
+  if (m_labels.isEmpty()) {
     return QRectF();
+  }
   // Interpolate between current position based on offset
   int    prevIndex = static_cast<int>(m_selectionOffset);
   int    nextIndex = qMin(prevIndex + 1, m_labels.size() - 1);
@@ -192,15 +198,17 @@ void SegmentedControl::paintEvent(QPaintEvent*) {
 }
 
 void SegmentedControl::mousePressEvent(QMouseEvent* event) {
-  if (event->button() != Qt::LeftButton)
+  if (event->button() != Qt::LeftButton) {
     return;
+  }
   m_pressedIndex = indexAtPos(event->pos());
   event->accept();
 }
 
 void SegmentedControl::mouseReleaseEvent(QMouseEvent* event) {
-  if (event->button() != Qt::LeftButton)
+  if (event->button() != Qt::LeftButton) {
     return;
+  }
   int releasedIndex = indexAtPos(event->pos());
   if (releasedIndex >= 0 && releasedIndex == m_pressedIndex) {
     setCurrentIndex(releasedIndex);

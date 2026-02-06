@@ -82,12 +82,14 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
       }
     } else {
       m_proxyService->stopTrafficMonitor();
-      if (m_connectionsTimer)
+      if (m_connectionsTimer) {
         m_connectionsTimer->stop();
+      }
     }
   } else if (!running) {
-    if (m_connectionsTimer)
+    if (m_connectionsTimer) {
       m_connectionsTimer->stop();
+    }
   }
   if (!running && m_dataUsageTracker) {
     m_dataUsageTracker->resetSession();

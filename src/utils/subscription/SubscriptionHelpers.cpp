@@ -5,21 +5,24 @@
 
 namespace SubscriptionHelpers {
 bool isSingleManualNode(const SubscriptionInfo& info, QJsonObject* outNode) {
-  if (!info.isManual || info.useOriginalConfig)
+  if (!info.isManual || info.useOriginalConfig) {
     return false;
+  }
   QJsonDocument doc = QJsonDocument::fromJson(info.manualContent.toUtf8());
   if (doc.isArray()) {
     QJsonArray arr = doc.array();
     if (arr.count() == 1 && arr[0].isObject()) {
-      if (outNode)
+      if (outNode) {
         *outNode = arr[0].toObject();
+      }
       return true;
     }
   } else if (doc.isObject()) {
     QJsonObject obj = doc.object();
     if (obj.contains("type") && obj.contains("server")) {
-      if (outNode)
+      if (outNode) {
         *outNode = obj;
+      }
       return true;
     }
   }

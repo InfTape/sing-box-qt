@@ -31,8 +31,9 @@ void MenuComboBox::setWheelEnabled(bool enabled) {
 }
 
 void MenuComboBox::setThemeService(ThemeService* themeService) {
-  if (m_themeService == themeService)
+  if (m_themeService == themeService) {
     return;
+  }
   if (m_themeService) {
     disconnect(m_themeService, nullptr, this, nullptr);
   }
@@ -60,8 +61,9 @@ void MenuComboBox::paintEvent(QPaintEvent* event) {
 }
 
 void MenuComboBox::showPopup() {
-  if (!m_menu)
+  if (!m_menu) {
     return;
+  }
   m_menu->clear();
   ThemeService* ts         = m_themeService;
   QColor        checkColor = ts ? ts->color("primary") : QColor(0, 0, 200);
@@ -108,9 +110,11 @@ void MenuComboBox::wheelEvent(QWheelEvent* event) {
 }
 
 void MenuComboBox::updateMenuStyle() {
-  if (!m_menu)
+  if (!m_menu) {
     return;
+  }
   ThemeService* ts = m_themeService;
-  if (ts)
+  if (ts) {
     m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
+  }
 }

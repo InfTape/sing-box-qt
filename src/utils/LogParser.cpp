@@ -53,38 +53,52 @@ QString detectLogType(const QString& message) {
   static const QRegularExpression kDebugRe("\\bDEBUG\\b");
   static const QRegularExpression kTraceRe("\\bTRACE\\b");
   static const QRegularExpression kInfoRe("\\bINFO\\b");
-  if (upper.contains(kPanicRe))
+  if (upper.contains(kPanicRe)) {
     return "panic";
-  if (upper.contains(kFatalRe))
+  }
+  if (upper.contains(kFatalRe)) {
     return "fatal";
-  if (upper.contains(kErrorRe))
+  }
+  if (upper.contains(kErrorRe)) {
     return "error";
-  if (upper.contains(kWarnRe) || upper.contains(kWarningRe))
+  }
+  if (upper.contains(kWarnRe) || upper.contains(kWarningRe)) {
     return "warning";
-  if (upper.contains(kDebugRe))
+  }
+  if (upper.contains(kDebugRe)) {
     return "debug";
-  if (upper.contains(kTraceRe))
+  }
+  if (upper.contains(kTraceRe)) {
     return "trace";
-  if (upper.contains(kInfoRe))
+  }
+  if (upper.contains(kInfoRe)) {
     return "info";
+  }
   return "info";
 }
 
 QString logTypeLabel(const QString& type) {
-  if (type == "trace")
+  if (type == "trace") {
     return "TRACE";
-  if (type == "debug")
+  }
+  if (type == "debug") {
     return "DEBUG";
-  if (type == "info")
+  }
+  if (type == "info") {
     return "INFO";
-  if (type == "warning")
+  }
+  if (type == "warning") {
     return "WARN";
-  if (type == "error")
+  }
+  if (type == "error") {
     return "ERROR";
-  if (type == "fatal")
+  }
+  if (type == "fatal") {
     return "FATAL";
-  if (type == "panic")
+  }
+  if (type == "panic") {
     return "PANIC";
+  }
   return "INFO";
 }
 }  // namespace LogParser

@@ -12,11 +12,14 @@ QString ProxyNodeHelper::delayStateFromText(const QString& delayText) {
   if (!ok) {
     return QString();
   }
-  if (delay <= 0)
+  if (delay <= 0) {
     return "bad";
-  if (delay < 100)
+  }
+  if (delay < 100) {
     return "ok";
-  if (delay < 300)
+  }
+  if (delay < 300) {
     return "warn";
+  }
   return "bad";
 }

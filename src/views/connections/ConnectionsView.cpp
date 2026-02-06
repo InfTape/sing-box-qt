@@ -112,12 +112,15 @@ void ConnectionsView::setProxyService(ProxyService* service) {
                 QJsonObject metadata = conn["metadata"].toObject();
                 setCell(i, 0, metadata["sourceIP"].toString());
                 QString host = metadata["host"].toString();
-                if (host.isEmpty())
+                if (host.isEmpty()) {
                   host = metadata["destinationIP"].toString();
-                if (host.isEmpty())
+                }
+                if (host.isEmpty()) {
                   host = metadata["destinationIp"].toString();
-                if (host.isEmpty())
+                }
+                if (host.isEmpty()) {
                   host = tr("Unknown");
+                }
                 auto readPort = [](const QJsonValue& value) -> int {
                   if (value.isString()) {
                     bool      ok     = false;
@@ -182,8 +185,9 @@ void ConnectionsView::onRefresh() {
 }
 
 void ConnectionsView::onCloseSelected() {
-  if (!m_proxyService)
+  if (!m_proxyService) {
     return;
+  }
   QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
   QSet<int>                rows;
   for (auto item : selected) {
@@ -203,6 +207,7 @@ void ConnectionsView::onCloseAll() {
 
 void ConnectionsView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (ts)
+  if (ts) {
     setStyleSheet(ts->loadStyleSheet(":/styles/connections_view.qss"));
+  }
 }

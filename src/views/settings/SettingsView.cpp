@@ -647,8 +647,9 @@ void SettingsView::updateResponsiveUi() {
 
 void SettingsView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts)
+  if (!ts) {
     return;
+  }
   setStyleSheet(ts->loadStyleSheet(":/styles/settings_view.qss"));
   {
     QSignalBlocker blocker(m_themeCombo);
@@ -756,8 +757,9 @@ void SettingsView::loadSettings() {
 }
 
 bool SettingsView::saveSettings() {
-  if (!m_settingsController)
+  if (!m_settingsController) {
     return false;
+  }
   SettingsModel::Data data = m_settingsController->loadSettings();
   fillGeneralFromUi(data);
   fillAdvancedFromUi(data);
@@ -840,8 +842,9 @@ void SettingsView::onKernelReleasesReady(const QStringList& versions,
   setDownloadUi(false);
   m_latestKernelVersion = latest.trimmed();
   updateKernelVersionLabelStatus();
-  if (!m_kernelVersionCombo)
+  if (!m_kernelVersionCombo) {
     return;
+  }
   m_kernelVersionCombo->clear();
   m_kernelVersionCombo->addItem(tr("Latest version"));
   for (const QString& ver : versions) {

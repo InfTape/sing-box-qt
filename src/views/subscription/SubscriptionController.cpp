@@ -27,8 +27,9 @@ void SubscriptionController::addUrl(const QString& url,
                                     bool           applyRuntime,
                                     bool           enableSharedRules,
                                     const QStringList& ruleSets) {
-  if (!m_service)
+  if (!m_service) {
     return;
+  }
   m_service->addUrlSubscription(url,
                                 name,
                                 useOriginalConfig,
@@ -45,8 +46,9 @@ void SubscriptionController::addManual(const QString&     content,
                                        bool               applyRuntime,
                                        bool               enableSharedRules,
                                        const QStringList& ruleSets) {
-  if (!m_service)
+  if (!m_service) {
     return;
+  }
   m_service->addManualSubscription(content,
                                    name,
                                    useOriginalConfig,
@@ -57,20 +59,23 @@ void SubscriptionController::addManual(const QString&     content,
 }
 
 void SubscriptionController::refresh(const QString& id, bool applyRuntime) {
-  if (!m_service)
+  if (!m_service) {
     return;
+  }
   m_service->refreshSubscription(id, applyRuntime);
 }
 
 bool SubscriptionController::rollback(const QString& id) {
-  if (!m_service)
+  if (!m_service) {
     return false;
+  }
   return m_service->rollbackSubscriptionConfig(id);
 }
 
 void SubscriptionController::remove(const QString& id) {
-  if (!m_service)
+  if (!m_service) {
     return;
+  }
   m_service->removeSubscription(id);
 }
 
@@ -83,8 +88,9 @@ void SubscriptionController::updateSubscription(const QString& id,
                                                 int  autoUpdateIntervalMinutes,
                                                 bool enableSharedRules,
                                                 const QStringList& ruleSets) {
-  if (!m_service)
+  if (!m_service) {
     return;
+  }
   m_service->updateSubscriptionMeta(id,
                                     name,
                                     url,
@@ -98,7 +104,8 @@ void SubscriptionController::updateSubscription(const QString& id,
 
 bool SubscriptionController::saveCurrentConfig(const QString& content,
                                                bool           applyRuntime) {
-  if (!m_service)
+  if (!m_service) {
     return false;
+  }
   return m_service->saveCurrentConfig(content, applyRuntime);
 }

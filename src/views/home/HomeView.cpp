@@ -22,8 +22,9 @@ QString rgba(const QColor& color, double alpha) {
 }
 
 void polishWidget(QWidget* widget) {
-  if (!widget)
+  if (!widget) {
     return;
+  }
   widget->style()->unpolish(widget);
   widget->style()->polish(widget);
   widget->update();
@@ -152,8 +153,9 @@ void HomeView::setupUI() {
 }
 
 void HomeView::updateStyle() {
-  if (!m_themeService)
+  if (!m_themeService) {
     return;
+  }
   QColor                 primary = m_themeService->color("primary");
   QColor                 success = m_themeService->color("success");
   QColor                 warning = m_themeService->color("warning");
@@ -200,8 +202,9 @@ bool HomeView::isSystemProxyEnabled() const {
 }
 
 void HomeView::setSystemProxyEnabled(bool enabled) {
-  if (!m_proxyModeSection)
+  if (!m_proxyModeSection) {
     return;
+  }
   m_proxyModeSection->setSystemProxyEnabled(enabled);
 }
 
@@ -210,14 +213,16 @@ bool HomeView::isTunModeEnabled() const {
 }
 
 void HomeView::setTunModeEnabled(bool enabled) {
-  if (!m_proxyModeSection)
+  if (!m_proxyModeSection) {
     return;
+  }
   m_proxyModeSection->setTunModeEnabled(enabled);
 }
 
 void HomeView::setProxyMode(const QString& mode) {
-  if (!m_proxyModeSection)
+  if (!m_proxyModeSection) {
     return;
+  }
   m_proxyModeSection->setProxyMode(mode);
 }
 
@@ -236,26 +241,34 @@ void HomeView::updateStatus(bool running) {
     m_totalUpload   = 0;
     m_totalDownload = 0;
     m_trafficTimer.invalidate();
-    if (m_trafficChart)
+    if (m_trafficChart) {
       m_trafficChart->clear();
-    if (m_uploadCard)
+    }
+    if (m_uploadCard) {
       m_uploadCard->setValueText(tr("0 B/s"));
-    if (m_downloadCard)
+    }
+    if (m_downloadCard) {
       m_downloadCard->setValueText(tr("0 B/s"));
-    if (m_uploadCard)
+    }
+    if (m_uploadCard) {
       m_uploadCard->setSubText(tr("Total: 0 B"));
-    if (m_downloadCard)
+    }
+    if (m_downloadCard) {
       m_downloadCard->setSubText(tr("Total: 0 B"));
+    }
   }
 }
 
 void HomeView::updateTraffic(qint64 upload, qint64 download) {
-  if (m_uploadCard)
+  if (m_uploadCard) {
     m_uploadCard->setValueText(formatBytes(upload) + "/s");
-  if (m_downloadCard)
+  }
+  if (m_downloadCard) {
     m_downloadCard->setValueText(formatBytes(download) + "/s");
-  if (m_trafficChart)
+  }
+  if (m_trafficChart) {
     m_trafficChart->updateData(upload, download);
+  }
   if (!m_trafficTimer.isValid()) {
     m_trafficTimer.start();
   } else {
@@ -266,16 +279,19 @@ void HomeView::updateTraffic(qint64 upload, qint64 download) {
       m_totalDownload += static_cast<qint64>(download * seconds);
     }
   }
-  if (m_uploadCard)
+  if (m_uploadCard) {
     m_uploadCard->setSubText(tr("Total: %1").arg(formatBytes(m_totalUpload)));
-  if (m_downloadCard)
+  }
+  if (m_downloadCard) {
     m_downloadCard->setSubText(
         tr("Total: %1").arg(formatBytes(m_totalDownload)));
+  }
 }
 
 void HomeView::updateUptime(int seconds) {
-  if (!m_statusBadge)
+  if (!m_statusBadge) {
     return;
+  }
   if (seconds <= 0) {
     m_statusBadge->setToolTip(QString());
     return;
@@ -284,16 +300,19 @@ void HomeView::updateUptime(int seconds) {
 }
 
 void HomeView::updateConnections(int count, qint64 memoryUsage) {
-  if (m_connectionsCard)
+  if (m_connectionsCard) {
     m_connectionsCard->setValueText(QString::number(count));
-  if (m_connectionsCard)
+  }
+  if (m_connectionsCard) {
     m_connectionsCard->setSubText(
         tr("Memory usage: %1").arg(formatBytes(memoryUsage)));
+  }
 }
 
 void HomeView::updateDataUsage(const QJsonObject& snapshot) {
-  if (m_dataUsageCard)
+  if (m_dataUsageCard) {
     m_dataUsageCard->updateDataUsage(snapshot);
+  }
 }
 
 QString HomeView::formatBytes(qint64 bytes) const {

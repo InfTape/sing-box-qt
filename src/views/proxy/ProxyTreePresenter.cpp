@@ -21,24 +21,28 @@ QString normalizeNodeName(QString name) {
 
 QString asCountText(const ProxyTreePresenter::CountFormatter& formatter,
                     int                                       count) {
-  if (formatter)
+  if (formatter) {
     return formatter(count);
+  }
   return QString("%1 nodes").arg(count);
 }
 
 QString asCurrentText(const ProxyTreePresenter::CurrentFormatter& formatter,
                       const QString&                              proxy) {
-  if (formatter)
+  if (formatter) {
     return formatter(proxy);
+  }
   return QString("Current: %1").arg(proxy);
 }
 
 QString asDelayText(const ProxyTreePresenter::DelayFormatter& formatter,
                     int                                       delay) {
-  if (formatter)
+  if (formatter) {
     return formatter(delay);
-  if (delay <= 0)
+  }
+  if (delay <= 0) {
     return QString("Timeout");
+  }
   return QString::number(delay) + " ms";
 }
 }  // namespace
@@ -55,8 +59,9 @@ QJsonObject ProxyTreePresenter::render(
     const DelayFormatter&   formatDelay,
     const CountFormatter&   formatNodeCount,
     const CurrentFormatter& formatCurrent) const {
-  if (!m_treeWidget)
+  if (!m_treeWidget) {
     return QJsonObject();
+  }
   QSet<QString>           expandedGroups;
   QString                 selectedNode;
   QTreeWidgetItemIterator oldIt(m_treeWidget);
@@ -176,8 +181,9 @@ void ProxyTreePresenter::updateSelectedProxy(
     const QString&          group,
     const QString&          proxy,
     const CurrentFormatter& formatCurrent) const {
-  if (group.isEmpty() || proxy.isEmpty() || !m_treeWidget)
+  if (group.isEmpty() || proxy.isEmpty() || !m_treeWidget) {
     return;
+  }
   if (cachedProxies.contains(group)) {
     QJsonObject groupProxy = cachedProxies.value(group).toObject();
     groupProxy["now"]      = proxy;
@@ -191,14 +197,16 @@ void ProxyTreePresenter::updateSelectedProxy(
       break;
     }
   }
-  if (!groupItem)
+  if (!groupItem) {
     return;
+  }
   ProxyTreeUtils::updateGroupCurrentLabel(
       m_treeWidget, groupItem, asCurrentText(formatCurrent, proxy));
   for (int i = 0; i < groupItem->childCount(); ++i) {
     QTreeWidgetItem* child = groupItem->child(i);
-    if (!child)
+    if (!child) {
       continue;
+    }
     ProxyTreeUtils::markNodeState(m_treeWidget, child, proxy, child->text(2));
   }
 }

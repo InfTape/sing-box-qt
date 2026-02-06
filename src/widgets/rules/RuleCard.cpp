@@ -85,10 +85,12 @@ void RuleCard::setupUI() {
   payloadLabel->setObjectName("CardInfoText");
   payloadLabel->setWordWrap(true);
   QString typeLabelText = RuleUtils::displayRuleTypeLabel(m_rule.type);
-  if (!typeLabelText.isEmpty())
+  if (!typeLabelText.isEmpty()) {
     typeLabelText[0] = typeLabelText[0].toUpper();
-  if (typeLabelText.isEmpty())
+  }
+  if (typeLabelText.isEmpty()) {
     typeLabelText = tr("Default");
+  }
   QLabel* typeLabel = new QLabel(tr("Type: %1").arg(typeLabelText), infoPanel);
   typeLabel->setObjectName("CardInfoText");
   infoLayout->addWidget(payloadLabel);
@@ -111,8 +113,9 @@ void RuleCard::setupUI() {
 
 void RuleCard::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts)
+  if (!ts) {
     return;
+  }
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   if (qss.isEmpty()) {
     qss = ts->loadStyleSheet(":/styles/subscription_card.qss");
@@ -121,8 +124,9 @@ void RuleCard::updateStyle() {
 }
 
 void RuleCard::updateMenuTheme() {
-  if (!m_menu)
+  if (!m_menu) {
     return;
+  }
   ThemeService* ts = m_themeService;
   if (ts) {
     m_menu->setThemeColors(ts->color("bg-secondary"), ts->color("primary"));

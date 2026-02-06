@@ -12,14 +12,16 @@ void animateReflow(QWidget*                      container,
                    const QHash<QWidget*, QRect>& oldGeometries,
                    int                           previousColumns,
                    int                           newColumns) {
-  if (!container)
+  if (!container) {
     return;
+  }
   const bool columnChanged =
       previousColumns > 0 && previousColumns != newColumns;
   auto* group = new QParallelAnimationGroup(static_cast<QObject*>(container));
   for (QWidget* w : widgets) {
-    if (!w)
+    if (!w) {
       continue;
+    }
     const QRect endRect   = w->geometry();
     QRect       startRect = oldGeometries.value(w, endRect);
     // 跳过从原点 (0,0) 开始的新卡片动画，直接放到目标位置
@@ -29,8 +31,9 @@ void animateReflow(QWidget*                      container,
       continue;
     }
     Q_UNUSED(columnChanged)
-    if (startRect == endRect)
+    if (startRect == endRect) {
       continue;
+    }
     w->setGeometry(startRect);
     auto* anim =
         new QPropertyAnimation(static_cast<QObject*>(w), "geometry", group);
@@ -39,8 +42,9 @@ void animateReflow(QWidget*                      container,
     anim->setStartValue(startRect);
     anim->setEndValue(endRect);
     QObject::connect(w, &QObject::destroyed, anim, [anim]() {
-      if (anim->state() != QAbstractAnimation::Stopped)
+      if (anim->state() != QAbstractAnimation::Stopped) {
         anim->stop();
+      }
     });
     group->addAnimation(anim);
   }

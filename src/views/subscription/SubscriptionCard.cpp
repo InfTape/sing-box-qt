@@ -33,8 +33,9 @@ SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info,
 }
 
 void SubscriptionCard::setActive(bool active) {
-  if (m_active == active)
+  if (m_active == active) {
     return;
+  }
   m_active = active;
   applyActiveState();
   updateStyle();
@@ -226,8 +227,9 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
 
 void SubscriptionCard::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts)
+  if (!ts) {
     return;
+  }
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   if (qss.isEmpty()) {
     qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // Fallback

@@ -61,17 +61,21 @@ void NodeEditDialog::setupUI() {
     RoundedMenu* menu = new RoundedMenu(this);
     // Use tray menu style, reusing checkmark appearance
     menu->setObjectName("TrayMenu");
-    if (m_themeService)
+    if (m_themeService) {
       menu->setThemeColors(m_themeService->color("bg-secondary"),
                            m_themeService->color("primary"));
+    }
     QStringList options = SharedRulesStore::listRuleSets();
-    for (const auto& name : m_ruleSets)
-      if (!options.contains(name))
+    for (const auto& name : m_ruleSets) {
+      if (!options.contains(name)) {
         options << name;
+      }
+    }
     options.removeDuplicates();
     options.removeAll(QString());
-    if (!options.contains("default"))
+    if (!options.contains("default")) {
       options.prepend("default");
+    }
     for (const QString& name : options) {
       QAction* act = menu->addAction(name);
       act->setCheckable(true);
@@ -79,13 +83,15 @@ void NodeEditDialog::setupUI() {
                       (m_ruleSets.isEmpty() && name == "default"));
       connect(act, &QAction::triggered, this, [this, name, act]() {
         if (act->isChecked()) {
-          if (!m_ruleSets.contains(name))
+          if (!m_ruleSets.contains(name)) {
             m_ruleSets << name;
+          }
         } else {
           m_ruleSets.removeAll(name);
         }
-        if (m_ruleSets.isEmpty())
+        if (m_ruleSets.isEmpty()) {
           m_ruleSets << "default";
+        }
         m_ruleSets.removeDuplicates();
         m_ruleSetsBtn->setText(m_ruleSets.join(", "));
       });
@@ -135,8 +141,9 @@ void NodeEditDialog::setupUI() {
           this,
           &NodeEditDialog::onTypeChanged);
   connect(m_tabs, &QTabWidget::currentChanged, this, [this](int index) {
-    if (index == 1)
+    if (index == 1) {
       updatePreview();
+    }
   });
   // Initial editor
   onTypeChanged(m_typeCombo->currentText());
@@ -156,8 +163,9 @@ void NodeEditDialog::onTypeChanged(const QString& type) {
   if (m_currentEditor) {
     // Insert editor before bottom stretch to keep bottom spacing
     int stretchIndex = m_editorContainer->count() - 1;
-    if (stretchIndex < 0)
+    if (stretchIndex < 0) {
       stretchIndex = 0;
+    }
     m_editorContainer->insertWidget(stretchIndex, m_currentEditor);
     // Connect data changed to nothing for now, or live preview if needed
   }
@@ -192,43 +200,51 @@ void NodeEditDialog::setNodeData(const QJsonObject& node) {
 void NodeEditDialog::setRuleSets(const QStringList& sets, bool enableShared) {
   m_sharedRulesCheck->setChecked(enableShared);
   m_ruleSets = sets;
-  if (m_ruleSets.isEmpty())
+  if (m_ruleSets.isEmpty()) {
     m_ruleSets << "default";
+  }
   m_ruleSets.removeDuplicates();
   m_ruleSetsBtn->setText(m_ruleSets.join(", "));
   // rebuild menu to reflect selections
   QMetaObject::invokeMethod(
       m_ruleSetsBtn,
       [this, enableShared]() {
-        if (m_ruleSetsBtn->menu())
+        if (m_ruleSetsBtn->menu()) {
           m_ruleSetsBtn->menu()->deleteLater();
+        }
         // rebuild
         RoundedMenu* menu = new RoundedMenu(this);
         menu->setObjectName("TrayMenu");
-        if (m_themeService)
+        if (m_themeService) {
           menu->setThemeColors(m_themeService->color("bg-secondary"),
                                m_themeService->color("primary"));
+        }
         QStringList options = SharedRulesStore::listRuleSets();
-        for (const auto& name : m_ruleSets)
-          if (!options.contains(name))
+        for (const auto& name : m_ruleSets) {
+          if (!options.contains(name)) {
             options << name;
+          }
+        }
         options.removeDuplicates();
         options.removeAll(QString());
-        if (!options.contains("default"))
+        if (!options.contains("default")) {
           options.prepend("default");
+        }
         for (const QString& name : options) {
           QAction* act = menu->addAction(name);
           act->setCheckable(true);
           act->setChecked(m_ruleSets.contains(name));
           connect(act, &QAction::triggered, this, [this, name, act]() {
             if (act->isChecked()) {
-              if (!m_ruleSets.contains(name))
+              if (!m_ruleSets.contains(name)) {
                 m_ruleSets << name;
+              }
             } else {
               m_ruleSets.removeAll(name);
             }
-            if (m_ruleSets.isEmpty())
+            if (m_ruleSets.isEmpty()) {
               m_ruleSets << "default";
+            }
             m_ruleSets.removeDuplicates();
             m_ruleSetsBtn->setText(m_ruleSets.join(", "));
           });
@@ -247,8 +263,9 @@ QJsonObject NodeEditDialog::nodeData() const {
 }
 
 QStringList NodeEditDialog::ruleSets() const {
-  if (m_ruleSets.isEmpty())
+  if (m_ruleSets.isEmpty()) {
     return {"default"};
+  }
   return m_ruleSets;
 }
 

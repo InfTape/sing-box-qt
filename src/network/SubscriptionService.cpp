@@ -62,20 +62,26 @@ SubscriptionService::SubscriptionService(ConfigRepository* configRepo,
       const QJsonArray arr = obj.value("rule_sets").toArray();
       for (const auto& v : arr) {
         const QString name = v.toString().trimmed();
-        if (!name.isEmpty())
+        if (!name.isEmpty()) {
           info.ruleSets.append(name);
+        }
       }
     }
-    if (!obj.contains("subscription_upload"))
+    if (!obj.contains("subscription_upload")) {
       info.subscriptionUpload = kUnsetValue;
-    if (!obj.contains("subscription_download"))
+    }
+    if (!obj.contains("subscription_download")) {
       info.subscriptionDownload = kUnsetValue;
-    if (!obj.contains("subscription_total"))
+    }
+    if (!obj.contains("subscription_total")) {
       info.subscriptionTotal = kUnsetValue;
-    if (!obj.contains("subscription_expire"))
+    }
+    if (!obj.contains("subscription_expire")) {
       info.subscriptionExpire = kUnsetValue;
-    if (info.ruleSets.isEmpty())
+    }
+    if (info.ruleSets.isEmpty()) {
       info.ruleSets << "default";
+    }
     m_subscriptions.append(info);
   }
   m_activeIndex      = DatabaseService::instance().getActiveSubscriptionIndex();
@@ -103,19 +109,24 @@ void SubscriptionService::saveToDatabase() {
     obj["config_path"]                  = info.configPath;
     obj["backup_path"]                  = info.backupPath;
     obj["auto_update_interval_minutes"] = info.autoUpdateIntervalMinutes;
-    if (info.subscriptionUpload >= 0)
+    if (info.subscriptionUpload >= 0) {
       obj["subscription_upload"] = info.subscriptionUpload;
-    if (info.subscriptionDownload >= 0)
+    }
+    if (info.subscriptionDownload >= 0) {
       obj["subscription_download"] = info.subscriptionDownload;
-    if (info.subscriptionTotal >= 0)
+    }
+    if (info.subscriptionTotal >= 0) {
       obj["subscription_total"] = info.subscriptionTotal;
-    if (info.subscriptionExpire >= 0)
+    }
+    if (info.subscriptionExpire >= 0) {
       obj["subscription_expire"] = info.subscriptionExpire;
+    }
     obj["enable_shared_rules"] = info.enableSharedRules;
     QJsonArray rs;
     for (const auto& name : info.ruleSets) {
-      if (!name.trimmed().isEmpty())
+      if (!name.trimmed().isEmpty()) {
         rs.append(name.trimmed());
+      }
     }
     obj["rule_sets"] = rs;
     array.append(obj);
@@ -164,21 +175,25 @@ void SubscriptionService::updateSubscriptionUserinfoFromHeader(
 
 void SubscriptionService::syncSharedRulesToConfig(
     const SubscriptionInfo& info) {
-  if (info.configPath.isEmpty())
+  if (info.configPath.isEmpty()) {
     return;
-  if (!m_configRepo)
+  }
+  if (!m_configRepo) {
     return;
+  }
   QJsonObject config = m_configRepo->loadConfig(info.configPath);
-  if (config.isEmpty())
+  if (config.isEmpty()) {
     return;
+  }
   QJsonArray merged;
   if (info.enableSharedRules) {
     const QStringList setNames =
         info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets;
     for (const auto& name : setNames) {
       const QJsonArray rules = SharedRulesStore::loadRules(name);
-      for (const auto& r : rules)
+      for (const auto& r : rules) {
         merged.append(r);
+      }
     }
   }
   ConfigMutator::applySharedRules(

@@ -25,8 +25,9 @@ RuntimeUiBinder::RuntimeUiBinder(ProxyRuntimeController* runtime,
       m_startStopBtn(startStopBtn) {}
 
 void RuntimeUiBinder::bind() {
-  if (!m_runtime)
+  if (!m_runtime) {
     return;
+  }
   // Kernel running state → UI (status, auto refresh, button text)
   if (m_home) {
     QObject::connect(m_runtime,
@@ -61,8 +62,9 @@ void RuntimeUiBinder::bind() {
                      &ProxyRuntimeController::connectionsUpdated,
                      m_home,
                      [this](int count, qint64 memoryUsage) {
-                       if (m_home)
+                       if (m_home) {
                          m_home->updateConnections(count, memoryUsage);
+                       }
                      });
     QObject::connect(m_runtime,
                      &ProxyRuntimeController::dataUsageUpdated,
@@ -92,8 +94,9 @@ void RuntimeUiBinder::bind() {
                      &ProxyRuntimeController::logMessage,
                      m_log,
                      [this](const QString& msg, bool) {
-                       if (m_log)
+                       if (m_log) {
                          m_log->appendLog(msg);
+                       }
                      });
   }
   // Initial broadcast

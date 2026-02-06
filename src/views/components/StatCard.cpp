@@ -111,8 +111,9 @@ void StatCard::setupUi(const QString& title) {
 }
 
 void StatCard::applyIcon() {
-  if (!m_iconLabel)
+  if (!m_iconLabel) {
     return;
+  }
   if (m_iconPath.isEmpty()) {
     m_iconLabel->setText(m_iconText);
     return;
@@ -134,11 +135,13 @@ void StatCard::updateStyle() {
 }
 
 void StatCard::setValueText(const QString& text) {
-  if (m_valueLabel)
+  if (m_valueLabel) {
     m_valueLabel->setText(text);
+  }
 }
 
 void StatCard::setSubText(const QString& text) {
-  if (m_subLabel)
+  if (m_subLabel) {
     m_subLabel->setText(text);
+  }
 }

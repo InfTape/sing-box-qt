@@ -43,8 +43,9 @@ bool saveOriginalConfig(ConfigRepository* cfg,
   if (err.error != QJsonParseError::NoError || !doc.isObject()) {
     return false;
   }
-  if (!cfg)
+  if (!cfg) {
     return false;
+  }
   QJsonObject config = doc.object();
   cfg->applyPortSettings(config);
   return cfg->saveConfig(targetPath, config);

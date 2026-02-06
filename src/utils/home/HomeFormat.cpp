@@ -2,8 +2,9 @@
 
 namespace HomeFormat {
 QString bytes(qint64 bytes) {
-  if (bytes <= 0)
+  if (bytes <= 0) {
     return QStringLiteral("0 B");
+  }
   static const char* units[]   = {"B", "KB", "MB", "GB", "TB"};
   int                unitIndex = 0;
   double             size      = bytes;

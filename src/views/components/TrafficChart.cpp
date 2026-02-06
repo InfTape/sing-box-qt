@@ -59,8 +59,9 @@ void TrafficChart::clear() {
 
 void TrafficChart::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (!ts)
+  if (!ts) {
     return;
+  }
   m_uploadColor   = ts->color("success");
   m_downloadColor = ts->color("primary");
   m_gridColor     = ts->color("border");
@@ -88,12 +89,14 @@ double TrafficChart::calculateMaxValue() const {
   double uploadMax   = 0.1;
   double downloadMax = 0.1;
   for (double val : m_uploadData) {
-    if (val > uploadMax)
+    if (val > uploadMax) {
       uploadMax = val;
+    }
   }
   for (double val : m_downloadData) {
-    if (val > downloadMax)
+    if (val > downloadMax) {
       downloadMax = val;
+    }
   }
   double currentMax = std::max(uploadMax, downloadMax);
   return std::max(currentMax * 1.2, 0.1);
@@ -163,11 +166,13 @@ void TrafficChart::drawCurve(QPainter&              painter,
                              const QRect&           chartRect,
                              const QVector<double>& data,
                              const QColor&          color) {
-  if (data.isEmpty())
+  if (data.isEmpty()) {
     return;
+  }
   double maxValue = calculateMaxValue();
-  if (maxValue <= 0)
+  if (maxValue <= 0) {
     maxValue = 0.1;
+  }
   // Build path using bezier curves
   QPainterPath path;
   auto         getPoint = [&](int i) -> QPointF {

@@ -61,13 +61,15 @@ void CoreManagerClient::onReadyRead() {
   m_buffer.append(m_socket->readAll());
   while (true) {
     const int idx = m_buffer.indexOf('\n');
-    if (idx < 0)
+    if (idx < 0) {
       break;
+    }
     QByteArray line = m_buffer.left(idx);
     m_buffer.remove(0, idx + 1);
     line = line.trimmed();
-    if (line.isEmpty())
+    if (line.isEmpty()) {
       continue;
+    }
     QJsonParseError err;
     QJsonDocument   doc = QJsonDocument::fromJson(line, &err);
     if (err.error != QJsonParseError::NoError || !doc.isObject()) {
@@ -94,8 +96,9 @@ void CoreManagerClient::handleMessage(const QJsonObject& obj) {
     }
     return;
   }
-  if (!obj.contains("id"))
+  if (!obj.contains("id")) {
     return;
+  }
   const int     id    = obj.value("id").toInt(-1);
   const bool    ok    = obj.value("ok").toBool(false);
   const QString error = obj.value("error").toString();

@@ -87,8 +87,9 @@ bool RuleEditorDialog::setEditRule(const RuleItem& rule, QString* error) {
     }
   }
   if (index < 0) {
-    if (error)
+    if (error) {
       *error = tr("Failed to parse current rule content.");
+    }
     return false;
   }
   m_typeCombo->setCurrentIndex(index);
@@ -119,49 +120,57 @@ void RuleEditorDialog::accept() {
 }
 
 void RuleEditorDialog::updatePlaceholder(int index) {
-  if (index < 0 || index >= m_fields.size())
+  if (index < 0 || index >= m_fields.size()) {
     return;
+  }
   m_valueEdit->setPlaceholderText(m_fields[index].placeholder +
                                   tr(" (separate by commas or new lines)"));
 }
 
 bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out,
                                      QString* error) const {
-  if (!out)
+  if (!out) {
     return false;
+  }
   const int fieldIndex = m_typeCombo->currentIndex();
   if (fieldIndex < 0 || fieldIndex >= m_fields.size()) {
-    if (error)
+    if (error) {
       *error = tr("Match type cannot be empty.");
+    }
     return false;
   }
   const RuleConfigService::RuleFieldInfo field = m_fields[fieldIndex];
   const QString rawText = m_valueEdit->toPlainText().trimmed();
   if (rawText.isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Match value cannot be empty.");
+    }
     return false;
   }
   QStringList values =
       rawText.split(QRegularExpression("[,\\n]"), Qt::SkipEmptyParts);
-  for (QString& v : values)
+  for (QString& v : values) {
     v = v.trimmed();
+  }
   values.removeAll(QString());
   if (values.isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Match value cannot be empty.");
+    }
     return false;
   }
   if (field.key == "ip_is_private") {
     if (values.size() != 1) {
-      if (error)
+      if (error) {
         *error = tr("ip_is_private allows only one value (true/false).");
+      }
       return false;
     }
     const QString raw = values.first().toLower();
     if (raw != "true" && raw != "false") {
-      if (error)
+      if (error) {
         *error = tr("ip_is_private must be true or false.");
+      }
       return false;
     }
     values = {raw};
@@ -170,16 +179,18 @@ bool RuleEditorDialog::buildEditData(RuleConfigService::RuleEditData* out,
       bool ok = false;
       v.toInt(&ok);
       if (!ok) {
-        if (error)
+        if (error) {
           *error = tr("Port must be numeric: %1").arg(v);
+        }
         return false;
       }
     }
   }
   const QString outboundTag = m_outboundCombo->currentText().trimmed();
   if (outboundTag.isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Outbound cannot be empty.");
+    }
     return false;
   }
   out->field       = field;

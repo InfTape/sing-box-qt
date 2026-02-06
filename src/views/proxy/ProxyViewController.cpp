@@ -20,14 +20,16 @@ ProxyViewController::ProxyViewController(ConfigRepository* configRepository,
     : QObject(parent), m_configRepository(configRepository) {}
 
 void ProxyViewController::setProxyService(ProxyService* service) {
-  if (m_proxyService == service)
+  if (m_proxyService == service) {
     return;
+  }
   if (m_proxyService) {
     disconnect(m_proxyService, nullptr, this, nullptr);
   }
   m_proxyService = service;
-  if (!m_proxyService)
+  if (!m_proxyService) {
     return;
+  }
   updateDelayTesterAuth();
   connect(m_proxyService,
           &ProxyService::proxiesReceived,
@@ -76,8 +78,9 @@ bool ProxyViewController::isTesting() const {
 }
 
 void ProxyViewController::updateDelayTesterAuth() {
-  if (!m_delayTestService || !m_proxyService)
+  if (!m_delayTestService || !m_proxyService) {
     return;
+  }
   m_delayTestService->setApiPort(m_proxyService->getApiPort());
   m_delayTestService->setApiToken(m_proxyService->getApiToken());
 }
@@ -90,8 +93,9 @@ void ProxyViewController::refreshProxies() const {
 
 void ProxyViewController::selectProxy(const QString& group,
                                       const QString& proxy) {
-  if (!m_proxyService)
+  if (!m_proxyService) {
     return;
+  }
   ProxyActions::selectProxy(m_proxyService, group, proxy);
 }
 
@@ -115,15 +119,17 @@ DelayTestOptions ProxyViewController::buildBatchOptions() const {
 
 void ProxyViewController::startSingleDelayTest(const QString& nodeName) {
   DelayTestService* tester = ensureDelayTester();
-  if (!tester)
+  if (!tester) {
     return;
+  }
   tester->testNodeDelay(nodeName, buildSingleOptions());
 }
 
 void ProxyViewController::startBatchDelayTests(const QStringList& nodes) {
   DelayTestService* tester = ensureDelayTester();
-  if (!tester)
+  if (!tester) {
     return;
+  }
   tester->testNodesDelay(nodes, buildBatchOptions());
 }
 
@@ -135,15 +141,18 @@ void ProxyViewController::stopAllTests() {
 
 QJsonObject ProxyViewController::loadNodeOutbound(const QString& tag) const {
   const QString path = RuleConfigService::activeConfigPath(m_configRepository);
-  if (path.isEmpty() || !m_configRepository)
+  if (path.isEmpty() || !m_configRepository) {
     return QJsonObject();
+  }
   QJsonObject config = m_configRepository->loadConfig(path);
-  if (config.isEmpty())
+  if (config.isEmpty()) {
     return QJsonObject();
+  }
   const QJsonArray outbounds = config.value("outbounds").toArray();
   for (const auto& v : outbounds) {
-    if (!v.isObject())
+    if (!v.isObject()) {
       continue;
+    }
     QJsonObject ob = v.toObject();
     if (ob.value("tag").toString() == tag) {
       return ob;
@@ -188,8 +197,9 @@ QString ProxyViewController::runBandwidthTest(const QString& nodeTag) const {
   reply->readAll();
   reply->deleteLater();
   const qint64 ms = timer.elapsed();
-  if (ms <= 0)
+  if (ms <= 0) {
     return QString();
+  }
   const double bytesPerSec = (static_cast<double>(totalBytes) * 1000.0) / ms;
   const double mbps        = (bytesPerSec * 8.0) / (1024.0 * 1024.0);
   return tr("%1 Mbps").arg(QString::number(mbps, 'f', 1));

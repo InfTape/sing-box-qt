@@ -233,10 +233,12 @@ void MainWindow::setupConnections() {
                                           m_startStopBtn);
     m_runtimeBinder->bind();
   } else {
-    if (m_homeView)
+    if (m_homeView) {
       m_homeView->updateStatus(false);
-    if (m_connectionsView)
+    }
+    if (m_connectionsView) {
       m_connectionsView->setAutoRefreshEnabled(false);
+    }
   }
   if (m_proxyUiController) {
     m_proxyUiController->broadcastCurrentStates();
@@ -264,16 +266,19 @@ void MainWindow::setupThemeConnections() {
 }
 
 void MainWindow::setupSubscriptionConnections() {
-  if (!m_subscriptionService)
+  if (!m_subscriptionService) {
     return;
+  }
   connect(m_subscriptionService,
           &SubscriptionService::applyConfigRequested,
           this,
           [this](const QString& configPath, bool restart) {
-            if (configPath.isEmpty())
+            if (configPath.isEmpty()) {
               return;
-            if (!m_proxyController)
+            }
+            if (!m_proxyController) {
               return;
+            }
             if (restart) {
               m_proxyController->restartKernelWithConfig(configPath);
             } else if (auto* kernel = m_proxyController->kernel()) {
@@ -283,8 +288,9 @@ void MainWindow::setupSubscriptionConnections() {
 }
 
 void MainWindow::setupProxyUiBindings() {
-  if (!m_proxyUiController || !m_homeView)
+  if (!m_proxyUiController || !m_homeView) {
     return;
+  }
   connect(m_proxyUiController,
           &ProxyUiController::systemProxyStateChanged,
           m_homeView,
@@ -300,12 +306,14 @@ void MainWindow::setupProxyUiBindings() {
 }
 
 void MainWindow::setupHomeViewConnections() {
-  if (!m_homeView)
+  if (!m_homeView) {
     return;
+  }
   connect(
       m_homeView, &HomeView::systemProxyChanged, this, [this](bool enabled) {
-        if (!m_proxyUiController)
+        if (!m_proxyUiController) {
           return;
+        }
         QString error;
         if (!m_proxyUiController->setSystemProxyEnabled(enabled, &error)) {
           if (!error.isEmpty()) {
@@ -317,8 +325,9 @@ void MainWindow::setupHomeViewConnections() {
         }
       });
   connect(m_homeView, &HomeView::tunModeChanged, this, [this](bool enabled) {
-    if (!m_proxyUiController)
+    if (!m_proxyUiController) {
       return;
+    }
     const auto result =
         m_proxyUiController->setTunModeEnabled(enabled, [this]() {
           QMessageBox box(this);
@@ -345,8 +354,9 @@ void MainWindow::setupHomeViewConnections() {
           &HomeView::proxyModeChanged,
           this,
           [this](const QString& mode) {
-            if (!m_proxyUiController)
+            if (!m_proxyUiController) {
               return;
+            }
             QString error;
             if (m_proxyUiController->switchProxyMode(mode, &error)) {
               const QString msg =
@@ -399,8 +409,9 @@ void MainWindow::setProxyModeUI(const QString& mode) {
 }
 
 void MainWindow::onKernelStatusChanged(bool running) {
-  if (!m_startStopBtn)
+  if (!m_startStopBtn) {
     return;
+  }
   m_startStopBtn->setText(running ? tr("Stop") : tr("Start"));
   m_startStopBtn->setProperty("state", running ? "stop" : "start");
   applyStartStopStyle();
@@ -412,18 +423,21 @@ void MainWindow::onStartStopClicked() {
       m_proxyUiController && m_proxyUiController->isKernelRunning();
   const int stopSeq = ++m_stopCheckSeq;
   if (wasRunning) {
-    if (m_homeView)
+    if (m_homeView) {
       m_homeView->updateStatus(false);
-    if (m_connectionsView)
+    }
+    if (m_connectionsView) {
       m_connectionsView->setAutoRefreshEnabled(false);
+    }
     if (m_startStopBtn) {
       m_startStopBtn->setText(tr("Start"));
       m_startStopBtn->setProperty("state", "start");
       applyStartStopStyle();
     }
     QTimer::singleShot(5000, this, [this, stopSeq]() {
-      if (stopSeq != m_stopCheckSeq)
+      if (stopSeq != m_stopCheckSeq) {
         return;
+      }
       if (m_proxyUiController && m_proxyUiController->isKernelRunning()) {
         showStopFailedToast();
       }

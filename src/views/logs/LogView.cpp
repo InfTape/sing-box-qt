@@ -162,8 +162,9 @@ void LogView::setupUI() {
 
 void LogView::appendLog(const QString& message) {
   const QString cleaned = LogParser::stripAnsiSequences(message).trimmed();
-  if (cleaned.isEmpty())
+  if (cleaned.isEmpty()) {
     return;
+  }
   if (cleaned.contains('\n') || cleaned.contains('\r')) {
     const QStringList lines =
         cleaned.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts);
@@ -256,11 +257,13 @@ void LogView::onCopyClicked() {
 void LogView::onExportClicked() {
   const QString path = QFileDialog::getSaveFileName(
       this, tr("Export Logs"), "logs.txt", tr("Text Files (*.txt)"));
-  if (path.isEmpty())
+  if (path.isEmpty()) {
     return;
+  }
   QFile file(path);
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+  if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
     return;
+  }
   QTextStream out(&file);
   for (const auto& log : std::as_const(m_filtered)) {
     out << QString("[%1] [%2] %3\n")
@@ -294,10 +297,12 @@ void LogView::updateStats() {
   int errorCount   = 0;
   int warningCount = 0;
   for (const auto& log : std::as_const(m_filtered)) {
-    if (log.type == "error" || log.type == "fatal" || log.type == "panic")
+    if (log.type == "error" || log.type == "fatal" || log.type == "panic") {
       errorCount++;
-    if (log.type == "warning")
+    }
+    if (log.type == "warning") {
       warningCount++;
+    }
   }
   m_totalTag->setText(tr("%1 entries").arg(m_filtered.size()));
   m_errorTag->setText(tr("Errors: %1").arg(errorCount));
@@ -360,6 +365,7 @@ void LogView::updateEmptyState() {
 
 void LogView::updateStyle() {
   ThemeService* ts = m_themeService;
-  if (ts)
+  if (ts) {
     setStyleSheet(ts->loadStyleSheet(":/styles/log_view.qss"));
+  }
 }

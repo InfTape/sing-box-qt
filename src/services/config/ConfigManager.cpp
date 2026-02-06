@@ -77,16 +77,18 @@ bool ConfigManager::updateClashDefaultMode(const QString& configPath,
                                            QString*       error) {
   QJsonObject config = ConfigIO::loadConfig(configPath);
   if (config.isEmpty()) {
-    if (error)
+    if (error) {
       *error = QString("Failed to load config file: %1").arg(configPath);
+    }
     return false;
   }
   if (!ConfigMutator::updateClashDefaultMode(config, mode, error)) {
     return false;
   }
   if (!ConfigIO::saveConfig(configPath, config)) {
-    if (error)
+    if (error) {
       *error = QString("Failed to save config file: %1").arg(configPath);
+    }
     return false;
   }
   return true;

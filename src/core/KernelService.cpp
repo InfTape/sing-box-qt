@@ -154,8 +154,9 @@ QString KernelService::getKernelPath() const {
 }
 
 void KernelService::onManagerStatus(bool running) {
-  if (m_running == running)
+  if (m_running == running) {
     return;
+  }
   m_running = running;
   emit statusChanged(running);
 }
@@ -183,8 +184,9 @@ bool KernelService::ensureManagerReady(QString* error) {
   if (m_serverName.isEmpty()) {
     m_serverName = coreManagerServerName();
   }
-  if (m_client->isConnected())
+  if (m_client->isConnected()) {
     return true;
+  }
   m_client->connectToServer(m_serverName);
   if (m_client->waitForConnected(300)) {
     return true;
@@ -243,8 +245,9 @@ bool KernelService::sendRequestAndWait(const QString&     method,
                                        QString*           error) {
   QString err;
   if (!ensureManagerReady(&err)) {
-    if (error)
+    if (error) {
       *error = err;
+    }
     return false;
   }
   const int   id = m_nextRequestId++;
@@ -262,8 +265,9 @@ bool KernelService::sendRequestAndWait(const QString&     method,
                                              bool               respOk,
                                              const QJsonObject& resp,
                                              const QString&     respErr) {
-                                           if (respId != id)
+                                           if (respId != id) {
                                              return;
+                                           }
                                            ok         = respOk;
                                            respResult = resp;
                                            respError  = respErr;
@@ -274,8 +278,9 @@ bool KernelService::sendRequestAndWait(const QString&     method,
   loop.exec();
   disconnect(conn);
   if (timer.isActive() == false) {
-    if (error)
+    if (error) {
       *error = tr("RPC timeout");
+    }
     return false;
   }
   if (!ok && error) {

@@ -62,15 +62,17 @@ void MultiSelectMenuBox::setOptions(const QStringList& options) {
   m_options.removeDuplicates();
   m_options.removeAll(QString());
   m_options.sort();
-  if (!m_options.contains("default"))
+  if (!m_options.contains("default")) {
     m_options.prepend("default");
+  }
   rebuildMenu();
 }
 
 void MultiSelectMenuBox::setSelected(const QStringList& selected) {
   m_selected = selected;
-  if (m_selected.isEmpty())
+  if (m_selected.isEmpty()) {
     m_selected << "default";
+  }
   m_selected.removeDuplicates();
   updateButtonText();
 }
@@ -87,13 +89,15 @@ void MultiSelectMenuBox::rebuildMenu() {
     act->setChecked(m_selected.contains(name));
     connect(act, &QAction::triggered, this, [this, name, act]() {
       if (act->isChecked()) {
-        if (!m_selected.contains(name))
+        if (!m_selected.contains(name)) {
           m_selected << name;
+        }
       } else {
         m_selected.removeAll(name);
       }
-      if (m_selected.isEmpty())
+      if (m_selected.isEmpty()) {
         m_selected << "default";
+      }
       updateButtonText();
       emit selectionChanged(m_selected);
     });
@@ -102,8 +106,9 @@ void MultiSelectMenuBox::rebuildMenu() {
 
 void MultiSelectMenuBox::updateButtonText() {
   QString text = m_selected.join(", ");
-  if (text.isEmpty())
+  if (text.isEmpty()) {
     text = tr("default");
+  }
   m_button->setText(text);
 }
 
@@ -201,9 +206,11 @@ void SubscriptionFormDialog::setEditData(const SubscriptionInfo& info) {
   m_useOriginalCheck->setChecked(info.useOriginalConfig);
   m_sharedRulesCheck->setChecked(info.enableSharedRules);
   QStringList options = SharedRulesStore::listRuleSets();
-  for (const auto& name : info.ruleSets)
-    if (!options.contains(name))
+  for (const auto& name : info.ruleSets) {
+    if (!options.contains(name)) {
       options << name;
+    }
+  }
   m_ruleSetsBox->setOptions(options);
   m_ruleSetsBox->setSelected(info.ruleSets.isEmpty() ? QStringList{"default"}
                                                      : info.ruleSets);
@@ -246,8 +253,9 @@ bool SubscriptionFormDialog::sharedRulesEnabled() const {
 
 QStringList SubscriptionFormDialog::ruleSets() const {
   QStringList list = m_ruleSetsBox->selected();
-  if (list.isEmpty())
+  if (list.isEmpty()) {
     list << "default";
+  }
   list.removeDuplicates();
   return list;
 }
@@ -258,31 +266,36 @@ int SubscriptionFormDialog::autoUpdateIntervalMinutes() const {
 
 bool SubscriptionFormDialog::validateInput(QString* error) const {
   if (name().isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Please enter a subscription name");
+    }
     return false;
   }
   if (m_tabs->currentIndex() == 0 && url().isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Please enter a subscription URL");
+    }
     return false;
   }
   if (m_tabs->currentIndex() == 1 && manualContent().isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Please enter subscription content");
+    }
     return false;
   }
   if (m_tabs->currentIndex() == 2 && uriContent().isEmpty()) {
-    if (error)
+    if (error) {
       *error = tr("Please enter URI content");
+    }
     return false;
   }
   if (useOriginalConfig() && m_tabs->currentIndex() != 0) {
     QString content =
         m_tabs->currentIndex() == 1 ? manualContent() : uriContent();
     if (!isJsonText(content)) {
-      if (error)
+      if (error) {
         *error = tr("Original subscription only supports sing-box JSON config");
+      }
       return false;
     }
   }

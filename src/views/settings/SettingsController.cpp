@@ -43,21 +43,25 @@ bool SettingsController::saveSettings(const SettingsModel::Data& data,
 }
 
 void SettingsController::refreshInstalledInfo() {
-  if (m_kernelManager)
+  if (m_kernelManager) {
     m_kernelManager->refreshInstalledInfo();
+  }
 }
 
 void SettingsController::fetchReleaseList() {
-  if (m_kernelManager)
+  if (m_kernelManager) {
     m_kernelManager->fetchReleaseList();
+  }
 }
 
 void SettingsController::checkLatest() {
-  if (m_kernelManager)
+  if (m_kernelManager) {
     m_kernelManager->checkLatest();
+  }
 }
 
 void SettingsController::downloadAndInstall(const QString& version) {
-  if (m_kernelManager)
+  if (m_kernelManager) {
     m_kernelManager->downloadAndInstall(version);
+  }
 }
