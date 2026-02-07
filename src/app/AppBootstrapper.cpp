@@ -92,18 +92,18 @@ void AppBootstrapper::setupStyle() {
 
 void AppBootstrapper::setupFont() {
   QStringList families;
-  families << "Microsoft YaHei"
+  families << "Segoe UI"
+           << "Microsoft YaHei"
            << "Microsoft YaHei UI"
-           << "Segoe UI"
            << "PingFang SC"
            << "Noto Sans SC";
-  QFont defaultFont("Microsoft YaHei", 10);
+  QFont defaultFont("Segoe UI", 10);
   defaultFont.setStyleStrategy(QFont::PreferAntialias);
   defaultFont.setFamilies(families);
   m_app.setFont(defaultFont);
-  m_app.setProperty("appFontFamily", "Microsoft YaHei");
+  m_app.setProperty("appFontFamily", "Segoe UI");
   m_app.setProperty("appFontFamilyList", families.join("','"));
-  Logger::info("Default font set: Microsoft YaHei");
+  Logger::info("Default font set: Segoe UI");
 }
 
 bool AppBootstrapper::setupDatabase() {

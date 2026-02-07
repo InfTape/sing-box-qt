@@ -485,8 +485,11 @@ void SubscriptionView::layoutCards() {
   const int columns =
       CardGridLayoutHelper::computeColumns(availableWidth, spacing);
   m_columnCount              = columns;
-  const int horizontalMargin = CardGridLayoutHelper::computeHorizontalMargin(
-      availableWidth, spacing, columns);
+  const int horizontalMargin =
+      (m_cards.size() == 1)
+          ? 0
+          : CardGridLayoutHelper::computeHorizontalMargin(
+                availableWidth, spacing, columns);
   m_cardsLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
   int             row = 0;
   int             col = 0;

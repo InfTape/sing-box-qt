@@ -3,8 +3,10 @@
 #include <QFrame>
 #include <QString>
 class QAction;
+class QEvent;
 class QLabel;
 class QPushButton;
+class QResizeEvent;
 class ThemeService;
 struct SubscriptionInfo;
 
@@ -33,6 +35,9 @@ class SubscriptionCard : public QFrame {
   void          setupUI(const SubscriptionInfo& info);
   void          applyActiveState();
   void          updateStyle();
+  void          updateUrlLabelText();
+  void          resizeEvent(QResizeEvent* event) override;
+  bool          eventFilter(QObject* watched, QEvent* event) override;
   QString       m_subId;
   bool          m_active           = false;
   QLabel*       m_nameLabel        = nullptr;
@@ -46,5 +51,6 @@ class SubscriptionCard : public QFrame {
   QPushButton*  m_useBtn           = nullptr;
   QAction*      m_editConfigAction = nullptr;
   ThemeService* m_themeService     = nullptr;
+  QString       m_urlRawText;
 };
 #endif  // SUBSCRIPTIONCARD_H
