@@ -23,7 +23,7 @@
 
 namespace {
 constexpr int kLanguageDefaultIndex       = 1;
-constexpr int kSpinBoxHeight              = 34;
+constexpr int kSpinBoxHeight              = 36;
 constexpr int kControlMinWidth            = 150;
 constexpr int kControlMinWidthCompact     = 110;
 constexpr int kCardMargin                 = 20;
