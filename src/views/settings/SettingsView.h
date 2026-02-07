@@ -9,6 +9,7 @@
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QWidget>
 #include "models/SettingsModel.h"
 class ToggleSwitch;
@@ -29,7 +30,6 @@ class SettingsView : public QWidget {
   void showEvent(QShowEvent* event) override;
   void resizeEvent(QResizeEvent* event) override;
  private slots:
-  void onSaveClicked();
   void onDownloadKernelClicked();
   void onCheckKernelClicked();
   void onCheckUpdateClicked();
@@ -44,8 +44,10 @@ class SettingsView : public QWidget {
 
  private:
   void      setupUI();
+  void      setupAutoSave();
+  void      scheduleAutoSave();
   void      loadSettings();
-  bool      saveSettings();
+  bool      saveSettings(bool showError);
   void      setDownloadUi(bool downloading, const QString& message = QString());
   void      ensureKernelInfoLoaded();
   QWidget*  buildProxySection();
@@ -109,9 +111,10 @@ class SettingsView : public QWidget {
   bool                m_checkingInstall    = false;
   SettingsController* m_settingsController = nullptr;
   bool                m_kernelInfoLoaded   = false;
+  bool                m_isApplyingSettings = false;
   QString             m_inputStyleApplied;
   QString             m_comboStyle;
-  QPushButton*        m_saveBtn;
+  QTimer*             m_autoSaveTimer      = nullptr;
   ThemeService*       m_themeService = nullptr;
 };
 #endif  // SETTINGSVIEW_H

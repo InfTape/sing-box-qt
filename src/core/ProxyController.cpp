@@ -148,14 +148,14 @@ bool ProxyController::setSystemProxyEnabled(bool enabled) {
   return applySettingsToActiveConfig(false);
 }
 
-bool ProxyController::setTunModeEnabled(bool enabled) {
+bool ProxyController::setTunModeEnabled(bool enabled, bool restartIfRunning) {
   m_settings->setTunEnabled(enabled);
-  return applySettingsToActiveConfig(true);
+  return applySettingsToActiveConfig(restartIfRunning);
 }
 
 bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
-  QString configPath = activeConfigPath();
-  if (configPath.isEmpty() || !m_configRepo) {
+  QString configPath;
+  if (!m_configRepo || !ensureConfigExists(&configPath)) {
     return false;
   }
   QJsonObject config = m_configRepo->loadConfig(configPath);

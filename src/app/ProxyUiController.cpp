@@ -87,37 +87,69 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
   if (!m_proxyController || !m_settings) {
     return TunResult::Failed;
   }
+  const bool previousSystemProxyEnabled = m_settings->systemProxyEnabled();
+  const auto emitCurrentStates          = [this]() {
+    emit tunModeStateChanged(m_settings->tunEnabled());
+    emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+  };
+  const auto disableSystemProxyIfNeeded = [this]() {
+    if (!m_settings->systemProxyEnabled()) {
+      return true;
+    }
+    return m_proxyController->setSystemProxyEnabled(false);
+  };
+  const auto restoreSystemProxyIfNeeded = [this, previousSystemProxyEnabled]() {
+    if (!previousSystemProxyEnabled || m_settings->systemProxyEnabled()) {
+      return;
+    }
+    m_proxyController->setSystemProxyEnabled(true);
+  };
   if (!enabled) {
     const bool ok = m_proxyController->setTunModeEnabled(false);
-    emit       tunModeStateChanged(m_settings->tunEnabled());
-    emit       systemProxyStateChanged(m_settings->systemProxyEnabled());
+    emitCurrentStates();
     return ok ? TunResult::Applied : TunResult::Failed;
   }
   const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
   if (!isAdmin) {
     if (confirmRestartAdmin && confirmRestartAdmin()) {
-      // User agreed to restart as admin
-      m_settings->setTunEnabled(true);
+      const bool proxyDisabled = disableSystemProxyIfNeeded();
+      if (!proxyDisabled) {
+        restoreSystemProxyIfNeeded();
+        emitCurrentStates();
+        return TunResult::Failed;
+      }
+      const bool tunPrepared = m_proxyController->setTunModeEnabled(true, false);
+      if (!tunPrepared) {
+        restoreSystemProxyIfNeeded();
+        emitCurrentStates();
+        return TunResult::Failed;
+      }
       const bool restarted =
           m_adminActions ? m_adminActions->restartAsAdmin() : false;
       if (!restarted) {
-        m_settings->setTunEnabled(false);
-        emit tunModeStateChanged(false);
-        emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+        m_proxyController->setTunModeEnabled(false, false);
+        restoreSystemProxyIfNeeded();
+        emitCurrentStates();
         return TunResult::Failed;
       }
-      emit tunModeStateChanged(m_settings->tunEnabled());
-      emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+      emitCurrentStates();
       return TunResult::Applied;
     }
     m_settings->setTunEnabled(false);
-    emit tunModeStateChanged(false);
-    emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+    emitCurrentStates();
     return TunResult::Cancelled;
   }
+  const bool proxyDisabled = disableSystemProxyIfNeeded();
+  if (!proxyDisabled) {
+    restoreSystemProxyIfNeeded();
+    emitCurrentStates();
+    return TunResult::Failed;
+  }
   const bool ok = m_proxyController->setTunModeEnabled(true);
-  emit       tunModeStateChanged(m_settings->tunEnabled());
-  emit       systemProxyStateChanged(m_settings->systemProxyEnabled());
+  if (!ok) {
+    restoreSystemProxyIfNeeded();
+  }
+  emitCurrentStates();
   return ok ? TunResult::Applied : TunResult::Failed;
 }
 

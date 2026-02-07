@@ -28,7 +28,7 @@ class ProxyController : public QObject {
                        QString*       error = nullptr);
   bool    restartKernelWithConfig(const QString& configPath);
   bool    setSystemProxyEnabled(bool enabled);
-  bool    setTunModeEnabled(bool enabled);
+  bool    setTunModeEnabled(bool enabled, bool restartIfRunning = true);
   void    updateSystemProxyForKernelState(bool running);
 
   KernelService* kernel() const { return m_kernel; }

@@ -40,12 +40,11 @@ constexpr int kProfileToggleVSpacing      = 10;
 constexpr int kPageMargin                 = 24;
 constexpr int kTitleSpacing               = 4;
 constexpr int kBypassEditHeight           = 96;
-constexpr int kSaveButtonHeight           = 36;
-constexpr int kSaveButtonWidth            = 110;
 constexpr int kKernelFormSpacing          = 15;
 constexpr int kSectionPaddingReserve      = 170;
 constexpr int kMinRoutingWrapWidth        = 1200;
 constexpr int kMinDnsWrapWidth            = 1180;
+constexpr int kAutoSaveDebounceMs         = 450;
 
 class NoWheelSpinBox : public QSpinBox {
  public:
@@ -65,6 +64,7 @@ SettingsView::SettingsView(ThemeService*       themeService,
       m_themeService(themeService) {
   setupUI();
   loadSettings();
+  setupAutoSave();
   if (m_themeService) {
     connect(m_themeService,
             &ThemeService::themeChanged,
@@ -509,14 +509,8 @@ void SettingsView::setupUI() {
   mainLayout->addWidget(buildAppearanceSection());
   mainLayout->addWidget(buildKernelSection());
   mainLayout->addStretch();
-  m_saveBtn = new QPushButton(tr("Save"));
-  m_saveBtn->setObjectName("SaveBtn");
-  m_saveBtn->setFixedHeight(kSaveButtonHeight);
-  m_saveBtn->setFixedWidth(kSaveButtonWidth);
-  mainLayout->addWidget(m_saveBtn, 0, Qt::AlignHCenter);
   scrollArea->setWidget(contentWidget);
   outerLayout->addWidget(scrollArea, 1);
-  connect(m_saveBtn, &QPushButton::clicked, this, &SettingsView::onSaveClicked);
   connect(m_downloadKernelBtn,
           &QPushButton::clicked,
           this,
@@ -550,6 +544,84 @@ void SettingsView::setupUI() {
             m_languageCombo->setCurrentIndex(kLanguageDefaultIndex);
           });
   updateResponsiveUi();
+}
+
+void SettingsView::setupAutoSave() {
+  if (m_autoSaveTimer) {
+    return;
+  }
+  m_autoSaveTimer = new QTimer(this);
+  m_autoSaveTimer->setSingleShot(true);
+  connect(m_autoSaveTimer, &QTimer::timeout, this, [this]() {
+    if (!m_isApplyingSettings) {
+      saveSettings(false);
+    }
+  });
+
+  auto connectSpin = [this](QSpinBox* spin) {
+    if (!spin) {
+      return;
+    }
+    connect(spin,
+            QOverload<int>::of(&QSpinBox::valueChanged),
+            this,
+            [this](int) { scheduleAutoSave(); });
+  };
+  auto connectCombo = [this](QComboBox* combo) {
+    if (!combo) {
+      return;
+    }
+    connect(combo,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,
+            [this](int) { scheduleAutoSave(); });
+  };
+  auto connectLine = [this](QLineEdit* edit) {
+    if (!edit) {
+      return;
+    }
+    connect(edit, &QLineEdit::textChanged, this, [this](const QString&) {
+      scheduleAutoSave();
+    });
+  };
+  auto connectToggle = [this](ToggleSwitch* toggle) {
+    if (!toggle) {
+      return;
+    }
+    connect(
+        toggle, &ToggleSwitch::toggled, this, [this](bool) { scheduleAutoSave(); });
+  };
+
+  connectSpin(m_mixedPortSpin);
+  connectSpin(m_apiPortSpin);
+  connectSpin(m_tunMtuSpin);
+  connectCombo(m_tunStackCombo);
+  connectCombo(m_defaultOutboundCombo);
+  connectCombo(m_downloadDetourCombo);
+  connectCombo(m_themeCombo);
+  connect(m_autoStartCheck, &QCheckBox::toggled, this, [this](bool) {
+    scheduleAutoSave();
+  });
+  connect(m_systemProxyBypassEdit, &QPlainTextEdit::textChanged, this, [this]() {
+    scheduleAutoSave();
+  });
+  connectToggle(m_tunEnableIpv6Switch);
+  connectToggle(m_tunAutoRouteSwitch);
+  connectToggle(m_tunStrictRouteSwitch);
+  connectToggle(m_blockAdsSwitch);
+  connectToggle(m_dnsHijackSwitch);
+  connectToggle(m_enableAppGroupsSwitch);
+  connectLine(m_dnsProxyEdit);
+  connectLine(m_dnsCnEdit);
+  connectLine(m_dnsResolverEdit);
+  connectLine(m_urltestUrlEdit);
+}
+
+void SettingsView::scheduleAutoSave() {
+  if (m_isApplyingSettings || !m_settingsController || !m_autoSaveTimer) {
+    return;
+  }
+  m_autoSaveTimer->start(kAutoSaveDebounceMs);
 }
 
 void SettingsView::updateResponsiveUi() {
@@ -748,11 +820,13 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
 
 void SettingsView::loadSettings() {
   if (m_settingsController) {
+    m_isApplyingSettings = true;
     applySettingsToUi(m_settingsController->loadSettings());
+    m_isApplyingSettings = false;
   }
 }
 
-bool SettingsView::saveSettings() {
+bool SettingsView::saveSettings(bool showError) {
   if (!m_settingsController) {
     return false;
   }
@@ -765,16 +839,12 @@ bool SettingsView::saveSettings() {
                                           m_themeCombo->currentIndex(),
                                           m_languageCombo->currentIndex(),
                                           &errorMessage)) {
-    QMessageBox::warning(this, tr("Notice"), errorMessage);
+    if (showError) {
+      QMessageBox::warning(this, tr("Notice"), errorMessage);
+    }
     return false;
   }
   return true;
-}
-
-void SettingsView::onSaveClicked() {
-  if (saveSettings()) {
-    QMessageBox::information(this, tr("Notice"), tr("Settings saved"));
-  }
 }
 
 void SettingsView::onDownloadKernelClicked() {
