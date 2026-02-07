@@ -365,15 +365,16 @@ bool RuleConfigService::addRule(ConfigRepository*   cfgRepo,
     }
     return false;
   }
+  const QString setName = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   if (added) {
     RuleItem item;
     item.type     = data.field.key;
     item.payload  = QString("%1=%2").arg(data.field.key, data.values.join(","));
     item.proxy    = data.outboundTag.trimmed();
+    item.ruleSet  = setName;
     item.isCustom = true;
     *added        = item;
   }
-  const QString setName = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   SharedRulesStore::addRule(setName, routeRule);
   return true;
 }
@@ -422,17 +423,18 @@ bool RuleConfigService::updateRule(ConfigRepository*   cfgRepo,
     }
     return false;
   }
+  const QString targetSet  = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   if (updated) {
     RuleItem item;
     item.type     = data.field.key;
     item.payload  = QString("%1=%2").arg(data.field.key, data.values.join(","));
     item.proxy    = RuleUtils::normalizeProxyValue(data.outboundTag);
+    item.ruleSet  = targetSet;
     item.isCustom = true;
     *updated      = item;
   }
   const QJsonObject oldRouteRule = buildRouteRuleFromItem(existing, nullptr);
   const QString     oldSet = SharedRulesStore::findSetOfRule(oldRouteRule);
-  const QString targetSet  = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   if (!oldSet.isEmpty() && oldSet != targetSet) {
     SharedRulesStore::removeRule(oldSet, oldRouteRule);
   }

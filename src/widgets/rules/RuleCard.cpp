@@ -82,10 +82,7 @@ void RuleCard::setupUI() {
   QLabel* payloadLabel = new QLabel(m_rule.payload, infoPanel);
   payloadLabel->setObjectName("CardInfoText");
   payloadLabel->setWordWrap(true);
-  QString typeLabelText = RuleUtils::displayRuleTypeLabel(m_rule.type);
-  if (!typeLabelText.isEmpty()) {
-    typeLabelText[0] = typeLabelText[0].toUpper();
-  }
+  QString typeLabelText = m_rule.ruleSet.trimmed();
   if (typeLabelText.isEmpty()) {
     typeLabelText = tr("Default");
   }

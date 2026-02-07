@@ -175,6 +175,14 @@ void RulesView::setProxyService(ProxyService* service) {
               } else {
                 data.isCustom = RuleUtils::isCustomPayload(data.payload);
               }
+              if (data.isCustom) {
+                data.ruleSet =
+                    RuleConfigService::findRuleSet(m_configRepo, data)
+                        .trimmed();
+              }
+              if (data.ruleSet.isEmpty()) {
+                data.ruleSet = QStringLiteral("default");
+              }
               m_rules.push_back(data);
             }
             sortRules();
