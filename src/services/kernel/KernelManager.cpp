@@ -232,10 +232,10 @@ void KernelManager::tryDownloadUrl(int                index,
           emit finished(false, tr("sing-box executable not found in archive"));
           return;
         }
-        ProcessManager::killProcessByName("sing-box.exe");
         const QString dataDir = KernelPlatform::kernelInstallDir();
         QDir().mkpath(dataDir);
         const QString destPath   = dataDir + "/" + exeName;
+        ProcessManager::killProcessByPath(destPath);
         const QString backupPath = destPath + ".old";
         if (QFile::exists(destPath)) {
           QFile::remove(backupPath);

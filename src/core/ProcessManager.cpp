@@ -1,10 +1,40 @@
 #include "ProcessManager.h"
+#include <QDir>
+#include <QFileInfo>
 #include "utils/Logger.h"
 #ifdef Q_OS_WIN
 #include <windows.h>  // must be first for Windows types/macros
 #include <psapi.h>
 #include <tlhelp32.h>
 #endif
+
+#ifdef Q_OS_WIN
+namespace {
+QString normalizeProcessPath(const QString& path) {
+  if (path.trimmed().isEmpty()) {
+    return QString();
+  }
+  return QDir::cleanPath(QDir::fromNativeSeparators(path)).toLower();
+}
+
+QString queryProcessPathByPid(DWORD pid) {
+  HANDLE process =
+      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+  if (!process) {
+    return QString();
+  }
+  wchar_t buffer[32768];
+  DWORD   length = static_cast<DWORD>(sizeof(buffer) / sizeof(buffer[0]));
+  QString result;
+  if (QueryFullProcessImageNameW(process, 0, buffer, &length)) {
+    result = QString::fromWCharArray(buffer, static_cast<int>(length));
+  }
+  CloseHandle(process);
+  return result;
+}
+}  // namespace
+#endif
+
 ProcessManager::ProcessManager(QObject* parent) : QObject(parent) {}
 
 QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
@@ -23,11 +53,47 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
         ProcessInfo info;
         info.pid  = pe32.th32ProcessID;
         info.name = processName;
+        info.path = queryProcessPathByPid(static_cast<DWORD>(info.pid));
         processes.append(info);
       }
     } while (Process32NextW(hSnapshot, &pe32));
   }
   CloseHandle(hSnapshot);
+#endif
+  return processes;
+}
+
+QList<ProcessInfo> ProcessManager::findProcessesByPath(const QString& path) {
+  QList<ProcessInfo> processes;
+#ifdef Q_OS_WIN
+  const QString targetPath =
+      normalizeProcessPath(QFileInfo(path).absoluteFilePath());
+  if (targetPath.isEmpty()) {
+    return processes;
+  }
+  HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hSnapshot == INVALID_HANDLE_VALUE) {
+    return processes;
+  }
+  PROCESSENTRY32W pe32;
+  pe32.dwSize = sizeof(pe32);
+  if (Process32FirstW(hSnapshot, &pe32)) {
+    do {
+      const DWORD pid         = pe32.th32ProcessID;
+      const QString imagePath = queryProcessPathByPid(pid);
+      if (normalizeProcessPath(imagePath) != targetPath) {
+        continue;
+      }
+      ProcessInfo info;
+      info.pid  = pid;
+      info.name = QString::fromWCharArray(pe32.szExeFile);
+      info.path = imagePath;
+      processes.append(info);
+    } while (Process32NextW(hSnapshot, &pe32));
+  }
+  CloseHandle(hSnapshot);
+#else
+  Q_UNUSED(path)
 #endif
   return processes;
 }
@@ -77,6 +143,17 @@ bool ProcessManager::killProcess(qint64 pid) {
 
 bool ProcessManager::killProcessByName(const QString& name) {
   QList<ProcessInfo> processes = findProcessesByName(name);
+  bool               allKilled = true;
+  for (const ProcessInfo& proc : processes) {
+    if (!killProcess(proc.pid)) {
+      allKilled = false;
+    }
+  }
+  return allKilled;
+}
+
+bool ProcessManager::killProcessByPath(const QString& path) {
+  QList<ProcessInfo> processes = findProcessesByPath(path);
   bool               allKilled = true;
   for (const ProcessInfo& proc : processes) {
     if (!killProcess(proc.pid)) {

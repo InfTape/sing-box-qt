@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(sing-box-qt VERSION 1.1.2 LANGUAGES CXX)
+project(sing-box-qt VERSION 1.1.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -117,6 +117,7 @@ set(SOURCES
     src/widgets/common/SegmentedControl.cpp
     src/widgets/common/ChevronToggle.cpp
     src/widgets/common/RoundedMenu.cpp
+    src/utils/PortableMode.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
     src/utils/LogParser.cpp
@@ -216,6 +217,7 @@ set(HEADERS
     src/widgets/common/SegmentedControl.h
     src/widgets/common/ChevronToggle.h
     src/widgets/common/RoundedMenu.h
+    src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/Crypto.h
     src/utils/LogParser.h
@@ -255,6 +257,7 @@ set(CORE_MANAGER_SOURCES
     src/coremanager/CoreManagerServer.cpp
     src/coremanager/KernelRunner.cpp
     src/core/ProcessManager.cpp
+    src/utils/PortableMode.cpp
     src/utils/Logger.cpp
 )
 
@@ -263,6 +266,7 @@ set(CORE_MANAGER_HEADERS
     src/coremanager/KernelRunner.h
     src/core/CoreManagerProtocol.h
     src/core/ProcessManager.h
+    src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/AppPaths.h
 )

@@ -61,10 +61,11 @@ if (Test-Path $distDir) { Remove-Item $distDir -Recurse -Force }
 New-Item -ItemType Directory $distDir | Out-Null
 Copy-Item $exePath $distDir
 Copy-Item $coreManagerPath $distDir
+Set-Content -Path (Join-Path $distDir "portable.flag") -Value "1" -Encoding Ascii
 
 # Deploy Qt runtime
 Write-Host "Deploying Qt runtime..." -ForegroundColor Cyan
-& $windeployqt --release --compiler-runtime (Join-Path $distDir $exeName)
+& $windeployqt --release --no-compiler-runtime (Join-Path $distDir $exeName)
 
 # Optional: bundle kernel if you want (currently app downloads kernel itself)
 # Copy-Item "C:\path\to\sing-box.exe" $distDir

@@ -26,6 +26,7 @@ add_executable(sing-box-qt-unit-tests
     ../src/storage/AppSettings.cpp
     ../src/storage/DatabaseService.cpp
     ../src/utils/Crypto.cpp
+    ../src/utils/PortableMode.cpp
     ../src/utils/home/HomeFormat.cpp
     ../src/utils/Logger.cpp
     ../src/utils/settings/SettingsHelpers.cpp

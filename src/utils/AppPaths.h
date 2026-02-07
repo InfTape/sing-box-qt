@@ -3,8 +3,12 @@
 #include <QDir>
 #include <QStandardPaths>
 #include <QString>
+#include "utils/PortableMode.h"
 
 inline QString appDataRoot() {
+  if (PortableMode::isPortableEnabled()) {
+    return QDir(PortableMode::portableDataDir()).absolutePath();
+  }
   QString path =
       QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 #ifdef Q_OS_WIN
@@ -23,6 +27,9 @@ inline QString appDataRoot() {
 }
 
 inline QString appDataDir() {
+  if (PortableMode::isPortableEnabled()) {
+    return appDataRoot();
+  }
   return QDir(appDataRoot()).filePath("sing-box-qt");
 }
 #endif  // APPPATHS_H

@@ -1,6 +1,7 @@
 ﻿#include "MainWindow.h"
 #include <QApplication>
 #include <QCloseEvent>
+#include <QDir>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QPainter>
@@ -24,6 +25,7 @@
 #include "storage/AppSettings.h"
 #include "storage/DatabaseService.h"
 #include "system/AdminHelper.h"
+#include "utils/AppPaths.h"
 #include "utils/Logger.h"
 #include "views/connections/ConnectionsView.h"
 #include "views/home/HomeView.h"
@@ -526,13 +528,16 @@ void MainWindow::updateNavIcons() {
 }
 
 void MainWindow::loadSettings() {
-  QSettings settings;
+  const QString settingsPath = QDir(appDataDir()).filePath("ui.ini");
+  QSettings     settings(settingsPath, QSettings::IniFormat);
   restoreGeometry(settings.value("mainWindow/geometry").toByteArray());
   restoreState(settings.value("mainWindow/state").toByteArray());
 }
 
 void MainWindow::saveSettings() {
-  QSettings settings;
+  QDir().mkpath(appDataDir());
+  const QString settingsPath = QDir(appDataDir()).filePath("ui.ini");
+  QSettings     settings(settingsPath, QSettings::IniFormat);
   settings.setValue("mainWindow/geometry", saveGeometry());
   settings.setValue("mainWindow/state", saveState());
 }

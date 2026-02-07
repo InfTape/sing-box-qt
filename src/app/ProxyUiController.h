@@ -30,6 +30,7 @@ class ProxyUiController : public QObject {
   bool      setSystemProxyEnabled(bool enabled, QString* error = nullptr);
   TunResult setTunModeEnabled(
       bool enabled, const std::function<bool()>& confirmRestartAdmin = {});
+  void prepareForExit();
   void broadcastCurrentStates();
  signals:
   void systemProxyStateChanged(bool enabled);

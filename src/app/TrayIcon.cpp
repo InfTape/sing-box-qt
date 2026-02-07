@@ -134,7 +134,9 @@ void TrayIcon::onSelectRule() {
 }
 
 void TrayIcon::onQuit() {
-  // TODO(sam): stop the kernel process
+  if (m_proxyUiController) {
+    m_proxyUiController->prepareForExit();
+  }
   QApplication::quit();
 }
 

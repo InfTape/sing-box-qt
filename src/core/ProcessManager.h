@@ -16,11 +16,13 @@ class ProcessManager : public QObject {
   explicit ProcessManager(QObject* parent = nullptr);
   // Find processes.
   static QList<ProcessInfo> findProcessesByName(const QString& name);
+  static QList<ProcessInfo> findProcessesByPath(const QString& path);
   static bool               isProcessRunning(const QString& name);
   static bool               isProcessRunning(qint64 pid);
   // Terminate processes.
   static bool killProcess(qint64 pid);
   static bool killProcessByName(const QString& name);
+  static bool killProcessByPath(const QString& path);
   // Cleanup leftover kernel processes.
   static void cleanupKernelProcesses();
 };

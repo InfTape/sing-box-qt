@@ -121,6 +121,15 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
   return ok ? TunResult::Applied : TunResult::Failed;
 }
 
+void ProxyUiController::prepareForExit() {
+  if (m_proxyController) {
+    m_proxyController->updateSystemProxyForKernelState(false);
+  }
+  if (m_kernelService && m_kernelService->isRunning()) {
+    m_kernelService->stop();
+  }
+}
+
 void ProxyUiController::broadcastCurrentStates() {
   if (m_settings) {
     const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
