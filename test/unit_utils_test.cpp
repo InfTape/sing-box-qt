@@ -615,8 +615,12 @@ void UnitUtilsTest::kernelPlatform_shouldBuildUrlsAndFilename() {
   const QStringList urls =
       KernelPlatform::buildDownloadUrls("1.2.3", "sing-box-1.2.3-windows-amd64.zip");
   QCOMPARE(urls.size(), 4);
-  QVERIFY(urls[0].contains("/download/v1.2.3/"));
-  QVERIFY(urls[0].contains("sing-box-1.2.3-windows-amd64.zip"));
+  QVERIFY(urls[0].startsWith("https://ghproxy.net/"));
+  QVERIFY(urls[1].startsWith("https://mirror.ghproxy.com/"));
+  QVERIFY(urls[2].startsWith("https://ghproxy.com/"));
+  QVERIFY(urls[3].startsWith("https://github.com/"));
+  QVERIFY(urls[3].contains("/download/v1.2.3/"));
+  QVERIFY(urls[3].contains("sing-box-1.2.3-windows-amd64.zip"));
 }
 
 void UnitUtilsTest::kernelPlatform_shouldHandlePathUtilities() {

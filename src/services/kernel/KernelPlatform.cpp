@@ -92,10 +92,11 @@ QStringList buildDownloadUrls(const QString& version, const QString& filename) {
       QString("https://github.com/SagerNet/sing-box/releases/download/%1/%2")
           .arg(tag, filename);
   QStringList urls;
-  urls << base;
-  urls << "https://ghproxy.com/" + base;
-  urls << "https://mirror.ghproxy.com/" + base;
+  // Try backup mirrors first: 3 -> 2 -> 1, then the GitHub primary URL.
   urls << "https://ghproxy.net/" + base;
+  urls << "https://mirror.ghproxy.com/" + base;
+  urls << "https://ghproxy.com/" + base;
+  urls << base;
   return urls;
 }
 
