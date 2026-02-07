@@ -81,10 +81,6 @@
 ![设置](https://github.com/user-attachments/assets/617a190f-e8c5-41fe-aa47-e86f9792265f)
 
 
-![托盘](https://github.com/user-attachments/assets/47ea51f1-6a3c-4e15-b5aa-c62d883b1044)
-
-
-
 ---
 
 ## 下载安装
