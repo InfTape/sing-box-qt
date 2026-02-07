@@ -19,7 +19,7 @@ class SettingsModel {
     QString downloadDetour  = "manual";
     bool    blockAds        = false;
     bool    dnsHijack       = true;
-    bool    enableAppGroups = true;
+    bool    enableAppGroups = false;
     QString dnsProxy;
     QString dnsCn;
     QString dnsResolver;

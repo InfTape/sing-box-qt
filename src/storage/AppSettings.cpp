@@ -32,7 +32,7 @@ AppSettings::AppSettings(QObject* parent)
       // Feature flags defaults.
       ,
       m_blockAds(false),
-      m_enableAppGroups(true),
+      m_enableAppGroups(false),
       m_preferIpv6(false),
       m_dnsHijack(true),
       m_systemProxyEnabled(true),
@@ -76,7 +76,7 @@ void AppSettings::load() {
                       .toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
   // Feature flags.
   m_blockAds        = config.value("blockAds").toBool(false);
-  m_enableAppGroups = config.value("enableAppGroups").toBool(true);
+  m_enableAppGroups = config.value("enableAppGroups").toBool(false);
   m_preferIpv6      = config.value("preferIpv6").toBool(false);
   m_dnsHijack       = config.value("dnsHijack").toBool(true);
   if (config.contains("systemProxyEnabled")) {

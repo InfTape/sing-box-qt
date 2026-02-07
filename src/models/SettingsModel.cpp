@@ -28,7 +28,7 @@ SettingsModel::Data SettingsModel::load() {
   d.downloadDetour  = config.value("downloadDetour").toString("manual");
   d.blockAds        = config.value("blockAds").toBool(false);
   d.dnsHijack       = config.value("dnsHijack").toBool(true);
-  d.enableAppGroups = config.value("enableAppGroups").toBool(true);
+  d.enableAppGroups = config.value("enableAppGroups").toBool(false);
   d.dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
   d.dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
