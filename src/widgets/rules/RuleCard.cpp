@@ -38,7 +38,7 @@ void RuleCard::setupUI() {
   QHBoxLayout* headerLayout = new QHBoxLayout;
   headerLayout->setSpacing(6);
   QLabel* statusTag =
-      new QLabel(m_rule.isCustom ? tr("Custom") : tr("Default"));
+      new QLabel(m_rule.isCustom ? tr("Custom") : tr("Built-in"));
   statusTag->setObjectName(m_rule.isCustom ? "CardTagActive" : "CardTag");
   statusTag->setAttribute(Qt::WA_StyledBackground, true);
   statusTag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -83,10 +83,15 @@ void RuleCard::setupUI() {
   payloadLabel->setObjectName("CardInfoText");
   payloadLabel->setWordWrap(true);
   QString typeLabelText = m_rule.ruleSet.trimmed();
-  if (typeLabelText.isEmpty()) {
+  if (!m_rule.isCustom &&
+      (typeLabelText.isEmpty() ||
+       typeLabelText.compare("default", Qt::CaseInsensitive) == 0)) {
+    typeLabelText = tr("Built-in");
+  } else if (typeLabelText.isEmpty()) {
     typeLabelText = tr("Default");
   }
-  QLabel* typeLabel = new QLabel(tr("Type: %1").arg(typeLabelText), infoPanel);
+  QLabel* typeLabel =
+      new QLabel(tr("Rule Set: %1").arg(typeLabelText), infoPanel);
   typeLabel->setObjectName("CardInfoText");
   infoLayout->addWidget(payloadLabel);
   infoLayout->addWidget(typeLabel);

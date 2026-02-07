@@ -80,7 +80,7 @@ AppContext* AppBootstrapper::context() const {
 
 void AppBootstrapper::setupMeta() {
   m_app.setApplicationName("Sing-Box——Qt");
-  m_app.setApplicationVersion("1.1.1");
+  m_app.setApplicationVersion("1.1.3");
   m_app.setOrganizationName("InfTape");
   m_app.setOrganizationDomain("github.com/inftape");
   m_app.setWindowIcon(QIcon(":/icons/app.png"));

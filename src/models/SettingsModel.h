@@ -16,7 +16,7 @@ class SettingsModel {
     bool    tunAutoRoute    = true;
     bool    tunStrictRoute  = true;
     QString defaultOutbound = "manual";
-    QString downloadDetour  = "direct";
+    QString downloadDetour  = "manual";
     bool    blockAds        = false;
     bool    dnsHijack       = true;
     bool    enableAppGroups = true;

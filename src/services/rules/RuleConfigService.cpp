@@ -9,6 +9,50 @@
 #include "utils/rule/RuleUtils.h"
 
 namespace {
+QStringList splitBracketListValues(const QString& raw) {
+  QStringList values;
+  QString     token;
+  bool        inQuote = false;
+  QChar       quoteChar;
+
+  auto pushToken = [&values, &token]() {
+    const QString trimmed = token.trimmed();
+    if (!trimmed.isEmpty()) {
+      values << trimmed;
+    }
+    token.clear();
+  };
+
+  for (int i = 0; i < raw.size(); ++i) {
+    const QChar ch = raw.at(i);
+    if (inQuote) {
+      if (ch == quoteChar) {
+        inQuote = false;
+      } else if (ch == '\\' && i + 1 < raw.size() &&
+                 raw.at(i + 1) == quoteChar) {
+        token += quoteChar;
+        ++i;
+      } else {
+        token += ch;
+      }
+      continue;
+    }
+    if (ch == '"' || ch == '\'') {
+      inQuote  = true;
+      quoteChar = ch;
+      continue;
+    }
+    if (ch == ',' || ch.isSpace()) {
+      pushToken();
+      continue;
+    }
+    token += ch;
+  }
+
+  pushToken();
+  return values;
+}
+
 bool buildRouteRule(const RuleConfigService::RuleEditData& data,
                     QJsonObject*                           out,
                     QString*                               error) {
@@ -508,7 +552,14 @@ bool RuleConfigService::parseRulePayload(const QString& payload,
   }
   const QString foundKey     = trimmed.left(eq).trimmed();
   const QString valueStr     = trimmed.mid(eq + 1).trimmed();
-  QStringList   parsedValues = valueStr.split(',', Qt::SkipEmptyParts);
+  QStringList   parsedValues;
+  if (valueStr.startsWith('[') && valueStr.endsWith(']')) {
+    const QString bracketInner =
+        valueStr.mid(1, valueStr.size() - 2).trimmed();
+    parsedValues = splitBracketListValues(bracketInner);
+  } else {
+    parsedValues = valueStr.split(',', Qt::SkipEmptyParts);
+  }
   for (QString& v : parsedValues) {
     v = v.trimmed();
   }

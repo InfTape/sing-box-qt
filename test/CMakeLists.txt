@@ -21,9 +21,12 @@ add_executable(sing-box-qt-unit-tests
     unit_utils_test.cpp
     ../src/services/config/ConfigBuilder.cpp
     ../src/services/config/ConfigMutator.cpp
+    ../src/services/rules/RuleConfigService.cpp
+    ../src/services/rules/SharedRulesStore.cpp
     ../src/services/subscription/SubscriptionParser.cpp
     ../src/services/kernel/KernelPlatform.cpp
     ../src/storage/AppSettings.cpp
+    ../src/storage/ConfigIO.cpp
     ../src/storage/DatabaseService.cpp
     ../src/utils/Crypto.cpp
     ../src/utils/PortableMode.cpp

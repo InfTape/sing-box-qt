@@ -8,6 +8,7 @@
 #include <QRegularExpression>
 #include <QSysInfo>
 #include "utils/AppPaths.h"
+#include "utils/GitHubMirror.h"
 
 namespace KernelPlatform {
 QString kernelInstallDir() {
@@ -91,13 +92,7 @@ QStringList buildDownloadUrls(const QString& version, const QString& filename) {
   const QString base =
       QString("https://github.com/SagerNet/sing-box/releases/download/%1/%2")
           .arg(tag, filename);
-  QStringList urls;
-  // Try backup mirrors first: 3 -> 2 -> 1, then the GitHub primary URL.
-  urls << "https://ghproxy.net/" + base;
-  urls << "https://mirror.ghproxy.com/" + base;
-  urls << "https://ghproxy.com/" + base;
-  urls << base;
-  return urls;
+  return GitHubMirror::buildUrls(base);
 }
 
 QString findExecutableInDir(const QString& dirPath, const QString& exeName) {

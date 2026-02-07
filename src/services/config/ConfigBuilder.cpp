@@ -290,7 +290,7 @@ QJsonArray ConfigBuilder::buildRuleSets() {
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_PRIVATE,
       ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE),
-      ConfigConstants::TAG_DIRECT,
+      downloadDetour,
       "7d"));
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOIP_CN,

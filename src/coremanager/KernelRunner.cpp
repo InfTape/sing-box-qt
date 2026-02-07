@@ -94,8 +94,13 @@ void KernelRunner::stop() {
   m_stopRequested = true;
   Logger::info(tr("Stopping kernel..."));
   m_process->terminate();
-  // NOTE: kill fallback intentionally disabled for testing terminate()
-  // behavior.
+  QTimer::singleShot(3000, this, [this]() {
+    if (!m_process || m_process->state() == QProcess::NotRunning) {
+      return;
+    }
+    Logger::warn(tr("Kernel did not exit after terminate, forcing kill."));
+    m_process->kill();
+  });
 }
 
 void KernelRunner::restart() {

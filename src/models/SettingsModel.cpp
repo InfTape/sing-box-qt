@@ -25,7 +25,7 @@ SettingsModel::Data SettingsModel::load() {
   d.tunAutoRoute    = config.value("tunAutoRoute").toBool(true);
   d.tunStrictRoute  = config.value("tunStrictRoute").toBool(true);
   d.defaultOutbound = config.value("defaultOutbound").toString("manual");
-  d.downloadDetour  = config.value("downloadDetour").toString("direct");
+  d.downloadDetour  = config.value("downloadDetour").toString("manual");
   d.blockAds        = config.value("blockAds").toBool(false);
   d.dnsHijack       = config.value("dnsHijack").toBool(true);
   d.enableAppGroups = config.value("enableAppGroups").toBool(true);

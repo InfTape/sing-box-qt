@@ -46,7 +46,7 @@ AppSettings::AppSettings(QObject* parent)
       // Outbound selection.
       ,
       m_defaultOutbound("manual"),
-      m_downloadDetour("direct") {
+      m_downloadDetour("manual") {
   load();
 }
 
@@ -99,7 +99,7 @@ void AppSettings::load() {
                          .toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
-  m_downloadDetour  = config.value("downloadDetour").toString("direct");
+  m_downloadDetour  = config.value("downloadDetour").toString("manual");
   Logger::info("App settings loaded");
 }
 

@@ -2,6 +2,7 @@
 #define CONFIGCONSTANTS_H
 #include <QString>
 #include <QStringList>
+#include "utils/GitHubMirror.h"
 
 namespace ConfigConstants {
 // ==================== Outbound tags ====================
@@ -33,7 +34,7 @@ const QString RS_GEOIP_CN                   = "geoip-cn";
 // ==================== Rule set URLs ====================
 const QString RULE_SET_BASE = "https://raw.githubusercontent.com";
 
-inline QString ruleSetUrl(const QString& tag) {
+inline QString ruleSetRawUrl(const QString& tag) {
   if (tag == RS_GEOSITE_CN) {
     return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-cn.srs";
   } else if (tag == RS_GEOSITE_GEOLOCATION_NOT_CN) {
@@ -60,6 +61,10 @@ inline QString ruleSetUrl(const QString& tag) {
     return RULE_SET_BASE + "/SagerNet/sing-geoip/rule-set/geoip-cn.srs";
   }
   return QString();
+}
+
+inline QString ruleSetUrl(const QString& tag) {
+  return GitHubMirror::withMirror(ruleSetRawUrl(tag), 0);
 }
 
 // ==================== Private IP ranges ====================
@@ -89,8 +94,8 @@ inline QStringList tunRouteExcludes() {
 const int     DEFAULT_MIXED_PORT   = 7890;
 const int     DEFAULT_API_PORT     = 9090;
 const QString DEFAULT_DNS_PROXY    = "https://1.1.1.1/dns-query";
-const QString DEFAULT_DNS_CN       = "h3://dns.alidns.com/dns-query";
-const QString DEFAULT_DNS_RESOLVER = "114.114.114.114";
+const QString DEFAULT_DNS_CN       = "223.5.5.5";
+const QString DEFAULT_DNS_RESOLVER = "223.5.5.5";
 // Default delay test address consistent with Throne-dev
 const QString DEFAULT_URLTEST_URL = "http://cp.cloudflare.com/";
 const QString DEFAULT_SYSTEM_PROXY_BYPASS =

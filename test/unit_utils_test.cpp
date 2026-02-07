@@ -7,6 +7,7 @@
 #include "network/SubscriptionService.h"
 #include "services/config/ConfigBuilder.h"
 #include "services/config/ConfigMutator.h"
+#include "services/rules/RuleConfigService.h"
 #include "services/subscription/SubscriptionParser.h"
 #include "services/kernel/KernelPlatform.h"
 #include "storage/AppSettings.h"
@@ -169,6 +170,7 @@ class UnitUtilsTest : public QObject {
   void ruleUtils_shouldNormalizeTypeAndProxy();
   void ruleUtils_shouldDetectCustomPayload();
   void ruleUtils_shouldHandleAdditionalProxyShapes();
+  void ruleConfigService_shouldParsePayloadValues();
   void homeFormat_shouldFormatBytesAndDuration();
   void homeFormat_shouldCoverAdditionalUnits();
   void proxyNodeHelper_shouldMapDelayState();
@@ -282,10 +284,20 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QVERIFY(tgIdx >= 0);
   QVERIFY(cnIdx >= 0);
   QVERIFY(privateIdx >= 0);
+  QVERIFY(ruleSets[cnIdx]
+              .toObject()
+              .value("url")
+              .toString()
+              .startsWith("https://ghproxy.com/"));
+  QVERIFY(ruleSets[cnIdx]
+              .toObject()
+              .value("url")
+              .toString()
+              .contains("https://raw.githubusercontent.com/"));
   QCOMPARE(ruleSets[cnIdx].toObject().value("download_detour").toString(),
            ConfigConstants::TAG_MANUAL);
   QCOMPARE(ruleSets[privateIdx].toObject().value("download_detour").toString(),
-           ConfigConstants::TAG_DIRECT);
+           ConfigConstants::TAG_MANUAL);
 
   const QJsonObject experimental = config.value("experimental").toObject();
   const QJsonObject clashApi = experimental.value("clash_api").toObject();
@@ -380,6 +392,38 @@ void UnitUtilsTest::ruleUtils_shouldHandleAdditionalProxyShapes() {
   QCOMPARE(RuleUtils::normalizeProxyValue("Proxy(Node-D)"), QString("Node-D"));
   QCOMPARE(RuleUtils::normalizeProxyValue("[Node-E]"), QString("Node-E"));
   QCOMPARE(RuleUtils::displayProxyLabel("Node-F"), QString("Node-F"));
+}
+
+void UnitUtilsTest::ruleConfigService_shouldParsePayloadValues() {
+  QString     key;
+  QStringList values;
+  QString     error;
+
+  QVERIFY(RuleConfigService::parseRulePayload(
+      "domain_suffix=googleapis.com,gstatic.com", &key, &values, &error));
+  QCOMPARE(key, QString("domain_suffix"));
+  QCOMPARE(values, (QStringList{"googleapis.com", "gstatic.com"}));
+
+  QVERIFY(RuleConfigService::parseRulePayload(
+      "domain_suffix=[googleapis.com gstatic.com]", &key, &values, &error));
+  QCOMPARE(key, QString("domain_suffix"));
+  QCOMPARE(values, (QStringList{"googleapis.com", "gstatic.com"}));
+
+  QVERIFY(RuleConfigService::parseRulePayload(
+      "domain_suffix=[googleapis.com, gstatic.com]", &key, &values, &error));
+  QCOMPARE(values, (QStringList{"googleapis.com", "gstatic.com"}));
+
+  QVERIFY(RuleConfigService::parseRulePayload(
+      "process_path=[\"C:\\Program Files\\App\\app.exe\" D:\\Tools\\tool.exe]",
+      &key,
+      &values,
+      &error));
+  QCOMPARE(key, QString("process_path"));
+  QCOMPARE(values,
+           (QStringList{"C:\\Program Files\\App\\app.exe",
+                        "D:\\Tools\\tool.exe"}));
+
+  QVERIFY(!RuleConfigService::parseRulePayload("domain_suffix", &key, &values, &error));
 }
 
 void UnitUtilsTest::homeFormat_shouldFormatBytesAndDuration() {
@@ -615,12 +659,12 @@ void UnitUtilsTest::kernelPlatform_shouldBuildUrlsAndFilename() {
   const QStringList urls =
       KernelPlatform::buildDownloadUrls("1.2.3", "sing-box-1.2.3-windows-amd64.zip");
   QCOMPARE(urls.size(), 4);
-  QVERIFY(urls[0].startsWith("https://ghproxy.net/"));
-  QVERIFY(urls[1].startsWith("https://mirror.ghproxy.com/"));
-  QVERIFY(urls[2].startsWith("https://ghproxy.com/"));
-  QVERIFY(urls[3].startsWith("https://github.com/"));
-  QVERIFY(urls[3].contains("/download/v1.2.3/"));
-  QVERIFY(urls[3].contains("sing-box-1.2.3-windows-amd64.zip"));
+  QVERIFY(urls[0].startsWith("https://ghproxy.com/"));
+  QVERIFY(urls[1].startsWith("https://github.com/"));
+  QVERIFY(urls[2].startsWith("https://ghproxy.net/"));
+  QVERIFY(urls[3].startsWith("https://mirror.ghproxy.com/"));
+  QVERIFY(urls[1].contains("/download/v1.2.3/"));
+  QVERIFY(urls[1].contains("sing-box-1.2.3-windows-amd64.zip"));
 }
 
 void UnitUtilsTest::kernelPlatform_shouldHandlePathUtilities() {
@@ -900,7 +944,7 @@ void UnitUtilsTest::configMutator_shouldApplyPortSettingsAndFeatureRemovals() {
   settings.setDownloadDetour("direct");
   settings.setPreferIpv6(false);
   settings.setDnsProxy("https://1.0.0.1/dns-query");
-  settings.setDnsCn("h3://dns.alidns.com/dns-query");
+  settings.setDnsCn("223.5.5.5");
   settings.setDnsResolver("223.5.5.5");
   settings.setUrltestUrl("http://cp.cloudflare.com/");
 
@@ -996,7 +1040,7 @@ void UnitUtilsTest::configMutator_shouldApplyPortSettingsAndFeatureRemovals() {
   QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_CN)
                .value("address")
                .toString(),
-           QString("h3://dns.alidns.com/dns-query"));
+           QString("223.5.5.5"));
   QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER)
                .value("address")
                .toString(),
@@ -1053,6 +1097,7 @@ void UnitUtilsTest::configMutator_shouldApplySettingsFeatureInsertions() {
       {"rule_set",
        QJsonArray{QJsonObject{{"type", "remote"},
                               {"tag", ConfigConstants::RS_GEOSITE_CN},
+                              {"url", "https://raw.githubusercontent.com/old"},
                               {"download_detour", "old"}}}},
       {"rules",
        QJsonArray{
@@ -1081,6 +1126,11 @@ void UnitUtilsTest::configMutator_shouldApplySettingsFeatureInsertions() {
                .value("download_detour")
                .toString(),
            ConfigConstants::TAG_MANUAL);
+  QVERIFY(ruleSets[cnIdx]
+              .toObject()
+              .value("url")
+              .toString()
+              .startsWith("https://ghproxy.com/"));
 }
 
 void UnitUtilsTest::subscriptionParser_shouldParseAdvancedProtocols() {

@@ -329,6 +329,11 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         QJsonObject rs = ruleSets[i].toObject();
         if (rs.value("type").toString() == "remote") {
+          const QString tag = rs.value("tag").toString();
+          const QString url = ConfigConstants::ruleSetUrl(tag);
+          if (!url.isEmpty()) {
+            rs["url"] = url;
+          }
           rs["download_detour"] = settings.normalizedDownloadDetour();
         }
         ruleSets[i] = rs;

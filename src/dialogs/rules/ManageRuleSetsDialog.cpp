@@ -214,7 +214,7 @@ void ManageRuleSetsDialog::onRuleAdd() {
     QMessageBox::warning(this, tr("Add Rule"), error);
     return;
   }
-  RuleEditorDialog dlg(RuleEditorDialog::Mode::Add, this);
+  RuleEditorDialog dlg(RuleEditorDialog::Mode::Add, m_themeService, this);
   dlg.setOutboundTags(outboundTags);
   dlg.setRuleSetName(set);
   if (dlg.exec() != QDialog::Accepted) {

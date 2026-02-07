@@ -6,12 +6,15 @@ class QLabel;
 class QPlainTextEdit;
 class MenuComboBox;
 class QLineEdit;
+class ThemeService;
 
 class RuleEditorDialog : public QDialog {
   Q_OBJECT
  public:
   enum class Mode { Add, Edit };
-  explicit RuleEditorDialog(Mode mode, QWidget* parent = nullptr);
+  explicit RuleEditorDialog(Mode          mode,
+                            ThemeService* themeService = nullptr,
+                            QWidget*      parent       = nullptr);
   void setOutboundTags(const QStringList& tags);
   void setRuleSetName(const QString& name);
   bool setEditRule(const RuleItem& rule, QString* error);

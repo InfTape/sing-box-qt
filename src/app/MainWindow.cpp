@@ -425,17 +425,6 @@ void MainWindow::onStartStopClicked() {
       m_proxyUiController && m_proxyUiController->isKernelRunning();
   const int stopSeq = ++m_stopCheckSeq;
   if (wasRunning) {
-    if (m_homeView) {
-      m_homeView->updateStatus(false);
-    }
-    if (m_connectionsView) {
-      m_connectionsView->setAutoRefreshEnabled(false);
-    }
-    if (m_startStopBtn) {
-      m_startStopBtn->setText(tr("Start"));
-      m_startStopBtn->setProperty("state", "start");
-      applyStartStopStyle();
-    }
     QTimer::singleShot(5000, this, [this, stopSeq]() {
       if (stopSeq != m_stopCheckSeq) {
         return;

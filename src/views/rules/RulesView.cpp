@@ -170,16 +170,17 @@ void RulesView::setProxyService(ProxyService* service) {
               data.payload         = rule.value("payload").toString();
               data.proxy           = rule.value("proxy").toString();
               const QString source = rule.value("source").toString().toLower();
-              if (source == "user" || source == "custom") {
-                data.isCustom = true;
-              } else {
-                data.isCustom = RuleUtils::isCustomPayload(data.payload);
-              }
-              if (data.isCustom) {
+              const bool sourceMarkedCustom =
+                  (source == "user" || source == "custom");
+              const bool customPayloadShape =
+                  RuleUtils::isCustomPayload(data.payload);
+              // Prefer shared-rules matching result to classify custom rules.
+              if (sourceMarkedCustom || customPayloadShape) {
                 data.ruleSet =
                     RuleConfigService::findRuleSet(m_configRepo, data)
                         .trimmed();
               }
+              data.isCustom = !data.ruleSet.isEmpty() || sourceMarkedCustom;
               if (data.ruleSet.isEmpty()) {
                 data.ruleSet = QStringLiteral("default");
               }
@@ -230,7 +231,7 @@ void RulesView::onAddRuleClicked() {
     QMessageBox::warning(this, tr("Add Rule"), error);
     return;
   }
-  RuleEditorDialog dialog(RuleEditorDialog::Mode::Add, this);
+  RuleEditorDialog dialog(RuleEditorDialog::Mode::Add, m_themeService, this);
   dialog.setOutboundTags(outboundTags);
   if (dialog.exec() != QDialog::Accepted) {
     return;
@@ -321,11 +322,11 @@ void RulesView::updateFilterOptions() {
   QMap<QString, QString> types;
   QSet<QString>          proxies;
   bool                   hasCustom  = false;
-  bool                   hasDefault = false;
+  bool                   hasBuiltIn = false;
   for (const auto& rule : std::as_const(m_rules)) {
     const QString typeKey = RuleUtils::normalizeRuleTypeKey(rule.type);
     if (!rule.isCustom) {
-      hasDefault = true;
+      hasBuiltIn = true;
       if (typeKey != "default" && !types.contains(typeKey)) {
         types.insert(typeKey, RuleUtils::displayRuleTypeLabel(rule.type));
       }
@@ -341,8 +342,8 @@ void RulesView::updateFilterOptions() {
   if (hasCustom) {
     m_typeFilter->addItem(tr("Custom"), "custom");
   }
-  if (hasDefault) {
-    m_typeFilter->addItem(tr("Default"), "default");
+  if (hasBuiltIn) {
+    m_typeFilter->addItem(tr("Built-in"), "default");
   }
   QStringList typeKeys = types.keys();
   typeKeys.sort();
@@ -513,7 +514,7 @@ void RulesView::handleEditRule(const RuleItem& rule) {
     QMessageBox::warning(this, tr("Edit Match Type"), error);
     return;
   }
-  RuleEditorDialog dialog(RuleEditorDialog::Mode::Edit, this);
+  RuleEditorDialog dialog(RuleEditorDialog::Mode::Edit, m_themeService, this);
   dialog.setOutboundTags(outboundTags);
   dialog.setRuleSetName(RuleConfigService::findRuleSet(m_configRepo, rule));
   if (!dialog.setEditRule(rule, &error)) {

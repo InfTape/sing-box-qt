@@ -7,16 +7,19 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QVBoxLayout>
+#include "app/interfaces/ThemeService.h"
 #include "utils/rule/RuleUtils.h"
 #include "widgets/common/MenuComboBox.h"
 
-RuleEditorDialog::RuleEditorDialog(Mode mode, QWidget* parent)
+RuleEditorDialog::RuleEditorDialog(Mode          mode,
+                                   ThemeService* themeService,
+                                   QWidget*      parent)
     : QDialog(parent),
       m_mode(mode),
       m_fields(RuleConfigService::fieldInfos()),
-      m_typeCombo(new MenuComboBox(this)),
+      m_typeCombo(new MenuComboBox(this, themeService)),
       m_valueEdit(new QPlainTextEdit(this)),
-      m_outboundCombo(new MenuComboBox(this)),
+      m_outboundCombo(new MenuComboBox(this, themeService)),
       m_ruleSetEdit(new QLineEdit(this)),
       m_hintLabel(new QLabel(this)) {
   setModal(true);
