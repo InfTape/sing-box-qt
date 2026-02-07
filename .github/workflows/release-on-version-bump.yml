@@ -124,8 +124,8 @@ jobs:
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.detect-version.outputs.current_version }}
-          name: sing-box-qt v${{ needs.detect-version.outputs.current_version }}
+          tag: ${{ needs.detect-version.outputs.current_version }}
+          name: ${{ needs.detect-version.outputs.current_version }}
           artifacts: sing-box-qt-portable-v${{ needs.detect-version.outputs.current_version }}.zip
           allowUpdates: true
           replacesArtifacts: true

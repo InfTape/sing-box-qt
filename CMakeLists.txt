@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(sing-box-qt VERSION 1.1.2.1 LANGUAGES CXX)
+project(sing-box-qt VERSION 1.1.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -293,6 +293,11 @@ target_link_libraries(sing-box-core-manager PRIVATE
     Qt6::Core
     Qt6::Network
 )
+
+# Silence noisy third-party conversion warnings from yaml-cpp on MSVC.
+if(MSVC AND TARGET yaml-cpp)
+    target_compile_options(yaml-cpp PRIVATE /wd4267)
+endif()
 
 # Windows-specific configuration.
 if(WIN32)

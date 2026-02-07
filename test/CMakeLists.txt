@@ -51,6 +51,10 @@ target_link_libraries(sing-box-qt-unit-tests PRIVATE
     yaml-cpp::yaml-cpp
 )
 
+if (MSVC AND TARGET yaml-cpp)
+    target_compile_options(yaml-cpp PRIVATE /wd4267)
+endif()
+
 enable_testing()
 add_test(
     NAME sing-box-qt-unit-tests
