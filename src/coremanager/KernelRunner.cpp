@@ -93,14 +93,7 @@ void KernelRunner::stop() {
   }
   m_stopRequested = true;
   Logger::info(tr("Stopping kernel..."));
-  m_process->terminate();
-  QTimer::singleShot(3000, this, [this]() {
-    if (!m_process || m_process->state() == QProcess::NotRunning) {
-      return;
-    }
-    Logger::warn(tr("Kernel did not exit after terminate, forcing kill."));
-    m_process->kill();
-  });
+  m_process->kill();
 }
 
 void KernelRunner::restart() {
