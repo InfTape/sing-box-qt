@@ -189,7 +189,7 @@ QFrame#Card, QWidget#Card {
 }
 #ComboMenu::separator, #TrayMenu::separator {
     height: 1px;
-    background-color: @border@;
+    background-color: @border-solid@;
     margin: 6px 4px;
 }
 #TrayMenu::indicator {
@@ -238,7 +238,7 @@ QFrame#Card, QWidget#Card {
 }
 #MultiSelectMenu::separator {
     height: 1px;
-    background-color: @border@;
+    background-color: @border-solid@;
     margin: 6px 4px;
 }
 
