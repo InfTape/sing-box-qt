@@ -589,6 +589,32 @@ void SubscriptionService::clearActiveSubscription() {
   emit activeSubscriptionChanged(QString(), QString());
 }
 
+void SubscriptionService::syncRuleSetToSubscriptions(
+    const QString& ruleSetName) {
+  const QString name = ruleSetName.isEmpty() ? QStringLiteral("default") : ruleSetName;
+  for (auto& sub : m_subscriptions) {
+    if (!sub.enableSharedRules) {
+      continue;
+    }
+    const QStringList sets =
+        sub.ruleSets.isEmpty() ? QStringList{"default"} : sub.ruleSets;
+    if (!sets.contains(name)) {
+      continue;
+    }
+    syncSharedRulesToConfig(sub);
+  }
+  if (m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count()) {
+    const auto& active = m_subscriptions[m_activeIndex];
+    if (active.enableSharedRules && !active.configPath.isEmpty()) {
+      const QStringList sets =
+          active.ruleSets.isEmpty() ? QStringList{"default"} : active.ruleSets;
+      if (sets.contains(name)) {
+        emit applyConfigRequested(active.configPath, true);
+      }
+    }
+  }
+}
+
 QString SubscriptionService::getCurrentConfig() const {
   const QString path =
       m_activeConfigPath.isEmpty()

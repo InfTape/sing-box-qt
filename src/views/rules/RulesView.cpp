@@ -247,6 +247,7 @@ void RulesView::onAddRuleClicked() {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
+  emit ruleSetChanged(data.ruleSet);
   auto* box = new QMessageBox(
       QMessageBox::Information,
       tr("Add Rule"),
@@ -542,6 +543,7 @@ void RulesView::handleEditRule(const RuleItem& rule) {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
+  emit ruleSetChanged(data.ruleSet);
 }
 
 void RulesView::handleDeleteRule(const RuleItem& rule) {
@@ -565,6 +567,7 @@ void RulesView::handleDeleteRule(const RuleItem& rule) {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
+  emit ruleSetChanged(rule.ruleSet);
 }
 
 void RulesView::updateStyle() {

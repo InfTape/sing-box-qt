@@ -66,6 +66,8 @@ class SubscriptionService : public QObject {
   bool    saveCurrentConfig(const QString& content, bool applyRuntime);
   bool    rollbackSubscriptionConfig(const QString& configPath);
   bool    deleteSubscriptionConfig(const QString& configPath);
+  // Sync rule‑set changes to all subscriptions that reference the set.
+  void    syncRuleSetToSubscriptions(const QString& ruleSetName);
   // Get subscription list.
   QList<SubscriptionInfo> getSubscriptions() const;
   int                     getActiveIndex() const;

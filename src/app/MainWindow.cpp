@@ -114,7 +114,6 @@ MainWindow::~MainWindow() {
   saveSettings();
 }
 
-// ... existing code ...
 void MainWindow::setupUI() {
   setWindowTitle(tr("Sing-Box"));
   setMinimumSize(1000, 700);
@@ -287,6 +286,12 @@ void MainWindow::setupSubscriptionConnections() {
               kernel->setConfigPath(configPath);
             }
           });
+  if (m_rulesView) {
+    connect(m_rulesView,
+            &RulesView::ruleSetChanged,
+            m_subscriptionService,
+            &SubscriptionService::syncRuleSetToSubscriptions);
+  }
 }
 
 void MainWindow::setupProxyUiBindings() {

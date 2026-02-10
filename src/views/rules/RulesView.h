@@ -26,6 +26,8 @@ class RulesView : public QWidget {
                      QWidget*          parent = nullptr);
   void setProxyService(ProxyService* service);
   void refresh();
+ signals:
+  void ruleSetChanged(const QString& ruleSetName);
  public slots:
   void updateStyle();
 
