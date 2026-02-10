@@ -28,6 +28,7 @@ class RulesView : public QWidget {
   void refresh();
  signals:
   void ruleSetChanged(const QString& ruleSetName);
+  void ruleSetsChanged();
  public slots:
   void updateStyle();
 

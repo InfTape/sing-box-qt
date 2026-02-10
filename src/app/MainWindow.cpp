@@ -291,6 +291,10 @@ void MainWindow::setupSubscriptionConnections() {
             &RulesView::ruleSetChanged,
             m_subscriptionService,
             &SubscriptionService::syncRuleSetToSubscriptions);
+    connect(m_rulesView,
+            &RulesView::ruleSetsChanged,
+            m_subscriptionService,
+            &SubscriptionService::syncAllRuleSetsToSubscriptions);
   }
 }
 

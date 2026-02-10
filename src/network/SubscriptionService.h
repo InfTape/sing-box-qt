@@ -68,6 +68,7 @@ class SubscriptionService : public QObject {
   bool    deleteSubscriptionConfig(const QString& configPath);
   // Sync rule‑set changes to all subscriptions that reference the set.
   void    syncRuleSetToSubscriptions(const QString& ruleSetName);
+  void    syncAllRuleSetsToSubscriptions();
   // Get subscription list.
   QList<SubscriptionInfo> getSubscriptions() const;
   int                     getActiveIndex() const;

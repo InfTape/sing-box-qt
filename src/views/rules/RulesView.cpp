@@ -27,6 +27,13 @@
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/rules/RuleCard.h"
 
+namespace {
+QString normalizeRuleSetName(const QString& ruleSetName) {
+  const QString normalized = ruleSetName.trimmed();
+  return normalized.isEmpty() ? QStringLiteral("default") : normalized;
+}
+}  // namespace
+
 RulesView::RulesView(ConfigRepository* configRepo,
                      ThemeService*     themeService,
                      QWidget*          parent)
@@ -131,8 +138,7 @@ void RulesView::setupUI() {
   connect(m_ruleSetBtn, &QPushButton::clicked, this, [this]() {
     ManageRuleSetsDialog dlg(m_configRepo, m_themeService, this);
     connect(&dlg, &ManageRuleSetsDialog::ruleSetsChanged, this, [this]() {
-      // refresh filters to include new sets via /rules fetch
-      this->refresh();
+      emit ruleSetsChanged();
     });
     dlg.exec();
   });
@@ -197,7 +203,7 @@ void RulesView::setProxyService(ProxyService* service) {
 }
 
 void RulesView::refresh() {
-  if (!m_proxyService) {
+  if (!m_proxyService || m_loading) {
     return;
   }
   m_loading = true;
@@ -247,7 +253,7 @@ void RulesView::onAddRuleClicked() {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
-  emit ruleSetChanged(data.ruleSet);
+  emit ruleSetChanged(normalizeRuleSetName(data.ruleSet));
   auto* box = new QMessageBox(
       QMessageBox::Information,
       tr("Add Rule"),
@@ -543,7 +549,12 @@ void RulesView::handleEditRule(const RuleItem& rule) {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
-  emit ruleSetChanged(data.ruleSet);
+  const QString oldSet = normalizeRuleSetName(rule.ruleSet);
+  const QString newSet = normalizeRuleSetName(data.ruleSet);
+  emit ruleSetChanged(newSet);
+  if (oldSet != newSet) {
+    emit ruleSetChanged(oldSet);
+  }
 }
 
 void RulesView::handleDeleteRule(const RuleItem& rule) {
@@ -567,7 +578,7 @@ void RulesView::handleDeleteRule(const RuleItem& rule) {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
-  emit ruleSetChanged(rule.ruleSet);
+  emit ruleSetChanged(normalizeRuleSetName(rule.ruleSet));
 }
 
 void RulesView::updateStyle() {

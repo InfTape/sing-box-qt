@@ -615,6 +615,21 @@ void SubscriptionService::syncRuleSetToSubscriptions(
   }
 }
 
+void SubscriptionService::syncAllRuleSetsToSubscriptions() {
+  for (auto& sub : m_subscriptions) {
+    if (!sub.enableSharedRules) {
+      continue;
+    }
+    syncSharedRulesToConfig(sub);
+  }
+  if (m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count()) {
+    const auto& active = m_subscriptions[m_activeIndex];
+    if (active.enableSharedRules && !active.configPath.isEmpty()) {
+      emit applyConfigRequested(active.configPath, true);
+    }
+  }
+}
+
 QString SubscriptionService::getCurrentConfig() const {
   const QString path =
       m_activeConfigPath.isEmpty()
