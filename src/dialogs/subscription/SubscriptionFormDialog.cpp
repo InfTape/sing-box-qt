@@ -37,7 +37,7 @@ MultiSelectMenuBox::MultiSelectMenuBox(QWidget*      parent,
   m_button->setAutoRaise(true);
   m_menu = new RoundedMenu(this);
   // Use tray menu styling so the checklist matches the tray menu look
-  m_menu->setObjectName("TrayMenu");
+  m_menu->setObjectName("MultiSelectMenu");
   QHBoxLayout* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(m_button);
@@ -83,7 +83,11 @@ QStringList MultiSelectMenuBox::selected() const {
 
 void MultiSelectMenuBox::rebuildMenu() {
   m_menu->clear();
-  for (const QString& name : m_options) {
+  for (int i = 0; i < m_options.size(); ++i) {
+    if (i > 0) {
+      m_menu->addSeparator();
+    }
+    const QString& name = m_options[i];
     QAction* act = m_menu->addAction(name);
     act->setCheckable(true);
     act->setChecked(m_selected.contains(name));

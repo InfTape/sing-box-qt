@@ -547,6 +547,7 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
     emit errorOccurred(tr("Subscription not found"));
     return;
   }
+  const QStringList oldRuleSets = sub->ruleSets;
   sub->name                      = name.trimmed();
   sub->url                       = url.trimmed();
   sub->isManual                  = isManual;
@@ -558,6 +559,9 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
   saveToDatabase();
   syncSharedRulesToConfig(*sub);
   emit subscriptionUpdated(id);
+  if (sub->ruleSets != oldRuleSets && !sub->configPath.isEmpty()) {
+    emit applyConfigRequested(sub->configPath, true);
+  }
 }
 
 void SubscriptionService::setActiveSubscription(const QString& id,

@@ -4,6 +4,7 @@
         <file>icons/app.png</file>
         <file>icons/tray.png</file>
         <file>icons/check.svg</file>
+        <file>icons/check-blue.svg</file>
         <file>icons/network.svg</file>
         <file>icons/checklist.svg</file>
         <file>icons/logs.svg</file>

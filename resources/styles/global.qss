@@ -197,10 +197,49 @@ QFrame#Card, QWidget#Card {
     height: 14px;
 }
 #TrayMenu::indicator:checked {
-    image: url(:/icons/check.svg);
+    image: url(:/icons/check-blue.svg);
 }
 #TrayMenu::indicator:unchecked {
     image: none;
+}
+
+/* MultiSelectMenu (rule-set picker in subscription dialog) */
+#MultiSelectMenu {
+    background: transparent;
+    border: none;
+    padding: 6px;
+}
+#MultiSelectMenu::panel {
+    background: transparent;
+    border: none;
+}
+#MultiSelectMenu::item {
+    color: @text-primary@;
+    padding: 8px 14px;
+    border-radius: 10px;
+}
+#MultiSelectMenu::item:selected {
+    background-color: @bg-tertiary@;
+    color: @text-primary@;
+}
+#MultiSelectMenu::item:checked, #MultiSelectMenu::item:checked:selected {
+    color: @primary@;
+}
+#MultiSelectMenu::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+#MultiSelectMenu::indicator:checked {
+    image: url(:/icons/check-blue.svg);
+}
+#MultiSelectMenu::indicator:unchecked {
+    image: none;
+}
+#MultiSelectMenu::separator {
+    height: 1px;
+    background-color: @border@;
+    margin: 6px 4px;
 }
 
 /* Dialog hints */
