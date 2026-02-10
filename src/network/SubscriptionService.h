@@ -91,10 +91,13 @@ class SubscriptionService : public QObject {
   void              updateSubscriptionUserinfoFromHeader(SubscriptionInfo& info,
                                                          const QByteArray& header);
   void              syncSharedRulesToConfig(const SubscriptionInfo& info);
+  void              requestCoalescedApplyConfig(const QString& configPath);
   QString           generateId() const;
   QList<SubscriptionInfo> m_subscriptions;
   int                     m_activeIndex;
   QString                 m_activeConfigPath;
+  QString                 m_pendingApplyConfigPath;
+  bool                    m_applyRequestScheduled = false;
   ConfigRepository*       m_configRepo = nullptr;
 };
 #endif  // SUBSCRIPTIONSERVICE_H

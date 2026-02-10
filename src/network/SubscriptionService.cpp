@@ -6,6 +6,7 @@
 #include <QJsonParseError>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QTimer>
 #include <QUrl>
 #include <QUuid>
 #include "app/interfaces/ConfigRepository.h"
@@ -609,7 +610,7 @@ void SubscriptionService::syncRuleSetToSubscriptions(
       const QStringList sets =
           active.ruleSets.isEmpty() ? QStringList{"default"} : active.ruleSets;
       if (sets.contains(name)) {
-        emit applyConfigRequested(active.configPath, true);
+        requestCoalescedApplyConfig(active.configPath);
       }
     }
   }
@@ -625,9 +626,29 @@ void SubscriptionService::syncAllRuleSetsToSubscriptions() {
   if (m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count()) {
     const auto& active = m_subscriptions[m_activeIndex];
     if (active.enableSharedRules && !active.configPath.isEmpty()) {
-      emit applyConfigRequested(active.configPath, true);
+      requestCoalescedApplyConfig(active.configPath);
     }
   }
+}
+
+void SubscriptionService::requestCoalescedApplyConfig(const QString& configPath) {
+  if (configPath.isEmpty()) {
+    return;
+  }
+  m_pendingApplyConfigPath = configPath;
+  if (m_applyRequestScheduled) {
+    return;
+  }
+  m_applyRequestScheduled = true;
+  QTimer::singleShot(0, this, [this]() {
+    m_applyRequestScheduled = false;
+    if (m_pendingApplyConfigPath.isEmpty()) {
+      return;
+    }
+    const QString pendingPath = m_pendingApplyConfigPath;
+    m_pendingApplyConfigPath.clear();
+    emit applyConfigRequested(pendingPath, true);
+  });
 }
 
 QString SubscriptionService::getCurrentConfig() const {
