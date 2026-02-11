@@ -261,9 +261,19 @@ QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
   for (Type type : allTypes()) {
     payload.insert(typeKey(type), buildTypeSnapshot(type, limitPerType));
   }
+  const auto  gt = globalTotals();
+  QJsonObject gtObj;
+  gtObj.insert("upload", QString::number(gt.upload));
+  gtObj.insert("download", QString::number(gt.download));
+  payload.insert("globalTotals", gtObj);
   payload.insert("updatedAt",
                  QString::number(QDateTime::currentMSecsSinceEpoch()));
   return payload;
+}
+
+DataUsageTracker::GlobalTotals DataUsageTracker::globalTotals() const {
+  const auto totals = buildTotals(m_entries[static_cast<int>(Type::Outbound)]);
+  return {totals.upload, totals.download};
 }
 
 void DataUsageTracker::loadFromStorage() {

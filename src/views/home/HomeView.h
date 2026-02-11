@@ -1,6 +1,5 @@
 #ifndef HOMEVIEW_H
 #define HOMEVIEW_H
-#include <QElapsedTimer>
 #include <QJsonObject>
 #include <QLabel>
 #include <QWidget>
@@ -46,9 +45,6 @@ class HomeView : public QWidget {
   ProxyModeSection* m_proxyModeSection = nullptr;
   DataUsageCard*    m_dataUsageCard    = nullptr;
   bool              m_isRunning        = false;
-  qint64            m_totalUpload      = 0;
-  qint64            m_totalDownload    = 0;
-  QElapsedTimer     m_trafficTimer;
   ThemeService*     m_themeService = nullptr;
 };
 #endif  // HOMEVIEW_H

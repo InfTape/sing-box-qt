@@ -237,9 +237,6 @@ void HomeView::updateStatus(bool running) {
   }
   polishWidget(m_statusBadge);
   if (!running) {
-    m_totalUpload   = 0;
-    m_totalDownload = 0;
-    m_trafficTimer.invalidate();
     if (m_trafficChart) {
       m_trafficChart->clear();
     }
@@ -268,23 +265,6 @@ void HomeView::updateTraffic(qint64 upload, qint64 download) {
   if (m_trafficChart) {
     m_trafficChart->updateData(upload, download);
   }
-  if (!m_trafficTimer.isValid()) {
-    m_trafficTimer.start();
-  } else {
-    const qint64 elapsedMs = m_trafficTimer.restart();
-    const double seconds   = elapsedMs / 1000.0;
-    if (seconds > 0) {
-      m_totalUpload += static_cast<qint64>(upload * seconds);
-      m_totalDownload += static_cast<qint64>(download * seconds);
-    }
-  }
-  if (m_uploadCard) {
-    m_uploadCard->setSubText(tr("Total: %1").arg(formatBytes(m_totalUpload)));
-  }
-  if (m_downloadCard) {
-    m_downloadCard->setSubText(
-        tr("Total: %1").arg(formatBytes(m_totalDownload)));
-  }
 }
 
 void HomeView::updateUptime(int seconds) {
@@ -311,6 +291,16 @@ void HomeView::updateConnections(int count, qint64 memoryUsage) {
 void HomeView::updateDataUsage(const QJsonObject& snapshot) {
   if (m_dataUsageCard) {
     m_dataUsageCard->updateDataUsage(snapshot);
+  }
+  // Read global totals from DataUsageTracker snapshot
+  const QJsonObject gt        = snapshot.value("globalTotals").toObject();
+  const qint64      totalUp   = gt.value("upload").toString().toLongLong();
+  const qint64      totalDown = gt.value("download").toString().toLongLong();
+  if (m_uploadCard) {
+    m_uploadCard->setSubText(tr("Total: %1").arg(formatBytes(totalUp)));
+  }
+  if (m_downloadCard) {
+    m_downloadCard->setSubText(tr("Total: %1").arg(formatBytes(totalDown)));
   }
 }
 

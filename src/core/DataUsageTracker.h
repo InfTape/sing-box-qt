@@ -12,11 +12,16 @@ class DataUsageTracker : public QObject {
   Q_OBJECT
  public:
   enum class Type { SourceIP = 0, Host = 1, Process = 2, Outbound = 3 };
+  struct GlobalTotals {
+    qint64 upload   = 0;
+    qint64 download = 0;
+  };
   explicit DataUsageTracker(QObject* parent = nullptr);
-  void        reset();
-  void        resetSession();
-  void        updateFromConnections(const QJsonObject& connections);
-  QJsonObject snapshot(int limitPerType = 50) const;
+  void         reset();
+  void         resetSession();
+  void         updateFromConnections(const QJsonObject& connections);
+  QJsonObject  snapshot(int limitPerType = 50) const;
+  GlobalTotals globalTotals() const;
  signals:
   void dataUsageUpdated(const QJsonObject& snapshot);
 

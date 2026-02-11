@@ -39,6 +39,7 @@ add_executable(sing-box-qt-unit-tests
     ../src/utils/subscription/SubscriptionHelpers.cpp
     ../src/utils/subscription/SubscriptionUserinfo.cpp
     ../src/utils/subscription/SubscriptionFormat.cpp
+    ../src/core/DataUsageTracker.cpp
 )
 
 target_include_directories(sing-box-qt-unit-tests PRIVATE

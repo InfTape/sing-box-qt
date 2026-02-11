@@ -16,6 +16,7 @@
 #include "utils/Crypto.h"
 #include "utils/LogParser.h"
 #include "utils/home/HomeFormat.h"
+#include "core/DataUsageTracker.h"
 #include "utils/proxy/ProxyNodeHelper.h"
 #include "utils/rule/RuleUtils.h"
 #include "utils/settings/SettingsHelpers.h"
@@ -201,6 +202,7 @@ class UnitUtilsTest : public QObject {
   void subscriptionParser_shouldParseAdvancedProtocols();
   void subscriptionParser_shouldParseClashSip008AndSingleJson();
   void subscriptionParser_shouldParseSingBoxAndMixedUriList();
+  void dataUsageTracker_shouldTrackGlobalTotals();
 };
 
 void UnitUtilsTest::initTestCase() {
@@ -1317,6 +1319,62 @@ void UnitUtilsTest::subscriptionParser_shouldParseSingBoxAndMixedUriList() {
   QVERIFY(mixedNodes.size() >= 3);
   QCOMPARE(mixedNodes[0].toObject().value("type").toString(), QString("http"));
   QCOMPARE(mixedNodes[1].toObject().value("type").toString(), QString("socks"));
+}
+
+void UnitUtilsTest::dataUsageTracker_shouldTrackGlobalTotals() {
+  DataUsageTracker tracker;
+  // Build a fake connections JSON with two connections
+  QJsonArray conns;
+  {
+    QJsonObject meta;
+    meta.insert("sourceIP", "192.168.1.1");
+    meta.insert("host", "example.com");
+    meta.insert("process", "firefox.exe");
+    QJsonObject c;
+    c.insert("id", "conn-1");
+    c.insert("upload", 1000);
+    c.insert("download", 2000);
+    c.insert("metadata", meta);
+    QJsonArray chains;
+    chains.append("proxy-out");
+    c.insert("chains", chains);
+    conns.append(c);
+  }
+  {
+    QJsonObject meta;
+    meta.insert("sourceIP", "192.168.1.2");
+    meta.insert("host", "google.com");
+    meta.insert("process", "chrome.exe");
+    QJsonObject c;
+    c.insert("id", "conn-2");
+    c.insert("upload", 500);
+    c.insert("download", 3000);
+    c.insert("metadata", meta);
+    QJsonArray chains;
+    chains.append("direct");
+    c.insert("chains", chains);
+    conns.append(c);
+  }
+  QJsonObject connections;
+  connections.insert("connections", conns);
+  tracker.updateFromConnections(connections);
+
+  // Verify globalTotals()
+  const auto gt = tracker.globalTotals();
+  QCOMPARE(gt.upload, qint64(1500));    // 1000 + 500
+  QCOMPARE(gt.download, qint64(5000));  // 2000 + 3000
+
+  // Verify snapshot contains matching globalTotals
+  const QJsonObject snap   = tracker.snapshot();
+  const QJsonObject gtSnap = snap.value("globalTotals").toObject();
+  QCOMPARE(gtSnap.value("upload").toString().toLongLong(), qint64(1500));
+  QCOMPARE(gtSnap.value("download").toString().toLongLong(), qint64(5000));
+
+  // Verify reset clears totals
+  tracker.reset();
+  const auto gtAfterReset = tracker.globalTotals();
+  QCOMPARE(gtAfterReset.upload, qint64(0));
+  QCOMPARE(gtAfterReset.download, qint64(0));
 }
 
 QTEST_GUILESS_MAIN(UnitUtilsTest)
