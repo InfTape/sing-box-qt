@@ -7,12 +7,12 @@
 namespace GitHubMirror {
 inline QStringList prefixes() {
   return {
-      // ghproxy.com is currently the most stable in our observed environments.
-      "https://ghproxy.com/",
-      // Keep GitHub origin as secondary fallback.
-      "",
-      // Additional mirrors as tertiary fallbacks.
+      // ghproxy.net is currently the most stable in our observed environments.
       "https://ghproxy.net/",
+      // Keep GitHub origin as secondary fallback.
+      "https://github.com/",
+      // Additional mirrors as tertiary fallbacks.
+      "https://ghproxy.com/",
       "https://mirror.ghproxy.com/",
   };
 }
