@@ -22,6 +22,7 @@
 #include "views/subscription/SubscriptionCard.h"
 #include "views/subscription/SubscriptionController.h"
 #include "widgets/common/RoundedMenu.h"
+#include "widgets/common/SubscriptionLoadingDialog.h"
 
 // ==================== SubscriptionView ====================
 SubscriptionView::SubscriptionView(SubscriptionService* service,
@@ -96,6 +97,16 @@ void SubscriptionView::setupUI() {
           this,
           &SubscriptionView::refreshList);
   connect(m_subscriptionService,
+          &SubscriptionService::subscriptionAdded,
+          this,
+          [this](const SubscriptionInfo&) {
+            if (!m_waitingUrlAdd) {
+              return;
+            }
+            m_waitingUrlAdd = false;
+            showUrlAddSuccessPopup();
+          });
+  connect(m_subscriptionService,
           &SubscriptionService::subscriptionRemoved,
           this,
           &SubscriptionView::refreshList);
@@ -111,6 +122,10 @@ void SubscriptionView::setupUI() {
           &SubscriptionService::errorOccurred,
           this,
           [this](const QString& err) {
+            if (m_waitingUrlAdd) {
+              m_waitingUrlAdd = false;
+              closeUrlAddLoadingPopup();
+            }
             QMessageBox::warning(this, tr("Notice"), err);
           });
   refreshList();
@@ -121,6 +136,27 @@ void SubscriptionView::updateStyle() {
   if (ts) {
     setStyleSheet(ts->loadStyleSheet(":/styles/subscription_view.qss"));
   }
+}
+
+void SubscriptionView::showUrlAddLoadingPopup() {
+  if (!m_loadingDialog) {
+    m_loadingDialog = new SubscriptionLoadingDialog(this);
+  }
+  m_loadingDialog->showLoading(this);
+}
+
+void SubscriptionView::closeUrlAddLoadingPopup() {
+  if (!m_loadingDialog) {
+    return;
+  }
+  m_loadingDialog->closePopup();
+}
+
+void SubscriptionView::showUrlAddSuccessPopup() {
+  if (!m_loadingDialog) {
+    return;
+  }
+  m_loadingDialog->showSuccessAndAutoClose();
 }
 
 void SubscriptionView::onAddClicked() {
@@ -165,6 +201,8 @@ void SubscriptionView::openSubscriptionDialog() {
                                         dialog.sharedRulesEnabled(),
                                         dialog.ruleSets());
   } else {
+    m_waitingUrlAdd = true;
+    showUrlAddLoadingPopup();
     m_subscriptionController->addUrl(dialog.url(),
                                      dialog.name(),
                                      useOriginal,

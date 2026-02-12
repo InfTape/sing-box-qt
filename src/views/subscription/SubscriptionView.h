@@ -16,6 +16,7 @@ class SubscriptionCard;
 class NodeEditDialog;
 class SubscriptionService;
 class ThemeService;
+class SubscriptionLoadingDialog;
 struct SubscriptionInfo;
 
 class SubscriptionView : public QWidget {
@@ -53,6 +54,9 @@ class SubscriptionView : public QWidget {
   SubscriptionCard* findCardById(const QString& id) const;
   void              updateActiveCards(const QString& activeId);
   bool getSubscriptionById(const QString& id, SubscriptionInfo* out) const;
+  void showUrlAddLoadingPopup();
+  void closeUrlAddLoadingPopup();
+  void showUrlAddSuccessPopup();
 
  protected:
   void         resizeEvent(QResizeEvent* event) override;
@@ -69,5 +73,7 @@ class SubscriptionView : public QWidget {
   class SubscriptionController* m_subscriptionController;
   QTimer*                       m_autoUpdateTimer;
   ThemeService*                 m_themeService = nullptr;
+  SubscriptionLoadingDialog*    m_loadingDialog = nullptr;
+  bool                          m_waitingUrlAdd = false;
 };
 #endif  // SUBSCRIPTIONVIEW_H

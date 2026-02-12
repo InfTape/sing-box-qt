@@ -117,6 +117,7 @@ set(SOURCES
     src/widgets/common/SegmentedControl.cpp
     src/widgets/common/ChevronToggle.cpp
     src/widgets/common/RoundedMenu.cpp
+    src/widgets/common/SubscriptionLoadingDialog.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
@@ -217,6 +218,7 @@ set(HEADERS
     src/widgets/common/SegmentedControl.h
     src/widgets/common/ChevronToggle.h
     src/widgets/common/RoundedMenu.h
+    src/widgets/common/SubscriptionLoadingDialog.h
     src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/Crypto.h
