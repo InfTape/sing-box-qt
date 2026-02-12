@@ -7,15 +7,22 @@
 #include <QWidget>
 
 namespace {
-constexpr int kDialogWidth  = 220;
-constexpr int kDialogHeight = 180;
+constexpr int kDialogWidth  = 160;
+constexpr int kDialogHeight = 160;
+constexpr int kIconSize     = 70;
+constexpr int kStrokeWidth  = 8;
+const QColor  kAccentGreen(105, 224, 118);
+const QColor  kTrackGreen(168, 236, 177);
 }  // namespace
 
 SubscriptionLoadingDialog::SubscriptionLoadingDialog(QWidget* parent)
     : QDialog(parent), m_spinTimer(new QTimer(this)), m_closeTimer(new QTimer(this)) {
+  setObjectName("SubscriptionLoadingDialog");
   setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint);
   setWindowModality(Qt::ApplicationModal);
   setAttribute(Qt::WA_TranslucentBackground);
+  setAttribute(Qt::WA_NoSystemBackground);
+  setStyleSheet("background: transparent;");
   setFixedSize(kDialogWidth, kDialogHeight);
 
   m_spinTimer->setInterval(16);
@@ -58,56 +65,44 @@ void SubscriptionLoadingDialog::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  const QRectF panelRect = rect().adjusted(10, 10, -10, -10);
-  painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor(12, 16, 22, 235));
-  painter.drawRoundedRect(panelRect, 12, 12);
-
-  const QPointF center(panelRect.center().x(), panelRect.center().y() - 16);
-  const QRectF  iconRect(center.x() - 26, center.y() - 26, 52, 52);
+  const QRectF panelRect = rect();
+  const QPointF center(panelRect.center().x(), panelRect.center().y());
+  const qreal  half = kIconSize / 2.0;
+  const QRectF iconRect(center.x() - half, center.y() - half, kIconSize, kIconSize);
 
   if (m_state == State::Loading) {
-    QPen basePen(QColor(255, 255, 255, 40));
-    basePen.setWidth(6);
+    QPen basePen(kTrackGreen);
+    basePen.setWidth(kStrokeWidth);
     basePen.setCapStyle(Qt::RoundCap);
     painter.setPen(basePen);
     painter.setBrush(Qt::NoBrush);
     painter.drawEllipse(iconRect);
 
-    QPen spinPen(QColor(94, 214, 255));
-    spinPen.setWidth(6);
+    QPen spinPen(kAccentGreen);
+    spinPen.setWidth(kStrokeWidth);
     spinPen.setCapStyle(Qt::RoundCap);
     painter.setPen(spinPen);
-    painter.drawArc(iconRect, (-m_angle + 90) * 16, -120 * 16);
-
-    painter.setPen(QColor(225, 232, 240));
-    painter.setFont(QFont("Segoe UI", 10));
-    painter.drawText(panelRect.adjusted(0, 95, 0, 0),
-                     Qt::AlignHCenter | Qt::AlignTop,
-                     tr("Downloading..."));
+    painter.drawArc(iconRect, (-m_angle + 120) * 16, -96 * 16);
     return;
   }
 
-  painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor(98, 247, 72));
+  QPen circlePen(kAccentGreen);
+  circlePen.setWidth(kStrokeWidth - 1);
+  circlePen.setCapStyle(Qt::RoundCap);
+  painter.setPen(circlePen);
+  painter.setBrush(Qt::NoBrush);
   painter.drawEllipse(iconRect);
 
-  QPen checkPen(QColor(14, 38, 21));
-  checkPen.setWidth(5);
+  QPen checkPen(kAccentGreen);
+  checkPen.setWidth(kStrokeWidth - 1);
   checkPen.setCapStyle(Qt::RoundCap);
   checkPen.setJoinStyle(Qt::RoundJoin);
   painter.setPen(checkPen);
   QPainterPath checkPath;
-  checkPath.moveTo(iconRect.left() + 14, iconRect.top() + 28);
-  checkPath.lineTo(iconRect.left() + 23, iconRect.top() + 36);
-  checkPath.lineTo(iconRect.right() - 13, iconRect.top() + 16);
+  checkPath.moveTo(iconRect.left() + 20, iconRect.top() + 39);
+  checkPath.lineTo(iconRect.left() + 31, iconRect.top() + 51);
+  checkPath.lineTo(iconRect.right() - 17, iconRect.top() + 24);
   painter.drawPath(checkPath);
-
-  painter.setPen(QColor(225, 232, 240));
-  painter.setFont(QFont("Segoe UI", 10));
-  painter.drawText(panelRect.adjusted(0, 95, 0, 0),
-                   Qt::AlignHCenter | Qt::AlignTop,
-                   tr("Done"));
 }
 
 void SubscriptionLoadingDialog::centerToAnchor(QWidget* anchor) {
