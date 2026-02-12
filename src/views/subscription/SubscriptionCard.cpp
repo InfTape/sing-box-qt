@@ -229,9 +229,6 @@ void SubscriptionCard::updateStyle() {
     return;
   }
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
-  if (qss.isEmpty()) {
-    qss = ts->loadStyleSheet(":/styles/subscription_card.qss");  // Fallback
-  }
   setStyleSheet(qss);
 }
 

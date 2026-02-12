@@ -61,6 +61,7 @@
 #CardInfoText {
     color: @text-secondary@;
     font-size: 12px;
+    min-height: 15px;
 }
 
 #CardActionBtn, #CardActionBtnActive {
