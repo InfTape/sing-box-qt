@@ -20,7 +20,7 @@ RuleEditorDialog::RuleEditorDialog(Mode          mode,
       m_fields(RuleConfigService::fieldInfos()),
       m_typeCombo(new MenuComboBox(this, themeService)),
       m_valueEdit(new QPlainTextEdit(this)),
-      m_outboundCombo(new GridComboBox(this)),
+      m_outboundCombo(new GridComboBox(this, themeService)),
       m_ruleSetEdit(new QLineEdit(this)),
       m_hintLabel(new QLabel(this)) {
   setModal(true);
