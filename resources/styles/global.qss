@@ -110,6 +110,32 @@ QComboBox QAbstractItemView::item:selected {
     background-color: @primary@;
     color: white;
 }
+QListView#GridComboPopup {
+    background-color: @input-bg@;
+    border: 1px solid @border-solid@;
+    border-radius: 10px;
+    outline: none;
+    padding: 6px;
+}
+QListView#GridComboPopup::item {
+    color: @text-primary@;
+    margin: 2px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+QListView#GridComboPopup::item:hover {
+    background-color: @primary-12@;
+    color: @text-primary@;
+}
+QListView#GridComboPopup::item:selected,
+QListView#GridComboPopup::item:selected:active {
+    background-color: @bg-tertiary@;
+    color: @text-primary@;
+}
+QFrame#GridComboPopupWindow {
+    background: transparent;
+    border: none;
+}
 QCheckBox {
     color: @text-primary@;
     spacing: 8px;
@@ -169,6 +195,7 @@ QFrame#Card, QWidget#Card {
     background: transparent;
     border: none;
     padding: 6px;
+    menu-scrollable: 1;
 }
 #ComboMenu::panel, #TrayMenu::panel {
     background: transparent;
@@ -208,6 +235,7 @@ QFrame#Card, QWidget#Card {
     background: transparent;
     border: none;
     padding: 6px;
+    menu-scrollable: 1;
 }
 #MultiSelectMenu::panel {
     background: transparent;

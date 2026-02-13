@@ -109,6 +109,7 @@ set(SOURCES
     src/services/settings/SettingsService.cpp
     src/models/SettingsModel.cpp
     src/widgets/common/MenuComboBox.cpp
+    src/widgets/common/GridComboBox.cpp
     src/widgets/common/ElideLineEdit.cpp
     src/widgets/common/FlowLayout.cpp
     src/widgets/logs/LogRowWidget.cpp
@@ -210,6 +211,7 @@ set(HEADERS
     src/services/settings/SettingsService.h
     src/models/SettingsModel.h
     src/widgets/common/MenuComboBox.h
+    src/widgets/common/GridComboBox.h
     src/widgets/common/ElideLineEdit.h
     src/widgets/common/FlowLayout.h
     src/widgets/logs/LogRowWidget.h

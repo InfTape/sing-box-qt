@@ -1,8 +1,10 @@
 ﻿#include "widgets/common/MenuComboBox.h"
 #include <QAction>
+#include <QGuiApplication>
 #include <QPainterPath>
 #include <QPixmap>
 #include <QPoint>
+#include <QScreen>
 #include <QStyle>
 #include <QStyleOptionComboBox>
 #include <QStylePainter>
@@ -89,6 +91,18 @@ void MenuComboBox::showPopup() {
   }
   const int menuWidth = qMax(width(), 180);
   m_menu->setFixedWidth(menuWidth);
+  QScreen* screen = QGuiApplication::screenAt(
+      mapToGlobal(QPoint(width() / 2, height() / 2)));
+  if (!screen) {
+    screen = QGuiApplication::primaryScreen();
+  }
+  if (screen) {
+    const QRect availableGeometry = screen->availableGeometry();
+    // Keep popup height bounded so long menus can enter scrollable mode.
+    m_menu->setMaximumHeight(qMax(200, availableGeometry.height() - 24));
+  } else {
+    m_menu->setMaximumHeight(480);
+  }
   m_menu->popup(mapToGlobal(QPoint(0, height())));
 }
 

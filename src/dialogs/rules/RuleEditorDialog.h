@@ -5,6 +5,7 @@
 class QLabel;
 class QPlainTextEdit;
 class MenuComboBox;
+class GridComboBox;
 class QLineEdit;
 class ThemeService;
 
@@ -31,7 +32,7 @@ class RuleEditorDialog : public QDialog {
   QList<RuleConfigService::RuleFieldInfo> m_fields;
   MenuComboBox*                           m_typeCombo;
   QPlainTextEdit*                         m_valueEdit;
-  MenuComboBox*                           m_outboundCombo;
+  GridComboBox*                           m_outboundCombo;
   QLineEdit*                              m_ruleSetEdit;
   QLabel*                                 m_hintLabel;
   RuleConfigService::RuleEditData         m_cachedData;

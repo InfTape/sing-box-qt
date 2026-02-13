@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "utils/rule/RuleUtils.h"
+#include "widgets/common/GridComboBox.h"
 #include "widgets/common/MenuComboBox.h"
 
 RuleEditorDialog::RuleEditorDialog(Mode          mode,
@@ -19,7 +20,7 @@ RuleEditorDialog::RuleEditorDialog(Mode          mode,
       m_fields(RuleConfigService::fieldInfos()),
       m_typeCombo(new MenuComboBox(this, themeService)),
       m_valueEdit(new QPlainTextEdit(this)),
-      m_outboundCombo(new MenuComboBox(this, themeService)),
+      m_outboundCombo(new GridComboBox(this)),
       m_ruleSetEdit(new QLineEdit(this)),
       m_hintLabel(new QLabel(this)) {
   setModal(true);
@@ -37,6 +38,9 @@ RuleEditorDialog::RuleEditorDialog(Mode          mode,
     updatePlaceholder(0);
   }
   m_valueEdit->setFixedHeight(80);
+  m_outboundCombo->setWheelEnabled(false);
+  m_outboundCombo->setMaxColumns(3);
+  m_outboundCombo->setVisibleRowRange(5, 9);
   form->addRow(tr("Match Type:"), m_typeCombo);
   form->addRow(tr("Match Value:"), m_valueEdit);
   form->addRow(tr("Outbound:"), m_outboundCombo);
