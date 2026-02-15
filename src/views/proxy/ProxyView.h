@@ -8,6 +8,7 @@
 #include <QWidget>
 #include <memory>
 class ThemeService;
+class SubscriptionService;
 struct ProxyDelayTestResult;
 class ProxyViewController;
 class ProxyToolbar;
@@ -19,6 +20,7 @@ class ProxyView : public QWidget {
  public:
   explicit ProxyView(ThemeService* themeService, QWidget* parent = nullptr);
   void setController(ProxyViewController* controller);
+  void setSubscriptionService(SubscriptionService* service);
   void refresh();
  private slots:
   void updateStyle();
@@ -36,6 +38,7 @@ class ProxyView : public QWidget {
   void onTreeContextMenu(const QPoint& pos);
   void startSpeedTest(QTreeWidgetItem* item);
   void onSpeedTestResult(const QString& nodeName, const QString& result);
+  void onAddGroupClicked();
 
  private:
   void            setupUI();
@@ -57,6 +60,7 @@ class ProxyView : public QWidget {
   bool                                m_singleTesting{false};
   QString                             m_singleTestingTarget;
   ThemeService*                       m_themeService = nullptr;
+  SubscriptionService*                m_subscriptionService = nullptr;
   ProxyViewController*                m_controller   = nullptr;
 };
 #endif  // PROXYVIEW_H

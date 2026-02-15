@@ -153,6 +153,7 @@ void MainWindow::setupUI() {
   m_logView         = new LogView(m_themeService);
   m_settingsView    = new SettingsView(m_themeService, m_settingsController);
   m_proxyView->setController(m_ctx.proxyViewController());
+  m_proxyView->setSubscriptionService(m_subscriptionService);
   if (m_ctx.proxyService()) {
     m_connectionsView->setProxyService(m_ctx.proxyService());
     m_rulesView->setProxyService(m_ctx.proxyService());

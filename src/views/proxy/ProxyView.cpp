@@ -14,6 +14,8 @@
 #include "views/proxy/ProxyTreePresenter.h"
 #include "views/proxy/ProxyTreeUtils.h"
 #include "views/proxy/ProxyViewController.h"
+#include "network/SubscriptionService.h"
+#include "storage/ConfigConstants.h"
 #include "widgets/common/RoundedMenu.h"
 
 namespace {
@@ -109,6 +111,10 @@ void ProxyView::setupUI() {
           this,
           &ProxyView::onTestAllClicked);
   connect(m_toolbar, &ProxyToolbar::refreshClicked, this, &ProxyView::refresh);
+  connect(m_toolbar,
+          &ProxyToolbar::addGroupClicked,
+          this,
+          &ProxyView::onAddGroupClicked);
   connect(
       m_treeWidget, &QTreeWidget::itemClicked, this, &ProxyView::onItemClicked);
   connect(m_treeWidget,
@@ -180,6 +186,71 @@ void ProxyView::refresh() {
   }
 }
 
+void ProxyView::setSubscriptionService(SubscriptionService* service) {
+  m_subscriptionService = service;
+}
+
+void ProxyView::onAddGroupClicked() {
+  if (!m_subscriptionService) {
+    return;
+  }
+  const QList<SubscriptionInfo> subs =
+      m_subscriptionService->getSubscriptions();
+  const int activeIndex = m_subscriptionService->getActiveIndex();
+  if (subs.isEmpty()) {
+    QMessageBox::information(
+        this, tr("Notice"), tr("No subscriptions available."));
+    return;
+  }
+  if (activeIndex < 0 || activeIndex >= subs.size()) {
+    QMessageBox::warning(
+        this, tr("Notice"), tr("No active subscription selected."));
+    return;
+  }
+  RoundedMenu menu(this);
+  menu.setObjectName("TrayMenu");
+  if (m_themeService) {
+    menu.setThemeColors(m_themeService->color("bg-secondary"),
+                        m_themeService->color("primary"));
+  }
+  QList<QAction*> actions;
+  for (int i = 0; i < subs.size(); ++i) {
+    if (i == activeIndex) {
+      continue;
+    }
+    const SubscriptionInfo& sub = subs[i];
+    QString label = sub.name;
+    if (sub.nodeCount > 0) {
+      label += QString(" (%1)").arg(sub.nodeCount);
+    }
+    QAction* act = menu.addAction(label);
+    act->setData(sub.id);
+    actions.append(act);
+  }
+  if (actions.isEmpty()) {
+    QMessageBox::information(
+        this, tr("Notice"), tr("No other subscriptions to import from."));
+    return;
+  }
+  QAction* chosen = menu.exec(QCursor::pos());
+  if (!chosen) {
+    return;
+  }
+  const QString sourceId = chosen->data().toString();
+  QString       error;
+  if (!m_subscriptionService->addSubscriptionNodesToActiveGroup(sourceId,
+                                                                 &error)) {
+    if (error.isEmpty()) {
+      error = tr("Failed to add nodes to active subscription.");
+    }
+    QMessageBox::warning(this, tr("Notice"), error);
+    return;
+  }
+  QMessageBox::information(
+      this, tr("Notice"), tr("Nodes imported to active subscription group."));
+  refresh();
+}
+
 void ProxyView::onProxiesReceived(const QJsonObject& proxies) {
   if (!m_treePresenter) {
     return;
@@ -207,6 +278,49 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
     return;
   }
   const QString role = item->data(0, Qt::UserRole).toString();
+
+  if (role == "group") {
+    const QString groupTag = item->data(0, Qt::UserRole + 1).toString();
+    if (groupTag.isEmpty()) {
+      return;
+    }
+    // Don't show delete for built-in groups.
+    if (groupTag == ConfigConstants::TAG_MANUAL ||
+        groupTag == ConfigConstants::TAG_AUTO ||
+        groupTag == ConfigConstants::TAG_DIRECT ||
+        groupTag == ConfigConstants::TAG_BLOCK) {
+      return;
+    }
+    RoundedMenu menu(this);
+    menu.setObjectName("TrayMenu");
+    if (m_themeService) {
+      menu.setThemeColors(m_themeService->color("bg-secondary"),
+                          m_themeService->color("primary"));
+    }
+    QAction* deleteAct = menu.addAction(tr("Delete Group"));
+    QAction* chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
+    if (chosen == deleteAct && m_subscriptionService) {
+      auto reply = QMessageBox::question(
+          this,
+          tr("Delete Group"),
+          tr("Delete group '%1' and its exclusive nodes from config?")
+              .arg(groupTag),
+          QMessageBox::Yes | QMessageBox::No);
+      if (reply != QMessageBox::Yes) {
+        return;
+      }
+      QString error;
+      if (!m_subscriptionService->removeGroupFromActiveConfig(groupTag,
+                                                               &error)) {
+        if (error.isEmpty()) {
+          error = tr("Failed to delete group.");
+        }
+        QMessageBox::warning(this, tr("Notice"), error);
+      }
+    }
+    return;
+  }
+
   if (role != "node") {
     return;
   }
@@ -267,6 +381,7 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
     startSpeedTest(item);
   }
 }
+
 
 QJsonObject ProxyView::loadNodeOutbound(const QString& tag) const {
   if (!m_controller) {

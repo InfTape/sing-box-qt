@@ -23,7 +23,11 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
   m_refreshBtn = new QPushButton(tr("Refresh"), this);
   m_refreshBtn->setObjectName("RefreshBtn");
   m_refreshBtn->setCursor(Qt::PointingHandCursor);
+  m_addGroupBtn = new QPushButton(tr("Add Group"), this);
+  m_addGroupBtn->setObjectName("AddGroupBtn");
+  m_addGroupBtn->setCursor(Qt::PointingHandCursor);
   toolbarLayout->addWidget(m_searchEdit, 1);
+  toolbarLayout->addWidget(m_addGroupBtn);
   toolbarLayout->addWidget(m_testAllBtn);
   toolbarLayout->addWidget(m_refreshBtn);
   m_progressBar = new QProgressBar(this);
@@ -39,6 +43,10 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
           &QLineEdit::textChanged,
           this,
           &ProxyToolbar::searchTextChanged);
+  connect(m_addGroupBtn,
+          &QPushButton::clicked,
+          this,
+          &ProxyToolbar::addGroupClicked);
   connect(
       m_testAllBtn, &QPushButton::clicked, this, &ProxyToolbar::testAllClicked);
   connect(

@@ -293,10 +293,7 @@ void SubscriptionView::wireCardSignals(SubscriptionCard* card) {
           &SubscriptionCard::copyLinkClicked,
           this,
           &SubscriptionView::handleCopyLink);
-  connect(card,
-          &SubscriptionCard::importToActiveClicked,
-          this,
-          &SubscriptionView::handleImportToActive);
+
 }
 
 void SubscriptionView::handleUseSubscription(const QString& id) {
@@ -408,19 +405,7 @@ void SubscriptionView::handleCopyLink(const QString& id) {
   QApplication::clipboard()->setText(target.url);
 }
 
-void SubscriptionView::handleImportToActive(const QString& id) {
-  QString error;
-  if (!m_subscriptionController->addToActiveGroup(id, &error)) {
-    if (error.isEmpty()) {
-      error = tr("Failed to add nodes to active subscription.");
-    }
-    QMessageBox::warning(this, tr("Notice"), error);
-    return;
-  }
-  QMessageBox::information(this,
-                           tr("Notice"),
-                           tr("Nodes imported to active subscription group."));
-}
+
 
 void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
   SubscriptionInfo target;

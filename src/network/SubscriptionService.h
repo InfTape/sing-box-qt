@@ -64,6 +64,8 @@ class SubscriptionService : public QObject {
   void    clearActiveSubscription();
   bool    addSubscriptionNodesToActiveGroup(const QString& sourceId,
                                             QString*       error = nullptr);
+  bool    removeGroupFromActiveConfig(const QString& groupTag,
+                                      QString*       error = nullptr);
   QString getCurrentConfig() const;
   bool    saveCurrentConfig(const QString& content, bool applyRuntime);
   bool    rollbackSubscriptionConfig(const QString& configPath);

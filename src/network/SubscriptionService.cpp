@@ -950,6 +950,131 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
   return true;
 }
 
+bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
+                                                       QString*       error) {
+  auto setError = [this, error](const QString& msg) {
+    if (error) {
+      *error = msg;
+    }
+    emit errorOccurred(msg);
+  };
+  if (groupTag.isEmpty()) {
+    setError(tr("Group tag is empty."));
+    return false;
+  }
+  if (isReservedImportGroupTag(groupTag)) {
+    setError(tr("Cannot delete a built-in group."));
+    return false;
+  }
+  if (m_activeIndex < 0 || m_activeIndex >= m_subscriptions.size()) {
+    setError(tr("No active subscription."));
+    return false;
+  }
+  const SubscriptionInfo& active = m_subscriptions[m_activeIndex];
+  if (active.configPath.isEmpty() || !m_configRepo) {
+    setError(tr("Active subscription has no config path."));
+    return false;
+  }
+  QJsonObject config = m_configRepo->loadConfig(active.configPath);
+  if (config.isEmpty()) {
+    setError(tr("Failed to load config: %1").arg(active.configPath));
+    return false;
+  }
+  QJsonArray outbounds = config.value("outbounds").toArray();
+
+  // Find the group and collect its member tags.
+  int         groupIndex = -1;
+  QStringList memberTags;
+  for (int i = 0; i < outbounds.size(); ++i) {
+    if (!outbounds[i].isObject()) {
+      continue;
+    }
+    const QJsonObject ob = outbounds[i].toObject();
+    if (ob.value("tag").toString() == groupTag) {
+      groupIndex = i;
+      const QJsonArray members = ob.value("outbounds").toArray();
+      for (const auto& m : members) {
+        const QString tag = m.toString().trimmed();
+        if (!tag.isEmpty()) {
+          memberTags.append(tag);
+        }
+      }
+      break;
+    }
+  }
+  if (groupIndex < 0) {
+    setError(tr("Group '%1' not found in config.").arg(groupTag));
+    return false;
+  }
+
+  // Find which member tags are exclusive to this group (not referenced by
+  // any other selector/urltest/fallback group).
+  QSet<QString> exclusiveTags(memberTags.begin(), memberTags.end());
+  for (int i = 0; i < outbounds.size(); ++i) {
+    if (i == groupIndex || !outbounds[i].isObject()) {
+      continue;
+    }
+    const QJsonObject ob   = outbounds[i].toObject();
+    const QString     type = ob.value("type").toString();
+    if (type != "selector" && type != "urltest" && type != "fallback") {
+      continue;
+    }
+    const QJsonArray members = ob.value("outbounds").toArray();
+    for (const auto& m : members) {
+      exclusiveTags.remove(m.toString().trimmed());
+    }
+  }
+
+  // Collect tags to remove: the group itself + exclusive member nodes.
+  QSet<QString> tagsToRemove;
+  tagsToRemove.insert(groupTag);
+  tagsToRemove.unite(exclusiveTags);
+
+  // Remove from outbounds array.
+  QJsonArray newOutbounds;
+  for (int i = 0; i < outbounds.size(); ++i) {
+    if (!outbounds[i].isObject()) {
+      newOutbounds.append(outbounds[i]);
+      continue;
+    }
+    const QString tag = outbounds[i].toObject().value("tag").toString();
+    if (tagsToRemove.contains(tag)) {
+      continue;
+    }
+    newOutbounds.append(outbounds[i]);
+  }
+
+  // Remove groupTag from manual selector's outbounds list.
+  for (int i = 0; i < newOutbounds.size(); ++i) {
+    if (!newOutbounds[i].isObject()) {
+      continue;
+    }
+    QJsonObject ob = newOutbounds[i].toObject();
+    if (ob.value("tag").toString() != ConfigConstants::TAG_MANUAL ||
+        ob.value("type").toString() != "selector") {
+      continue;
+    }
+    QJsonArray  current = ob.value("outbounds").toArray();
+    QJsonArray  filtered;
+    for (const auto& item : current) {
+      if (item.toString().trimmed() != groupTag) {
+        filtered.append(item);
+      }
+    }
+    ob["outbounds"]  = filtered;
+    newOutbounds[i]  = ob;
+    break;
+  }
+
+  config["outbounds"] = newOutbounds;
+  if (!m_configRepo->saveConfig(active.configPath, config)) {
+    setError(tr("Failed to save config: %1").arg(active.configPath));
+    return false;
+  }
+  emit applyConfigRequested(active.configPath, true);
+  return true;
+}
+
 void SubscriptionService::syncRuleSetToSubscriptions(
     const QString& ruleSetName) {
   const QString name = ruleSetName.isEmpty() ? QStringLiteral("default") : ruleSetName;
