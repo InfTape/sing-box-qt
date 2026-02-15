@@ -175,17 +175,10 @@ void RulesView::setProxyService(ProxyService* service) {
               data.type            = rule.value("type").toString();
               data.payload         = rule.value("payload").toString();
               data.proxy           = rule.value("proxy").toString();
-              const QString source = rule.value("source").toString().toLower();
-              const bool sourceMarkedCustom =
-                  (source == "user" || source == "custom");
-              const bool customPayloadShape =
-                  RuleUtils::isCustomPayload(data.payload);
-              if (sourceMarkedCustom || customPayloadShape) {
-                data.ruleSet =
-                    RuleConfigService::findRuleSet(m_configRepo, data)
-                        .trimmed();
-              }
-              data.isCustom = sourceMarkedCustom || !data.ruleSet.isEmpty();
+              data.ruleSet =
+                  RuleConfigService::findRuleSet(m_configRepo, data)
+                      .trimmed();
+              data.isCustom = !data.ruleSet.isEmpty();
               if (data.ruleSet.isEmpty()) {
                 data.ruleSet = QStringLiteral("default");
               }

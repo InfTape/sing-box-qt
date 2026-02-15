@@ -170,7 +170,7 @@ class UnitUtilsTest : public QObject {
 
  private slots:
   void ruleUtils_shouldNormalizeTypeAndProxy();
-  void ruleUtils_shouldDetectCustomPayload();
+
   void ruleUtils_shouldHandleAdditionalProxyShapes();
   void ruleConfigService_shouldParsePayloadValues();
   void homeFormat_shouldFormatBytesAndDuration();
@@ -385,15 +385,7 @@ void UnitUtilsTest::ruleUtils_shouldNormalizeTypeAndProxy() {
   QVERIFY(!RuleUtils::displayProxyLabel("reject").isEmpty());
 }
 
-void UnitUtilsTest::ruleUtils_shouldDetectCustomPayload() {
-  QVERIFY(RuleUtils::isCustomPayload("domain_suffix=example.com"));
-  QVERIFY(RuleUtils::isCustomPayload("IP_CIDR=1.1.1.0/24"));
-  QVERIFY(RuleUtils::isCustomPayload("process_name=foo.exe"));
-  QVERIFY(RuleUtils::isCustomPayload("package_name=com.demo.app"));
-  QVERIFY(RuleUtils::isCustomPayload("port=443"));
-  QVERIFY(RuleUtils::isCustomPayload("source=192.168.0.1"));
-  QVERIFY(!RuleUtils::isCustomPayload("geoip-cn"));
-}
+
 
 void UnitUtilsTest::ruleUtils_shouldHandleAdditionalProxyShapes() {
   QCOMPARE(RuleUtils::normalizeProxyValue("[route(node-c)]"), QString("node-c"));

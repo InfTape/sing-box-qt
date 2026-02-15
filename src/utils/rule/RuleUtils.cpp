@@ -49,10 +49,4 @@ QString displayProxyLabel(const QString& proxy) {
   return value;
 }
 
-bool isCustomPayload(const QString& payload) {
-  const QString p = payload.toLower();
-  return p.startsWith("domain") || p.startsWith("ip") ||
-         p.startsWith("process") || p.startsWith("package") ||
-         p.startsWith("port") || p.startsWith("source");
-}
 }  // namespace RuleUtils
