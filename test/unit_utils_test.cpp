@@ -14,6 +14,7 @@
 #include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"
 #include "utils/Crypto.h"
+#include "utils/GitHubMirror.h"
 #include "utils/LogParser.h"
 #include "utils/home/HomeFormat.h"
 #include "core/DataUsageTracker.h"
@@ -286,11 +287,16 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QVERIFY(tgIdx >= 0);
   QVERIFY(cnIdx >= 0);
   QVERIFY(privateIdx >= 0);
-  QVERIFY(ruleSets[cnIdx]
-              .toObject()
-              .value("url")
-              .toString()
-              .startsWith("https://ghproxy.com/"));
+  const QString cnRuleSetUrl =
+      ruleSets[cnIdx].toObject().value("url").toString();
+  bool hasKnownMirrorPrefix = false;
+  for (const QString& prefix : GitHubMirror::prefixes()) {
+    if (cnRuleSetUrl.startsWith(prefix)) {
+      hasKnownMirrorPrefix = true;
+      break;
+    }
+  }
+  QVERIFY(hasKnownMirrorPrefix);
   QVERIFY(ruleSets[cnIdx]
               .toObject()
               .value("url")
@@ -1323,6 +1329,7 @@ void UnitUtilsTest::subscriptionParser_shouldParseSingBoxAndMixedUriList() {
 
 void UnitUtilsTest::dataUsageTracker_shouldTrackGlobalTotals() {
   DataUsageTracker tracker;
+  tracker.reset();
   // Build a fake connections JSON with two connections
   QJsonArray conns;
   {

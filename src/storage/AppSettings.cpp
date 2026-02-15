@@ -51,6 +51,7 @@ AppSettings::AppSettings(QObject* parent)
 }
 
 void AppSettings::load() {
+  const int previousApiPort = m_apiPort;
   QJsonObject config = DatabaseService::instance().getAppConfig();
   // Ports.
   m_mixedPort =
@@ -100,7 +101,15 @@ void AppSettings::load() {
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
   m_downloadDetour  = config.value("downloadDetour").toString("manual");
+  if (previousApiPort != m_apiPort) {
+    emit apiPortChanged(m_apiPort);
+  }
   Logger::info("App settings loaded");
+}
+
+void AppSettings::reload() {
+  load();
+  emit settingsReloaded();
 }
 
 void AppSettings::save() {
@@ -155,6 +164,7 @@ void AppSettings::setApiPort(int port) {
     m_apiPort = port;
     save();
     emit settingsChanged();
+    emit apiPortChanged(m_apiPort);
   }
 }
 

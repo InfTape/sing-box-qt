@@ -108,9 +108,12 @@ class AppSettings : public QObject {
   QString dnsStrategy() const;
   // Load and save.
   void load();
+  void reload();
   void save();
- signals:
+signals:
   void settingsChanged();
+  void apiPortChanged(int port);
+  void settingsReloaded();
 
  private:
   explicit AppSettings(QObject* parent = nullptr);

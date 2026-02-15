@@ -10,12 +10,32 @@
 #include "core/ProxyController.h"
 #include "core/ProxyService.h"
 #include "network/SubscriptionService.h"
+#include "storage/AppSettings.h"
 #include "views/proxy/ProxyViewController.h"
 
 AppContext::AppContext() {
   m_configRepository = std::make_unique<ConfigRepositoryAdapter>();
   m_kernelService    = std::make_unique<KernelService>();
   m_proxyService     = std::make_unique<ProxyService>();
+  AppSettings& appSettings = AppSettings::instance();
+  m_proxyService->setApiPort(appSettings.apiPort());
+  QObject::connect(
+      &appSettings,
+      &AppSettings::apiPortChanged,
+      m_proxyService.get(),
+      [proxyService = m_proxyService.get()](int port) {
+        proxyService->setApiPort(port);
+      });
+  QObject::connect(&appSettings,
+                   &AppSettings::settingsReloaded,
+                   m_proxyService.get(),
+                   [this]() {
+                     if (m_proxyController) {
+                       m_proxyController->syncSettingsToActiveConfig(false);
+                       m_proxyController->updateSystemProxyForKernelState(
+                           m_kernelService && m_kernelService->isRunning());
+                     }
+                   });
   m_subscriptionService =
       std::make_unique<SubscriptionService>(m_configRepository.get());
   m_settingsStore      = std::make_unique<SettingsStoreAdapter>();

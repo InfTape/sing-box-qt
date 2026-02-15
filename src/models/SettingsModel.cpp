@@ -80,6 +80,7 @@ bool SettingsModel::save(const SettingsModel::Data& data,
     }
     return false;
   }
-  AppSettings::instance().load();
+  AppSettings& settings = AppSettings::instance();
+  settings.reload();
   return true;
 }

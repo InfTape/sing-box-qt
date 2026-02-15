@@ -153,6 +153,10 @@ bool ProxyController::setTunModeEnabled(bool enabled, bool restartIfRunning) {
   return applySettingsToActiveConfig(restartIfRunning);
 }
 
+bool ProxyController::syncSettingsToActiveConfig(bool restartIfRunning) {
+  return applySettingsToActiveConfig(restartIfRunning);
+}
+
 bool ProxyController::applySettingsToActiveConfig(bool restartIfRunning) {
   QString configPath;
   if (!m_configRepo || !ensureConfigExists(&configPath)) {
