@@ -20,6 +20,7 @@ class ManageRuleSetsDialog : public QDialog {
   void onSetRename();
   void onSetDelete();
   void onRuleAdd();
+  void onRuleEdit();
   void onRuleDelete();
   void onSetChanged();
   void onSetContextMenu(const QPoint& pos);

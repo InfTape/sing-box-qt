@@ -106,11 +106,7 @@ void ProxyView::setupUI() {
           &ProxyToolbar::searchTextChanged,
           this,
           &ProxyView::onSearchTextChanged);
-  connect(m_toolbar,
-          &ProxyToolbar::testAllClicked,
-          this,
-          &ProxyView::onTestAllClicked);
-  connect(m_toolbar, &ProxyToolbar::refreshClicked, this, &ProxyView::refresh);
+
   connect(m_toolbar,
           &ProxyToolbar::addGroupClicked,
           this,
@@ -136,7 +132,7 @@ void ProxyView::updateStyle() {
   if (m_treeWidget && m_treeWidget->viewport()) {
     m_treeWidget->viewport()->update();
   }
-  updateTestButtonStyle(isTesting());
+
 }
 
 void ProxyView::setController(ProxyViewController* controller) {
@@ -284,22 +280,57 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
     if (groupTag.isEmpty()) {
       return;
     }
-    // Don't show delete for built-in groups.
-    if (groupTag == ConfigConstants::TAG_MANUAL ||
-        groupTag == ConfigConstants::TAG_AUTO ||
-        groupTag == ConfigConstants::TAG_DIRECT ||
-        groupTag == ConfigConstants::TAG_BLOCK) {
-      return;
-    }
+    const bool isBuiltIn = (groupTag == ConfigConstants::TAG_MANUAL ||
+                            groupTag == ConfigConstants::TAG_AUTO ||
+                            groupTag == ConfigConstants::TAG_DIRECT ||
+                            groupTag == ConfigConstants::TAG_BLOCK);
     RoundedMenu menu(this);
     menu.setObjectName("TrayMenu");
     if (m_themeService) {
       menu.setThemeColors(m_themeService->color("bg-secondary"),
                           m_themeService->color("primary"));
     }
-    QAction* deleteAct = menu.addAction(tr("Delete Group"));
+    QAction* testAct   = menu.addAction(tr("Test Group"));
+    QAction* deleteAct = isBuiltIn ? nullptr : menu.addAction(tr("Delete Group"));
     QAction* chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
-    if (chosen == deleteAct && m_subscriptionService) {
+    if (!chosen) {
+      return;
+    }
+    if (chosen == testAct) {
+      QStringList nodesToTest;
+      for (int c = 0; c < item->childCount(); ++c) {
+        QTreeWidgetItem* child = item->child(c);
+        if (child->data(0, Qt::UserRole).toString() != "node") {
+          continue;
+        }
+        QString name = ProxyTreeUtils::nodeDisplayName(child);
+        if (name.startsWith("* ")) {
+          name = name.mid(2);
+        }
+        if (name == "DIRECT" || name == "REJECT" || name == "COMPATIBLE") {
+          continue;
+        }
+        nodesToTest.append(name);
+        child->setText(2, "...");
+        child->setData(2, Qt::UserRole + 2, QString("loading"));
+      }
+      if (nodesToTest.isEmpty()) {
+        return;
+      }
+      nodesToTest.removeDuplicates();
+      m_testingNodes.clear();
+      for (const QString& node : nodesToTest) {
+        m_testingNodes.insert(node);
+      }
+      if (m_toolbar) {
+        m_toolbar->showProgress(true);
+        m_toolbar->setProgress(0);
+      }
+
+      if (m_controller) {
+        m_controller->startBatchDelayTests(nodesToTest);
+      }
+    } else if (chosen == deleteAct && m_subscriptionService) {
       auto reply = QMessageBox::question(
           this,
           tr("Delete Group"),
@@ -375,7 +406,7 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       m_singleTesting       = true;
       m_singleTestingTarget = nodeName;
       m_controller->startSingleDelayTest(nodeName);
-      updateTestButtonStyle(true);
+
     }
   } else if (chosen == speedAct) {
     startSpeedTest(item);
@@ -515,59 +546,7 @@ void ProxyView::onTestSelectedClicked() {
   }
 }
 
-void ProxyView::onTestAllClicked() {
-  if (!m_controller) {
-    return;
-  }
-  if (m_singleTesting) {
-    return;
-  }
-  if (isTesting()) {
-    if (m_controller) {
-      m_controller->stopAllTests();
-    }
-    if (m_toolbar) {
-      m_toolbar->setTestAllText(tr("Test All"));
-    }
-    updateTestButtonStyle(false);
-    return;
-  }
-  QStringList             nodesToTest;
-  QTreeWidgetItemIterator it(m_treeWidget);
-  while (*it) {
-    if ((*it)->data(0, Qt::UserRole).toString() == "node") {
-      QString name = ProxyTreeUtils::nodeDisplayName(*it);
-      if (name.startsWith("* ")) {
-        name = name.mid(2);
-      }
-      if (name != "DIRECT" && name != "REJECT" && name != "COMPATIBLE") {
-        nodesToTest.append(name);
-      }
-      (*it)->setText(2, "...");
-      (*it)->setData(2, Qt::UserRole + 2, QString("loading"));
-    }
-    ++it;
-  }
-  if (nodesToTest.isEmpty()) {
-    return;
-  }
-  nodesToTest.removeDuplicates();
-  m_testingNodes.clear();
-  for (const QString& node : nodesToTest) {
-    m_testingNodes.insert(node);
-  }
-  if (m_toolbar) {
-    m_toolbar->setTestAllText(tr("Stop Tests"));
-  }
-  updateTestButtonStyle(true);
-  if (m_toolbar) {
-    m_toolbar->showProgress(true);
-    m_toolbar->setProgress(0);
-  }
-  if (m_controller) {
-    m_controller->startBatchDelayTests(nodesToTest);
-  }
-}
+
 
 void ProxyView::onSearchTextChanged(const QString& text) {
   ProxyTreeUtils::filterTreeNodes(m_treeWidget, text);
@@ -622,13 +601,15 @@ void ProxyView::onTestProgress(int current, int total) {
 
 void ProxyView::onTestCompleted() {
   if (m_toolbar) {
-    m_toolbar->setTestAllText(tr("Test All"));
-  }
-  updateTestButtonStyle(false);
-  if (m_toolbar) {
     m_toolbar->showProgress(false);
   }
   m_testingNodes.clear();
+  if (m_testSelectedBtn) {
+    m_testSelectedBtn->setEnabled(true);
+    m_testSelectedBtn->setProperty("testing", false);
+    m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
+    m_testSelectedBtn->style()->polish(m_testSelectedBtn);
+  }
   if (QTreeWidgetItem* current = m_treeWidget->currentItem()) {
     ProxyTreeUtils::updateNodeRowSelected(
         m_treeWidget, current, current->isSelected());
@@ -642,18 +623,7 @@ QString ProxyView::formatDelay(int delay) const {
   return QString::number(delay) + " ms";
 }
 
-void ProxyView::updateTestButtonStyle(bool testing) {
-  if (m_toolbar) {
-    m_toolbar->setTesting(testing);
-  }
-  if (m_testSelectedBtn) {
-    const bool busy = testing || m_singleTesting;
-    m_testSelectedBtn->setEnabled(!busy);
-    m_testSelectedBtn->setProperty("testing", busy);
-    m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
-    m_testSelectedBtn->style()->polish(m_testSelectedBtn);
-  }
-}
+
 
 void ProxyView::onSelectionChanged(const QItemSelection& selected,
                                    const QItemSelection& deselected) {

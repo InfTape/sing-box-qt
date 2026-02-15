@@ -30,7 +30,7 @@ class ProxyView : public QWidget {
   void onProxySelected(const QString& group, const QString& proxy);
   void onProxySelectFailed(const QString& group, const QString& proxy);
   void onTestSelectedClicked();
-  void onTestAllClicked();
+
   void onSearchTextChanged(const QString& text);
   void onDelayResult(const ProxyDelayTestResult& result);
   void onTestProgress(int current, int total);
@@ -46,7 +46,7 @@ class ProxyView : public QWidget {
   QString         formatDelay(int delay) const;
   void            onSelectionChanged(const QItemSelection& selected,
                                      const QItemSelection& deselected);
-  void            updateTestButtonStyle(bool testing);
+
   QJsonObject     loadNodeOutbound(const QString& tag) const;
   bool            isTesting() const;
   ProxyToolbar*   m_toolbar   = nullptr;

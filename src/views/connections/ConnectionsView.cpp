@@ -55,12 +55,9 @@ void ConnectionsView::setupUI() {
   titleLayout->addWidget(titleLabel);
   titleLayout->addWidget(subtitleLabel);
   headerLayout->addLayout(titleLayout);
-  m_closeSelectedBtn = new QPushButton(tr("Close Selected"));
   m_closeAllBtn      = new QPushButton(tr("Close All"));
-  m_closeSelectedBtn->setObjectName("CloseSelectedBtn");
   m_closeAllBtn->setObjectName("CloseAllBtn");
   headerLayout->addStretch();
-  headerLayout->addWidget(m_closeSelectedBtn);
   headerLayout->addWidget(m_closeAllBtn);
   mainLayout->addLayout(headerLayout);
   // Connections table.
@@ -78,12 +75,17 @@ void ConnectionsView::setupUI() {
   m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
   m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
   mainLayout->addWidget(m_tableWidget, 1);
-  connect(m_closeSelectedBtn,
-          &QPushButton::clicked,
-          this,
-          &ConnectionsView::onCloseSelected);
   connect(
       m_closeAllBtn, &QPushButton::clicked, this, &ConnectionsView::onCloseAll);
+  connect(m_tableWidget->selectionModel(),
+          &QItemSelectionModel::selectionChanged,
+          this,
+          [this]() {
+            const bool hasSelection =
+                !m_tableWidget->selectionModel()->selectedRows().isEmpty();
+            m_closeAllBtn->setText(
+                hasSelection ? tr("Close Selected") : tr("Close All"));
+          });
   updateStyle();
 }
 
@@ -181,23 +183,18 @@ void ConnectionsView::onRefresh() {
   }
 }
 
-void ConnectionsView::onCloseSelected() {
+void ConnectionsView::onCloseAll() {
   if (!m_proxyService) {
     return;
   }
-  QList<QTableWidgetItem*> selected = m_tableWidget->selectedItems();
-  QSet<int>                rows;
-  for (auto item : selected) {
-    rows.insert(item->row());
-  }
-  for (int row : rows) {
-    QString id = m_tableWidget->item(row, 0)->data(Qt::UserRole).toString();
-    m_proxyService->closeConnection(id);
-  }
-}
-
-void ConnectionsView::onCloseAll() {
-  if (m_proxyService) {
+  const auto selectedRows = m_tableWidget->selectionModel()->selectedRows();
+  if (!selectedRows.isEmpty()) {
+    for (const auto& idx : selectedRows) {
+      QString id =
+          m_tableWidget->item(idx.row(), 0)->data(Qt::UserRole).toString();
+      m_proxyService->closeConnection(id);
+    }
+  } else {
     m_proxyService->closeAllConnections();
   }
 }

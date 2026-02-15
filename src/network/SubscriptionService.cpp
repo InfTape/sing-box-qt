@@ -1066,6 +1066,31 @@ bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
     break;
   }
 
+  // Update route rules: change any rule whose outbound references the deleted
+  // group to fall back to "manual".
+  if (config.contains("route") && config["route"].isObject()) {
+    QJsonObject route = config.value("route").toObject();
+    if (route.contains("rules") && route["rules"].isArray()) {
+      QJsonArray rules = route.value("rules").toArray();
+      bool       changed = false;
+      for (int i = 0; i < rules.size(); ++i) {
+        if (!rules[i].isObject()) {
+          continue;
+        }
+        QJsonObject rule = rules[i].toObject();
+        if (rule.value("outbound").toString() == groupTag) {
+          rule["outbound"] = ConfigConstants::TAG_MANUAL;
+          rules[i]         = rule;
+          changed          = true;
+        }
+      }
+      if (changed) {
+        route["rules"]  = rules;
+        config["route"] = route;
+      }
+    }
+  }
+
   config["outbounds"] = newOutbounds;
   if (!m_configRepo->saveConfig(active.configPath, config)) {
     setError(tr("Failed to save config: %1").arg(active.configPath));

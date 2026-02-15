@@ -16,14 +16,14 @@ class ConnectionsView : public QWidget {
   void setAutoRefreshEnabled(bool enabled);
  private slots:
   void onRefresh();
-  void onCloseSelected();
+
   void onCloseAll();
   void updateStyle();
 
  private:
   void          setupUI();
   QTableWidget* m_tableWidget;
-  QPushButton*  m_closeSelectedBtn;
+
   QPushButton*  m_closeAllBtn;
   QTimer*       m_refreshTimer;
   ProxyService* m_proxyService;

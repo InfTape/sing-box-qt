@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/rules/RuleEditorDialog.h"
+#include "models/RuleItem.h"
 #include "services/rules/RuleConfigService.h"
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/RoundedMenu.h"
@@ -244,6 +245,71 @@ void ManageRuleSetsDialog::onRuleDelete() {
   emit ruleSetsChanged();
 }
 
+void ManageRuleSetsDialog::onRuleEdit() {
+  const QString set = selectedName();
+  if (set.isEmpty()) {
+    return;
+  }
+  QList<QListWidgetItem*> items = m_ruleList->selectedItems();
+  if (items.isEmpty()) {
+    return;
+  }
+  QJsonObject oldObj = items.first()->data(Qt::UserRole).toJsonObject();
+
+  // Build RuleItem from stored QJsonObject.
+  RuleItem rule;
+  rule.proxy   = oldObj.value("outbound").toString();
+  rule.ruleSet = set;
+  for (auto it = oldObj.begin(); it != oldObj.end(); ++it) {
+    if (it.key() == "outbound" || it.key() == "action") {
+      continue;
+    }
+    QString payload;
+    if (it->isArray()) {
+      QStringList arr;
+      for (const auto& av : it->toArray()) {
+        arr << (av.isDouble() ? QString::number(av.toInt()) : av.toString());
+      }
+      payload = arr.join(",");
+    } else if (it->isDouble()) {
+      payload = QString::number(it->toInt());
+    } else if (it->isBool()) {
+      payload = it->toBool() ? "true" : "false";
+    } else {
+      payload = it->toString();
+    }
+    rule.type    = it.key();
+    rule.payload = it.key() + "=" + payload;
+    break;
+  }
+
+  QString     error;
+  QStringList outboundTags =
+      RuleConfigService::loadOutboundTags(m_configRepo, "direct", &error);
+  if (!error.isEmpty()) {
+    QMessageBox::warning(this, tr("Edit Rule"), error);
+    return;
+  }
+  RuleEditorDialog dlg(RuleEditorDialog::Mode::Edit, m_themeService, this);
+  dlg.setOutboundTags(outboundTags);
+  dlg.setRuleSetName(set);
+  QString parseError;
+  if (!dlg.setEditRule(rule, &parseError)) {
+    QMessageBox::warning(this, tr("Edit Rule"), parseError);
+    return;
+  }
+  if (dlg.exec() != QDialog::Accepted) {
+    return;
+  }
+  // Remove old rule, add new one.
+  SharedRulesStore::removeRule(set, oldObj);
+  RuleConfigService::RuleEditData data = dlg.editData();
+  data.ruleSet                         = set;
+  addRuleToSet(set, data);
+  reloadRules();
+  emit ruleSetsChanged();
+}
+
 void ManageRuleSetsDialog::onSetContextMenu(const QPoint& pos) {
   const QString set     = selectedName();
   const bool    hasSet  = !set.isEmpty();
@@ -290,8 +356,10 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
       menu.setThemeColors(ts->color("bg-secondary"), ts->color("primary"));
     });
   }
-  QAction* addAct = menu.addAction(tr("Add Rule"));
-  QAction* delAct = menu.addAction(tr("Delete Rule"));
+  QAction* addAct  = menu.addAction(tr("Add Rule"));
+  QAction* editAct = menu.addAction(tr("Edit Rule"));
+  QAction* delAct  = menu.addAction(tr("Delete Rule"));
+  editAct->setEnabled(hasRule);
   delAct->setEnabled(hasRule);
   QAction* chosen = menu.exec(m_ruleList->viewport()->mapToGlobal(pos));
   if (!chosen) {
@@ -299,6 +367,8 @@ void ManageRuleSetsDialog::onRuleContextMenu(const QPoint& pos) {
   }
   if (chosen == addAct) {
     onRuleAdd();
+  } else if (chosen == editAct) {
+    onRuleEdit();
   } else if (chosen == delAct) {
     onRuleDelete();
   }
