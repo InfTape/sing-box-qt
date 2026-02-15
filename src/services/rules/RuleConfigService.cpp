@@ -154,6 +154,38 @@ int findInsertIndex(const QJsonArray& rules) {
   return insertIndex;
 }
 
+QStringList comparableValuesFromJson(const QJsonValue& value) {
+  QStringList out;
+  if (value.isArray()) {
+    const QJsonArray arr = value.toArray();
+    out.reserve(arr.size());
+    for (const auto& item : arr) {
+      if (item.isDouble()) {
+        out << QString::number(item.toInt());
+      } else if (item.isBool()) {
+        out << (item.toBool() ? QStringLiteral("true")
+                              : QStringLiteral("false"));
+      } else {
+        out << item.toString().trimmed();
+      }
+    }
+    return out;
+  }
+  if (value.isDouble()) {
+    out << QString::number(value.toInt());
+    return out;
+  }
+  if (value.isBool()) {
+    out << (value.toBool() ? QStringLiteral("true") : QStringLiteral("false"));
+    return out;
+  }
+  const QString text = value.toString().trimmed();
+  if (!text.isEmpty()) {
+    out << text;
+  }
+  return out;
+}
+
 bool ruleObjectMatches(const QJsonObject& obj,
                        const RuleItem&    rule,
                        const QString&     key,
@@ -169,30 +201,123 @@ bool ruleObjectMatches(const QJsonObject& obj,
   if (RuleUtils::normalizeProxyValue(rule.proxy) != objOutbound) {
     return false;
   }
-  const QJsonValue v = obj.value(key);
-  if (v.isArray()) {
-    QStringList arr;
-    for (const auto& it : v.toArray()) {
-      if (it.isDouble()) {
-        arr << QString::number(it.toInt());
-      } else {
-        arr << it.toString();
-      }
+  QStringList expected = values;
+  for (QString& item : expected) {
+    item = item.trimmed();
+  }
+  expected.removeAll(QString());
+  expected.sort();
+  QStringList actual = comparableValuesFromJson(obj.value(key));
+  for (QString& item : actual) {
+    item = item.trimmed();
+  }
+  actual.removeAll(QString());
+  actual.sort();
+  return !expected.isEmpty() && actual == expected;
+}
+
+QString normalizeLookupToken(QString value) {
+  value = value.trimmed();
+  if (value == "...") {
+    return QString();
+  }
+  if (value.endsWith("...")) {
+    value.chop(3);
+    value = value.trimmed();
+  }
+  return value;
+}
+
+struct RuleLookupInput {
+  QString     key;
+  QStringList exactValuesSorted;
+  QStringList truncatedTokens;
+  QString     normalizedProxy;
+  bool        hasTruncatedPayload = false;
+};
+
+bool buildRuleLookupInput(const RuleItem& rule, RuleLookupInput* out) {
+  if (!out) {
+    return false;
+  }
+  QString     key;
+  QStringList values;
+  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, nullptr)) {
+    return false;
+  }
+  out->key                 = key;
+  out->normalizedProxy     = RuleUtils::normalizeProxyValue(rule.proxy);
+  out->hasTruncatedPayload = rule.payload.contains("...");
+  out->exactValuesSorted   = values;
+  for (QString& value : out->exactValuesSorted) {
+    value = value.trimmed();
+  }
+  out->exactValuesSorted.removeAll(QString());
+  out->exactValuesSorted.sort();
+  out->truncatedTokens.clear();
+  for (const auto& value : values) {
+    const QString token = normalizeLookupToken(value);
+    if (!token.isEmpty()) {
+      out->truncatedTokens << token;
     }
-    arr.sort();
-    QStringList sortedValues = values;
-    sortedValues.sort();
-    return arr == sortedValues;
   }
-  if (v.isDouble()) {
-    return values.size() == 1 && v.toInt() == values.first().toInt();
+  out->truncatedTokens.removeDuplicates();
+  return !out->key.isEmpty() && !out->exactValuesSorted.isEmpty();
+}
+
+QStringList lookupComparableValues(const QJsonObject& obj, const QString& key) {
+  if (!obj.contains(key)) {
+    return {};
   }
-  if (v.isBool()) {
-    return values.size() == 1 &&
-           ((v.toBool() && values.first().toLower() == "true") ||
-            (!v.toBool() && values.first().toLower() == "false"));
+  return comparableValuesFromJson(obj.value(key));
+}
+
+bool valuesMatchForLookup(const QStringList& actualValuesRaw,
+                          const RuleLookupInput& lookup) {
+  QStringList actualValues;
+  actualValues.reserve(actualValuesRaw.size());
+  for (const auto& value : actualValuesRaw) {
+    const QString trimmed = value.trimmed();
+    if (!trimmed.isEmpty()) {
+      actualValues << trimmed;
+    }
   }
-  return values.size() == 1 && v.toString().trimmed() == values.first();
+  if (actualValues.isEmpty()) {
+    return false;
+  }
+  QStringList sortedActual = actualValues;
+  sortedActual.sort();
+  if (sortedActual == lookup.exactValuesSorted) {
+    return true;
+  }
+  if (!lookup.hasTruncatedPayload || lookup.truncatedTokens.isEmpty()) {
+    return false;
+  }
+  for (const auto& token : lookup.truncatedTokens) {
+    if (!actualValues.contains(token)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ruleObjectMatchesForLookup(const QJsonObject& obj,
+                                const RuleLookupInput& lookup,
+                                bool compareOutbound) {
+  if (obj.contains("action") && obj.value("action").toString() != "route") {
+    return false;
+  }
+  if (!obj.contains(lookup.key)) {
+    return false;
+  }
+  if (compareOutbound) {
+    const QString objOutbound =
+        RuleUtils::normalizeProxyValue(obj.value("outbound").toString());
+    if (lookup.normalizedProxy != objOutbound) {
+      return false;
+    }
+  }
+  return valuesMatchForLookup(lookupComparableValues(obj, lookup.key), lookup);
 }
 
 bool removeRuleFromArray(QJsonArray*     rules,
@@ -222,6 +347,35 @@ bool removeRuleFromArray(QJsonArray*     rules,
     *error = QObject::tr("Rule not found in config.");
   }
   return removed;
+}
+
+QString findRuleSetByPayload(const RuleItem& rule) {
+  RuleLookupInput lookup;
+  if (!buildRuleLookupInput(rule, &lookup)) {
+    return QString();
+  }
+  const QStringList  setNames = SharedRulesStore::listRuleSets();
+  QList<QJsonArray>  rulesBySet;
+  rulesBySet.reserve(setNames.size());
+  for (const auto& setName : setNames) {
+    rulesBySet.append(SharedRulesStore::loadRules(setName));
+  }
+  for (int pass = 0; pass < 2; ++pass) {
+    const bool compareOutbound = (pass == 0);
+    for (int i = 0; i < setNames.size(); ++i) {
+      const QJsonArray& rules = rulesBySet[i];
+      for (const auto& value : rules) {
+        if (!value.isObject()) {
+          continue;
+        }
+        if (ruleObjectMatchesForLookup(
+                value.toObject(), lookup, compareOutbound)) {
+          return setNames[i].trimmed();
+        }
+      }
+    }
+  }
+  return QString();
 }
 
 QJsonObject buildRouteRuleFromItem(const RuleItem& rule, QString* error) {
@@ -309,7 +463,11 @@ QString RuleConfigService::activeConfigPath(ConfigRepository* cfgRepo) {
 QString RuleConfigService::findRuleSet(ConfigRepository* /*cfgRepo*/,
                                        const RuleItem& rule) {
   const QJsonObject obj = buildRouteRuleFromItem(rule, nullptr);
-  return SharedRulesStore::findSetOfRule(obj);
+  const QString     setName = SharedRulesStore::findSetOfRule(obj);
+  if (!setName.isEmpty()) {
+    return setName;
+  }
+  return findRuleSetByPayload(rule);
 }
 
 QStringList RuleConfigService::loadOutboundTags(ConfigRepository* cfgRepo,

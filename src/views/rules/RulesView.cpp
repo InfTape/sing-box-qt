@@ -180,13 +180,12 @@ void RulesView::setProxyService(ProxyService* service) {
                   (source == "user" || source == "custom");
               const bool customPayloadShape =
                   RuleUtils::isCustomPayload(data.payload);
-              // Prefer shared-rules matching result to classify custom rules.
               if (sourceMarkedCustom || customPayloadShape) {
                 data.ruleSet =
                     RuleConfigService::findRuleSet(m_configRepo, data)
                         .trimmed();
               }
-              data.isCustom = !data.ruleSet.isEmpty() || sourceMarkedCustom;
+              data.isCustom = sourceMarkedCustom || !data.ruleSet.isEmpty();
               if (data.ruleSet.isEmpty()) {
                 data.ruleSet = QStringLiteral("default");
               }
