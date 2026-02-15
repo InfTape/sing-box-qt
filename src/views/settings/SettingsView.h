@@ -1,15 +1,16 @@
 ﻿#ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
 #include <QCheckBox>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPlainTextEdit>
 #include <QProgressBar>
-#include <QPushButton>
 #include <QSpinBox>
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <QToolButton>
 #include <QWidget>
 #include "models/SettingsModel.h"
 class ToggleSwitch;
@@ -30,14 +31,11 @@ class SettingsView : public QWidget {
   void showEvent(QShowEvent* event) override;
   void resizeEvent(QResizeEvent* event) override;
  private slots:
-  void onDownloadKernelClicked();
-  void onCheckKernelClicked();
-  void onCheckUpdateClicked();
+  void onKernelStatusIconClicked();
   void updateStyle();
   void onKernelInstalledReady(const QString& path, const QString& version);
   void onKernelReleasesReady(const QStringList& versions,
                              const QString&     latest);
-  void onKernelLatestReady(const QString& latest, const QString& installed);
   void onKernelDownloadProgress(int percent);
   void onKernelStatusChanged(const QString& status);
   void onKernelFinished(bool ok, const QString& message);
@@ -48,7 +46,9 @@ class SettingsView : public QWidget {
   void      scheduleAutoSave();
   void      loadSettings();
   bool      saveSettings(bool showError);
-  void      setDownloadUi(bool downloading, const QString& message = QString());
+  void      setDownloadUi(bool           downloading,
+                          const QString& message   = QString(),
+                          const QString& hintLevel = QString());
   void      ensureKernelInfoLoaded();
   QWidget*  buildProxySection();
   QWidget*  buildProxyAdvancedSection();
@@ -68,6 +68,12 @@ class SettingsView : public QWidget {
   void           fillProfileFromUi(SettingsModel::Data& data) const;
   QString        normalizeBypassText(const QString& text) const;
   void           updateKernelVersionLabelStatus();
+  QIcon          buildKernelStatusIcon(const QString& resourcePath,
+                                       int rotationDegrees = 0) const;
+  void           setKernelStatusIcon(const QString& resourcePath);
+  void           startKernelStatusIconSpin();
+  void           stopKernelStatusIconSpin();
+  void           advanceKernelStatusIconSpin();
   void           updateResponsiveUi();
   // Proxy settings.
   QSpinBox*       m_mixedPortSpin;
@@ -98,17 +104,19 @@ class SettingsView : public QWidget {
   MenuComboBox* m_languageCombo;
   // Kernel settings.
   QLabel*             m_kernelVersionLabel;
+  QLabel*             m_kernelVersionHintLabel = nullptr;
   QString             m_installedKernelVersion;
   QString             m_latestKernelVersion;
+  QToolButton*        m_kernelStatusIconBtn = nullptr;
   MenuComboBox*       m_kernelVersionCombo;
   QProgressBar*       m_kernelDownloadProgress;
-  QLabel*             m_kernelDownloadStatus;
   QLineEdit*          m_kernelPathEdit;
-  QPushButton*        m_downloadKernelBtn;
-  QPushButton*        m_checkKernelBtn;
-  QPushButton*        m_checkUpdateBtn;
+  QTimer*             m_kernelStatusSpinTimer = nullptr;
+  int                 m_kernelStatusSpinAngle = 0;
+  bool                m_kernelIsOutdated   = false;
+  QString             m_kernelInlineHintText;
+  QString             m_kernelInlineHintLevel = "info";
   bool                m_isDownloading      = false;
-  bool                m_checkingInstall    = false;
   SettingsController* m_settingsController = nullptr;
   bool                m_kernelInfoLoaded   = false;
   bool                m_isApplyingSettings = false;

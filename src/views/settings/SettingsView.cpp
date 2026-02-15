@@ -1,15 +1,20 @@
 ﻿#include "SettingsView.h"
+#include <QApplication>
 #include <QFormLayout>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QMessageBox>
+#include <QPainter>
+#include <QPixmap>
 #include <QProgressBar>
 #include <QResizeEvent>
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QSizePolicy>
+#include <QSvgRenderer>
 #include <algorithm>
 #include "app/interfaces/ThemeService.h"
 #include "storage/ConfigConstants.h"
@@ -41,10 +46,81 @@ constexpr int kPageMargin                 = 24;
 constexpr int kTitleSpacing               = 4;
 constexpr int kBypassEditHeight           = 96;
 constexpr int kKernelFormSpacing          = 15;
+constexpr int kKernelStatusIconSize       = 18;
+constexpr int kKernelStatusButtonSize     = 26;
+constexpr int kKernelStatusSpinIntervalMs = 80;
+constexpr int kKernelStatusSpinStepDeg    = 24;
 constexpr int kSectionPaddingReserve      = 170;
 constexpr int kMinRoutingWrapWidth        = 1200;
 constexpr int kMinDnsWrapWidth            = 1180;
 constexpr int kAutoSaveDebounceMs         = 450;
+constexpr auto kKernelIconClockwise       = ":/icons/clockwise.svg";
+constexpr auto kKernelIconCounterclockwise = ":/icons/counterclockwise.svg";
+constexpr auto kKernelIconDownload        = ":/icons/download.svg";
+constexpr auto kKernelIconExclamation =
+    ":/icons/exclamationmarkclockwise.svg";
+
+QIcon colorizedSvgIcon(const QString& resourcePath,
+                       int            size,
+                       const QColor&  color,
+                       int            rotationDegrees = 0) {
+  if (size <= 0) {
+    return QIcon(resourcePath);
+  }
+  const qreal  dpr = qApp ? qApp->devicePixelRatio() : 1.0;
+  const int    box = static_cast<int>(size * dpr);
+  QSvgRenderer renderer(resourcePath);
+  if (!renderer.isValid()) {
+    return QIcon(resourcePath);
+  }
+  QPixmap base(box, box);
+  base.fill(Qt::transparent);
+  {
+    QPainter p(&base);
+    p.setRenderHint(QPainter::Antialiasing);
+    const QSizeF def     = renderer.defaultSize();
+    const qreal  w       = def.width() > 0 ? def.width() : size;
+    const qreal  h       = def.height() > 0 ? def.height() : size;
+    const qreal  ratio   = (h > 0) ? (w / h) : 1.0;
+    qreal        renderW = box;
+    qreal        renderH = box;
+    if (ratio > 1.0) {
+      renderH = renderH / ratio;
+    } else if (ratio < 1.0) {
+      renderW = renderW * ratio;
+    }
+    const QRectF target(
+        (box - renderW) / 2.0, (box - renderH) / 2.0, renderW, renderH);
+    renderer.render(&p, target);
+  }
+
+  QPixmap tinted(box, box);
+  tinted.fill(Qt::transparent);
+  {
+    QPainter p(&tinted);
+    p.setCompositionMode(QPainter::CompositionMode_Source);
+    p.drawPixmap(0, 0, base);
+    p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    p.fillRect(tinted.rect(), color);
+  }
+  if (rotationDegrees % 360 == 0) {
+    tinted.setDevicePixelRatio(dpr);
+    return QIcon(tinted);
+  }
+
+  QPixmap rotated(box, box);
+  rotated.fill(Qt::transparent);
+  {
+    QPainter p(&rotated);
+    p.setRenderHint(QPainter::SmoothPixmapTransform);
+    p.translate(box / 2.0, box / 2.0);
+    p.rotate(rotationDegrees);
+    p.translate(-box / 2.0, -box / 2.0);
+    p.drawPixmap(0, 0, tinted);
+  }
+  rotated.setDevicePixelRatio(dpr);
+  return QIcon(rotated);
+}
 
 class NoWheelSpinBox : public QSpinBox {
  public:
@@ -82,10 +158,6 @@ SettingsView::SettingsView(ThemeService*       themeService,
             this,
             &SettingsView::onKernelReleasesReady);
     connect(m_settingsController,
-            &SettingsController::latestReady,
-            this,
-            &SettingsView::onKernelLatestReady);
-    connect(m_settingsController,
             &SettingsController::downloadProgress,
             this,
             &SettingsView::onKernelDownloadProgress);
@@ -118,6 +190,8 @@ void SettingsView::ensureKernelInfoLoaded() {
   }
   m_kernelInfoLoaded = true;
   if (m_settingsController) {
+    setKernelStatusIcon(kKernelIconClockwise);
+    setDownloadUi(true, tr("Checking kernel status..."), "info");
     m_settingsController->refreshInstalledInfo();
     m_settingsController->fetchReleaseList();
   }
@@ -435,6 +509,20 @@ QWidget* SettingsView::buildKernelSection() {
   m_kernelVersionLabel = new QLabel(tr("Not installed"));
   m_kernelVersionLabel->setObjectName("KernelVersionLabel");
   m_kernelVersionLabel->setProperty("status", "error");
+  m_kernelVersionHintLabel = new QLabel;
+  m_kernelVersionHintLabel->setObjectName("KernelVersionHintLabel");
+  m_kernelVersionHintLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+  m_kernelVersionHintLabel->setVisible(false);
+  m_kernelStatusIconBtn = new QToolButton;
+  m_kernelStatusIconBtn->setObjectName("KernelStatusIconBtn");
+  m_kernelStatusIconBtn->setIconSize(
+      QSize(kKernelStatusIconSize, kKernelStatusIconSize));
+  m_kernelStatusIconBtn->setFixedSize(
+      QSize(kKernelStatusButtonSize, kKernelStatusButtonSize));
+  m_kernelStatusIconBtn->setAutoRaise(true);
+  m_kernelStatusIconBtn->setCursor(Qt::PointingHandCursor);
+  m_kernelStatusIconBtn->setToolTip(tr("Check kernel status"));
+  setKernelStatusIcon(kKernelIconClockwise);
   m_kernelVersionCombo = createMenuComboBox();
   m_kernelVersionCombo->addItem(tr("Latest version"));
   m_kernelPathEdit = createElideLineEdit(tr("Kernel path"));
@@ -445,28 +533,21 @@ QWidget* SettingsView::buildKernelSection() {
   m_kernelDownloadProgress->setValue(0);
   m_kernelDownloadProgress->setTextVisible(true);
   m_kernelDownloadProgress->setVisible(false);
-  m_kernelDownloadStatus = new QLabel;
-  m_kernelDownloadStatus->setObjectName("KernelStatusLabel");
-  m_kernelDownloadStatus->setVisible(false);
-  QHBoxLayout* kernelBtnLayout = new QHBoxLayout;
-  m_downloadKernelBtn          = new QPushButton(tr("Download Kernel"));
-  m_downloadKernelBtn->setObjectName("DownloadKernelBtn");
-  m_checkKernelBtn = new QPushButton(tr("Check Installation"));
-  m_checkKernelBtn->setObjectName("CheckKernelBtn");
-  m_checkUpdateBtn = new QPushButton(tr("Check Updates"));
-  m_checkUpdateBtn->setObjectName("CheckUpdateBtn");
-  kernelBtnLayout->addWidget(m_downloadKernelBtn);
-  kernelBtnLayout->addWidget(m_checkKernelBtn);
-  kernelBtnLayout->addWidget(m_checkUpdateBtn);
-  kernelBtnLayout->addStretch();
+  QWidget*     installedVersionWidget = new QWidget;
+  QHBoxLayout* installedVersionLayout =
+      new QHBoxLayout(installedVersionWidget);
+  installedVersionLayout->setContentsMargins(0, 0, 0, 0);
+  installedVersionLayout->setSpacing(8);
+  installedVersionLayout->addWidget(m_kernelVersionLabel);
+  installedVersionLayout->addWidget(m_kernelStatusIconBtn);
+  installedVersionLayout->addStretch();
+  installedVersionLayout->addWidget(m_kernelVersionHintLabel);
   kernelLayout->addRow(createFormLabel(tr("Installed version:")),
-                       m_kernelVersionLabel);
+                       installedVersionWidget);
   kernelLayout->addRow(createFormLabel(tr("Select version:")),
                        m_kernelVersionCombo);
   kernelLayout->addRow(createFormLabel(tr("Kernel path:")), m_kernelPathEdit);
   kernelLayout->addRow(m_kernelDownloadProgress);
-  kernelLayout->addRow(m_kernelDownloadStatus);
-  kernelLayout->addRow(kernelBtnLayout);
   kernelSectionLayout->addWidget(kernelCard);
   return kernelSection;
 }
@@ -511,18 +592,16 @@ void SettingsView::setupUI() {
   mainLayout->addStretch();
   scrollArea->setWidget(contentWidget);
   outerLayout->addWidget(scrollArea, 1);
-  connect(m_downloadKernelBtn,
-          &QPushButton::clicked,
+  connect(m_kernelStatusIconBtn,
+          &QToolButton::clicked,
           this,
-          &SettingsView::onDownloadKernelClicked);
-  connect(m_checkKernelBtn,
-          &QPushButton::clicked,
+          &SettingsView::onKernelStatusIconClicked);
+  m_kernelStatusSpinTimer = new QTimer(this);
+  m_kernelStatusSpinTimer->setInterval(kKernelStatusSpinIntervalMs);
+  connect(m_kernelStatusSpinTimer,
+          &QTimer::timeout,
           this,
-          &SettingsView::onCheckKernelClicked);
-  connect(m_checkUpdateBtn,
-          &QPushButton::clicked,
-          this,
-          &SettingsView::onCheckUpdateClicked);
+          &SettingsView::advanceKernelStatusIconSpin);
   connect(m_themeCombo,
           QOverload<int>::of(&QComboBox::currentIndexChanged),
           this,
@@ -719,6 +798,14 @@ void SettingsView::updateStyle() {
     return;
   }
   setStyleSheet(ts->loadStyleSheet(":/styles/settings_view.qss"));
+  if (m_kernelStatusIconBtn) {
+    if (!m_kernelInfoLoaded && !m_isDownloading &&
+        m_installedKernelVersion.isEmpty() && m_latestKernelVersion.isEmpty()) {
+      setKernelStatusIcon(kKernelIconClockwise);
+    } else {
+      updateKernelVersionLabelStatus();
+    }
+  }
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
@@ -847,39 +934,53 @@ bool SettingsView::saveSettings(bool showError) {
   return true;
 }
 
-void SettingsView::onDownloadKernelClicked() {
+void SettingsView::onKernelStatusIconClicked() {
   if (m_isDownloading || !m_settingsController) {
     return;
   }
-  QString version;
+  const bool hasInstalled = !m_installedKernelVersion.isEmpty();
+  const bool hasLatest    = !m_latestKernelVersion.isEmpty();
+  const bool isLatest     = hasInstalled && hasLatest &&
+                        (m_installedKernelVersion == m_latestKernelVersion);
+  const bool isOutdated = hasInstalled && hasLatest && !isLatest;
+
+  QString selectedVersion;
   if (m_kernelVersionCombo && m_kernelVersionCombo->currentIndex() > 0) {
-    version = m_kernelVersionCombo->currentText().trimmed();
+    selectedVersion = m_kernelVersionCombo->currentText().trimmed();
   }
-  setDownloadUi(true, tr("Preparing to download kernel..."));
-  m_settingsController->downloadAndInstall(version);
-}
+  const bool explicitVersionSelected = !selectedVersion.isEmpty();
+  const bool selectedDiffersFromInstalled =
+      hasInstalled && explicitVersionSelected &&
+      (selectedVersion != m_installedKernelVersion);
+  const bool shouldDownload =
+      !hasInstalled || selectedDiffersFromInstalled ||
+      (hasInstalled && hasLatest && !isLatest);
 
-void SettingsView::onCheckKernelClicked() {
-  if (m_settingsController) {
-    m_checkingInstall = true;
-    setDownloadUi(true, tr("Checking installation..."));
-    m_settingsController->refreshInstalledInfo();
-    m_settingsController->fetchReleaseList();
-  } else {
-    setDownloadUi(false, tr("Kernel manager unavailable"));
+  if (shouldDownload) {
+    if (isOutdated) {
+      selectedVersion = m_latestKernelVersion;
+    }
+    // If no version candidate yet, refresh release info first.
+    if (selectedVersion.isEmpty() && !hasLatest) {
+      setKernelStatusIcon(kKernelIconClockwise);
+      setDownloadUi(true, tr("Checking kernel status..."), "info");
+      m_settingsController->refreshInstalledInfo();
+      m_settingsController->fetchReleaseList();
+      return;
+    }
+    setDownloadUi(true, tr("Preparing to download kernel..."), "info");
+    m_settingsController->downloadAndInstall(selectedVersion);
+    return;
   }
-}
 
-void SettingsView::onCheckUpdateClicked() {
-  if (m_settingsController) {
-    setDownloadUi(true, tr("Checking latest kernel version..."));
-    m_settingsController->checkLatest();
-  }
+  setKernelStatusIcon(kKernelIconClockwise);
+  setDownloadUi(true, tr("Checking kernel status..."), "info");
+  m_settingsController->refreshInstalledInfo();
+  m_settingsController->fetchReleaseList();
 }
 
 void SettingsView::onKernelInstalledReady(const QString& path,
                                           const QString& version) {
-  setDownloadUi(false, tr("Installation check finished"));
   m_installedKernelVersion = version.trimmed();
   if (m_kernelPathEdit) {
     m_kernelPathEdit->setText(path);
@@ -892,21 +993,16 @@ void SettingsView::onKernelInstalledReady(const QString& path,
     }
   }
   updateKernelVersionLabelStatus();
-  if (m_checkingInstall) {
-    m_checkingInstall = false;
-    const QString msg = m_installedKernelVersion.isEmpty()
-                            ? tr("Kernel is not installed.")
-                            : tr("Kernel installed. Version: %1\nPath: %2")
-                                  .arg(m_installedKernelVersion,
-                                       path.isEmpty() ? tr("Unknown") : path);
-    QMessageBox::information(this, tr("Check Installation"), msg);
-  }
 }
 
 void SettingsView::onKernelReleasesReady(const QStringList& versions,
                                          const QString&     latest) {
-  setDownloadUi(false);
   m_latestKernelVersion = latest.trimmed();
+  if (m_latestKernelVersion.isEmpty()) {
+    setDownloadUi(false, tr("Failed to fetch kernel version list"), "error");
+  } else {
+    setDownloadUi(false, QString(), "info");
+  }
   updateKernelVersionLabelStatus();
   if (!m_kernelVersionCombo) {
     return;
@@ -918,36 +1014,73 @@ void SettingsView::onKernelReleasesReady(const QStringList& versions,
   }
 }
 
-void SettingsView::onKernelLatestReady(const QString& latest,
-                                       const QString& installed) {
-  setDownloadUi(false);
-  m_latestKernelVersion    = latest.trimmed();
-  m_installedKernelVersion = installed.trimmed();
-  if (m_kernelVersionLabel) {
-    if (m_installedKernelVersion.isEmpty()) {
-      m_kernelVersionLabel->setText(tr("Not installed"));
-    } else {
-      m_kernelVersionLabel->setText(m_installedKernelVersion);
-    }
+QIcon SettingsView::buildKernelStatusIcon(const QString& resourcePath,
+                                          int rotationDegrees) const {
+  QString colorKey = "text-secondary";
+  if (resourcePath == kKernelIconCounterclockwise) {
+    colorKey = "success";
+  } else if (resourcePath == kKernelIconDownload) {
+    colorKey = "error";
+  } else if (resourcePath == kKernelIconExclamation) {
+    colorKey = m_kernelIsOutdated ? "warning" : "error";
   }
-  updateKernelVersionLabelStatus();
-  if (m_installedKernelVersion.isEmpty()) {
-    QMessageBox::information(this,
-                             tr("Check Updates"),
-                             tr("Kernel not installed. Latest version is %1")
-                                 .arg(m_latestKernelVersion));
+  QColor iconColor = m_themeService ? m_themeService->color(colorKey)
+                                    : QColor("#64748b");
+  if (!iconColor.isValid()) {
+    iconColor = QColor("#64748b");
+  }
+  return colorizedSvgIcon(
+      resourcePath, kKernelStatusIconSize, iconColor, rotationDegrees);
+}
+
+void SettingsView::setKernelStatusIcon(const QString& resourcePath) {
+  if (!m_kernelStatusIconBtn) {
     return;
   }
-  if (m_installedKernelVersion == m_latestKernelVersion) {
-    QMessageBox::information(
-        this, tr("Check Updates"), tr("Already on the latest version"));
-  } else {
-    QMessageBox::information(
-        this,
-        tr("Check Updates"),
-        tr("New kernel version %1 available, current %2")
-            .arg(m_latestKernelVersion, m_installedKernelVersion));
+  if (resourcePath == kKernelIconClockwise && m_isDownloading &&
+      m_kernelStatusSpinTimer && m_kernelStatusSpinTimer->isActive()) {
+    m_kernelStatusIconBtn->setToolTip(tr("Kernel operation in progress"));
+    return;
   }
+  QString tooltip = tr("Check kernel status");
+  if (resourcePath == kKernelIconDownload ||
+      resourcePath == kKernelIconExclamation) {
+    tooltip = tr("Download selected kernel version");
+  }
+  m_kernelStatusIconBtn->setToolTip(tooltip);
+  m_kernelStatusIconBtn->setIcon(buildKernelStatusIcon(resourcePath));
+}
+
+void SettingsView::startKernelStatusIconSpin() {
+  if (!m_kernelStatusSpinTimer || !m_kernelStatusIconBtn) {
+    return;
+  }
+  if (!m_kernelStatusSpinTimer->isActive()) {
+    m_kernelStatusSpinAngle = 0;
+    m_kernelStatusSpinTimer->start();
+  }
+  m_kernelStatusIconBtn->setToolTip(tr("Kernel operation in progress"));
+  advanceKernelStatusIconSpin();
+}
+
+void SettingsView::stopKernelStatusIconSpin() {
+  if (!m_kernelStatusSpinTimer) {
+    return;
+  }
+  if (m_kernelStatusSpinTimer->isActive()) {
+    m_kernelStatusSpinTimer->stop();
+  }
+  m_kernelStatusSpinAngle = 0;
+}
+
+void SettingsView::advanceKernelStatusIconSpin() {
+  if (!m_kernelStatusIconBtn) {
+    return;
+  }
+  m_kernelStatusSpinAngle =
+      (m_kernelStatusSpinAngle + kKernelStatusSpinStepDeg) % 360;
+  m_kernelStatusIconBtn->setIcon(
+      buildKernelStatusIcon(kKernelIconClockwise, m_kernelStatusSpinAngle));
 }
 
 void SettingsView::updateKernelVersionLabelStatus() {
@@ -958,7 +1091,50 @@ void SettingsView::updateKernelVersionLabelStatus() {
   const bool hasLatest    = !m_latestKernelVersion.isEmpty();
   const bool isLatest     = hasInstalled && hasLatest &&
                         (m_installedKernelVersion == m_latestKernelVersion);
-  m_kernelVersionLabel->setProperty("status", isLatest ? "success" : "error");
+  const bool isOutdated = hasInstalled && hasLatest && !isLatest;
+  const bool isHealthy = hasInstalled && hasLatest && isLatest;
+  m_kernelIsOutdated   = isOutdated;
+  if (m_isDownloading) {
+    setKernelStatusIcon(kKernelIconClockwise);
+  } else if (!hasInstalled) {
+    setKernelStatusIcon(kKernelIconDownload);
+  } else if (isHealthy) {
+    setKernelStatusIcon(kKernelIconCounterclockwise);
+  } else {
+    setKernelStatusIcon(kKernelIconExclamation);
+  }
+  if (m_kernelVersionHintLabel) {
+    QString hintText;
+    QString hintLevel = "info";
+    if (m_isDownloading && !m_kernelInlineHintText.isEmpty()) {
+      hintText  = m_kernelInlineHintText;
+      hintLevel = m_kernelInlineHintLevel;
+    } else if (m_isDownloading) {
+      hintText  = tr("Kernel operation in progress");
+      hintLevel = "info";
+    } else if (isOutdated) {
+      hintText = tr("Current: %1, Latest: %2")
+                     .arg(m_installedKernelVersion, m_latestKernelVersion);
+      hintLevel = "warning";
+    } else if (!m_kernelInlineHintText.isEmpty()) {
+      hintText  = m_kernelInlineHintText;
+      hintLevel = m_kernelInlineHintLevel;
+    }
+
+    if (hintText.isEmpty()) {
+      m_kernelVersionHintLabel->clear();
+      m_kernelVersionHintLabel->setVisible(false);
+    } else {
+      m_kernelVersionHintLabel->setText(hintText);
+      m_kernelVersionHintLabel->setProperty("status", hintLevel);
+      m_kernelVersionHintLabel->style()->unpolish(m_kernelVersionHintLabel);
+      m_kernelVersionHintLabel->style()->polish(m_kernelVersionHintLabel);
+      m_kernelVersionHintLabel->setVisible(true);
+    }
+  }
+  const QString versionStatus =
+      isHealthy ? "success" : (isOutdated ? "warning" : "error");
+  m_kernelVersionLabel->setProperty("status", versionStatus);
   m_kernelVersionLabel->style()->unpolish(m_kernelVersionLabel);
   m_kernelVersionLabel->style()->polish(m_kernelVersionLabel);
   m_kernelVersionLabel->update();
@@ -972,11 +1148,11 @@ void SettingsView::onKernelDownloadProgress(int percent) {
 }
 
 void SettingsView::onKernelStatusChanged(const QString& status) {
-  setDownloadUi(true, status);
+  setDownloadUi(true, status, "info");
 }
 
 void SettingsView::onKernelFinished(bool ok, const QString& message) {
-  setDownloadUi(false, message);
+  setDownloadUi(false, message, ok ? "success" : "error");
   if (ok) {
     QMessageBox::information(this, tr("Kernel"), message);
   } else {
@@ -984,26 +1160,31 @@ void SettingsView::onKernelFinished(bool ok, const QString& message) {
   }
 }
 
-void SettingsView::setDownloadUi(bool downloading, const QString& message) {
+void SettingsView::setDownloadUi(bool           downloading,
+                                 const QString& message,
+                                 const QString& hintLevel) {
   m_isDownloading = downloading;
-  m_downloadKernelBtn->setEnabled(!downloading);
-  m_checkKernelBtn->setEnabled(!downloading);
-  m_checkUpdateBtn->setEnabled(!downloading);
-  m_kernelVersionCombo->setEnabled(!downloading);
-  if (downloading) {
-    m_kernelDownloadProgress->setValue(0);
-    m_kernelDownloadProgress->setVisible(true);
-    m_kernelDownloadStatus->setVisible(true);
-    if (!message.isEmpty()) {
-      m_kernelDownloadStatus->setText(message);
-    }
-  } else {
-    m_kernelDownloadProgress->setVisible(false);
-    if (!message.isEmpty()) {
-      m_kernelDownloadStatus->setText(message);
-      m_kernelDownloadStatus->setVisible(true);
-    } else {
-      m_kernelDownloadStatus->setVisible(false);
-    }
+  if (!hintLevel.isEmpty()) {
+    m_kernelInlineHintLevel = hintLevel;
   }
+  if (!message.isEmpty()) {
+    m_kernelInlineHintText = message;
+  } else if (!downloading) {
+    m_kernelInlineHintText.clear();
+  }
+  if (m_kernelVersionCombo) {
+    m_kernelVersionCombo->setEnabled(!downloading);
+  }
+  if (m_kernelStatusIconBtn) {
+    m_kernelStatusIconBtn->setEnabled(!downloading);
+  }
+  if (downloading) {
+    startKernelStatusIconSpin();
+    m_kernelDownloadProgress->setValue(0);
+    m_kernelDownloadProgress->setVisible(false);
+  } else {
+    stopKernelStatusIconSpin();
+    m_kernelDownloadProgress->setVisible(false);
+  }
+  updateKernelVersionLabelStatus();
 }

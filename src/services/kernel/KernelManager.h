@@ -29,6 +29,7 @@ class KernelManager : public QObject {
   QString     normalizedLatest(const QString& rawTag) const;
   QStringList latestKernelApiUrls() const;
   QStringList kernelReleasesApiUrls() const;
+  QStringList kernelReleasesPageUrls() const;
   HttpClient* m_httpClient;
   QString     m_latestKernelVersion;
   bool        m_isDownloading = false;

@@ -18,6 +18,10 @@
         <file>icons/networktun.svg</file>
         <file>icons/connect.svg</file>
         <file>icons/mappin.svg</file>
+        <file>icons/clockwise.svg</file>
+        <file>icons/counterclockwise.svg</file>
+        <file>icons/download.svg</file>
+        <file>icons/exclamationmarkclockwise.svg</file>
         <file>icons/trash.svg</file>
         <file>icons/trash-dark.svg</file>
         <file>icons/trash-red.svg</file>

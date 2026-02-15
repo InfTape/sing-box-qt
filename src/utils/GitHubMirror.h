@@ -9,8 +9,8 @@ inline QStringList prefixes() {
   return {
       // ghproxy.net is currently the most stable in our observed environments.
       "https://ghproxy.net/",
-      // Keep GitHub origin as secondary fallback.
-      "https://github.com/",
+      // Keep GitHub origin as secondary fallback (use raw URL directly).
+      "",
       // Additional mirrors as tertiary fallbacks.
       "https://ghproxy.com/",
       "https://mirror.ghproxy.com/",
@@ -21,14 +21,16 @@ inline QStringList buildUrls(const QString& rawUrl) {
   if (rawUrl.isEmpty()) {
     return {};
   }
+  const QString url = rawUrl.trimmed();
   QStringList urls;
   for (const QString& prefix : prefixes()) {
     if (prefix.isEmpty()) {
-      urls.append(rawUrl);
+      urls.append(url);
     } else {
-      urls.append(prefix + rawUrl);
+      urls.append(prefix + url);
     }
   }
+  urls.removeDuplicates();
   return urls;
 }
 
