@@ -62,10 +62,7 @@ void RulesView::setupUI() {
   m_subtitleLabel->setObjectName("PageSubtitle");
   titleLayout->addWidget(m_titleLabel);
   titleLayout->addWidget(m_subtitleLabel);
-  m_refreshBtn = new QPushButton(tr("Fetch Rules"));
-  m_refreshBtn->setObjectName("PrimaryActionBtn");
-  m_refreshBtn->setCursor(Qt::PointingHandCursor);
-  m_refreshBtn->setMinimumSize(110, 36);
+
   m_ruleSetBtn = new QPushButton(tr("Rule Sets"));
   m_ruleSetBtn->setObjectName("PrimaryActionBtn");
   m_ruleSetBtn->setCursor(Qt::PointingHandCursor);
@@ -78,7 +75,7 @@ void RulesView::setupUI() {
   headerLayout->addStretch();
   headerLayout->addWidget(m_ruleSetBtn);
   headerLayout->addWidget(m_addBtn);
-  headerLayout->addWidget(m_refreshBtn);
+
   mainLayout->addLayout(headerLayout);
   // Filters
   QFrame* filterCard = new QFrame;
@@ -123,7 +120,7 @@ void RulesView::setupUI() {
   m_emptyTitle = new QLabel(tr("No rules yet"));
   m_emptyTitle->setObjectName("EmptyTitle");
   m_emptyTitle->setAlignment(Qt::AlignCenter);
-  m_emptyAction = new QPushButton(tr("Fetch Rules"));
+  m_emptyAction = new QPushButton(tr("Clear Filters"));
   m_emptyAction->setObjectName("EmptyActionBtn");
   m_emptyAction->setCursor(Qt::PointingHandCursor);
   m_emptyAction->setMinimumSize(110, 36);
@@ -132,8 +129,6 @@ void RulesView::setupUI() {
   emptyLayout->addWidget(m_emptyAction, 0, Qt::AlignCenter);
   mainLayout->addWidget(m_scrollArea, 1);
   mainLayout->addWidget(m_emptyState, 1);
-  connect(
-      m_refreshBtn, &QPushButton::clicked, this, &RulesView::onRefreshClicked);
   connect(m_addBtn, &QPushButton::clicked, this, &RulesView::onAddRuleClicked);
   connect(m_ruleSetBtn, &QPushButton::clicked, this, [this]() {
     ManageRuleSetsDialog dlg(m_configRepo, m_themeService, this);
@@ -187,38 +182,23 @@ void RulesView::setProxyService(ProxyService* service) {
             sortRules();
             rebuildCards();
             m_loading = false;
-            m_refreshBtn->setEnabled(true);
-            m_refreshBtn->setText(tr("Fetch Rules"));
             updateFilterOptions();
             applyFilters();
           });
 }
 
-void RulesView::refresh() {
+void RulesView::fetchRules() {
   if (!m_proxyService || m_loading) {
     return;
   }
   m_loading = true;
-  m_refreshBtn->setEnabled(false);
-  m_refreshBtn->setText(tr("Loading..."));
   m_proxyService->fetchRules();
 }
 
-void RulesView::onRefreshClicked() {
-  refresh();
-}
-
 void RulesView::onEmptyActionClicked() {
-  const bool hasFilters = !m_searchEdit->text().trimmed().isEmpty() ||
-                          !m_typeFilter->currentData().toString().isEmpty() ||
-                          !m_proxyFilter->currentData().toString().isEmpty();
-  if (hasFilters) {
-    m_searchEdit->clear();
-    m_typeFilter->setCurrentIndex(0);
-    m_proxyFilter->setCurrentIndex(0);
-  } else {
-    refresh();
-  }
+  m_searchEdit->clear();
+  m_typeFilter->setCurrentIndex(0);
+  m_proxyFilter->setCurrentIndex(0);
 }
 
 void RulesView::onAddRuleClicked() {
@@ -496,8 +476,7 @@ void RulesView::updateEmptyState() {
     m_scrollArea->hide();
     m_emptyTitle->setText(hasFilters ? tr("No matching rules")
                                      : tr("No rules yet"));
-    m_emptyAction->setText(hasFilters ? tr("Clear Filters")
-                                      : tr("Fetch Rules"));
+    m_emptyAction->setVisible(hasFilters);
   } else {
     m_emptyState->hide();
     m_scrollArea->show();
@@ -600,6 +579,7 @@ bool RulesView::eventFilter(QObject* watched, QEvent* event) {
 void RulesView::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
   if (m_cards.isEmpty()) {
+    fetchRules();
     return;
   }
   m_skipNextAnimation = true;

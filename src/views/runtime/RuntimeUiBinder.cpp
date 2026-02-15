@@ -83,7 +83,11 @@ void RuntimeUiBinder::bind() {
     QObject::connect(m_runtime,
                      &ProxyRuntimeController::refreshRulesViewRequested,
                      m_rules,
-                     &RulesView::refresh);
+                     [this]() {
+                       if (m_rules) {
+                         m_rules->fetchRules();
+                       }
+                     });
   }
   // Logs → log view
   if (m_log) {

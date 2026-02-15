@@ -25,7 +25,7 @@ class RulesView : public QWidget {
                      ThemeService*     themeService,
                      QWidget*          parent = nullptr);
   void setProxyService(ProxyService* service);
-  void refresh();
+  void fetchRules();
  signals:
   void ruleSetChanged(const QString& ruleSetName);
   void ruleSetsChanged();
@@ -39,7 +39,6 @@ class RulesView : public QWidget {
  private slots:
   void onSearchChanged();
   void onFilterChanged();
-  void onRefreshClicked();
   void onEmptyActionClicked();
   void onAddRuleClicked();
 
@@ -56,7 +55,7 @@ class RulesView : public QWidget {
   ProxyService*     m_proxyService  = nullptr;
   QLabel*           m_titleLabel    = nullptr;
   QLabel*           m_subtitleLabel = nullptr;
-  QPushButton*      m_refreshBtn    = nullptr;
+
   QPushButton*      m_addBtn        = nullptr;
   QPushButton*      m_ruleSetBtn    = nullptr;
   QLineEdit*        m_searchEdit    = nullptr;
