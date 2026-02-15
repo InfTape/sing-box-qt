@@ -65,11 +65,6 @@ QString KernelManager::normalizedLatest(const QString& rawTag) const {
   return normalizeVersionTag(rawTag);
 }
 
-QStringList KernelManager::latestKernelApiUrls() const {
-  return GitHubMirror::buildUrls(
-      "https://api.github.com/repos/SagerNet/sing-box/releases/latest");
-}
-
 QStringList KernelManager::kernelReleasesApiUrls() const {
   return GitHubMirror::buildUrls(
       "https://api.github.com/repos/SagerNet/sing-box/releases");
@@ -162,73 +157,6 @@ void KernelManager::fetchReleaseList() {
   (*tryApiFetch)(0);
 }
 
-void KernelManager::checkLatest() {
-  if (!m_httpClient) {
-    return;
-  }
-  const QString installedVersion =
-      KernelPlatform::queryKernelVersion(KernelPlatform::detectKernelPath());
-  const QStringList apiUrls  = latestKernelApiUrls();
-  const QStringList pageUrls = kernelReleasesPageUrls();
-
-  auto tryPageFetch = std::make_shared<std::function<void(int)>>();
-  *tryPageFetch = [this, pageUrls, installedVersion, tryPageFetch](int index) {
-    if (index >= pageUrls.size()) {
-      emit finished(false,
-                    tr("Failed to fetch kernel versions. Please try again."));
-      return;
-    }
-    const QString url = pageUrls.at(index);
-    m_httpClient->get(
-        url,
-        [this, pageUrls, installedVersion, index, tryPageFetch](
-            bool success, const QByteArray& data) {
-          if (!success) {
-            (*tryPageFetch)(index + 1);
-            return;
-          }
-          const QStringList versions = extractVersionsFromReleasesHtml(data);
-          if (versions.isEmpty()) {
-            (*tryPageFetch)(index + 1);
-            return;
-          }
-          emit latestReady(versions.first(), normalizeVersionTag(installedVersion));
-        });
-  };
-
-  auto tryApiFetch = std::make_shared<std::function<void(int)>>();
-  *tryApiFetch = [this, apiUrls, installedVersion, tryApiFetch, tryPageFetch](
-                     int index) {
-    if (index >= apiUrls.size()) {
-      (*tryPageFetch)(0);
-      return;
-    }
-    const QString url = apiUrls.at(index);
-    m_httpClient->get(
-        url,
-        [this, apiUrls, installedVersion, index, tryApiFetch](
-            bool success, const QByteArray& data) {
-          if (!success) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          QJsonDocument doc = QJsonDocument::fromJson(data);
-          if (!doc.isObject()) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          const QJsonObject obj = doc.object();
-          QString           latest =
-              normalizeVersionTag(obj.value("tag_name").toString());
-          if (latest.isEmpty()) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          emit latestReady(latest, normalizeVersionTag(installedVersion));
-        });
-  };
-  (*tryApiFetch)(0);
-}
 
 void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
   if (m_isDownloading) {

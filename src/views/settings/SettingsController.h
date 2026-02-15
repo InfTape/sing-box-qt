@@ -17,12 +17,10 @@ class SettingsController : public QObject {
                                    QString*                   errorMessage = nullptr) const;
   void                refreshInstalledInfo();
   void                fetchReleaseList();
-  void                checkLatest();
   void                downloadAndInstall(const QString& version);
  signals:
   void installedInfoReady(const QString& path, const QString& version);
   void releasesReady(const QStringList& versions, const QString& latest);
-  void latestReady(const QString& latest, const QString& installed);
   void downloadProgress(int percent);
   void statusChanged(const QString& status);
   void finished(bool ok, const QString& message);

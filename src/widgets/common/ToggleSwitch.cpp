@@ -106,16 +106,6 @@ void ToggleSwitch::paintEvent(QPaintEvent*) {
   }
   p.setBrush(thumb);
   p.drawEllipse(th);
-  if (hasFocus() && en) {
-    QColor ringColor = track;
-    ringColor.setAlpha(120);
-    QPen pen(ringColor);
-    pen.setWidthF(2.0);
-    p.setPen(pen);
-    p.setBrush(Qt::NoBrush);
-    QRectF ring = tr.adjusted(-2, -2, 2, 2);
-    p.drawRoundedRect(ring, ring.height() / 2.0, ring.height() / 2.0);
-  }
 }
 
 void ToggleSwitch::mousePressEvent(QMouseEvent* e) {

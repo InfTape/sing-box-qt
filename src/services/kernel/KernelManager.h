@@ -10,12 +10,10 @@ class KernelManager : public QObject {
   explicit KernelManager(QObject* parent = nullptr);
   void refreshInstalledInfo();
   void fetchReleaseList();
-  void checkLatest();
   void downloadAndInstall(const QString& versionOrEmpty);
  signals:
   void installedInfoReady(const QString& path, const QString& version);
   void releasesReady(const QStringList& versions, const QString& latest);
-  void latestReady(const QString& latest, const QString& installed);
   void downloadProgress(int percent);
   void statusChanged(const QString& status);
   void finished(bool ok, const QString& message);
@@ -27,7 +25,6 @@ class KernelManager : public QObject {
                              const QString&     extractDir,
                              const QString&     version);
   QString     normalizedLatest(const QString& rawTag) const;
-  QStringList latestKernelApiUrls() const;
   QStringList kernelReleasesApiUrls() const;
   QStringList kernelReleasesPageUrls() const;
   HttpClient* m_httpClient;

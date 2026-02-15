@@ -13,10 +13,6 @@ SettingsController::SettingsController(QObject* parent)
           this,
           &SettingsController::releasesReady);
   connect(m_kernelManager,
-          &KernelManager::latestReady,
-          this,
-          &SettingsController::latestReady);
-  connect(m_kernelManager,
           &KernelManager::downloadProgress,
           this,
           &SettingsController::downloadProgress);
@@ -51,12 +47,6 @@ void SettingsController::refreshInstalledInfo() {
 void SettingsController::fetchReleaseList() {
   if (m_kernelManager) {
     m_kernelManager->fetchReleaseList();
-  }
-}
-
-void SettingsController::checkLatest() {
-  if (m_kernelManager) {
-    m_kernelManager->checkLatest();
   }
 }
 
