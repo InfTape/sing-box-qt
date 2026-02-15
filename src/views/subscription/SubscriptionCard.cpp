@@ -71,6 +71,7 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
     });
   }
   QAction* copyAction         = menu->addAction(tr("Copy Link"));
+  m_importAction              = menu->addAction(tr("Add To Active Group"));
   QAction* editAction         = menu->addAction(tr("Edit Subscription"));
   m_editConfigAction          = menu->addAction(tr("Edit Current Config"));
   QAction* refreshAction      = menu->addAction(tr("Refresh Now"));
@@ -84,6 +85,9 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   });
   connect(copyAction, &QAction::triggered, [this]() {
     emit copyLinkClicked(m_subId);
+  });
+  connect(m_importAction, &QAction::triggered, [this]() {
+    emit importToActiveClicked(m_subId);
   });
   connect(
       editAction, &QAction::triggered, [this]() { emit editClicked(m_subId); });
@@ -156,6 +160,9 @@ void SubscriptionCard::applyActiveState() {
   }
   if (m_editConfigAction) {
     m_editConfigAction->setVisible(m_active);
+  }
+  if (m_importAction) {
+    m_importAction->setVisible(!m_active);
   }
 }
 

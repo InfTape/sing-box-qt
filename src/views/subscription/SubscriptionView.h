@@ -48,6 +48,7 @@ class SubscriptionView : public QWidget {
   void handleRollbackSubscription(const QString& id);
   void handleDeleteSubscription(const QString& id);
   void handleCopyLink(const QString& id);
+  void handleImportToActive(const QString& id);
   // New slots
   void              onAddNodeClicked();
   void              openSubscriptionDialog();

@@ -1,4 +1,5 @@
 #include "SubscriptionController.h"
+#include <QObject>
 #include "network/SubscriptionService.h"
 
 SubscriptionController::SubscriptionController(SubscriptionService* service)
@@ -77,6 +78,17 @@ void SubscriptionController::remove(const QString& id) {
     return;
   }
   m_service->removeSubscription(id);
+}
+
+bool SubscriptionController::addToActiveGroup(const QString& id,
+                                              QString*       error) {
+  if (!m_service) {
+    if (error) {
+      *error = QObject::tr("Subscription service unavailable.");
+    }
+    return false;
+  }
+  return m_service->addSubscriptionNodesToActiveGroup(id, error);
 }
 
 void SubscriptionController::updateSubscription(const QString& id,

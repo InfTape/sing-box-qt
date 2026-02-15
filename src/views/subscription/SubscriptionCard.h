@@ -30,6 +30,7 @@ class SubscriptionCard : public QFrame {
   void rollbackClicked(const QString& id);
   void deleteClicked(const QString& id);
   void copyLinkClicked(const QString& id);
+  void importToActiveClicked(const QString& id);
 
  private:
   void          setupUI(const SubscriptionInfo& info);
@@ -50,6 +51,7 @@ class SubscriptionCard : public QFrame {
   QLabel*       m_expireLabel      = nullptr;
   QPushButton*  m_useBtn           = nullptr;
   QAction*      m_editConfigAction = nullptr;
+  QAction*      m_importAction     = nullptr;
   ThemeService* m_themeService     = nullptr;
   QString       m_urlRawText;
 };

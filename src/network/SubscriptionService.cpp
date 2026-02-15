@@ -1,11 +1,15 @@
 #include "SubscriptionService.h"
 #include <QDateTime>
 #include <QFile>
+#include <QHash>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <QJsonValue>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSet>
 #include <QTimer>
 #include <QUrl>
 #include <QUuid>
@@ -13,6 +17,7 @@
 #include "services/config/ConfigMutator.h"
 #include "services/rules/SharedRulesStore.h"
 #include "services/subscription/SubscriptionParser.h"
+#include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"
 #include "storage/SubscriptionConfigStore.h"
 #include "utils/Logger.h"
@@ -20,6 +25,157 @@
 
 namespace {
 constexpr qint64 kUnsetValue = -1;
+
+QJsonValue canonicalJsonValue(const QJsonValue& value) {
+  if (value.isObject()) {
+    const QJsonObject source = value.toObject();
+    const QStringList keys   = source.keys();
+    QJsonObject       sorted;
+    for (const auto& key : keys) {
+      sorted.insert(key, canonicalJsonValue(source.value(key)));
+    }
+    return sorted;
+  }
+  if (value.isArray()) {
+    QJsonArray sorted;
+    const auto arr = value.toArray();
+    for (const auto& item : arr) {
+      sorted.append(canonicalJsonValue(item));
+    }
+    return sorted;
+  }
+  return value;
+}
+
+QString nodeSignature(const QJsonObject& node) {
+  QJsonObject normalized = node;
+  normalized.remove("tag");
+  normalized.remove("domain_resolver");
+  const QJsonObject canonical = canonicalJsonValue(normalized).toObject();
+  return QString::fromUtf8(
+      QJsonDocument(canonical).toJson(QJsonDocument::Compact));
+}
+
+bool isSelectorLike(const QJsonObject& outbound) {
+  const QString type = outbound.value("type").toString().trimmed().toLower();
+  if (type == "selector" || type == "urltest" || type == "fallback" ||
+      type == "direct" || type == "block" || type == "dns") {
+    return true;
+  }
+  return outbound.contains("outbounds") &&
+         outbound.value("outbounds").isArray();
+}
+
+bool isNodeOutboundCandidate(const QJsonObject& outbound) {
+  if (outbound.value("tag").toString().trimmed().isEmpty()) {
+    return false;
+  }
+  if (outbound.value("type").toString().trimmed().isEmpty()) {
+    return false;
+  }
+  return !isSelectorLike(outbound);
+}
+
+QString fallbackNodeTag(const QJsonObject& node, int index) {
+  QString tag = node.value("name").toString().trimmed();
+  if (!tag.isEmpty()) {
+    return tag;
+  }
+  const QString server = node.value("server").toString().trimmed();
+  const int     port   = node.value("server_port").toInt();
+  if (!server.isEmpty() && port > 0) {
+    return QString("%1:%2").arg(server).arg(port);
+  }
+  QString type = node.value("type").toString().trimmed();
+  if (type.isEmpty()) {
+    type = QStringLiteral("node");
+  }
+  return QString("%1-%2").arg(type).arg(index + 1);
+}
+
+QString makeUniqueTag(const QString& preferred, const QSet<QString>& existing) {
+  QString base = preferred.trimmed();
+  if (base.isEmpty()) {
+    base = QStringLiteral("node");
+  }
+  if (!existing.contains(base)) {
+    return base;
+  }
+  int counter = 2;
+  while (true) {
+    const QString candidate = QString("%1-%2").arg(base).arg(counter);
+    if (!existing.contains(candidate)) {
+      return candidate;
+    }
+    ++counter;
+  }
+}
+
+QJsonArray loadSourceNodes(const SubscriptionInfo& source,
+                           ConfigRepository*       cfgRepo) {
+  QJsonArray nodes = DatabaseService::instance().getSubscriptionNodes(source.id);
+  if (nodes.isEmpty() && source.isManual && !source.useOriginalConfig &&
+      !source.manualContent.trimmed().isEmpty()) {
+    nodes = SubscriptionParser::extractNodesWithFallback(source.manualContent);
+  }
+  if (!nodes.isEmpty() || !cfgRepo || source.configPath.trimmed().isEmpty()) {
+    return nodes;
+  }
+  const QJsonObject sourceConfig = cfgRepo->loadConfig(source.configPath);
+  const QJsonArray  outbounds    = sourceConfig.value("outbounds").toArray();
+  for (const auto& item : outbounds) {
+    if (!item.isObject()) {
+      continue;
+    }
+    const QJsonObject outbound = item.toObject();
+    const QString     tag      = outbound.value("tag").toString().trimmed();
+    if (tag.isEmpty()) {
+      continue;
+    }
+    if (tag == ConfigConstants::TAG_AUTO || tag == ConfigConstants::TAG_MANUAL ||
+        tag == ConfigConstants::TAG_DIRECT || tag == ConfigConstants::TAG_BLOCK ||
+        tag == ConfigConstants::TAG_TELEGRAM ||
+        tag == ConfigConstants::TAG_YOUTUBE ||
+        tag == ConfigConstants::TAG_NETFLIX ||
+        tag == ConfigConstants::TAG_OPENAI) {
+      continue;
+    }
+    if (isNodeOutboundCandidate(outbound)) {
+      nodes.append(outbound);
+    }
+  }
+  return nodes;
+}
+
+QString resolveImportGroupName(const SubscriptionInfo& source,
+                               const QJsonArray&      sourceNodes) {
+  if (source.isManual && sourceNodes.size() == 1 && sourceNodes.first().isObject()) {
+    const QString nodeTag =
+        sourceNodes.first().toObject().value("tag").toString().trimmed();
+    if (!nodeTag.isEmpty()) {
+      return nodeTag;
+    }
+  }
+  const QString subscriptionName = source.name.trimmed();
+  if (!subscriptionName.isEmpty()) {
+    return subscriptionName;
+  }
+  return source.isManual ? QObject::tr("Manual Node")
+                         : QObject::tr("Imported Group");
+}
+
+bool isReservedImportGroupTag(const QString& tag) {
+  const QString normalized = tag.trimmed();
+  return normalized == ConfigConstants::TAG_AUTO ||
+         normalized == ConfigConstants::TAG_MANUAL ||
+         normalized == ConfigConstants::TAG_DIRECT ||
+         normalized == ConfigConstants::TAG_BLOCK ||
+         normalized == ConfigConstants::TAG_TELEGRAM ||
+         normalized == ConfigConstants::TAG_YOUTUBE ||
+         normalized == ConfigConstants::TAG_NETFLIX ||
+         normalized == ConfigConstants::TAG_OPENAI ||
+         normalized.compare("GLOBAL", Qt::CaseInsensitive) == 0;
+}
 }  // namespace
 
 SubscriptionService::SubscriptionService(ConfigRepository* configRepo,
@@ -588,6 +744,210 @@ void SubscriptionService::clearActiveSubscription() {
   m_activeConfigPath.clear();
   saveToDatabase();
   emit activeSubscriptionChanged(QString(), QString());
+}
+
+bool SubscriptionService::addSubscriptionNodesToActiveGroup(
+    const QString& sourceId, QString* error) {
+  auto setError = [error](const QString& message) {
+    if (error) {
+      *error = message;
+    }
+  };
+
+  const QString id = sourceId.trimmed();
+  if (id.isEmpty()) {
+    setError(tr("Subscription not found."));
+    return false;
+  }
+  SubscriptionInfo* source = findSubscription(id);
+  if (!source) {
+    setError(tr("Subscription not found."));
+    return false;
+  }
+  if (m_activeIndex < 0 || m_activeIndex >= m_subscriptions.size()) {
+    setError(tr("Active subscription not found."));
+    return false;
+  }
+  SubscriptionInfo& active = m_subscriptions[m_activeIndex];
+  if (active.id == source->id) {
+    setError(tr("Cannot import from active subscription itself."));
+    return false;
+  }
+  if (!m_configRepo) {
+    setError(tr("Config service not available."));
+    return false;
+  }
+  if (active.configPath.trimmed().isEmpty()) {
+    setError(tr("Active config not found."));
+    return false;
+  }
+
+  const QJsonArray sourceNodes = loadSourceNodes(*source, m_configRepo);
+  if (sourceNodes.isEmpty()) {
+    setError(tr("No node data available for this subscription."));
+    return false;
+  }
+
+  QJsonObject config = m_configRepo->loadConfig(active.configPath);
+  if (config.isEmpty()) {
+    setError(tr("Failed to read config file: %1").arg(active.configPath));
+    return false;
+  }
+  QJsonArray outbounds = config.value("outbounds").toArray();
+  if (outbounds.isEmpty()) {
+    setError(tr("Current config does not contain outbounds."));
+    return false;
+  }
+
+  QSet<QString>             existingTags;
+  QHash<QString, QString>   signatureToTag;
+  auto registerOutbound = [&](const QJsonObject& outbound) {
+    const QString tag = outbound.value("tag").toString().trimmed();
+    if (!tag.isEmpty()) {
+      existingTags.insert(tag);
+    }
+    if (!isNodeOutboundCandidate(outbound)) {
+      return;
+    }
+    const QString signature = nodeSignature(outbound);
+    if (!signature.isEmpty() && !tag.isEmpty()) {
+      signatureToTag.insert(signature, tag);
+    }
+  };
+  for (const auto& item : outbounds) {
+    if (!item.isObject()) {
+      continue;
+    }
+    registerOutbound(item.toObject());
+  }
+
+  QStringList groupNodeTags;
+  QJsonArray  newNodes;
+  int         fallbackIdx = 0;
+  for (const auto& item : sourceNodes) {
+    if (!item.isObject()) {
+      continue;
+    }
+    QJsonObject node = item.toObject();
+    if (node.value("type").toString().trimmed().isEmpty()) {
+      continue;
+    }
+    QString rawTag = node.value("tag").toString().trimmed();
+    if (rawTag.isEmpty()) {
+      rawTag = fallbackNodeTag(node, fallbackIdx);
+    }
+    ++fallbackIdx;
+    const QString signature = nodeSignature(node);
+    if (!signature.isEmpty() && signatureToTag.contains(signature)) {
+      const QString existingTag = signatureToTag.value(signature).trimmed();
+      if (!existingTag.isEmpty()) {
+        groupNodeTags.append(existingTag);
+      }
+      continue;
+    }
+    const QString uniqueTag = makeUniqueTag(rawTag, existingTags);
+    node["tag"]             = uniqueTag;
+    existingTags.insert(uniqueTag);
+    const QString uniqueSignature = nodeSignature(node);
+    if (!uniqueSignature.isEmpty()) {
+      signatureToTag.insert(uniqueSignature, uniqueTag);
+    }
+    groupNodeTags.append(uniqueTag);
+    newNodes.append(node);
+  }
+  groupNodeTags.removeDuplicates();
+  if (groupNodeTags.isEmpty()) {
+    setError(tr("No valid nodes can be imported."));
+    return false;
+  }
+
+  QString desiredGroupTag = resolveImportGroupName(*source, sourceNodes);
+  if (isReservedImportGroupTag(desiredGroupTag)) {
+    desiredGroupTag += "-import";
+  }
+  QString finalGroupTag = desiredGroupTag;
+  int           groupIndex      = -1;
+  for (int i = 0; i < outbounds.size(); ++i) {
+    if (!outbounds[i].isObject()) {
+      continue;
+    }
+    const QJsonObject outbound = outbounds[i].toObject();
+    if (outbound.value("tag").toString() != desiredGroupTag) {
+      continue;
+    }
+    if (outbound.value("type").toString() == "selector") {
+      groupIndex = i;
+      break;
+    }
+  }
+  if (groupIndex < 0 && existingTags.contains(finalGroupTag)) {
+    finalGroupTag = makeUniqueTag(finalGroupTag, existingTags);
+  }
+
+  for (const auto& node : newNodes) {
+    outbounds.append(node);
+  }
+
+  if (groupIndex >= 0) {
+    QJsonObject groupObj = outbounds[groupIndex].toObject();
+    QStringList members;
+    const QJsonArray current = groupObj.value("outbounds").toArray();
+    for (const auto& item : current) {
+      const QString member = item.toString().trimmed();
+      if (!member.isEmpty()) {
+        members.append(member);
+      }
+    }
+    for (const auto& tag : groupNodeTags) {
+      if (!members.contains(tag)) {
+        members.append(tag);
+      }
+    }
+    groupObj["outbounds"] = QJsonArray::fromStringList(members);
+    outbounds[groupIndex] = groupObj;
+  } else {
+    QJsonObject groupObj;
+    groupObj["type"]      = "selector";
+    groupObj["tag"]       = finalGroupTag;
+    groupObj["outbounds"] = QJsonArray::fromStringList(groupNodeTags);
+    outbounds.append(groupObj);
+    existingTags.insert(finalGroupTag);
+  }
+
+  // Keep imported selector reachable from manual chain so Clash /proxies can
+  // discover it in runtime.
+  for (int i = 0; i < outbounds.size(); ++i) {
+    if (!outbounds[i].isObject()) {
+      continue;
+    }
+    QJsonObject ob = outbounds[i].toObject();
+    if (ob.value("tag").toString() != ConfigConstants::TAG_MANUAL ||
+        ob.value("type").toString() != "selector") {
+      continue;
+    }
+    QStringList members;
+    const QJsonArray current = ob.value("outbounds").toArray();
+    for (const auto& item : current) {
+      const QString member = item.toString().trimmed();
+      if (!member.isEmpty()) {
+        members.append(member);
+      }
+    }
+    if (!members.contains(finalGroupTag)) {
+      members.append(finalGroupTag);
+      ob["outbounds"] = QJsonArray::fromStringList(members);
+      outbounds[i]    = ob;
+    }
+    break;
+  }
+
+  config["outbounds"] = outbounds;
+  if (!m_configRepo->saveConfig(active.configPath, config)) {
+    setError(tr("Failed to save config: %1").arg(active.configPath));
+    return false;
+  }
+  emit applyConfigRequested(active.configPath, true);
+  return true;
 }
 
 void SubscriptionService::syncRuleSetToSubscriptions(
