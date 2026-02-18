@@ -131,8 +131,13 @@ void ProxyService::fetchRules() {
 }
 
 void ProxyService::fetchConnections() {
+  if (m_connectionsInFlight) {
+    return;
+  }
+  m_connectionsInFlight = true;
   QString url = buildApiUrl("/connections");
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
+    m_connectionsInFlight = false;
     if (success) {
       QJsonDocument doc = QJsonDocument::fromJson(data);
       if (doc.isObject()) {

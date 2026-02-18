@@ -48,5 +48,6 @@ class ProxyService : public QObject {
   int              m_apiPort;
   QString          m_apiToken;
   QHash<QString, QString> m_groupNowCache;
+  bool                   m_connectionsInFlight = false;
 };
 #endif  // PROXYSERVICE_H

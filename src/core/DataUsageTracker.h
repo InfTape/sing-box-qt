@@ -52,16 +52,19 @@ class DataUsageTracker : public QObject {
                                  qint64         download,
                                  qint64         nowMs);
   void                  loadFromStorage();
-  void                  persistToStorage() const;
+  void                  persistToStorage();
   void                  restoreFromPayload(const QJsonObject& payload);
   QJsonObject           buildPersistPayload() const;
-  QVector<Entry>        sortedEntries(const QHash<QString, Entry>& map,
-                                      int                          limit) const;
+  bool                  pruneEntries(int maxEntriesPerType);
+  QVector<const Entry*> topEntries(const QHash<QString, Entry>& map,
+                                   int                          limit) const;
   Totals                buildTotals(const QHash<QString, Entry>& map) const;
   QJsonObject           buildTypeSnapshot(Type type, int limit) const;
   QHash<QString, Entry> m_entries[4];
   QHash<QString, QPair<qint64, qint64>> m_lastById;
   bool                                  m_initialized       = false;
   bool                                  m_loadedFromStorage = false;
+  qint64                                m_lastPersistMs     = 0;
+  bool                                  m_dirty             = false;
 };
 #endif  // DATAUSAGETRACKER_H

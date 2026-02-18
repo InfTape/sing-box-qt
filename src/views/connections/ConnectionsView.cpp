@@ -148,12 +148,9 @@ QString formatRuleText(const QJsonObject& conn,
 ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
     : QWidget(parent),
       m_proxyService(nullptr),
-      m_refreshTimer(new QTimer(this)),
       m_autoRefreshEnabled(false),
       m_themeService(themeService) {
   setupUI();
-  m_refreshTimer->setInterval(1000);
-  connect(m_refreshTimer, &QTimer::timeout, this, &ConnectionsView::onRefresh);
   if (m_themeService) {
     connect(m_themeService,
             &ThemeService::themeChanged,
@@ -226,6 +223,9 @@ void ConnectionsView::setProxyService(ProxyService* service) {
           &ProxyService::connectionsReceived,
           this,
           [this](const QJsonObject& connections) {
+            if (!m_autoRefreshEnabled) {
+              return;
+            }
             QJsonArray conns = connections["connections"].toArray();
             const QHash<QString, QString> groupNowMap =
                 m_proxyService ? m_proxyService->groupNowCache()
@@ -299,20 +299,6 @@ void ConnectionsView::setProxyService(ProxyService* service) {
 
 void ConnectionsView::setAutoRefreshEnabled(bool enabled) {
   m_autoRefreshEnabled = enabled;
-  if (m_autoRefreshEnabled && m_proxyService) {
-    if (!m_refreshTimer->isActive()) {
-      m_refreshTimer->start();
-    }
-    onRefresh();
-  } else {
-    m_refreshTimer->stop();
-  }
-}
-
-void ConnectionsView::onRefresh() {
-  if (m_proxyService && m_autoRefreshEnabled) {
-    m_proxyService->fetchConnections();
-  }
 }
 
 void ConnectionsView::onCloseAll() {

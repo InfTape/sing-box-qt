@@ -2,6 +2,10 @@
 #include <QJsonDocument>
 #include <QJsonValue>
 
+namespace {
+constexpr int kMaxIpcBufferBytes = 1024 * 1024;
+}  // namespace
+
 CoreManagerClient::CoreManagerClient(QObject* parent)
     : QObject(parent), m_socket(new QLocalSocket(this)) {
   connect(m_socket,
@@ -59,6 +63,12 @@ void CoreManagerClient::sendRequest(int                id,
 
 void CoreManagerClient::onReadyRead() {
   m_buffer.append(m_socket->readAll());
+  if (m_buffer.size() > kMaxIpcBufferBytes) {
+    m_buffer.clear();
+    m_socket->abort();
+    emit errorEvent(tr("Core manager IPC message too large"));
+    return;
+  }
   while (true) {
     const int idx = m_buffer.indexOf('\n');
     if (idx < 0) {
@@ -80,6 +90,7 @@ void CoreManagerClient::onReadyRead() {
 }
 
 void CoreManagerClient::onDisconnected() {
+  m_buffer.clear();
   emit disconnected();
 }
 

@@ -5,6 +5,10 @@
 #include "coremanager/KernelRunner.h"
 #include "utils/Logger.h"
 
+namespace {
+constexpr int kMaxIpcBufferBytes = 1024 * 1024;
+}  // namespace
+
 CoreManagerServer::CoreManagerServer(QObject* parent)
     : QObject(parent),
       m_server(new QLocalServer(this)),
@@ -63,6 +67,7 @@ void CoreManagerServer::onNewConnection() {
     m_client->deleteLater();
   }
   m_client = socket;
+  m_buffer.clear();
   connect(m_client,
           &QLocalSocket::readyRead,
           this,
@@ -82,6 +87,12 @@ void CoreManagerServer::onReadyRead() {
     return;
   }
   m_buffer.append(m_client->readAll());
+  if (m_buffer.size() > kMaxIpcBufferBytes) {
+    Logger::warn("Core manager server IPC buffer overflow, drop connection");
+    m_buffer.clear();
+    m_client->disconnectFromServer();
+    return;
+  }
   while (true) {
     const int idx = m_buffer.indexOf('\n');
     if (idx < 0) {
@@ -103,6 +114,7 @@ void CoreManagerServer::onReadyRead() {
 }
 
 void CoreManagerServer::onClientDisconnected() {
+  m_buffer.clear();
   m_client = nullptr;
 }
 

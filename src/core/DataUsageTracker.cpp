@@ -6,6 +6,9 @@
 #include "storage/DatabaseService.h"
 
 namespace {
+constexpr int kMaxEntriesPerType = 5000;
+constexpr qint64 kPersistMinIntervalMs = 30 * 1000;
+
 QString normalizeProcessLabel(const QString& process) {
   if (process.isEmpty()) {
     return QString();
@@ -31,6 +34,7 @@ void DataUsageTracker::reset() {
   m_lastById.clear();
   m_initialized       = false;
   m_loadedFromStorage = false;
+  m_dirty             = true;
   persistToStorage();
   emit dataUsageUpdated(snapshot());
 }
@@ -176,30 +180,86 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
       }
     }
   }
+  if (pruneEntries(kMaxEntriesPerType)) {
+    changed = true;
+  }
   m_initialized       = true;
   m_loadedFromStorage = false;
   if (changed) {
+    m_dirty = true;
+  }
+  if (m_dirty &&
+      (activeIds.isEmpty() ||
+       nowMs - m_lastPersistMs >= kPersistMinIntervalMs)) {
     persistToStorage();
   }
   emit dataUsageUpdated(snapshot());
 }
 
-QVector<DataUsageTracker::Entry> DataUsageTracker::sortedEntries(
-    const QHash<QString, Entry>& map, int limit) const {
-  QVector<Entry> entries;
-  entries.reserve(map.size());
-  for (const auto& entry : map) {
-    entries.push_back(entry);
+bool DataUsageTracker::pruneEntries(int maxEntriesPerType) {
+  if (maxEntriesPerType <= 0) {
+    return false;
   }
-  std::sort(entries.begin(), entries.end(), [](const Entry& a, const Entry& b) {
-    if (a.total == b.total) {
-      return a.label < b.label;
+  bool removed = false;
+  for (Type type : allTypes()) {
+    auto& map         = m_entries[static_cast<int>(type)];
+    const int toPrune = map.size() - maxEntriesPerType;
+    if (toPrune <= 0) {
+      continue;
     }
-    return a.total > b.total;
-  });
+    struct Candidate {
+      QString label;
+      qint64  lastSeenMs = 0;
+      qint64  total      = 0;
+    };
+    QVector<Candidate> candidates;
+    candidates.reserve(map.size());
+    for (auto it = map.cbegin(); it != map.cend(); ++it) {
+      candidates.push_back({it.key(), it.value().lastSeenMs, it.value().total});
+    }
+    auto olderFirst = [](const Candidate& a, const Candidate& b) {
+      if (a.lastSeenMs != b.lastSeenMs) {
+        return a.lastSeenMs < b.lastSeenMs;
+      }
+      if (a.total != b.total) {
+        return a.total < b.total;
+      }
+      return a.label < b.label;
+    };
+    std::nth_element(candidates.begin(),
+                     candidates.begin() + toPrune,
+                     candidates.end(),
+                     olderFirst);
+    for (int i = 0; i < toPrune; ++i) {
+      map.remove(candidates[i].label);
+    }
+    removed = true;
+  }
+  return removed;
+}
+
+QVector<const DataUsageTracker::Entry*> DataUsageTracker::topEntries(
+    const QHash<QString, Entry>& map, int limit) const {
+  QVector<const Entry*> entries;
+  if (map.isEmpty()) {
+    return entries;
+  }
+  entries.reserve(map.size());
+  for (auto it = map.cbegin(); it != map.cend(); ++it) {
+    entries.push_back(&it.value());
+  }
+  auto better = [](const Entry* a, const Entry* b) {
+    if (a->total == b->total) {
+      return a->label < b->label;
+    }
+    return a->total > b->total;
+  };
   if (limit > 0 && entries.size() > limit) {
+    std::nth_element(
+        entries.begin(), entries.begin() + limit, entries.end(), better);
     entries.resize(limit);
   }
+  std::sort(entries.begin(), entries.end(), better);
   return entries;
 }
 
@@ -230,17 +290,20 @@ DataUsageTracker::Totals DataUsageTracker::buildTotals(
 
 QJsonObject DataUsageTracker::buildTypeSnapshot(Type type, int limit) const {
   const auto& map    = m_entries[static_cast<int>(type)];
-  const auto  list   = sortedEntries(map, limit);
+  const auto  list   = topEntries(map, limit);
   const auto  totals = buildTotals(map);
   QJsonArray  entries;
-  for (const auto& entry : list) {
+  for (const Entry* entry : list) {
+    if (!entry) {
+      continue;
+    }
     QJsonObject obj;
-    obj.insert("label", entry.label);
-    obj.insert("upload", QString::number(entry.upload));
-    obj.insert("download", QString::number(entry.download));
-    obj.insert("total", QString::number(entry.total));
-    obj.insert("firstSeen", QString::number(entry.firstSeenMs));
-    obj.insert("lastSeen", QString::number(entry.lastSeenMs));
+    obj.insert("label", entry->label);
+    obj.insert("upload", QString::number(entry->upload));
+    obj.insert("download", QString::number(entry->download));
+    obj.insert("total", QString::number(entry->total));
+    obj.insert("firstSeen", QString::number(entry->firstSeenMs));
+    obj.insert("lastSeen", QString::number(entry->lastSeenMs));
     entries.append(obj);
   }
   QJsonObject summary;
@@ -279,10 +342,17 @@ DataUsageTracker::GlobalTotals DataUsageTracker::globalTotals() const {
 void DataUsageTracker::loadFromStorage() {
   QJsonObject payload = DatabaseService::instance().getDataUsage();
   restoreFromPayload(payload);
+  if (pruneEntries(kMaxEntriesPerType)) {
+    persistToStorage();
+  } else {
+    m_lastPersistMs = QDateTime::currentMSecsSinceEpoch();
+  }
 }
 
-void DataUsageTracker::persistToStorage() const {
+void DataUsageTracker::persistToStorage() {
   DatabaseService::instance().saveDataUsage(buildPersistPayload());
+  m_lastPersistMs = QDateTime::currentMSecsSinceEpoch();
+  m_dirty         = false;
 }
 
 QJsonObject DataUsageTracker::buildPersistPayload() const {
@@ -337,4 +407,5 @@ void DataUsageTracker::restoreFromPayload(const QJsonObject& payload) {
   }
   m_loadedFromStorage = hasData;
   m_initialized       = false;
+  m_dirty             = false;
 }
