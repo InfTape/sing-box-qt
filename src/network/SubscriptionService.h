@@ -94,7 +94,8 @@ class SubscriptionService : public QObject {
                                                const QJsonObject& headers);
   void              updateSubscriptionUserinfoFromHeader(SubscriptionInfo& info,
                                                          const QByteArray& header);
-  void              syncSharedRulesToConfig(const SubscriptionInfo& info);
+  void syncSharedRulesToConfig(const SubscriptionInfo& info,
+                               const QStringList&      cleanupRuleSets = {});
   void              requestCoalescedApplyConfig(const QString& configPath);
   QString           generateId() const;
   QList<SubscriptionInfo> m_subscriptions;

@@ -328,7 +328,7 @@ void SubscriptionService::updateSubscriptionUserinfoFromHeader(
 }
 
 void SubscriptionService::syncSharedRulesToConfig(
-    const SubscriptionInfo& info) {
+    const SubscriptionInfo& info, const QStringList& cleanupRuleSets) {
   if (info.configPath.isEmpty()) {
     return;
   }
@@ -339,19 +339,55 @@ void SubscriptionService::syncSharedRulesToConfig(
   if (config.isEmpty()) {
     return;
   }
-  QJsonArray merged;
-  if (info.enableSharedRules) {
-    const QStringList setNames =
-        info.ruleSets.isEmpty() ? QStringList{"default"} : info.ruleSets;
-    for (const auto& name : setNames) {
-      const QJsonArray rules = SharedRulesStore::loadRules(name);
-      for (const auto& r : rules) {
-        merged.append(r);
+  auto normalizeSetNames = [](const QStringList& setNames) {
+    QStringList normalized;
+    for (const auto& rawName : setNames) {
+      const QString name = rawName.trimmed();
+      if (!name.isEmpty()) {
+        normalized.append(name);
       }
     }
+    normalized.removeDuplicates();
+    if (normalized.isEmpty()) {
+      normalized.append(QStringLiteral("default"));
+    }
+    return normalized;
+  };
+  auto collectRules = [](const QStringList& setNames) {
+    QJsonArray   merged;
+    QSet<QString> signatures;
+    for (const auto& name : setNames) {
+      const QJsonArray rules = SharedRulesStore::loadRules(name);
+      for (const auto& rule : rules) {
+        if (!rule.isObject()) {
+          continue;
+        }
+        const QString sig =
+            QString::fromUtf8(QJsonDocument(rule.toObject())
+                                  .toJson(QJsonDocument::Compact));
+        if (signatures.contains(sig)) {
+          continue;
+        }
+        signatures.insert(sig);
+        merged.append(rule);
+      }
+    }
+    return merged;
+  };
+  const QStringList selectedSetNames = normalizeSetNames(info.ruleSets);
+  const QStringList cleanupSetNames  = cleanupRuleSets.isEmpty()
+                                           ? selectedSetNames
+                                           : normalizeSetNames(cleanupRuleSets);
+  const QJsonArray cleanupRules = collectRules(cleanupSetNames);
+  if (!cleanupRules.isEmpty()) {
+    ConfigMutator::applySharedRules(config, cleanupRules, false);
   }
-  ConfigMutator::applySharedRules(
-      config, merged, info.enableSharedRules && !merged.isEmpty());
+  if (info.enableSharedRules) {
+    const QJsonArray selectedRules = collectRules(selectedSetNames);
+    if (!selectedRules.isEmpty()) {
+      ConfigMutator::applySharedRules(config, selectedRules, true);
+    }
+  }
   m_configRepo->saveConfig(info.configPath, config);
 }
 
@@ -704,19 +740,31 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
     emit errorOccurred(tr("Subscription not found"));
     return;
   }
-  const QStringList oldRuleSets = sub->ruleSets;
-  sub->name                      = name.trimmed();
-  sub->url                       = url.trimmed();
-  sub->isManual                  = isManual;
-  sub->manualContent             = manualContent;
-  sub->useOriginalConfig         = useOriginalConfig;
-  sub->autoUpdateIntervalMinutes = autoUpdateIntervalMinutes;
-  sub->enableSharedRules         = enableSharedRules;
+  const QStringList oldRuleSets          = sub->ruleSets;
+  const bool        oldEnableSharedRules = sub->enableSharedRules;
+  sub->name                               = name.trimmed();
+  sub->url                                = url.trimmed();
+  sub->isManual                           = isManual;
+  sub->manualContent                      = manualContent;
+  sub->useOriginalConfig                  = useOriginalConfig;
+  sub->autoUpdateIntervalMinutes          = autoUpdateIntervalMinutes;
+  sub->enableSharedRules                  = enableSharedRules;
   sub->ruleSets = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
+  QStringList cleanupRuleSets = oldRuleSets;
+  for (const auto& setName : sub->ruleSets) {
+    if (!cleanupRuleSets.contains(setName)) {
+      cleanupRuleSets.append(setName);
+    }
+  }
   saveToDatabase();
-  syncSharedRulesToConfig(*sub);
+  syncSharedRulesToConfig(*sub, cleanupRuleSets);
   emit subscriptionUpdated(id);
-  if (sub->ruleSets != oldRuleSets && !sub->configPath.isEmpty()) {
+  const bool sharedRulesChanged = sub->ruleSets != oldRuleSets ||
+                                  sub->enableSharedRules != oldEnableSharedRules;
+  const bool isActiveSubscription = m_activeIndex >= 0 &&
+                                    m_activeIndex < m_subscriptions.count() &&
+                                    m_subscriptions[m_activeIndex].id == sub->id;
+  if (sharedRulesChanged && isActiveSubscription && !sub->configPath.isEmpty()) {
     emit applyConfigRequested(sub->configPath, true);
   }
 }
