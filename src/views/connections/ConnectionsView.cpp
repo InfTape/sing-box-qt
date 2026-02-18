@@ -1,6 +1,10 @@
 #include "ConnectionsView.h"
 #include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QLabel>
+#include <QRegularExpression>
+#include <QSet>
 #include <QStyledItemDelegate>
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
@@ -21,6 +25,124 @@ class ConnectionsItemDelegate : public QStyledItemDelegate {
     QStyledItemDelegate::paint(painter, opt, index);
   }
 };
+
+QStringList extractConnectionChains(const QJsonObject& conn) {
+  QStringList chains;
+  const QJsonArray chainArray = conn.value("chains").toArray();
+  for (const auto& chainVal : chainArray) {
+    const QString chain = chainVal.toString().trimmed();
+    if (!chain.isEmpty()) {
+      chains.append(chain);
+    }
+  }
+  if (chains.isEmpty()) {
+    const QString outbound = conn.value("outbound").toString().trimmed();
+    if (!outbound.isEmpty()) {
+      chains.append(outbound);
+    }
+  }
+  return chains;
+}
+
+QString resolveGroupToNode(const QString& outbound,
+                           const QHash<QString, QString>& groupNowMap) {
+  QString current = outbound.trimmed();
+  if (current.isEmpty()) {
+    return current;
+  }
+  QSet<QString> visited;
+  while (!current.isEmpty() && groupNowMap.contains(current)) {
+    if (visited.contains(current)) {
+      break;
+    }
+    visited.insert(current);
+    const QString next = groupNowMap.value(current).trimmed();
+    if (next.isEmpty() || next.compare(current, Qt::CaseInsensitive) == 0) {
+      break;
+    }
+    current = next;
+  }
+  return current;
+}
+
+QString resolveNodeFromConnection(const QJsonObject&              conn,
+                                  const QHash<QString, QString>& groupNowMap) {
+  const QStringList chains = extractConnectionChains(conn);
+  if (!chains.isEmpty()) {
+    for (int i = chains.size() - 1; i >= 0; --i) {
+      const QString candidate = chains[i].trimmed();
+      if (candidate.isEmpty()) {
+        continue;
+      }
+      const QString resolved = resolveGroupToNode(candidate, groupNowMap);
+      if (!resolved.isEmpty() &&
+          (resolved.compare(candidate, Qt::CaseInsensitive) != 0 ||
+           !groupNowMap.contains(resolved))) {
+        return resolved;
+      }
+    }
+    return resolveGroupToNode(chains.last(), groupNowMap);
+  }
+  QString outbound = conn.value("outbound").toString().trimmed();
+  if (outbound.isEmpty()) {
+    const QJsonObject meta = conn.value("metadata").toObject();
+    outbound               = meta.value("outbound").toString().trimmed();
+  }
+  return resolveGroupToNode(outbound, groupNowMap);
+}
+
+QString extractRouteGroupFromRule(const QString& rawRule) {
+  static const QRegularExpression routeExpr(R"(route\(([^)]+)\))");
+  const QRegularExpressionMatch   match = routeExpr.match(rawRule.trimmed());
+  if (!match.hasMatch()) {
+    return QString();
+  }
+  return match.captured(1).trimmed();
+}
+
+QString formatRuleText(const QJsonObject& conn,
+                       const QHash<QString, QString>& groupNowMap) {
+  const QString rawRule = conn.value("rule").toString().trimmed();
+  if (rawRule.isEmpty()) {
+    return rawRule;
+  }
+  const QString routeGroup = extractRouteGroupFromRule(rawRule);
+  if (!routeGroup.isEmpty()) {
+    const QString node       = resolveGroupToNode(routeGroup, groupNowMap);
+    if (!node.isEmpty() &&
+        node.compare(routeGroup, Qt::CaseInsensitive) != 0) {
+      QString result = rawRule;
+      static const QRegularExpression routeExpr(R"(route\(([^)]+)\))");
+      const QRegularExpressionMatch   match = routeExpr.match(rawRule);
+      result.replace(match.capturedStart(0),
+                     match.capturedLength(0),
+                     QStringLiteral("route(%1 => %2)").arg(routeGroup, node));
+      return result;
+    }
+    return rawRule;
+  }
+  const QString node = resolveNodeFromConnection(conn, groupNowMap);
+  if (node.isEmpty() || node.compare(rawRule, Qt::CaseInsensitive) == 0) {
+    return rawRule;
+  }
+  if (rawRule.contains("=>")) {
+    QStringList parts = rawRule.split("=>");
+    if (parts.size() >= 2) {
+      const QString tail = parts.last().trimmed();
+      if (!tail.isEmpty() && !tail.contains('(') && !tail.contains(')')) {
+        if (tail.compare(node, Qt::CaseInsensitive) == 0) {
+          return rawRule;
+        }
+        parts[parts.size() - 1] = node;
+        for (auto& part : parts) {
+          part = part.trimmed();
+        }
+        return parts.join(QStringLiteral(" => "));
+      }
+    }
+  }
+  return QStringLiteral("%1 => %2").arg(rawRule, node);
+}
 }  // namespace
 
 ConnectionsView::ConnectionsView(ThemeService* themeService, QWidget* parent)
@@ -90,79 +212,89 @@ void ConnectionsView::setupUI() {
 }
 
 void ConnectionsView::setProxyService(ProxyService* service) {
-  m_proxyService = service;
-  if (m_proxyService) {
-    connect(m_proxyService,
-            &ProxyService::connectionsReceived,
-            this,
-            [this](const QJsonObject& connections) {
-              QJsonArray conns = connections["connections"].toArray();
-              m_tableWidget->setRowCount(conns.count());
-              auto setCell = [this](int row, int col, const QString& text) {
-                QTableWidgetItem* item = m_tableWidget->item(row, col);
-                if (!item) {
-                  item = new QTableWidgetItem();
-                  m_tableWidget->setItem(row, col, item);
-                }
-                item->setText(text);
-              };
-              for (int i = 0; i < conns.count(); ++i) {
-                QJsonObject conn     = conns[i].toObject();
-                QJsonObject metadata = conn["metadata"].toObject();
-                setCell(i, 0, metadata["sourceIP"].toString());
-                QString host = metadata["host"].toString();
-                if (host.isEmpty()) {
-                  host = metadata["destinationIP"].toString();
-                }
-                if (host.isEmpty()) {
-                  host = metadata["destinationIp"].toString();
-                }
-                if (host.isEmpty()) {
-                  host = tr("Unknown");
-                }
-                auto readPort = [](const QJsonValue& value) -> int {
-                  if (value.isString()) {
-                    bool      ok     = false;
-                    const int parsed = value.toString().toInt(&ok);
-                    return ok ? parsed : 0;
-                  }
-                  if (value.isDouble()) {
-                    return value.toInt();
-                  }
-                  bool      ok     = false;
-                  const int parsed = value.toVariant().toInt(&ok);
-                  return ok ? parsed : 0;
-                };
-                QJsonValue portValue = metadata.value("destinationPort");
-                if (portValue.isUndefined()) {
-                  portValue = metadata.value("destination_port");
-                }
-                const int port        = readPort(portValue);
-                QString   destination = host;
-                if (port > 0) {
-                  destination += ":" + QString::number(port);
-                }
-                setCell(i, 1, destination);
-                setCell(i, 2, metadata["network"].toString());
-                setCell(i, 3, conn["rule"].toString());
-                setCell(i,
-                        4,
-                        QString::number(
-                            conn["upload"].toVariant().toLongLong() / 1024) +
-                            " KB");
-                setCell(i,
-                        5,
-                        QString::number(
-                            conn["download"].toVariant().toLongLong() / 1024) +
-                            " KB");
-                // Store connection ID.
-                QTableWidgetItem* idItem = m_tableWidget->item(i, 0);
-                if (idItem) {
-                  idItem->setData(Qt::UserRole, conn["id"].toString());
-                }
-              }
-            });
+  if (m_proxyService == service) {
+    return;
   }
+  if (m_proxyService) {
+    disconnect(m_proxyService, nullptr, this, nullptr);
+  }
+  m_proxyService = service;
+  if (!m_proxyService) {
+    return;
+  }
+  connect(m_proxyService,
+          &ProxyService::connectionsReceived,
+          this,
+          [this](const QJsonObject& connections) {
+            QJsonArray conns = connections["connections"].toArray();
+            const QHash<QString, QString> groupNowMap =
+                m_proxyService ? m_proxyService->groupNowCache()
+                               : QHash<QString, QString>();
+            m_tableWidget->setRowCount(conns.count());
+            auto setCell = [this](int row, int col, const QString& text) {
+              QTableWidgetItem* item = m_tableWidget->item(row, col);
+              if (!item) {
+                item = new QTableWidgetItem();
+                m_tableWidget->setItem(row, col, item);
+              }
+              item->setText(text);
+            };
+            for (int i = 0; i < conns.count(); ++i) {
+              QJsonObject conn     = conns[i].toObject();
+              QJsonObject metadata = conn["metadata"].toObject();
+              setCell(i, 0, metadata["sourceIP"].toString());
+              QString host = metadata["host"].toString();
+              if (host.isEmpty()) {
+                host = metadata["destinationIP"].toString();
+              }
+              if (host.isEmpty()) {
+                host = metadata["destinationIp"].toString();
+              }
+              if (host.isEmpty()) {
+                host = tr("Unknown");
+              }
+              auto readPort = [](const QJsonValue& value) -> int {
+                if (value.isString()) {
+                  bool      ok     = false;
+                  const int parsed = value.toString().toInt(&ok);
+                  return ok ? parsed : 0;
+                }
+                if (value.isDouble()) {
+                  return value.toInt();
+                }
+                bool      ok     = false;
+                const int parsed = value.toVariant().toInt(&ok);
+                return ok ? parsed : 0;
+              };
+              QJsonValue portValue = metadata.value("destinationPort");
+              if (portValue.isUndefined()) {
+                portValue = metadata.value("destination_port");
+              }
+              const int port        = readPort(portValue);
+              QString   destination = host;
+              if (port > 0) {
+                destination += ":" + QString::number(port);
+              }
+              setCell(i, 1, destination);
+              setCell(i, 2, metadata["network"].toString());
+              setCell(i, 3, formatRuleText(conn, groupNowMap));
+              setCell(i,
+                      4,
+                      QString::number(
+                          conn["upload"].toVariant().toLongLong() / 1024) +
+                          " KB");
+              setCell(i,
+                      5,
+                      QString::number(
+                          conn["download"].toVariant().toLongLong() / 1024) +
+                          " KB");
+              // Store connection ID.
+              QTableWidgetItem* idItem = m_tableWidget->item(i, 0);
+              if (idItem) {
+                idItem->setData(Qt::UserRole, conn["id"].toString());
+              }
+            }
+          });
 }
 
 void ConnectionsView::setAutoRefreshEnabled(bool enabled) {

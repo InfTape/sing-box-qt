@@ -2,6 +2,7 @@
 #define PROXYSERVICE_H
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QHash>
 #include <QObject>
 #include <QString>
 class HttpClient;
@@ -17,6 +18,8 @@ class ProxyService : public QObject {
   int     getApiPort() const;
   void    setApiToken(const QString& token);
   QString getApiToken() const;
+  QHash<QString, QString> groupNowCache() const;
+  QString                 resolveGroupNow(const QString& group) const;
   // Fetch proxy data.
   void fetchProxies();
   void fetchRules();
@@ -44,5 +47,6 @@ class ProxyService : public QObject {
   WebSocketClient* m_wsClient;
   int              m_apiPort;
   QString          m_apiToken;
+  QHash<QString, QString> m_groupNowCache;
 };
 #endif  // PROXYSERVICE_H

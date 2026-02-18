@@ -1,9 +1,38 @@
 #include "ProxyService.h"
 #include <QJsonDocument>
+#include <QSet>
 #include <QUrl>
 #include "network/HttpClient.h"
 #include "network/WebSocketClient.h"
 #include "utils/Logger.h"
+
+namespace {
+bool isPolicyGroupType(const QString& type) {
+  const QString normalized = type.trimmed().toLower();
+  return normalized == "selector" || normalized == "urltest" ||
+         normalized == "fallback";
+}
+
+QHash<QString, QString> extractGroupNowCache(const QJsonObject& payload) {
+  QHash<QString, QString> cache;
+  const QJsonObject       proxies = payload.value("proxies").toObject();
+  for (auto it = proxies.begin(); it != proxies.end(); ++it) {
+    if (!it.value().isObject()) {
+      continue;
+    }
+    const QJsonObject proxy = it.value().toObject();
+    if (!isPolicyGroupType(proxy.value("type").toString())) {
+      continue;
+    }
+    const QString group = it.key().trimmed();
+    const QString now   = proxy.value("now").toString().trimmed();
+    if (!group.isEmpty() && !now.isEmpty()) {
+      cache.insert(group, now);
+    }
+  }
+  return cache;
+}
+}  // namespace
 
 ProxyService::ProxyService(QObject* parent)
     : QObject(parent),
@@ -43,6 +72,30 @@ QString ProxyService::getApiToken() const {
   return m_apiToken;
 }
 
+QHash<QString, QString> ProxyService::groupNowCache() const {
+  return m_groupNowCache;
+}
+
+QString ProxyService::resolveGroupNow(const QString& group) const {
+  QString current = group.trimmed();
+  if (current.isEmpty()) {
+    return current;
+  }
+  QSet<QString> visited;
+  while (!current.isEmpty() && m_groupNowCache.contains(current)) {
+    if (visited.contains(current)) {
+      break;
+    }
+    visited.insert(current);
+    const QString next = m_groupNowCache.value(current).trimmed();
+    if (next.isEmpty() || next.compare(current, Qt::CaseInsensitive) == 0) {
+      break;
+    }
+    current = next;
+  }
+  return current;
+}
+
 QString ProxyService::buildApiUrl(const QString& path) const {
   return QString("http://127.0.0.1:%1%2").arg(m_apiPort).arg(path);
 }
@@ -53,7 +106,9 @@ void ProxyService::fetchProxies() {
     if (success) {
       QJsonDocument doc = QJsonDocument::fromJson(data);
       if (doc.isObject()) {
-        emit proxiesReceived(doc.object());
+        const QJsonObject payload = doc.object();
+        m_groupNowCache           = extractGroupNowCache(payload);
+        emit proxiesReceived(payload);
       }
     } else {
       emit errorOccurred(tr("Failed to fetch proxies"));
@@ -100,6 +155,11 @@ void ProxyService::selectProxy(const QString& group, const QString& proxy) {
       [this, group, proxy](bool success, const QByteArray&) {
         if (success) {
           Logger::info(QString("Proxy switched to: %1").arg(proxy));
+          const QString groupTag = group.trimmed();
+          const QString nodeTag  = proxy.trimmed();
+          if (!groupTag.isEmpty() && !nodeTag.isEmpty()) {
+            m_groupNowCache.insert(groupTag, nodeTag);
+          }
           emit proxySelected(group, proxy);
         } else {
           Logger::warn(QString("Proxy switch failed: group=%1, proxy=%2")
