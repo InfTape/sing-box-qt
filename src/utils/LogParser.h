@@ -20,9 +20,7 @@ struct LogKind {
   bool    isDns        = false;
 };
 
-QString stripAnsiSequences(const QString& text);
-LogKind parseLogKind(const QString& message);
-QString detectLogType(const QString& message);
-QString logTypeLabel(const QString& type);
+  LogKind parseLogKind(const QString& message);
+  QString logTypeLabel(const QString& type);
 }  // namespace LogParser
 #endif  // LOGPARSER_H

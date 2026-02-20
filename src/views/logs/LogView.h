@@ -17,7 +17,7 @@ class LogView : public QWidget {
   Q_OBJECT
  public:
   explicit LogView(ThemeService* themeService, QWidget* parent = nullptr);
-  void appendLog(const QString& message);
+  void appendApiLog(const QString& type, const QString& payload);
   void clear();
  public slots:
   void updateStyle();

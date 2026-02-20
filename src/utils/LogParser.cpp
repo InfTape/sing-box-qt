@@ -2,13 +2,6 @@
 #include <QRegularExpression>
 
 namespace LogParser {
-QString stripAnsiSequences(const QString& text) {
-  static const QRegularExpression kAnsiPattern("\x1B\\[[0-?]*[ -/]*[@-~]");
-  QString                         cleaned = text;
-  cleaned.remove(kAnsiPattern);
-  return cleaned;
-}
-
 LogKind parseLogKind(const QString& message) {
   LogKind                         info;
   static const QRegularExpression kDnsPattern("\\bdns\\s*:");
@@ -41,40 +34,6 @@ LogKind parseLogKind(const QString& message) {
   }
   info.isConnection = true;
   return info;
-}
-
-QString detectLogType(const QString& message) {
-  const QString                   upper = message.toUpper();
-  static const QRegularExpression kPanicRe("\\bPANIC\\b");
-  static const QRegularExpression kFatalRe("\\bFATAL\\b");
-  static const QRegularExpression kErrorRe("\\bERROR\\b");
-  static const QRegularExpression kWarnRe("\\bWARN\\b");
-  static const QRegularExpression kWarningRe("\\bWARNING\\b");
-  static const QRegularExpression kDebugRe("\\bDEBUG\\b");
-  static const QRegularExpression kTraceRe("\\bTRACE\\b");
-  static const QRegularExpression kInfoRe("\\bINFO\\b");
-  if (upper.contains(kPanicRe)) {
-    return "panic";
-  }
-  if (upper.contains(kFatalRe)) {
-    return "fatal";
-  }
-  if (upper.contains(kErrorRe)) {
-    return "error";
-  }
-  if (upper.contains(kWarnRe) || upper.contains(kWarningRe)) {
-    return "warning";
-  }
-  if (upper.contains(kDebugRe)) {
-    return "debug";
-  }
-  if (upper.contains(kTraceRe)) {
-    return "trace";
-  }
-  if (upper.contains(kInfoRe)) {
-    return "info";
-  }
-  return "info";
 }
 
 QString logTypeLabel(const QString& type) {

@@ -7,6 +7,8 @@ class ProxyController;
 class DataUsageTracker;
 class QJsonObject;
 class QTimer;
+class WebSocketClient;
+
 
 /**
  * @brief ProxyRuntimeController
@@ -28,7 +30,7 @@ class ProxyRuntimeController : public QObject {
   void trafficUpdated(qint64 upload, qint64 download);
   void connectionsUpdated(int count, qint64 memoryUsage);
   void dataUsageUpdated(const QJsonObject& snapshot);
-  void logMessage(const QString& message, bool isError);
+  void apiLogMessage(const QString& type, const QString& payload);
   void refreshProxyViewRequested();
   void refreshRulesViewRequested();
  public slots:
@@ -36,6 +38,7 @@ class ProxyRuntimeController : public QObject {
  private slots:
   void onKernelStatusChanged(bool running);
   void handleConnectionsJson(const QJsonObject& connections);
+  void onApiLogMessageReceived(const QString& message);
 
  private:
   KernelService*    m_kernelService    = nullptr;
@@ -43,5 +46,6 @@ class ProxyRuntimeController : public QObject {
   ProxyController*  m_proxyController  = nullptr;
   DataUsageTracker* m_dataUsageTracker = nullptr;
   QTimer*           m_connectionsTimer = nullptr;
+  WebSocketClient*  m_logWsClient      = nullptr;
 };
 #endif  // PROXYRUNTIMECONTROLLER_H

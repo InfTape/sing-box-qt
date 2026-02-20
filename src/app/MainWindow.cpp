@@ -375,7 +375,7 @@ void MainWindow::setupHomeViewConnections() {
                   QStringLiteral("Proxy mode switched to: %1").arg(mode);
               Logger::info(msg);
               if (m_logView) {
-                m_logView->appendLog(QString("[INFO] %1").arg(msg));
+                m_logView->appendApiLog("info", msg);
               }
             } else {
               const QString msg =
@@ -384,7 +384,7 @@ void MainWindow::setupHomeViewConnections() {
                       : error;
               Logger::error(msg);
               if (m_logView) {
-                m_logView->appendLog(QString("[ERROR] %1").arg(msg));
+                m_logView->appendApiLog("error", msg);
               }
               QMessageBox::warning(this, tr("Switch Mode Failed"), msg);
               m_homeView->setProxyMode(m_proxyUiController->currentProxyMode());

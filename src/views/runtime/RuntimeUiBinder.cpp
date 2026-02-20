@@ -92,11 +92,11 @@ void RuntimeUiBinder::bind() {
   // Logs → log view
   if (m_log) {
     QObject::connect(m_runtime,
-                     &ProxyRuntimeController::logMessage,
+                     &ProxyRuntimeController::apiLogMessage,
                      m_log,
-                     [this](const QString& msg, bool) {
+                     [this](const QString& type, const QString& payload) {
                        if (m_log) {
-                         m_log->appendLog(msg);
+                         m_log->appendApiLog(type, payload);
                        }
                      });
   }

@@ -159,22 +159,21 @@ void LogView::setupUI() {
   connect(m_exportBtn, &QPushButton::clicked, this, &LogView::onExportClicked);
 }
 
-void LogView::appendLog(const QString& message) {
-  const QString cleaned = LogParser::stripAnsiSequences(message).trimmed();
-  if (cleaned.isEmpty()) {
+void LogView::appendApiLog(const QString& type, const QString& payload) {
+  if (payload.isEmpty()) {
     return;
   }
-  if (cleaned.contains('\n') || cleaned.contains('\r')) {
+  if (payload.contains('\n') || payload.contains('\r')) {
     const QStringList lines =
-        cleaned.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts);
+        payload.split(QRegularExpression("[\\r\\n]+"), Qt::SkipEmptyParts);
     for (const auto& line : lines) {
-      appendLog(line);
+      appendApiLog(type, line);
     }
     return;
   }
-  const LogParser::LogKind kind = LogParser::parseLogKind(cleaned);
+  const LogParser::LogKind kind = LogParser::parseLogKind(payload);
   LogParser::LogEntry      entry;
-  entry.type = LogParser::detectLogType(cleaned);
+  entry.type = type.toLower();
   if (kind.isConnection && entry.type == "info") {
     if (kind.direction == "outbound") {
       QString label;
@@ -190,17 +189,17 @@ void LogView::appendLog(const QString& message) {
                             ? kind.host
                             : QString("%1 -> %2").arg(label, kind.host);
       } else {
-        entry.payload = label.isEmpty() ? cleaned : label;
+        entry.payload = label.isEmpty() ? payload : label;
       }
     } else {
-      entry.payload = kind.host.isEmpty() ? cleaned : kind.host;
+      entry.payload = kind.host.isEmpty() ? payload : kind.host;
     }
     entry.direction = kind.direction;
   } else if (kind.isDns) {
-    entry.payload   = cleaned;
+    entry.payload   = payload;
     entry.direction = kind.direction;
   } else {
-    entry.payload = cleaned;
+    entry.payload = payload;
     entry.direction.clear();
   }
   entry.timestamp = QDateTime::currentDateTime();

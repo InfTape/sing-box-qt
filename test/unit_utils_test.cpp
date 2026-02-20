@@ -464,17 +464,6 @@ void UnitUtilsTest::proxyNodeHelper_shouldHandleAdditionalDelayForms() {
 }
 
 void UnitUtilsTest::logParser_shouldParseAndDetectTypes() {
-  QCOMPARE(LogParser::stripAnsiSequences("\x1B[31mERROR\x1B[0m test"),
-           QString("ERROR test"));
-
-  QCOMPARE(LogParser::detectLogType("panic happened"), QString("panic"));
-  QCOMPARE(LogParser::detectLogType("FATAL: fail"), QString("fatal"));
-  QCOMPARE(LogParser::detectLogType("error happened"), QString("error"));
-  QCOMPARE(LogParser::detectLogType("warning message"), QString("warning"));
-  QCOMPARE(LogParser::detectLogType("debug trace"), QString("debug"));
-  QCOMPARE(LogParser::detectLogType("TRACE packet"), QString("trace"));
-  QCOMPARE(LogParser::detectLogType("info message"), QString("info"));
-
   const LogParser::LogKind dns = LogParser::parseLogKind("dns: query example");
   QVERIFY(dns.isDns);
   QCOMPARE(dns.direction, QString("dns"));
@@ -509,8 +498,6 @@ void UnitUtilsTest::logParser_shouldHandleFallbackPaths() {
   QCOMPARE(outboundNoNode.host, QString("8.8.8.8:53"));
   QVERIFY(outboundNoNode.protocol.isEmpty());
   QVERIFY(outboundNoNode.nodeName.isEmpty());
-
-  QCOMPARE(LogParser::detectLogType("plain message"), QString("info"));
 }
 
 void UnitUtilsTest::logParser_shouldMapLabels() {
