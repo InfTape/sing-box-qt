@@ -23,8 +23,7 @@ AppSettings::AppSettings(QObject* parent)
       m_tunMtu(ConfigConstants::DEFAULT_TUN_MTU),
       m_tunIpv4(ConfigConstants::DEFAULT_TUN_IPV4),
       m_tunIpv6(ConfigConstants::DEFAULT_TUN_IPV6),
-      m_tunEnableIpv6(false),
-      m_tunSniffOverrideDestination(true)
+      m_tunEnableIpv6(false)
       // DNS defaults.
       ,
       m_dnsProxy(ConfigConstants::DEFAULT_DNS_PROXY),
@@ -36,6 +35,7 @@ AppSettings::AppSettings(QObject* parent)
       m_enableAppGroups(false),
       m_preferIpv6(false),
       m_dnsHijack(true),
+      m_routeSniffEnabled(true),
       m_systemProxyEnabled(true),
       m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS)
       // URL test.
@@ -70,8 +70,6 @@ void AppSettings::load() {
   m_tunIpv6 =
       config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
   m_tunEnableIpv6 = config.value("tunEnableIpv6").toBool(false);
-  m_tunSniffOverrideDestination =
-      config.value("tunSniffOverrideDestination").toBool(true);
   // DNS.
   m_dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
@@ -83,6 +81,7 @@ void AppSettings::load() {
   m_enableAppGroups = config.value("enableAppGroups").toBool(false);
   m_preferIpv6      = config.value("preferIpv6").toBool(false);
   m_dnsHijack       = config.value("dnsHijack").toBool(true);
+  m_routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   if (config.contains("systemProxyEnabled")) {
     m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
   } else {
@@ -129,7 +128,6 @@ void AppSettings::save() {
   config["tunIpv4"]        = m_tunIpv4;
   config["tunIpv6"]        = m_tunIpv6;
   config["tunEnableIpv6"]  = m_tunEnableIpv6;
-  config["tunSniffOverrideDestination"] = m_tunSniffOverrideDestination;
   // DNS.
   config["dnsProxy"]    = m_dnsProxy;
   config["dnsCn"]       = m_dnsCn;
@@ -139,6 +137,7 @@ void AppSettings::save() {
   config["enableAppGroups"]    = m_enableAppGroups;
   config["preferIpv6"]         = m_preferIpv6;
   config["dnsHijack"]          = m_dnsHijack;
+  config["routeSniffEnabled"]  = m_routeSniffEnabled;
   config["systemProxyEnabled"] = m_systemProxyEnabled;
   config["systemProxy"]        = m_systemProxyEnabled;
   config["systemProxyBypass"]  = m_systemProxyBypass;
@@ -236,14 +235,6 @@ void AppSettings::setTunEnableIpv6(bool enabled) {
   }
 }
 
-void AppSettings::setTunSniffOverrideDestination(bool enabled) {
-  if (m_tunSniffOverrideDestination != enabled) {
-    m_tunSniffOverrideDestination = enabled;
-    save();
-    emit settingsChanged();
-  }
-}
-
 void AppSettings::setDnsProxy(const QString& dns) {
   if (m_dnsProxy != dns) {
     m_dnsProxy = dns;
@@ -295,6 +286,14 @@ void AppSettings::setPreferIpv6(bool enabled) {
 void AppSettings::setDnsHijack(bool enabled) {
   if (m_dnsHijack != enabled) {
     m_dnsHijack = enabled;
+    save();
+    emit settingsChanged();
+  }
+}
+
+void AppSettings::setRouteSniffEnabled(bool enabled) {
+  if (m_routeSniffEnabled != enabled) {
+    m_routeSniffEnabled = enabled;
     save();
     emit settingsChanged();
   }

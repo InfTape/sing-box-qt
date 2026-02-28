@@ -15,7 +15,7 @@ class SettingsModel {
     bool    tunEnableIpv6   = false;
     bool    tunAutoRoute    = true;
     bool    tunStrictRoute  = true;
-    bool    tunSniffOverrideDestination = true;
+    bool    routeSniffEnabled = true;
     QString defaultOutbound = "manual";
     QString downloadDetour  = "manual";
     bool    blockAds        = false;

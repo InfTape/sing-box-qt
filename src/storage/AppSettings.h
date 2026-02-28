@@ -39,10 +39,6 @@ class AppSettings : public QObject {
 
   bool tunEnableIpv6() const { return m_tunEnableIpv6; }
 
-  bool tunSniffOverrideDestination() const {
-    return m_tunSniffOverrideDestination;
-  }
-
   void setTunEnabled(bool enabled);
   void setTunAutoRoute(bool enabled);
   void setTunStrictRoute(bool enabled);
@@ -51,7 +47,6 @@ class AppSettings : public QObject {
   void setTunIpv4(const QString& addr);
   void setTunIpv6(const QString& addr);
   void setTunEnableIpv6(bool enabled);
-  void setTunSniffOverrideDestination(bool enabled);
 
   // DNS config.
   QString dnsProxy() const { return m_dnsProxy; }
@@ -73,6 +68,8 @@ class AppSettings : public QObject {
 
   bool dnsHijack() const { return m_dnsHijack; }
 
+  bool routeSniffEnabled() const { return m_routeSniffEnabled; }
+
   bool systemProxyEnabled() const { return m_systemProxyEnabled; }
 
   QString systemProxyBypass() const { return m_systemProxyBypass; }
@@ -81,6 +78,7 @@ class AppSettings : public QObject {
   void setEnableAppGroups(bool enabled);
   void setPreferIpv6(bool enabled);
   void setDnsHijack(bool enabled);
+  void setRouteSniffEnabled(bool enabled);
   void setSystemProxyEnabled(bool enabled);
   void setSystemProxyBypass(const QString& bypass);
 
@@ -135,7 +133,6 @@ signals:
   QString m_tunIpv4;
   QString m_tunIpv6;
   bool    m_tunEnableIpv6;
-  bool    m_tunSniffOverrideDestination;
   // DNS.
   QString m_dnsProxy;
   QString m_dnsCn;
@@ -145,6 +142,7 @@ signals:
   bool    m_enableAppGroups;
   bool    m_preferIpv6;
   bool    m_dnsHijack;
+  bool    m_routeSniffEnabled;
   bool    m_systemProxyEnabled;
   QString m_systemProxyBypass;
   // URL test.

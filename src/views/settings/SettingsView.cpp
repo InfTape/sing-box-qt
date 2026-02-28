@@ -424,8 +424,7 @@ QWidget* SettingsView::buildProfileSection() {
   addProfileToggle(tr("Block ads (geosite-category-ads-all)"),
                    m_blockAdsSwitch);
   addProfileToggle(tr("DNS hijack (hijack-dns)"), m_dnsHijackSwitch);
-  addProfileToggle(tr("TUN sniff override destination"),
-                   m_tunSniffOverrideDestSwitch);
+  addProfileToggle(tr("Protocol sniff (route action)"), m_routeSniffSwitch);
   addProfileToggle(tr("Enable app groups (TG/YouTube/Netflix/OpenAI)"),
                    m_enableAppGroupsSwitch);
   singboxProfileCardLayout->addWidget(profileToggleCard);
@@ -688,7 +687,7 @@ void SettingsView::setupAutoSave() {
   connectToggle(m_tunStrictRouteSwitch);
   connectToggle(m_blockAdsSwitch);
   connectToggle(m_dnsHijackSwitch);
-  connectToggle(m_tunSniffOverrideDestSwitch);
+  connectToggle(m_routeSniffSwitch);
   connectToggle(m_enableAppGroupsSwitch);
   connectLine(m_dnsProxyEdit);
   connectLine(m_dnsCnEdit);
@@ -852,7 +851,7 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
       (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
   data.blockAds        = m_blockAdsSwitch->isChecked();
   data.dnsHijack       = m_dnsHijackSwitch->isChecked();
-  data.tunSniffOverrideDestination = m_tunSniffOverrideDestSwitch->isChecked();
+  data.routeSniffEnabled = m_routeSniffSwitch->isChecked();
   data.enableAppGroups = m_enableAppGroupsSwitch->isChecked();
   data.dnsProxy        = SettingsHelpers::resolveTextOrDefault(
       m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
@@ -886,7 +885,7 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
                                                                          : 1);
   m_blockAdsSwitch->setChecked(data.blockAds);
   m_dnsHijackSwitch->setChecked(data.dnsHijack);
-  m_tunSniffOverrideDestSwitch->setChecked(data.tunSniffOverrideDestination);
+  m_routeSniffSwitch->setChecked(data.routeSniffEnabled);
   m_enableAppGroupsSwitch->setChecked(data.enableAppGroups);
   m_dnsProxyEdit->setText(data.dnsProxy);
   m_dnsCnEdit->setText(data.dnsCn);

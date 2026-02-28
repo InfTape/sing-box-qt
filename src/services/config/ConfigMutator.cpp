@@ -550,6 +550,31 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         }
         rules[i] = rule;
       }
+      bool hasSniffRule = false;
+      for (int i = rules.size() - 1; i >= 0; --i) {
+        if (!rules[i].isObject()) {
+          continue;
+        }
+        const QJsonObject rule = rules[i].toObject();
+        if (rule.value("action").toString() != "sniff") {
+          continue;
+        }
+        if (!settings.routeSniffEnabled()) {
+          rules.removeAt(i);
+          continue;
+        }
+        if (!hasSniffRule) {
+          hasSniffRule = true;
+        } else {
+          // Keep only one managed sniff rule.
+          rules.removeAt(i);
+        }
+      }
+      if (settings.routeSniffEnabled() && !hasSniffRule) {
+        QJsonObject sniffRule;
+        sniffRule["action"] = "sniff";
+        rules.prepend(sniffRule);
+      }
       int hijackIndex = -1;
       for (int i = 0; i < rules.size(); ++i) {
         if (!rules[i].isObject()) {

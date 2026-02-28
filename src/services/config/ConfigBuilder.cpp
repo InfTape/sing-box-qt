@@ -195,9 +195,11 @@ QJsonObject ConfigBuilder::buildRouteConfig() {
   const AppSettings& settings        = AppSettings::instance();
   const QString      defaultOutbound = settings.normalizedDefaultOutbound();
   QJsonArray         rules;
-  QJsonObject        sniffRule;
-  sniffRule["action"] = "sniff";
-  rules.append(sniffRule);
+  if (settings.routeSniffEnabled()) {
+    QJsonObject sniffRule;
+    sniffRule["action"] = "sniff";
+    rules.append(sniffRule);
+  }
   if (settings.dnsHijack()) {
     QJsonObject hijack;
     hijack["protocol"] = "dns";
@@ -273,7 +275,6 @@ QJsonArray ConfigBuilder::buildInbounds() {
   mixed["tag"]         = "mixed-in";
   mixed["listen"]      = "127.0.0.1";
   mixed["listen_port"] = settings.mixedPort();
-  mixed["sniff"]       = true;
   inbounds.append(mixed);
   if (settings.tunEnabled()) {
     QJsonArray addresses;
@@ -291,9 +292,6 @@ QJsonArray ConfigBuilder::buildInbounds() {
     tun["strict_route"]               = settings.tunStrictRoute();
     tun["stack"]                      = settings.tunStack();
     tun["mtu"]                        = settings.tunMtu();
-    tun["sniff"]                      = true;
-    tun["sniff_override_destination"] =
-        settings.tunSniffOverrideDestination();
     tun["route_exclude_address"] =
         QJsonArray::fromStringList(ConfigConstants::tunRouteExcludes());
     inbounds.append(tun);

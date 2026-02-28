@@ -79,6 +79,18 @@ int findProtocolActionIndex(const QJsonArray& rules,
   return -1;
 }
 
+int findActionIndex(const QJsonArray& rules, const QString& action) {
+  for (int i = 0; i < rules.size(); ++i) {
+    if (!rules[i].isObject()) {
+      continue;
+    }
+    if (rules[i].toObject().value("action").toString() == action) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 struct AppSettingsScopeGuard {
   AppSettings& s = AppSettings::instance();
 
@@ -92,7 +104,7 @@ struct AppSettingsScopeGuard {
   QString tunIpv4;
   QString tunIpv6;
   bool    tunEnableIpv6;
-  bool    tunSniffOverrideDestination;
+  bool    routeSniffEnabled;
   QString dnsProxy;
   QString dnsCn;
   QString dnsResolver;
@@ -120,7 +132,7 @@ struct AppSettingsScopeGuard {
         tunIpv4(s.tunIpv4()),
         tunIpv6(s.tunIpv6()),
         tunEnableIpv6(s.tunEnableIpv6()),
-        tunSniffOverrideDestination(s.tunSniffOverrideDestination()),
+        routeSniffEnabled(s.routeSniffEnabled()),
         dnsProxy(s.dnsProxy()),
         dnsCn(s.dnsCn()),
         dnsResolver(s.dnsResolver()),
@@ -148,7 +160,7 @@ struct AppSettingsScopeGuard {
     s.setTunIpv4(tunIpv4);
     s.setTunIpv6(tunIpv6);
     s.setTunEnableIpv6(tunEnableIpv6);
-    s.setTunSniffOverrideDestination(tunSniffOverrideDestination);
+    s.setRouteSniffEnabled(routeSniffEnabled);
     s.setDnsProxy(dnsProxy);
     s.setDnsCn(dnsCn);
     s.setDnsResolver(dnsResolver);
@@ -219,6 +231,7 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   settings.setBlockAds(true);
   settings.setEnableAppGroups(true);
   settings.setDnsHijack(true);
+  settings.setRouteSniffEnabled(true);
   settings.setPreferIpv6(true);
   settings.setTunEnabled(true);
   settings.setTunAutoRoute(true);
@@ -228,7 +241,6 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   settings.setTunIpv4("172.19.0.1/30");
   settings.setTunEnableIpv6(true);
   settings.setTunIpv6("fdfe::1/126");
-  settings.setTunSniffOverrideDestination(false);
   settings.setMixedPort(2080);
   settings.setApiPort(29090);
   settings.setDefaultOutbound("auto");
@@ -250,8 +262,8 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QCOMPARE(tunInbound.value("address").toArray().size(), 2);
   QCOMPARE(tunInbound.value("stack").toString(), QString("mixed"));
   QCOMPARE(tunInbound.value("mtu").toInt(), 1380);
-  QVERIFY(tunInbound.contains("sniff_override_destination"));
-  QCOMPARE(tunInbound.value("sniff_override_destination").toBool(), false);
+  QVERIFY(!tunInbound.contains("sniff"));
+  QVERIFY(!tunInbound.contains("sniff_override_destination"));
 
   const QJsonObject dnsObj = config.value("dns").toObject();
   QCOMPARE(dnsObj.value("final").toString(), ConfigConstants::DNS_PROXY);
@@ -279,6 +291,7 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   const QJsonObject routeObj = config.value("route").toObject();
   QCOMPARE(routeObj.value("final").toString(), ConfigConstants::TAG_AUTO);
   const QJsonArray routeRules = routeObj.value("rules").toArray();
+  QVERIFY(findActionIndex(routeRules, "sniff") >= 0);
   QVERIFY(findProtocolActionIndex(routeRules, "dns", "hijack-dns") >= 0);
   QVERIFY(findRuleSetIndex(routeRules, ConfigConstants::RS_GEOSITE_ADS) >= 0);
   QVERIFY(findRuleSetIndex(routeRules, ConfigConstants::RS_GEOSITE_TELEGRAM) >=
@@ -333,6 +346,7 @@ void UnitUtilsTest::configBuilder_shouldBuildMinimalBaseConfigWhenFeaturesDisabl
   settings.setBlockAds(false);
   settings.setEnableAppGroups(false);
   settings.setDnsHijack(false);
+  settings.setRouteSniffEnabled(false);
   settings.setPreferIpv6(false);
   settings.setTunEnabled(false);
   settings.setDefaultOutbound("manual");
@@ -362,6 +376,7 @@ void UnitUtilsTest::configBuilder_shouldBuildMinimalBaseConfigWhenFeaturesDisabl
   const QJsonObject routeObj = config.value("route").toObject();
   QCOMPARE(routeObj.value("final").toString(), ConfigConstants::TAG_MANUAL);
   const QJsonArray routeRules = routeObj.value("rules").toArray();
+  QCOMPARE(findActionIndex(routeRules, "sniff"), -1);
   QCOMPARE(findProtocolActionIndex(routeRules, "dns", "hijack-dns"), -1);
   QCOMPARE(findRuleSetIndex(routeRules, ConfigConstants::RS_GEOSITE_ADS), -1);
   QCOMPARE(findRuleSetIndex(routeRules, ConfigConstants::RS_GEOSITE_TELEGRAM),
@@ -1119,6 +1134,7 @@ void UnitUtilsTest::configMutator_shouldApplySettingsFeatureInsertions() {
   QCOMPARE(routeObj.value("final").toString(), ConfigConstants::TAG_AUTO);
 
   const QJsonArray routeRules = routeObj.value("rules").toArray();
+  QVERIFY(findActionIndex(routeRules, "sniff") >= 0);
   QVERIFY(findProtocolActionIndex(routeRules, "dns", "hijack-dns") >= 0);
   QVERIFY(findRuleSetIndex(routeRules, ConfigConstants::RS_GEOSITE_ADS) >= 0);
 
