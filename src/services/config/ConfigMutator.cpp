@@ -3,6 +3,7 @@
 #include <QHostAddress>
 #include <QSet>
 #include <QStringList>
+#include <QUrl>
 #include <limits>
 #include "services/config/ConfigBuilder.h"
 #include "storage/AppSettings.h"
@@ -142,6 +143,120 @@ void normalizeCacheFileConfig(QJsonObject& experimental) {
   }
   experimental["cache_file"] = cacheFile;
 }
+
+QJsonObject parseDnsServerAddress(const QString& rawAddress) {
+  QJsonObject dnsServer;
+  const QString address = rawAddress.trimmed();
+  if (address.isEmpty()) {
+    return dnsServer;
+  }
+
+  if (address.compare("local", Qt::CaseInsensitive) == 0) {
+    dnsServer["type"] = "local";
+    return dnsServer;
+  }
+  if (address.compare("fakeip", Qt::CaseInsensitive) == 0) {
+    dnsServer["type"] = "fakeip";
+    return dnsServer;
+  }
+
+  auto fillRemoteServer = [&dnsServer](const QString& type, const QUrl& url) {
+    dnsServer["type"] = type;
+    QString host = url.host().trimmed();
+    if (host.isEmpty()) {
+      host = url.path().trimmed();
+      if (host.startsWith('/')) {
+        host.remove(0, 1);
+      }
+    }
+    if (!host.isEmpty()) {
+      dnsServer["server"] = host;
+    }
+    const int port = url.port(-1);
+    if (port > 0) {
+      dnsServer["server_port"] = port;
+    }
+    if (type == "https" || type == "h3") {
+      const QString path = url.path().trimmed();
+      if (!path.isEmpty() && path != "/") {
+        dnsServer["path"] = path;
+      }
+    }
+  };
+
+  if (address.contains("://")) {
+    const QUrl    url(address);
+    const QString scheme = url.scheme().trimmed().toLower();
+    if (scheme == "rcode") {
+      return QJsonObject();
+    }
+    if (scheme == "udp" || scheme == "tcp" || scheme == "tls" ||
+        scheme == "https" || scheme == "quic" || scheme == "h3") {
+      fillRemoteServer(scheme, url);
+      return dnsServer;
+    }
+    if (scheme == "dhcp") {
+      dnsServer["type"] = "dhcp";
+      QString interfaceName = url.host().trimmed();
+      if (interfaceName.isEmpty()) {
+        interfaceName = url.path().trimmed();
+        if (interfaceName.startsWith('/')) {
+          interfaceName.remove(0, 1);
+        }
+      }
+      if (!interfaceName.isEmpty() &&
+          interfaceName.compare("auto", Qt::CaseInsensitive) != 0) {
+        dnsServer["interface"] = interfaceName;
+      }
+      return dnsServer;
+    }
+    return QJsonObject();
+  }
+
+  dnsServer["type"] = "udp";
+  const QUrl udpUrl(QString("udp://%1").arg(address));
+  const QString host = udpUrl.host().trimmed();
+  if (!host.isEmpty()) {
+    dnsServer["server"] = host;
+    const int port = udpUrl.port(-1);
+    if (port > 0) {
+      dnsServer["server_port"] = port;
+    }
+  } else {
+    dnsServer["server"] = address;
+  }
+  return dnsServer;
+}
+
+QJsonObject makeManagedDnsServer(const QString& tag,
+                                 const QString& address,
+                                 const QString& detour,
+                                 bool           attachDomainResolver) {
+  QJsonObject server = parseDnsServerAddress(address);
+  if (server.isEmpty()) {
+    server["type"]   = "udp";
+    server["server"] = address.trimmed();
+  }
+  server["tag"] = tag;
+  if (!detour.isEmpty() && detour != ConfigConstants::TAG_DIRECT) {
+    server["detour"] = detour;
+  }
+  if (attachDomainResolver && server.contains("server")) {
+    server["domain_resolver"] = ConfigConstants::DNS_RESOLVER;
+  } else {
+    server.remove("domain_resolver");
+  }
+  return server;
+}
+
+QJsonObject makeAdsBlockDnsRule() {
+  QJsonObject adsRule;
+  adsRule["rule_set"] = ConfigConstants::RS_GEOSITE_ADS;
+  adsRule["action"]   = "predefined";
+  adsRule["rcode"]    = "NOERROR";
+  adsRule.remove("server");
+  return adsRule;
+}
 }  // namespace
 
 bool ConfigMutator::injectNodes(QJsonObject& config, const QJsonArray& nodes) {
@@ -234,24 +349,72 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   QJsonObject dns        = config.value("dns").toObject();
   dns["strategy"]        = settings.dnsStrategy();
   if (dns.contains("servers") && dns["servers"].isArray()) {
-    QJsonArray servers = dns.value("servers").toArray();
-    for (int i = 0; i < servers.size(); ++i) {
-      if (!servers[i].isObject()) {
+    const QJsonArray inputServers = dns.value("servers").toArray();
+    QJsonArray       servers;
+    bool             hasProxyServer    = false;
+    bool             hasCnServer       = false;
+    bool             hasResolverServer = false;
+    for (const auto& serverVal : inputServers) {
+      if (!serverVal.isObject()) {
         continue;
       }
-      QJsonObject   server = servers[i].toObject();
+      QJsonObject   server = serverVal.toObject();
       const QString tag    = server.value("tag").toString();
       if (tag == ConfigConstants::DNS_PROXY) {
-        server["address"] = settings.dnsProxy();
-        server["detour"]  = settings.normalizedDefaultOutbound();
+        server = makeManagedDnsServer(ConfigConstants::DNS_PROXY,
+                                      settings.dnsProxy(),
+                                      settings.normalizedDefaultOutbound(),
+                                      true);
+        hasProxyServer = true;
       } else if (tag == ConfigConstants::DNS_CN) {
-        server["address"] = settings.dnsCn();
+        server = makeManagedDnsServer(ConfigConstants::DNS_CN,
+                                      settings.dnsCn(),
+                                      ConfigConstants::TAG_DIRECT,
+                                      true);
+        hasCnServer = true;
       } else if (tag == ConfigConstants::DNS_RESOLVER) {
-        server["address"] = settings.dnsResolver();
+        server = makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
+                                      settings.dnsResolver(),
+                                      ConfigConstants::TAG_DIRECT,
+                                      false);
+        hasResolverServer = true;
       }
-      servers[i] = server;
+      servers.append(server);
+    }
+    if (!hasProxyServer) {
+      servers.append(makeManagedDnsServer(ConfigConstants::DNS_PROXY,
+                                          settings.dnsProxy(),
+                                          settings.normalizedDefaultOutbound(),
+                                          true));
+    }
+    if (!hasCnServer) {
+      servers.append(makeManagedDnsServer(ConfigConstants::DNS_CN,
+                                          settings.dnsCn(),
+                                          ConfigConstants::TAG_DIRECT,
+                                          true));
+    }
+    if (!hasResolverServer) {
+      servers.append(makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
+                                          settings.dnsResolver(),
+                                          ConfigConstants::TAG_DIRECT,
+                                          false));
     }
     dns["servers"] = servers;
+  } else {
+    dns["servers"] = QJsonArray{
+        makeManagedDnsServer(ConfigConstants::DNS_PROXY,
+                             settings.dnsProxy(),
+                             settings.normalizedDefaultOutbound(),
+                             true),
+        makeManagedDnsServer(ConfigConstants::DNS_CN,
+                             settings.dnsCn(),
+                             ConfigConstants::TAG_DIRECT,
+                             true),
+        makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
+                             settings.dnsResolver(),
+                             ConfigConstants::TAG_DIRECT,
+                             false),
+    };
   }
   if (dns.contains("rules") && dns["rules"].isArray()) {
     QJsonArray rules    = dns.value("rules").toArray();
@@ -260,7 +423,7 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       if (!rules[i].isObject()) {
         continue;
       }
-      const QJsonObject rule = rules[i].toObject();
+      QJsonObject rule = rules[i].toObject();
       if (rule.value("rule_set").toString() ==
           ConfigConstants::RS_GEOSITE_ADS) {
         adsIndex = i;
@@ -269,14 +432,14 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     }
     if (settings.blockAds()) {
       if (adsIndex < 0) {
-        QJsonObject adsRule;
-        adsRule["rule_set"] = ConfigConstants::RS_GEOSITE_ADS;
-        adsRule["server"]   = ConfigConstants::DNS_BLOCK;
-        rules.insert(0, adsRule);
+        rules.insert(0, makeAdsBlockDnsRule());
       } else {
-        QJsonObject rule = rules[adsIndex].toObject();
-        rule["server"]   = ConfigConstants::DNS_BLOCK;
-        rules[adsIndex]  = rule;
+        QJsonObject adsRule = rules[adsIndex].toObject();
+        adsRule["rule_set"] = ConfigConstants::RS_GEOSITE_ADS;
+        adsRule["action"]   = "predefined";
+        adsRule["rcode"]    = "NOERROR";
+        adsRule.remove("server");
+        rules[adsIndex] = adsRule;
       }
     } else if (adsIndex >= 0) {
       rules.removeAt(adsIndex);

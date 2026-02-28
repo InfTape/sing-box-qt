@@ -249,15 +249,16 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
 
   const QJsonObject dnsObj = config.value("dns").toObject();
   QCOMPARE(dnsObj.value("final").toString(), ConfigConstants::DNS_PROXY);
+  QCOMPARE(dnsObj.value("strategy").toString(), QString("prefer_ipv6"));
   const QJsonArray dnsServers = dnsObj.value("servers").toArray();
-  QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY)
-               .value("detour")
-               .toString(),
-           ConfigConstants::TAG_AUTO);
-  QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY)
-               .value("strategy")
-               .toString(),
-           QString("prefer_ipv6"));
+  const QJsonObject dnsProxyServer =
+      findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY);
+  QCOMPARE(dnsProxyServer.value("detour").toString(), ConfigConstants::TAG_AUTO);
+  QVERIFY(!dnsProxyServer.contains("address"));
+  QVERIFY(!dnsProxyServer.value("type").toString().isEmpty());
+  QVERIFY(!findObjectByTag(dnsServers, ConfigConstants::DNS_CN).contains("detour"));
+  QVERIFY(
+      !findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER).contains("detour"));
   const QJsonArray dnsRules = dnsObj.value("rules").toArray();
   QVERIFY(findRuleSetIndex(dnsRules, ConfigConstants::RS_GEOSITE_ADS) >= 0);
 
@@ -948,19 +949,25 @@ void UnitUtilsTest::configMutator_shouldApplyPortSettingsAndFeatureRemovals() {
       {"servers",
        QJsonArray{
            QJsonObject{{"tag", ConfigConstants::DNS_PROXY},
-                       {"address", "old-proxy"},
+                       {"type", "https"},
+                       {"server", "old-proxy.example"},
+                       {"path", "/dns-query"},
                        {"detour", "old"}},
-           QJsonObject{{"tag", ConfigConstants::DNS_CN}, {"address", "old-cn"}},
+           QJsonObject{{"tag", ConfigConstants::DNS_CN},
+                       {"type", "udp"},
+                       {"server", "old-cn"}},
            QJsonObject{{"tag", ConfigConstants::DNS_RESOLVER},
-                       {"address", "old-resolver"}},
-       }},
+                       {"type", "udp"},
+                       {"server", "old-resolver"}},
+        }},
       {"rules",
        QJsonArray{
            QJsonObject{{"rule_set", ConfigConstants::RS_GEOSITE_ADS},
-                       {"server", ConfigConstants::DNS_BLOCK}},
+                       {"action", "predefined"},
+                       {"rcode", "NOERROR"}},
            QJsonObject{{"clash_mode", "global"},
                        {"server", ConfigConstants::DNS_PROXY}},
-       }}};
+        }}};
 
   config["outbounds"] =
       QJsonArray{QJsonObject{{"tag", ConfigConstants::TAG_AUTO}},
@@ -1016,22 +1023,24 @@ void UnitUtilsTest::configMutator_shouldApplyPortSettingsAndFeatureRemovals() {
   const QJsonObject dnsObj = config.value("dns").toObject();
   QCOMPARE(dnsObj.value("strategy").toString(), QString("ipv4_only"));
   const QJsonArray dnsServers = dnsObj.value("servers").toArray();
-  QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY)
-               .value("address")
-               .toString(),
-           QString("https://1.0.0.1/dns-query"));
-  QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY)
-               .value("detour")
-               .toString(),
-           ConfigConstants::TAG_MANUAL);
+  const QJsonObject dnsProxyServer =
+      findObjectByTag(dnsServers, ConfigConstants::DNS_PROXY);
+  QCOMPARE(dnsProxyServer.value("type").toString(), QString("https"));
+  QCOMPARE(dnsProxyServer.value("server").toString(), QString("1.0.0.1"));
+  QCOMPARE(dnsProxyServer.value("path").toString(), QString("/dns-query"));
+  QCOMPARE(dnsProxyServer.value("detour").toString(), ConfigConstants::TAG_MANUAL);
+  QVERIFY(!dnsProxyServer.contains("address"));
   QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_CN)
-               .value("address")
+               .value("server")
                .toString(),
            QString("223.5.5.5"));
   QCOMPARE(findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER)
-               .value("address")
+               .value("server")
                .toString(),
            QString("223.5.5.5"));
+  QVERIFY(!findObjectByTag(dnsServers, ConfigConstants::DNS_CN).contains("detour"));
+  QVERIFY(
+      !findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER).contains("detour"));
 
   const QJsonArray dnsRules = dnsObj.value("rules").toArray();
   QCOMPARE(findRuleSetIndex(dnsRules, ConfigConstants::RS_GEOSITE_ADS), -1);

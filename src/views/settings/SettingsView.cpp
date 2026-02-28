@@ -568,8 +568,7 @@ void SettingsView::setupUI() {
   scrollArea->setObjectName("SettingsScroll");
   QWidget*     contentWidget = new QWidget;
   QVBoxLayout* mainLayout    = new QVBoxLayout(contentWidget);
-  mainLayout->setContentsMargins(
-      kPageMargin, kPageMargin, kPageMargin, kPageMargin);
+  mainLayout->setContentsMargins(24, 14, 24, 24);
   mainLayout->setSpacing(kCardSpacing);
   // Header (match Rules page layout spacing)
   QHBoxLayout* headerLayout = new QHBoxLayout;

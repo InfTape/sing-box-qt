@@ -20,7 +20,6 @@ const QString TAG_OPENAI   = "OpenAI";
 const QString DNS_PROXY    = "dns_proxy";
 const QString DNS_CN       = "dns_cn";
 const QString DNS_RESOLVER = "dns_resolver";
-const QString DNS_BLOCK    = "dns_block";
 // ==================== Rule set tags ====================
 const QString RS_GEOSITE_CN                 = "geosite-cn";
 const QString RS_GEOSITE_GEOLOCATION_NOT_CN = "geosite-geolocation-!cn";
