@@ -1,5 +1,6 @@
 ﻿#include "TrafficChart.h"
 #include <QDateTime>
+#include <QLinearGradient>
 #include <QPainterPath>
 #include "app/interfaces/ThemeService.h"
 
@@ -173,7 +174,7 @@ void TrafficChart::drawCurve(QPainter&              painter,
     maxValue = 0.1;
   }
   // Build path using bezier curves
-  QPainterPath path;
+  QPainterPath linePath;
   auto         getPoint = [&](int i) -> QPointF {
     double x =
         chartRect.left() +
@@ -182,22 +183,43 @@ void TrafficChart::drawCurve(QPainter&              painter,
     return QPointF(x, y);
   };
   QPointF firstPoint = getPoint(0);
-  path.moveTo(firstPoint);
+  linePath.moveTo(firstPoint);
   for (int i = 1; i < data.size(); i++) {
     QPointF curr = getPoint(i);
     QPointF prev = getPoint(i - 1);
     // Control points for smooth bezier curve
     double cpX1 = prev.x() + (curr.x() - prev.x()) / 3.0;
     double cpX2 = prev.x() + (curr.x() - prev.x()) * 2.0 / 3.0;
-    path.cubicTo(QPointF(cpX1, prev.y()), QPointF(cpX2, curr.y()), curr);
+    linePath.cubicTo(QPointF(cpX1, prev.y()), QPointF(cpX2, curr.y()), curr);
   }
+  // Fill area below line with vertical gradient
+  QPainterPath fillPath = linePath;
+  fillPath.lineTo(QPointF(chartRect.right(), chartRect.bottom()));
+  fillPath.lineTo(QPointF(chartRect.left(), chartRect.bottom()));
+  fillPath.closeSubpath();
+
+  QLinearGradient gradient(0, chartRect.top(), 0, chartRect.bottom());
+  QColor          topColor = color;
+  topColor.setAlpha(88);
+  QColor midColor = color;
+  midColor.setAlpha(46);
+  QColor bottomColor = color;
+  bottomColor.setAlpha(16);
+  gradient.setColorAt(0.0, topColor);
+  gradient.setColorAt(0.55, midColor);
+  gradient.setColorAt(1.0, bottomColor);
+
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(gradient);
+  painter.drawPath(fillPath);
+
   // Draw line
   QPen linePen(color, 2.5);
   linePen.setJoinStyle(Qt::RoundJoin);
   linePen.setCapStyle(Qt::RoundCap);
   painter.setPen(linePen);
   painter.setBrush(Qt::NoBrush);
-  painter.drawPath(path);
+  painter.drawPath(linePath);
   // Draw endpoint dot
   QPointF endPoint = getPoint(data.size() - 1);
   // Outer glow
