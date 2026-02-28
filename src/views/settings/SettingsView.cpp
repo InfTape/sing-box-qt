@@ -39,7 +39,6 @@ constexpr int kGridVerticalSpacing        = 12;
 constexpr int kGridVerticalCompactSpacing = 10;
 constexpr int kToggleCardMarginH          = 16;
 constexpr int kToggleCardMarginV          = 10;
-constexpr int kToggleCardSpacing          = 30;
 constexpr int kProfileToggleHSpacing      = 20;
 constexpr int kProfileToggleVSpacing      = 10;
 constexpr int kPageMargin                 = 24;
@@ -334,12 +333,12 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   advancedLayout->addLayout(tunGrid);
   QWidget* toggleCard = new QWidget;
   toggleCard->setObjectName("SettingsToggleCard");
-  QHBoxLayout* toggleLayout = new QHBoxLayout(toggleCard);
+  FlowLayout* toggleLayout = new FlowLayout(
+      toggleCard, 0, kProfileToggleHSpacing, kProfileToggleVSpacing);
   toggleLayout->setContentsMargins(kToggleCardMarginH,
                                    kToggleCardMarginV,
                                    kToggleCardMarginH,
                                    kToggleCardMarginV);
-  toggleLayout->setSpacing(kToggleCardSpacing);
   auto addToggle = [this, toggleLayout](const QString& text,
                                         ToggleSwitch*& toggle) {
     QWidget*     item       = new QWidget;
@@ -356,7 +355,6 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
   addToggle(tr("Enable IPv6"), m_tunEnableIpv6Switch);
   addToggle(tr("Auto route"), m_tunAutoRouteSwitch);
   addToggle(tr("Strict route"), m_tunStrictRouteSwitch);
-  toggleLayout->addStretch();
   advancedLayout->addWidget(toggleCard);
   QLabel* advancedHint =
       new QLabel(tr("Changes take effect after restart or proxy re-enable."));
