@@ -7,13 +7,16 @@
 namespace GitHubMirror {
 inline QStringList prefixes() {
   return {
-      // ghproxy.net is currently the most stable in our observed environments.
+      // Legacy mirrors as tertiary fallbacks.
       "https://ghproxy.net/",
-      // Keep GitHub origin as secondary fallback (use raw URL directly).
-      "",
-      // Additional mirrors as tertiary fallbacks.
-      "https://ghproxy.com/",
-      "https://mirror.ghproxy.com/",
+      // gh-proxy.org main endpoint (recommended by upstream mirror provider).
+      "https://gh-proxy.org/",
+      // Additional mirrors with different CDN/region coverage, as secondary fallbacks.
+      "https://v6.gh-proxy.org/",
+      // Additional gh-proxy.org CDN/region mirrors.
+      "https://hk.gh-proxy.org/",
+      "https://cdn.gh-proxy.org/",
+      "https://edgeone.gh-proxy.org/"
   };
 }
 

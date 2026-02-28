@@ -6,7 +6,7 @@
 HttpClient::HttpClient(QObject* parent)
     : QObject(parent),
       m_manager(new QNetworkAccessManager(this)),
-      m_timeout(30000) {}
+      m_timeout(10000) {}
 
 HttpClient::~HttpClient() {}
 

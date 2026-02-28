@@ -662,7 +662,7 @@ void SubscriptionService::refreshSubscription(const QString& id,
     return;
   }
   QNetworkRequest request{QUrl(url)};
-  request.setTransferTimeout(30000);
+  request.setTransferTimeout(10000);
   QNetworkAccessManager* manager = new QNetworkAccessManager(this);
   QNetworkReply*         reply   = manager->get(request);
   connect(reply, &QNetworkReply::finished, this, [=]() {
