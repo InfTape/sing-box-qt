@@ -170,7 +170,7 @@ void DataUsageCard::refreshTable() {
     nameItem->setToolTip(rawLabel);
     m_topTable->setItem(i, 0, nameItem);
     auto* bar = new DataUsageBar(m_topTable);
-    bar->setLogScaledValue(total, maxTotal);
+    bar->setScaledValue(total, maxTotal);
     bar->setToolTip(tr("Upload: %1\nDownload: %2")
                         .arg(formatBytes(upload))
                         .arg(formatBytes(download)));

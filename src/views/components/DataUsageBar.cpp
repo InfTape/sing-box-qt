@@ -7,20 +7,40 @@ DataUsageBar::DataUsageBar(QWidget* parent) : QProgressBar(parent) {
   setFixedHeight(10);
 }
 
-void DataUsageBar::setLogScaledValue(qint64 total, qint64 maxTotal) {
-  setValue(calculateLogScaledValue(total, maxTotal));
+void DataUsageBar::setScaledValue(qint64 total, qint64 maxTotal) {
+  setValue(calculateScaledValue(total, maxTotal));
 }
 
-int DataUsageBar::calculateLogScaledValue(qint64 total, qint64 maxTotal) {
+int DataUsageBar::calculateScaledValue(qint64 total, qint64 maxTotal) {
   if (total <= 0 || maxTotal <= 0) {
     return 0;
   }
-  const double maxLog = qLn(static_cast<double>(maxTotal) + 1.0);
-  if (maxLog <= 0) {
+
+  double ratio = static_cast<double>(total) / static_cast<double>(maxTotal);
+  if (ratio < 0.0) {
+    ratio = 0.0;
+  } else if (ratio > 1.0) {
+    ratio = 1.0;
+  }
+  if (ratio <= 0.0) {
     return 0;
   }
-  const double currentLog = qLn(static_cast<double>(total) + 1.0);
-  const int    value      = static_cast<int>(currentLog * 1000.0 / maxLog);
+
+  // Contrast controls:
+  // kContrast: larger -> head values stand out more.
+  // gamma: larger -> tail compressed more.
+  constexpr double kContrast = 16.0;
+  constexpr double gamma     = 0.5;
+
+  const double normalizedLog =
+      qLn(1.0 + kContrast * ratio) / qLn(1.0 + kContrast);
+  const double emphasized = qPow(normalizedLog, gamma);
+  int          value      = static_cast<int>(emphasized * 1000.0 + 0.5);
+
+  // Keep non-zero entries minimally visible.
+  if (value <= 0 && total > 0) {
+    value = 12;
+  }
   if (value < 0) {
     return 0;
   }
