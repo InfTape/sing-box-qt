@@ -92,6 +92,7 @@ class SettingsView : public QWidget {
   MenuComboBox* m_downloadDetourCombo;
   ToggleSwitch* m_blockAdsSwitch;
   ToggleSwitch* m_dnsHijackSwitch;
+  ToggleSwitch* m_tunSniffOverrideDestSwitch;
   ToggleSwitch* m_enableAppGroupsSwitch;
   QLabel*       m_dnsResolverLabel = nullptr;
   QLabel*       m_urltestLabel     = nullptr;

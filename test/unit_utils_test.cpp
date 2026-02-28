@@ -92,6 +92,7 @@ struct AppSettingsScopeGuard {
   QString tunIpv4;
   QString tunIpv6;
   bool    tunEnableIpv6;
+  bool    tunSniffOverrideDestination;
   QString dnsProxy;
   QString dnsCn;
   QString dnsResolver;
@@ -119,6 +120,7 @@ struct AppSettingsScopeGuard {
         tunIpv4(s.tunIpv4()),
         tunIpv6(s.tunIpv6()),
         tunEnableIpv6(s.tunEnableIpv6()),
+        tunSniffOverrideDestination(s.tunSniffOverrideDestination()),
         dnsProxy(s.dnsProxy()),
         dnsCn(s.dnsCn()),
         dnsResolver(s.dnsResolver()),
@@ -146,6 +148,7 @@ struct AppSettingsScopeGuard {
     s.setTunIpv4(tunIpv4);
     s.setTunIpv6(tunIpv6);
     s.setTunEnableIpv6(tunEnableIpv6);
+    s.setTunSniffOverrideDestination(tunSniffOverrideDestination);
     s.setDnsProxy(dnsProxy);
     s.setDnsCn(dnsCn);
     s.setDnsResolver(dnsResolver);
@@ -225,6 +228,7 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   settings.setTunIpv4("172.19.0.1/30");
   settings.setTunEnableIpv6(true);
   settings.setTunIpv6("fdfe::1/126");
+  settings.setTunSniffOverrideDestination(false);
   settings.setMixedPort(2080);
   settings.setApiPort(29090);
   settings.setDefaultOutbound("auto");
@@ -246,6 +250,8 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QCOMPARE(tunInbound.value("address").toArray().size(), 2);
   QCOMPARE(tunInbound.value("stack").toString(), QString("mixed"));
   QCOMPARE(tunInbound.value("mtu").toInt(), 1380);
+  QVERIFY(tunInbound.contains("sniff_override_destination"));
+  QCOMPARE(tunInbound.value("sniff_override_destination").toBool(), false);
 
   const QJsonObject dnsObj = config.value("dns").toObject();
   QCOMPARE(dnsObj.value("final").toString(), ConfigConstants::DNS_PROXY);
@@ -1124,11 +1130,16 @@ void UnitUtilsTest::configMutator_shouldApplySettingsFeatureInsertions() {
                .value("download_detour")
                .toString(),
            ConfigConstants::TAG_MANUAL);
-  QVERIFY(ruleSets[cnIdx]
-              .toObject()
-              .value("url")
-              .toString()
-              .startsWith("https://gh-proxy.org/"));
+  const QString cnRuleSetUrl =
+      ruleSets[cnIdx].toObject().value("url").toString();
+  bool hasKnownMirrorPrefix = false;
+  for (const QString& prefix : GitHubMirror::prefixes()) {
+    if (cnRuleSetUrl.startsWith(prefix)) {
+      hasKnownMirrorPrefix = true;
+      break;
+    }
+  }
+  QVERIFY(hasKnownMirrorPrefix);
 }
 
 void UnitUtilsTest::subscriptionParser_shouldParseAdvancedProtocols() {

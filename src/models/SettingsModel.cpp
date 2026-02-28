@@ -24,6 +24,8 @@ SettingsModel::Data SettingsModel::load() {
   d.tunEnableIpv6   = config.value("tunEnableIpv6").toBool(false);
   d.tunAutoRoute    = config.value("tunAutoRoute").toBool(true);
   d.tunStrictRoute  = config.value("tunStrictRoute").toBool(true);
+  d.tunSniffOverrideDestination =
+      config.value("tunSniffOverrideDestination").toBool(true);
   d.defaultOutbound = config.value("defaultOutbound").toString("manual");
   d.downloadDetour  = config.value("downloadDetour").toString("manual");
   d.blockAds        = config.value("blockAds").toBool(false);
@@ -65,6 +67,7 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["tunEnableIpv6"]      = data.tunEnableIpv6;
   config["tunAutoRoute"]       = data.tunAutoRoute;
   config["tunStrictRoute"]     = data.tunStrictRoute;
+  config["tunSniffOverrideDestination"] = data.tunSniffOverrideDestination;
   config["defaultOutbound"]    = data.defaultOutbound;
   config["downloadDetour"]     = data.downloadDetour;
   config["blockAds"]           = data.blockAds;

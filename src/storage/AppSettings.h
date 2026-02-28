@@ -39,6 +39,10 @@ class AppSettings : public QObject {
 
   bool tunEnableIpv6() const { return m_tunEnableIpv6; }
 
+  bool tunSniffOverrideDestination() const {
+    return m_tunSniffOverrideDestination;
+  }
+
   void setTunEnabled(bool enabled);
   void setTunAutoRoute(bool enabled);
   void setTunStrictRoute(bool enabled);
@@ -47,6 +51,7 @@ class AppSettings : public QObject {
   void setTunIpv4(const QString& addr);
   void setTunIpv6(const QString& addr);
   void setTunEnableIpv6(bool enabled);
+  void setTunSniffOverrideDestination(bool enabled);
 
   // DNS config.
   QString dnsProxy() const { return m_dnsProxy; }
@@ -130,6 +135,7 @@ signals:
   QString m_tunIpv4;
   QString m_tunIpv6;
   bool    m_tunEnableIpv6;
+  bool    m_tunSniffOverrideDestination;
   // DNS.
   QString m_dnsProxy;
   QString m_dnsCn;

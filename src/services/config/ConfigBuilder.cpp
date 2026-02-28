@@ -292,7 +292,8 @@ QJsonArray ConfigBuilder::buildInbounds() {
     tun["stack"]                      = settings.tunStack();
     tun["mtu"]                        = settings.tunMtu();
     tun["sniff"]                      = true;
-    tun["sniff_override_destination"] = true;
+    tun["sniff_override_destination"] =
+        settings.tunSniffOverrideDestination();
     tun["route_exclude_address"] =
         QJsonArray::fromStringList(ConfigConstants::tunRouteExcludes());
     inbounds.append(tun);

@@ -23,7 +23,8 @@ AppSettings::AppSettings(QObject* parent)
       m_tunMtu(ConfigConstants::DEFAULT_TUN_MTU),
       m_tunIpv4(ConfigConstants::DEFAULT_TUN_IPV4),
       m_tunIpv6(ConfigConstants::DEFAULT_TUN_IPV6),
-      m_tunEnableIpv6(false)
+      m_tunEnableIpv6(false),
+      m_tunSniffOverrideDestination(true)
       // DNS defaults.
       ,
       m_dnsProxy(ConfigConstants::DEFAULT_DNS_PROXY),
@@ -69,6 +70,8 @@ void AppSettings::load() {
   m_tunIpv6 =
       config.value("tunIpv6").toString(ConfigConstants::DEFAULT_TUN_IPV6);
   m_tunEnableIpv6 = config.value("tunEnableIpv6").toBool(false);
+  m_tunSniffOverrideDestination =
+      config.value("tunSniffOverrideDestination").toBool(true);
   // DNS.
   m_dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
@@ -126,6 +129,7 @@ void AppSettings::save() {
   config["tunIpv4"]        = m_tunIpv4;
   config["tunIpv6"]        = m_tunIpv6;
   config["tunEnableIpv6"]  = m_tunEnableIpv6;
+  config["tunSniffOverrideDestination"] = m_tunSniffOverrideDestination;
   // DNS.
   config["dnsProxy"]    = m_dnsProxy;
   config["dnsCn"]       = m_dnsCn;
@@ -227,6 +231,14 @@ void AppSettings::setTunIpv6(const QString& addr) {
 void AppSettings::setTunEnableIpv6(bool enabled) {
   if (m_tunEnableIpv6 != enabled) {
     m_tunEnableIpv6 = enabled;
+    save();
+    emit settingsChanged();
+  }
+}
+
+void AppSettings::setTunSniffOverrideDestination(bool enabled) {
+  if (m_tunSniffOverrideDestination != enabled) {
+    m_tunSniffOverrideDestination = enabled;
     save();
     emit settingsChanged();
   }
