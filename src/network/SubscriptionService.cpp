@@ -417,7 +417,7 @@ void SubscriptionService::addUrlSubscription(const QString& url,
   }
   Logger::info(QString("Add subscription: %1 (%2)").arg(subName, trimmedUrl));
   QNetworkRequest request{QUrl(trimmedUrl)};
-  request.setRawHeader("User-Agent", "GUI.for.SingBox/v1.20.0");
+  request.setRawHeader("User-Agent", "singbox.qt/1.14.514");
   request.setTransferTimeout(30000);
   QNetworkAccessManager* manager = new QNetworkAccessManager(this);
   QNetworkReply*         reply   = manager->get(request);
