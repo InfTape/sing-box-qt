@@ -22,7 +22,7 @@ QNetworkRequest HttpClient::createRequest(const QString& url) {
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
   request.setTransferTimeout(m_timeout);
-  request.setRawHeader("User-Agent", "sing-box-qt");
+  request.setRawHeader("User-Agent", "singbox.qt/v1.14.514");
   request.setRawHeader("Accept", "application/vnd.github+json");
   if (!m_authToken.isEmpty()) {
     request.setRawHeader("Authorization",
