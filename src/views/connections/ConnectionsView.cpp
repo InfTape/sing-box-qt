@@ -242,17 +242,6 @@ void ConnectionsView::setProxyService(ProxyService* service) {
             for (int i = 0; i < conns.count(); ++i) {
               QJsonObject conn     = conns[i].toObject();
               QJsonObject metadata = conn["metadata"].toObject();
-              setCell(i, 0, metadata["sourceIP"].toString());
-              QString host = metadata["host"].toString();
-              if (host.isEmpty()) {
-                host = metadata["destinationIP"].toString();
-              }
-              if (host.isEmpty()) {
-                host = metadata["destinationIp"].toString();
-              }
-              if (host.isEmpty()) {
-                host = tr("Unknown");
-              }
               auto readPort = [](const QJsonValue& value) -> int {
                 if (value.isString()) {
                   bool      ok     = false;
@@ -266,6 +255,28 @@ void ConnectionsView::setProxyService(ProxyService* service) {
                 const int parsed = value.toVariant().toInt(&ok);
                 return ok ? parsed : 0;
               };
+              {
+                QString source = metadata["sourceIP"].toString();
+                QJsonValue srcPortValue = metadata.value("sourcePort");
+                if (srcPortValue.isUndefined()) {
+                  srcPortValue = metadata.value("source_port");
+                }
+                const int srcPort = readPort(srcPortValue);
+                if (srcPort > 0) {
+                  source += ":" + QString::number(srcPort);
+                }
+                setCell(i, 0, source);
+              }
+              QString host = metadata["host"].toString();
+              if (host.isEmpty()) {
+                host = metadata["destinationIP"].toString();
+              }
+              if (host.isEmpty()) {
+                host = metadata["destinationIp"].toString();
+              }
+              if (host.isEmpty()) {
+                host = tr("Unknown");
+              }
               QJsonValue portValue = metadata.value("destinationPort");
               if (portValue.isUndefined()) {
                 portValue = metadata.value("destination_port");
