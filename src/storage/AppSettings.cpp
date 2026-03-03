@@ -47,7 +47,7 @@ AppSettings::AppSettings(QObject* parent)
       // Outbound selection.
       ,
       m_defaultOutbound("manual"),
-      m_downloadDetour("manual") {
+      m_downloadDetour("direct") {
   load();
 }
 
@@ -102,7 +102,7 @@ void AppSettings::load() {
                          .toInt(ConfigConstants::DEFAULT_URLTEST_SAMPLES);
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
-  m_downloadDetour  = config.value("downloadDetour").toString("manual");
+  m_downloadDetour  = config.value("downloadDetour").toString("direct");
   m_rulesetBaseUrl  = config.value("rulesetBaseUrl").toString();
   if (previousApiPort != m_apiPort) {
     emit apiPortChanged(m_apiPort);

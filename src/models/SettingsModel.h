@@ -17,7 +17,7 @@ class SettingsModel {
     bool    tunStrictRoute    = true;
     bool    routeSniffEnabled = true;
     QString defaultOutbound   = "manual";
-    QString downloadDetour    = "manual";
+    QString downloadDetour    = "direct";
     QString rulesetBaseUrl;
     bool    blockAds        = false;
     bool    dnsHijack       = true;

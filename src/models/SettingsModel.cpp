@@ -26,7 +26,7 @@ SettingsModel::Data SettingsModel::load() {
   d.tunStrictRoute    = config.value("tunStrictRoute").toBool(true);
   d.routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   d.defaultOutbound   = config.value("defaultOutbound").toString("manual");
-  d.downloadDetour    = config.value("downloadDetour").toString("manual");
+  d.downloadDetour    = config.value("downloadDetour").toString("direct");
   d.rulesetBaseUrl    = config.value("rulesetBaseUrl").toString();
   d.blockAds          = config.value("blockAds").toBool(false);
   d.dnsHijack         = config.value("dnsHijack").toBool(true);
