@@ -433,6 +433,11 @@ void MainWindow::onStartStopClicked() {
   QString    error;
   const bool wasRunning =
       m_proxyUiController && m_proxyUiController->isKernelRunning();
+  if (!wasRunning && m_proxyUiController &&
+      !m_proxyUiController->isKernelInstalled()) {
+    promptOpenSettingsForKernelDownload();
+    return;
+  }
   const int stopSeq = ++m_stopCheckSeq;
   if (wasRunning) {
     QTimer::singleShot(5000, this, [this, stopSeq]() {
@@ -451,6 +456,39 @@ void MainWindow::onStartStopClicked() {
     }
     QMessageBox::warning(this, tr("Start kernel"), error);
   }
+}
+
+void MainWindow::openSettingsPage() {
+  if (!m_stackedWidget || !m_settingsView) {
+    return;
+  }
+  const int settingsIndex = m_stackedWidget->indexOf(m_settingsView);
+  if (settingsIndex < 0) {
+    return;
+  }
+  m_stackedWidget->setCurrentIndex(settingsIndex);
+  if (m_navList) {
+    m_navList->setCurrentRow(settingsIndex);
+  }
+}
+
+bool MainWindow::promptOpenSettingsForKernelDownload() {
+  QMessageBox box(this);
+  box.setIcon(QMessageBox::Warning);
+  box.setWindowTitle(tr("Kernel not installed"));
+  box.setText(tr("Kernel is not installed yet."));
+  box.setInformativeText(
+      tr("Please go to Settings and download the kernel first."));
+  box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+  auto* goToSettingsBtn =
+      box.addButton(tr("Go to Settings"), QMessageBox::AcceptRole);
+  box.setDefaultButton(goToSettingsBtn);
+  box.exec();
+  if (box.clickedButton() == goToSettingsBtn) {
+    openSettingsPage();
+    return true;
+  }
+  return false;
 }
 
 void MainWindow::updateStyle() {

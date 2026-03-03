@@ -19,6 +19,10 @@ bool ProxyUiController::isKernelRunning() const {
   return m_kernelService && m_kernelService->isRunning();
 }
 
+bool ProxyUiController::isKernelInstalled() const {
+  return m_kernelService && !m_kernelService->getKernelPath().isEmpty();
+}
+
 QString ProxyUiController::currentProxyMode() const {
   return m_proxyController ? m_proxyController->currentProxyMode()
                            : QStringLiteral("rule");

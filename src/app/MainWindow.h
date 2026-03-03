@@ -57,6 +57,8 @@ class MainWindow : public QMainWindow {
   void setupProxyUiBindings();
   void loadSettings();
   void saveSettings();
+  void openSettingsPage();
+  bool promptOpenSettingsForKernelDownload();
   void updateStyle();
   void updateNavIcons();
   void applyStartStopStyle();

@@ -22,6 +22,7 @@ class ProxyUiController : public QObject {
                              AdminActions*    adminActions,
                              QObject*         parent = nullptr);
   bool      isKernelRunning() const;
+  bool      isKernelInstalled() const;
   QString   currentProxyMode() const;
   bool      systemProxyEnabled() const;
   bool      tunModeEnabled() const;
