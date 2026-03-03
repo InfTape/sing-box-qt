@@ -18,7 +18,15 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(yaml-cpp)
 
 add_executable(sing-box-qt-unit-tests
-    unit_utils_test.cpp
+    unit_tests_main.cpp
+    config/config_builder_test.cpp
+    config/config_mutator_test.cpp
+    subscription/subscription_parser_basic_test.cpp
+    subscription/subscription_parser_advanced_test.cpp
+    utils/rule_and_ruleconfig_test.cpp
+    utils/format_and_proxy_test.cpp
+    utils/log_and_subscription_meta_test.cpp
+    utils/misc_services_test.cpp
     ../src/services/config/ConfigBuilder.cpp
     ../src/services/config/ConfigMutator.cpp
     ../src/services/rules/RuleConfigService.cpp
@@ -66,7 +74,3 @@ add_test(
         "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
         $<TARGET_FILE:sing-box-qt-unit-tests>
 )
-
-# Standalone GUI demo for debugging (test/main.cpp)
-add_executable(placeholder-bug-demo main.cpp)
-target_link_libraries(placeholder-bug-demo PRIVATE Qt6::Core Qt6::Widgets)
