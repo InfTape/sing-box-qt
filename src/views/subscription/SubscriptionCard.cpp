@@ -159,7 +159,6 @@ void SubscriptionCard::applyActiveState() {
   if (m_editConfigAction) {
     m_editConfigAction->setVisible(m_active);
   }
-
 }
 
 void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
@@ -253,10 +252,8 @@ void SubscriptionCard::updateUrlLabelText() {
     m_urlLabel->setToolTip(m_urlRawText);
     return;
   }
-  const QString elided =
-      m_urlLabel->fontMetrics().elidedText(m_urlRawText,
-                                           Qt::ElideRight,
-                                           availableWidth);
+  const QString elided = m_urlLabel->fontMetrics().elidedText(
+      m_urlRawText, Qt::ElideRight, availableWidth);
   m_urlLabel->setText(elided);
   m_urlLabel->setToolTip(m_urlRawText);
 }

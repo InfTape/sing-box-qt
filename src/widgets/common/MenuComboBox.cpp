@@ -91,8 +91,8 @@ void MenuComboBox::showPopup() {
   }
   const int menuWidth = qMax(width(), 180);
   m_menu->setFixedWidth(menuWidth);
-  QScreen* screen = QGuiApplication::screenAt(
-      mapToGlobal(QPoint(width() / 2, height() / 2)));
+  QScreen* screen =
+      QGuiApplication::screenAt(mapToGlobal(QPoint(width() / 2, height() / 2)));
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }

@@ -118,7 +118,8 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
         emitCurrentStates();
         return TunResult::Failed;
       }
-      const bool tunPrepared = m_proxyController->setTunModeEnabled(true, false);
+      const bool tunPrepared =
+          m_proxyController->setTunModeEnabled(true, false);
       if (!tunPrepared) {
         restoreSystemProxyIfNeeded();
         emitCurrentStates();

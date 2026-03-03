@@ -6,7 +6,7 @@
 #include "storage/DatabaseService.h"
 
 namespace {
-constexpr int kMaxEntriesPerType = 5000;
+constexpr int    kMaxEntriesPerType    = 5000;
 constexpr qint64 kPersistMinIntervalMs = 30 * 1000;
 
 QString normalizeProcessLabel(const QString& process) {
@@ -188,9 +188,8 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
   if (changed) {
     m_dirty = true;
   }
-  if (m_dirty &&
-      (activeIds.isEmpty() ||
-       nowMs - m_lastPersistMs >= kPersistMinIntervalMs)) {
+  if (m_dirty && (activeIds.isEmpty() ||
+                  nowMs - m_lastPersistMs >= kPersistMinIntervalMs)) {
     persistToStorage();
   }
   emit dataUsageUpdated(snapshot());
@@ -202,16 +201,18 @@ bool DataUsageTracker::pruneEntries(int maxEntriesPerType) {
   }
   bool removed = false;
   for (Type type : allTypes()) {
-    auto& map         = m_entries[static_cast<int>(type)];
+    auto&     map     = m_entries[static_cast<int>(type)];
     const int toPrune = map.size() - maxEntriesPerType;
     if (toPrune <= 0) {
       continue;
     }
+
     struct Candidate {
       QString label;
       qint64  lastSeenMs = 0;
       qint64  total      = 0;
     };
+
     QVector<Candidate> candidates;
     candidates.reserve(map.size());
     for (auto it = map.cbegin(); it != map.cend(); ++it) {

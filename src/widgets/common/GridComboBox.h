@@ -14,6 +14,7 @@ class GridComboBox : public QComboBox {
                         ThemeService* themeService = nullptr);
 
   void setWheelEnabled(bool enabled);
+
   bool isWheelEnabled() const { return m_wheelEnabled; }
 
   void setMaxColumns(int columns);
@@ -30,14 +31,14 @@ class GridComboBox : public QComboBox {
   void updatePopupLayout();
   void updateMenuStyle();
 
-  RoundedMenu* m_menu         = nullptr;
-  QWidget*     m_popupContent = nullptr;
-  QListWidget* m_listWidget   = nullptr;
-  bool         m_wheelEnabled = true;
-  int          m_maxColumns   = 3;
-  int          m_minVisibleRows = 4;
-  int          m_maxVisibleRows = 9;
-  ThemeService* m_themeService  = nullptr;
+  RoundedMenu*  m_menu           = nullptr;
+  QWidget*      m_popupContent   = nullptr;
+  QListWidget*  m_listWidget     = nullptr;
+  bool          m_wheelEnabled   = true;
+  int           m_maxColumns     = 3;
+  int           m_minVisibleRows = 4;
+  int           m_maxVisibleRows = 9;
+  ThemeService* m_themeService   = nullptr;
 };
 
 #endif  // GRIDCOMBOBOX_H

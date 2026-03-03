@@ -41,24 +41,24 @@ class SettingsView : public QWidget {
   void onKernelFinished(bool ok, const QString& message);
 
  private:
-  void      setupUI();
-  void      setupAutoSave();
-  void      scheduleAutoSave();
-  void      loadSettings();
-  bool      saveSettings(bool showError);
-  void      setDownloadUi(bool           downloading,
-                          const QString& message   = QString(),
-                          const QString& hintLevel = QString());
-  void      ensureKernelInfoLoaded();
-  QWidget*  buildProxySection();
-  QWidget*  buildProxyAdvancedSection();
-  QWidget*  buildProfileSection();
-  QWidget*  buildAppearanceSection();
-  QWidget*  buildKernelSection();
-  QLabel*   createSectionTitle(const QString& text);
-  QFrame*   createCard();
-  QLabel*   createFormLabel(const QString& text);
-  QSpinBox* createSpinBox(int min, int max, int value, bool blockWheel);
+  void           setupUI();
+  void           setupAutoSave();
+  void           scheduleAutoSave();
+  void           loadSettings();
+  bool           saveSettings(bool showError);
+  void           setDownloadUi(bool           downloading,
+                               const QString& message   = QString(),
+                               const QString& hintLevel = QString());
+  void           ensureKernelInfoLoaded();
+  QWidget*       buildProxySection();
+  QWidget*       buildProxyAdvancedSection();
+  QWidget*       buildProfileSection();
+  QWidget*       buildAppearanceSection();
+  QWidget*       buildKernelSection();
+  QLabel*        createSectionTitle(const QString& text);
+  QFrame*        createCard();
+  QLabel*        createFormLabel(const QString& text);
+  QSpinBox*      createSpinBox(int min, int max, int value, bool blockWheel);
   MenuComboBox*  createMenuComboBox(bool expanding = false);
   ElideLineEdit* createElideLineEdit(const QString& placeholder);
   void           prepareFormLabelPair(QLabel* left, QLabel* right);
@@ -69,7 +69,7 @@ class SettingsView : public QWidget {
   QString        normalizeBypassText(const QString& text) const;
   void           updateKernelVersionLabelStatus();
   QIcon          buildKernelStatusIcon(const QString& resourcePath,
-                                       int rotationDegrees = 0) const;
+                                       int            rotationDegrees = 0) const;
   void           setKernelStatusIcon(const QString& resourcePath);
   void           startKernelStatusIconSpin();
   void           stopKernelStatusIconSpin();
@@ -100,6 +100,7 @@ class SettingsView : public QWidget {
   QLineEdit*    m_dnsCnEdit;
   QLineEdit*    m_dnsResolverEdit;
   QLineEdit*    m_urltestUrlEdit;
+  QLineEdit*    m_rulesetBaseUrlEdit;
   // Appearance settings.
   MenuComboBox* m_themeCombo;
   MenuComboBox* m_languageCombo;
@@ -114,16 +115,16 @@ class SettingsView : public QWidget {
   QLineEdit*          m_kernelPathEdit;
   QTimer*             m_kernelStatusSpinTimer = nullptr;
   int                 m_kernelStatusSpinAngle = 0;
-  bool                m_kernelIsOutdated   = false;
+  bool                m_kernelIsOutdated      = false;
   QString             m_kernelInlineHintText;
   QString             m_kernelInlineHintLevel = "info";
-  bool                m_isDownloading      = false;
-  SettingsController* m_settingsController = nullptr;
-  bool                m_kernelInfoLoaded   = false;
-  bool                m_isApplyingSettings = false;
+  bool                m_isDownloading         = false;
+  SettingsController* m_settingsController    = nullptr;
+  bool                m_kernelInfoLoaded      = false;
+  bool                m_isApplyingSettings    = false;
   QString             m_inputStyleApplied;
   QString             m_comboStyle;
-  QTimer*             m_autoSaveTimer      = nullptr;
-  ThemeService*       m_themeService = nullptr;
+  QTimer*             m_autoSaveTimer = nullptr;
+  ThemeService*       m_themeService  = nullptr;
 };
 #endif  // SETTINGSVIEW_H

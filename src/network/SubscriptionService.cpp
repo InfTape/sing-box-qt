@@ -113,7 +113,8 @@ QString makeUniqueTag(const QString& preferred, const QSet<QString>& existing) {
 
 QJsonArray loadSourceNodes(const SubscriptionInfo& source,
                            ConfigRepository*       cfgRepo) {
-  QJsonArray nodes = DatabaseService::instance().getSubscriptionNodes(source.id);
+  QJsonArray nodes =
+      DatabaseService::instance().getSubscriptionNodes(source.id);
   if (nodes.isEmpty() && source.isManual && !source.useOriginalConfig &&
       !source.manualContent.trimmed().isEmpty()) {
     nodes = SubscriptionParser::extractNodesWithFallback(source.manualContent);
@@ -132,8 +133,10 @@ QJsonArray loadSourceNodes(const SubscriptionInfo& source,
     if (tag.isEmpty()) {
       continue;
     }
-    if (tag == ConfigConstants::TAG_AUTO || tag == ConfigConstants::TAG_MANUAL ||
-        tag == ConfigConstants::TAG_DIRECT || tag == ConfigConstants::TAG_BLOCK ||
+    if (tag == ConfigConstants::TAG_AUTO ||
+        tag == ConfigConstants::TAG_MANUAL ||
+        tag == ConfigConstants::TAG_DIRECT ||
+        tag == ConfigConstants::TAG_BLOCK ||
         tag == ConfigConstants::TAG_TELEGRAM ||
         tag == ConfigConstants::TAG_YOUTUBE ||
         tag == ConfigConstants::TAG_NETFLIX ||
@@ -148,8 +151,9 @@ QJsonArray loadSourceNodes(const SubscriptionInfo& source,
 }
 
 QString resolveImportGroupName(const SubscriptionInfo& source,
-                               const QJsonArray&      sourceNodes) {
-  if (source.isManual && sourceNodes.size() == 1 && sourceNodes.first().isObject()) {
+                               const QJsonArray&       sourceNodes) {
+  if (source.isManual && sourceNodes.size() == 1 &&
+      sourceNodes.first().isObject()) {
     const QString nodeTag =
         sourceNodes.first().toObject().value("tag").toString().trimmed();
     if (!nodeTag.isEmpty()) {
@@ -354,7 +358,7 @@ void SubscriptionService::syncSharedRulesToConfig(
     return normalized;
   };
   auto collectRules = [](const QStringList& setNames) {
-    QJsonArray   merged;
+    QJsonArray    merged;
     QSet<QString> signatures;
     for (const auto& name : setNames) {
       const QJsonArray rules = SharedRulesStore::loadRules(name);
@@ -362,9 +366,8 @@ void SubscriptionService::syncSharedRulesToConfig(
         if (!rule.isObject()) {
           continue;
         }
-        const QString sig =
-            QString::fromUtf8(QJsonDocument(rule.toObject())
-                                  .toJson(QJsonDocument::Compact));
+        const QString sig = QString::fromUtf8(
+            QJsonDocument(rule.toObject()).toJson(QJsonDocument::Compact));
         if (signatures.contains(sig)) {
           continue;
         }
@@ -378,7 +381,7 @@ void SubscriptionService::syncSharedRulesToConfig(
   const QStringList cleanupSetNames  = cleanupRuleSets.isEmpty()
                                            ? selectedSetNames
                                            : normalizeSetNames(cleanupRuleSets);
-  const QJsonArray cleanupRules = collectRules(cleanupSetNames);
+  const QJsonArray  cleanupRules     = collectRules(cleanupSetNames);
   if (!cleanupRules.isEmpty()) {
     ConfigMutator::applySharedRules(config, cleanupRules, false);
   }
@@ -744,13 +747,13 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
   }
   const QStringList oldRuleSets          = sub->ruleSets;
   const bool        oldEnableSharedRules = sub->enableSharedRules;
-  sub->name                               = name.trimmed();
-  sub->url                                = url.trimmed();
-  sub->isManual                           = isManual;
-  sub->manualContent                      = manualContent;
-  sub->useOriginalConfig                  = useOriginalConfig;
-  sub->autoUpdateIntervalMinutes          = autoUpdateIntervalMinutes;
-  sub->enableSharedRules                  = enableSharedRules;
+  sub->name                              = name.trimmed();
+  sub->url                               = url.trimmed();
+  sub->isManual                          = isManual;
+  sub->manualContent                     = manualContent;
+  sub->useOriginalConfig                 = useOriginalConfig;
+  sub->autoUpdateIntervalMinutes         = autoUpdateIntervalMinutes;
+  sub->enableSharedRules                 = enableSharedRules;
   sub->ruleSets = ruleSets.isEmpty() ? QStringList{"default"} : ruleSets;
   QStringList cleanupRuleSets = oldRuleSets;
   for (const auto& setName : sub->ruleSets) {
@@ -760,13 +763,15 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
   }
   saveToDatabase();
   syncSharedRulesToConfig(*sub, cleanupRuleSets);
-  emit subscriptionUpdated(id);
-  const bool sharedRulesChanged = sub->ruleSets != oldRuleSets ||
-                                  sub->enableSharedRules != oldEnableSharedRules;
-  const bool isActiveSubscription = m_activeIndex >= 0 &&
-                                    m_activeIndex < m_subscriptions.count() &&
-                                    m_subscriptions[m_activeIndex].id == sub->id;
-  if (sharedRulesChanged && isActiveSubscription && !sub->configPath.isEmpty()) {
+  emit       subscriptionUpdated(id);
+  const bool sharedRulesChanged =
+      sub->ruleSets != oldRuleSets ||
+      sub->enableSharedRules != oldEnableSharedRules;
+  const bool isActiveSubscription =
+      m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count() &&
+      m_subscriptions[m_activeIndex].id == sub->id;
+  if (sharedRulesChanged && isActiveSubscription &&
+      !sub->configPath.isEmpty()) {
     emit applyConfigRequested(sub->configPath, true);
   }
 }
@@ -849,9 +854,9 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
     return false;
   }
 
-  QSet<QString>             existingTags;
-  QHash<QString, QString>   signatureToTag;
-  auto registerOutbound = [&](const QJsonObject& outbound) {
+  QSet<QString>           existingTags;
+  QHash<QString, QString> signatureToTag;
+  auto                    registerOutbound = [&](const QJsonObject& outbound) {
     const QString tag = outbound.value("tag").toString().trimmed();
     if (!tag.isEmpty()) {
       existingTags.insert(tag);
@@ -916,7 +921,7 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
     desiredGroupTag += "-import";
   }
   QString finalGroupTag = desiredGroupTag;
-  int           groupIndex      = -1;
+  int     groupIndex    = -1;
   for (int i = 0; i < outbounds.size(); ++i) {
     if (!outbounds[i].isObject()) {
       continue;
@@ -939,8 +944,8 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
   }
 
   if (groupIndex >= 0) {
-    QJsonObject groupObj = outbounds[groupIndex].toObject();
-    QStringList members;
+    QJsonObject      groupObj = outbounds[groupIndex].toObject();
+    QStringList      members;
     const QJsonArray current = groupObj.value("outbounds").toArray();
     for (const auto& item : current) {
       const QString member = item.toString().trimmed();
@@ -975,7 +980,7 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
         ob.value("type").toString() != "selector") {
       continue;
     }
-    QStringList members;
+    QStringList      members;
     const QJsonArray current = ob.value("outbounds").toArray();
     for (const auto& item : current) {
       const QString member = item.toString().trimmed();
@@ -1001,7 +1006,7 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
 }
 
 bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
-                                                       QString*       error) {
+                                                      QString*       error) {
   auto setError = [this, error](const QString& msg) {
     if (error) {
       *error = msg;
@@ -1041,7 +1046,7 @@ bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
     }
     const QJsonObject ob = outbounds[i].toObject();
     if (ob.value("tag").toString() == groupTag) {
-      groupIndex = i;
+      groupIndex               = i;
       const QJsonArray members = ob.value("outbounds").toArray();
       for (const auto& m : members) {
         const QString tag = m.toString().trimmed();
@@ -1104,15 +1109,15 @@ bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
         ob.value("type").toString() != "selector") {
       continue;
     }
-    QJsonArray  current = ob.value("outbounds").toArray();
-    QJsonArray  filtered;
+    QJsonArray current = ob.value("outbounds").toArray();
+    QJsonArray filtered;
     for (const auto& item : current) {
       if (item.toString().trimmed() != groupTag) {
         filtered.append(item);
       }
     }
-    ob["outbounds"]  = filtered;
-    newOutbounds[i]  = ob;
+    ob["outbounds"] = filtered;
+    newOutbounds[i] = ob;
     break;
   }
 
@@ -1121,7 +1126,7 @@ bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
   if (config.contains("route") && config["route"].isObject()) {
     QJsonObject route = config.value("route").toObject();
     if (route.contains("rules") && route["rules"].isArray()) {
-      QJsonArray rules = route.value("rules").toArray();
+      QJsonArray rules   = route.value("rules").toArray();
       bool       changed = false;
       for (int i = 0; i < rules.size(); ++i) {
         if (!rules[i].isObject()) {
@@ -1152,7 +1157,8 @@ bool SubscriptionService::removeGroupFromActiveConfig(const QString& groupTag,
 
 void SubscriptionService::syncRuleSetToSubscriptions(
     const QString& ruleSetName) {
-  const QString name = ruleSetName.isEmpty() ? QStringLiteral("default") : ruleSetName;
+  const QString name =
+      ruleSetName.isEmpty() ? QStringLiteral("default") : ruleSetName;
   for (auto& sub : m_subscriptions) {
     if (!sub.enableSharedRules) {
       continue;
@@ -1191,7 +1197,8 @@ void SubscriptionService::syncAllRuleSetsToSubscriptions() {
   }
 }
 
-void SubscriptionService::requestCoalescedApplyConfig(const QString& configPath) {
+void SubscriptionService::requestCoalescedApplyConfig(
+    const QString& configPath) {
   if (configPath.isEmpty()) {
     return;
   }

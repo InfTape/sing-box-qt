@@ -27,37 +27,36 @@
 #include "widgets/common/ToggleSwitch.h"
 
 namespace {
-constexpr int kLanguageDefaultIndex       = 1;
-constexpr int kSpinBoxHeight              = 36;
-constexpr int kControlMinWidth            = 150;
-constexpr int kControlMinWidthCompact     = 110;
-constexpr int kCardMargin                 = 20;
-constexpr int kSectionSpacing             = 12;
-constexpr int kCardSpacing                = 16;
-constexpr int kGridHorizontalSpacing      = 16;
-constexpr int kGridVerticalSpacing        = 12;
-constexpr int kGridVerticalCompactSpacing = 10;
-constexpr int kToggleCardMarginH          = 16;
-constexpr int kToggleCardMarginV          = 10;
-constexpr int kProfileToggleHSpacing      = 20;
-constexpr int kProfileToggleVSpacing      = 10;
-constexpr int kPageMargin                 = 24;
-constexpr int kTitleSpacing               = 4;
-constexpr int kBypassEditHeight           = 96;
-constexpr int kKernelFormSpacing          = 15;
-constexpr int kKernelStatusIconSize       = 18;
-constexpr int kKernelStatusButtonSize     = 26;
-constexpr int kKernelStatusSpinIntervalMs = 80;
-constexpr int kKernelStatusSpinStepDeg    = 24;
-constexpr int kSectionPaddingReserve      = 170;
-constexpr int kMinRoutingWrapWidth        = 1200;
-constexpr int kMinDnsWrapWidth            = 1180;
-constexpr int kAutoSaveDebounceMs         = 450;
-constexpr auto kKernelIconClockwise       = ":/icons/clockwise.svg";
+constexpr int  kLanguageDefaultIndex       = 1;
+constexpr int  kSpinBoxHeight              = 36;
+constexpr int  kControlMinWidth            = 150;
+constexpr int  kControlMinWidthCompact     = 110;
+constexpr int  kCardMargin                 = 20;
+constexpr int  kSectionSpacing             = 12;
+constexpr int  kCardSpacing                = 16;
+constexpr int  kGridHorizontalSpacing      = 16;
+constexpr int  kGridVerticalSpacing        = 12;
+constexpr int  kGridVerticalCompactSpacing = 10;
+constexpr int  kToggleCardMarginH          = 16;
+constexpr int  kToggleCardMarginV          = 10;
+constexpr int  kProfileToggleHSpacing      = 20;
+constexpr int  kProfileToggleVSpacing      = 10;
+constexpr int  kPageMargin                 = 24;
+constexpr int  kTitleSpacing               = 4;
+constexpr int  kBypassEditHeight           = 96;
+constexpr int  kKernelFormSpacing          = 15;
+constexpr int  kKernelStatusIconSize       = 18;
+constexpr int  kKernelStatusButtonSize     = 26;
+constexpr int  kKernelStatusSpinIntervalMs = 80;
+constexpr int  kKernelStatusSpinStepDeg    = 24;
+constexpr int  kSectionPaddingReserve      = 170;
+constexpr int  kMinRoutingWrapWidth        = 1200;
+constexpr int  kMinDnsWrapWidth            = 1180;
+constexpr int  kAutoSaveDebounceMs         = 450;
+constexpr auto kKernelIconClockwise        = ":/icons/clockwise.svg";
 constexpr auto kKernelIconCounterclockwise = ":/icons/counterclockwise.svg";
-constexpr auto kKernelIconDownload        = ":/icons/download.svg";
-constexpr auto kKernelIconExclamation =
-    ":/icons/exclamationmarkclockwise.svg";
+constexpr auto kKernelIconDownload         = ":/icons/download.svg";
+constexpr auto kKernelIconExclamation = ":/icons/exclamationmarkclockwise.svg";
 
 QIcon colorizedSvgIcon(const QString& resourcePath,
                        int            size,
@@ -399,6 +398,11 @@ QWidget* SettingsView::buildProfileSection() {
   routingGrid->addWidget(m_defaultOutboundCombo, 0, 1);
   routingGrid->addWidget(m_downloadDetourLabel, 0, 2);
   routingGrid->addWidget(m_downloadDetourCombo, 0, 3);
+  m_rulesetBaseUrlEdit =
+      createElideLineEdit(ConfigConstants::DEFAULT_RULESET_BASE_URL);
+  QLabel* rulesetBaseUrlLabel = createFormLabel(tr("Ruleset base URL"));
+  routingGrid->addWidget(rulesetBaseUrlLabel, 1, 0);
+  routingGrid->addWidget(m_rulesetBaseUrlEdit, 1, 1, 1, 3);
   singboxProfileCardLayout->addLayout(routingGrid);
   QWidget* profileToggleCard = new QWidget;
   profileToggleCard->setObjectName("SettingsToggleCard");
@@ -533,8 +537,7 @@ QWidget* SettingsView::buildKernelSection() {
   m_kernelDownloadProgress->setTextVisible(true);
   m_kernelDownloadProgress->setVisible(false);
   QWidget*     installedVersionWidget = new QWidget;
-  QHBoxLayout* installedVersionLayout =
-      new QHBoxLayout(installedVersionWidget);
+  QHBoxLayout* installedVersionLayout = new QHBoxLayout(installedVersionWidget);
   installedVersionLayout->setContentsMargins(0, 0, 0, 0);
   installedVersionLayout->setSpacing(8);
   installedVersionLayout->addWidget(m_kernelVersionLabel);
@@ -639,10 +642,10 @@ void SettingsView::setupAutoSave() {
     if (!spin) {
       return;
     }
-    connect(spin,
-            QOverload<int>::of(&QSpinBox::valueChanged),
-            this,
-            [this](int) { scheduleAutoSave(); });
+    connect(
+        spin, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int) {
+          scheduleAutoSave();
+        });
   };
   auto connectCombo = [this](QComboBox* combo) {
     if (!combo) {
@@ -665,8 +668,9 @@ void SettingsView::setupAutoSave() {
     if (!toggle) {
       return;
     }
-    connect(
-        toggle, &ToggleSwitch::toggled, this, [this](bool) { scheduleAutoSave(); });
+    connect(toggle, &ToggleSwitch::toggled, this, [this](bool) {
+      scheduleAutoSave();
+    });
   };
 
   connectSpin(m_mixedPortSpin);
@@ -679,9 +683,10 @@ void SettingsView::setupAutoSave() {
   connect(m_autoStartCheck, &QCheckBox::toggled, this, [this](bool) {
     scheduleAutoSave();
   });
-  connect(m_systemProxyBypassEdit, &QPlainTextEdit::textChanged, this, [this]() {
-    scheduleAutoSave();
-  });
+  connect(
+      m_systemProxyBypassEdit, &QPlainTextEdit::textChanged, this, [this]() {
+        scheduleAutoSave();
+      });
   connectToggle(m_tunEnableIpv6Switch);
   connectToggle(m_tunAutoRouteSwitch);
   connectToggle(m_tunStrictRouteSwitch);
@@ -693,6 +698,7 @@ void SettingsView::setupAutoSave() {
   connectLine(m_dnsCnEdit);
   connectLine(m_dnsResolverEdit);
   connectLine(m_urltestUrlEdit);
+  connectLine(m_rulesetBaseUrlEdit);
 }
 
 void SettingsView::scheduleAutoSave() {
@@ -849,11 +855,11 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
       (m_defaultOutboundCombo->currentIndex() == 1) ? "auto" : "manual";
   data.downloadDetour =
       (m_downloadDetourCombo->currentIndex() == 0) ? "manual" : "direct";
-  data.blockAds        = m_blockAdsSwitch->isChecked();
-  data.dnsHijack       = m_dnsHijackSwitch->isChecked();
+  data.blockAds          = m_blockAdsSwitch->isChecked();
+  data.dnsHijack         = m_dnsHijackSwitch->isChecked();
   data.routeSniffEnabled = m_routeSniffSwitch->isChecked();
-  data.enableAppGroups = m_enableAppGroupsSwitch->isChecked();
-  data.dnsProxy        = SettingsHelpers::resolveTextOrDefault(
+  data.enableAppGroups   = m_enableAppGroupsSwitch->isChecked();
+  data.dnsProxy          = SettingsHelpers::resolveTextOrDefault(
       m_dnsProxyEdit, ConfigConstants::DEFAULT_DNS_PROXY);
   data.dnsCn = SettingsHelpers::resolveTextOrDefault(
       m_dnsCnEdit, ConfigConstants::DEFAULT_DNS_CN);
@@ -861,6 +867,8 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
       m_dnsResolverEdit, ConfigConstants::DEFAULT_DNS_RESOLVER);
   data.urltestUrl = SettingsHelpers::resolveTextOrDefault(
       m_urltestUrlEdit, ConfigConstants::DEFAULT_URLTEST_URL);
+  data.rulesetBaseUrl =
+      m_rulesetBaseUrlEdit ? m_rulesetBaseUrlEdit->text().trimmed() : QString();
 }
 
 void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
@@ -891,6 +899,9 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   m_dnsCnEdit->setText(data.dnsCn);
   m_dnsResolverEdit->setText(data.dnsResolver);
   m_urltestUrlEdit->setText(data.urltestUrl);
+  if (m_rulesetBaseUrlEdit) {
+    m_rulesetBaseUrlEdit->setText(data.rulesetBaseUrl);
+  }
   {
     QSignalBlocker blocker(m_themeCombo);
     if (m_themeCombo) {
@@ -953,9 +964,8 @@ void SettingsView::onKernelStatusIconClicked() {
   const bool selectedDiffersFromInstalled =
       hasInstalled && explicitVersionSelected &&
       (selectedVersion != m_installedKernelVersion);
-  const bool shouldDownload =
-      !hasInstalled || selectedDiffersFromInstalled ||
-      (hasInstalled && hasLatest && !isLatest);
+  const bool shouldDownload = !hasInstalled || selectedDiffersFromInstalled ||
+                              (hasInstalled && hasLatest && !isLatest);
 
   if (shouldDownload) {
     if (isOutdated) {
@@ -1025,8 +1035,8 @@ QIcon SettingsView::buildKernelStatusIcon(const QString& resourcePath,
   } else if (resourcePath == kKernelIconExclamation) {
     colorKey = m_kernelIsOutdated ? "warning" : "error";
   }
-  QColor iconColor = m_themeService ? m_themeService->color(colorKey)
-                                    : QColor("#64748b");
+  QColor iconColor =
+      m_themeService ? m_themeService->color(colorKey) : QColor("#64748b");
   if (!iconColor.isValid()) {
     iconColor = QColor("#64748b");
   }
@@ -1093,8 +1103,8 @@ void SettingsView::updateKernelVersionLabelStatus() {
   const bool isLatest     = hasInstalled && hasLatest &&
                         (m_installedKernelVersion == m_latestKernelVersion);
   const bool isOutdated = hasInstalled && hasLatest && !isLatest;
-  const bool isHealthy = hasInstalled && hasLatest && isLatest;
-  m_kernelIsOutdated   = isOutdated;
+  const bool isHealthy  = hasInstalled && hasLatest && isLatest;
+  m_kernelIsOutdated    = isOutdated;
   if (m_isDownloading) {
     setKernelStatusIcon(kKernelIconClockwise);
   } else if (!hasInstalled) {

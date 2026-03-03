@@ -31,28 +31,27 @@ class SubscriptionCard : public QFrame {
   void deleteClicked(const QString& id);
   void copyLinkClicked(const QString& id);
 
-
  private:
-  void          setupUI(const SubscriptionInfo& info);
-  void          applyActiveState();
-  void          updateStyle();
-  void          updateUrlLabelText();
-  void          resizeEvent(QResizeEvent* event) override;
-  bool          eventFilter(QObject* watched, QEvent* event) override;
-  QString       m_subId;
-  bool          m_active           = false;
-  QLabel*       m_nameLabel        = nullptr;
-  QLabel*       m_typeTag          = nullptr;
-  QLabel*       m_statusTag        = nullptr;
-  QLabel*       m_scheduleTag      = nullptr;
-  QLabel*       m_urlLabel         = nullptr;
-  QLabel*       m_timeLabel        = nullptr;
-  QLabel*       m_trafficLabel     = nullptr;
-  QLabel*       m_expireLabel      = nullptr;
-  QPushButton*  m_useBtn           = nullptr;
-  QAction*      m_editConfigAction = nullptr;
+  void         setupUI(const SubscriptionInfo& info);
+  void         applyActiveState();
+  void         updateStyle();
+  void         updateUrlLabelText();
+  void         resizeEvent(QResizeEvent* event) override;
+  bool         eventFilter(QObject* watched, QEvent* event) override;
+  QString      m_subId;
+  bool         m_active           = false;
+  QLabel*      m_nameLabel        = nullptr;
+  QLabel*      m_typeTag          = nullptr;
+  QLabel*      m_statusTag        = nullptr;
+  QLabel*      m_scheduleTag      = nullptr;
+  QLabel*      m_urlLabel         = nullptr;
+  QLabel*      m_timeLabel        = nullptr;
+  QLabel*      m_trafficLabel     = nullptr;
+  QLabel*      m_expireLabel      = nullptr;
+  QPushButton* m_useBtn           = nullptr;
+  QAction*     m_editConfigAction = nullptr;
 
-  ThemeService* m_themeService     = nullptr;
+  ThemeService* m_themeService = nullptr;
   QString       m_urlRawText;
 };
 #endif  // SUBSCRIPTIONCARD_H

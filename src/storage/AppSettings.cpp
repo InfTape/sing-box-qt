@@ -52,8 +52,8 @@ AppSettings::AppSettings(QObject* parent)
 }
 
 void AppSettings::load() {
-  const int previousApiPort = m_apiPort;
-  QJsonObject config = DatabaseService::instance().getAppConfig();
+  const int   previousApiPort = m_apiPort;
+  QJsonObject config          = DatabaseService::instance().getAppConfig();
   // Ports.
   m_mixedPort =
       config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
@@ -77,10 +77,10 @@ void AppSettings::load() {
   m_dnsResolver = config.value("dnsResolver")
                       .toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
   // Feature flags.
-  m_blockAds        = config.value("blockAds").toBool(false);
-  m_enableAppGroups = config.value("enableAppGroups").toBool(false);
-  m_preferIpv6      = config.value("preferIpv6").toBool(false);
-  m_dnsHijack       = config.value("dnsHijack").toBool(true);
+  m_blockAds          = config.value("blockAds").toBool(false);
+  m_enableAppGroups   = config.value("enableAppGroups").toBool(false);
+  m_preferIpv6        = config.value("preferIpv6").toBool(false);
+  m_dnsHijack         = config.value("dnsHijack").toBool(true);
   m_routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   if (config.contains("systemProxyEnabled")) {
     m_systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
@@ -103,6 +103,7 @@ void AppSettings::load() {
   // Outbound selection.
   m_defaultOutbound = config.value("defaultOutbound").toString("manual");
   m_downloadDetour  = config.value("downloadDetour").toString("manual");
+  m_rulesetBaseUrl  = config.value("rulesetBaseUrl").toString();
   if (previousApiPort != m_apiPort) {
     emit apiPortChanged(m_apiPort);
   }
@@ -149,6 +150,7 @@ void AppSettings::save() {
   // Outbound selection.
   config["defaultOutbound"] = m_defaultOutbound;
   config["downloadDetour"]  = m_downloadDetour;
+  config["rulesetBaseUrl"]  = m_rulesetBaseUrl;
   DatabaseService::instance().saveAppConfig(config);
   Logger::info("App settings saved");
 }
@@ -367,6 +369,14 @@ void AppSettings::setDefaultOutbound(const QString& outbound) {
 void AppSettings::setDownloadDetour(const QString& detour) {
   if (m_downloadDetour != detour) {
     m_downloadDetour = detour;
+    save();
+    emit settingsChanged();
+  }
+}
+
+void AppSettings::setRulesetBaseUrl(const QString& url) {
+  if (m_rulesetBaseUrl != url) {
+    m_rulesetBaseUrl = url;
     save();
     emit settingsChanged();
   }

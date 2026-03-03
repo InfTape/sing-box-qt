@@ -7,6 +7,7 @@ class DataUsageBar : public QProgressBar {
  public:
   explicit DataUsageBar(QWidget* parent = nullptr);
   void setScaledValue(qint64 total, qint64 maxTotal);
+
   void setLogScaledValue(qint64 total, qint64 maxTotal) {
     setScaledValue(total, maxTotal);
   }

@@ -38,7 +38,7 @@ QStringList splitBracketListValues(const QString& raw) {
       continue;
     }
     if (ch == '"' || ch == '\'') {
-      inQuote  = true;
+      inQuote   = true;
       quoteChar = ch;
       continue;
     }
@@ -242,7 +242,8 @@ bool buildRuleLookupInput(const RuleItem& rule, RuleLookupInput* out) {
   }
   QString     key;
   QStringList values;
-  if (!RuleConfigService::parseRulePayload(rule.payload, &key, &values, nullptr)) {
+  if (!RuleConfigService::parseRulePayload(
+          rule.payload, &key, &values, nullptr)) {
     return false;
   }
   out->key                 = key;
@@ -272,7 +273,7 @@ QStringList lookupComparableValues(const QJsonObject& obj, const QString& key) {
   return comparableValuesFromJson(obj.value(key));
 }
 
-bool valuesMatchForLookup(const QStringList& actualValuesRaw,
+bool valuesMatchForLookup(const QStringList&     actualValuesRaw,
                           const RuleLookupInput& lookup) {
   QStringList actualValues;
   actualValues.reserve(actualValuesRaw.size());
@@ -301,9 +302,9 @@ bool valuesMatchForLookup(const QStringList& actualValuesRaw,
   return true;
 }
 
-bool ruleObjectMatchesForLookup(const QJsonObject& obj,
+bool ruleObjectMatchesForLookup(const QJsonObject&     obj,
                                 const RuleLookupInput& lookup,
-                                bool compareOutbound) {
+                                bool                   compareOutbound) {
   if (obj.contains("action") && obj.value("action").toString() != "route") {
     return false;
   }
@@ -354,8 +355,8 @@ QString findRuleSetByPayload(const RuleItem& rule) {
   if (!buildRuleLookupInput(rule, &lookup)) {
     return QString();
   }
-  const QStringList  setNames = SharedRulesStore::listRuleSets();
-  QList<QJsonArray>  rulesBySet;
+  const QStringList setNames = SharedRulesStore::listRuleSets();
+  QList<QJsonArray> rulesBySet;
   rulesBySet.reserve(setNames.size());
   for (const auto& setName : setNames) {
     rulesBySet.append(SharedRulesStore::loadRules(setName));
@@ -462,7 +463,7 @@ QString RuleConfigService::activeConfigPath(ConfigRepository* cfgRepo) {
 
 QString RuleConfigService::findRuleSet(ConfigRepository* /*cfgRepo*/,
                                        const RuleItem& rule) {
-  const QJsonObject obj = buildRouteRuleFromItem(rule, nullptr);
+  const QJsonObject obj     = buildRouteRuleFromItem(rule, nullptr);
   const QString     setName = SharedRulesStore::findSetOfRule(obj);
   if (!setName.isEmpty()) {
     return setName;
@@ -625,7 +626,7 @@ bool RuleConfigService::updateRule(ConfigRepository*   cfgRepo,
     }
     return false;
   }
-  const QString targetSet  = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
+  const QString targetSet = data.ruleSet.isEmpty() ? "default" : data.ruleSet;
   if (updated) {
     RuleItem item;
     item.type     = data.field.key;
@@ -708,13 +709,12 @@ bool RuleConfigService::parseRulePayload(const QString& payload,
     }
     return false;
   }
-  const QString foundKey     = trimmed.left(eq).trimmed();
-  const QString valueStr     = trimmed.mid(eq + 1).trimmed();
+  const QString foundKey = trimmed.left(eq).trimmed();
+  const QString valueStr = trimmed.mid(eq + 1).trimmed();
   QStringList   parsedValues;
   if (valueStr.startsWith('[') && valueStr.endsWith(']')) {
-    const QString bracketInner =
-        valueStr.mid(1, valueStr.size() - 2).trimmed();
-    parsedValues = splitBracketListValues(bracketInner);
+    const QString bracketInner = valueStr.mid(1, valueStr.size() - 2).trimmed();
+    parsedValues               = splitBracketListValues(bracketInner);
   } else {
     parsedValues = valueStr.split(',', Qt::SkipEmptyParts);
   }

@@ -88,7 +88,7 @@ void MultiSelectMenuBox::rebuildMenu() {
       m_menu->addSeparator();
     }
     const QString& name = m_options[i];
-    QAction* act = m_menu->addAction(name);
+    QAction*       act  = m_menu->addAction(name);
     act->setCheckable(true);
     act->setChecked(m_selected.contains(name));
     connect(act, &QAction::triggered, this, [this, name, act]() {

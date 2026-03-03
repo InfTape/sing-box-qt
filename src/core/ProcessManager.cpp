@@ -18,8 +18,7 @@ QString normalizeProcessPath(const QString& path) {
 }
 
 QString queryProcessPathByPid(DWORD pid) {
-  HANDLE process =
-      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
   if (!process) {
     return QString();
   }
@@ -79,7 +78,7 @@ QList<ProcessInfo> ProcessManager::findProcessesByPath(const QString& path) {
   pe32.dwSize = sizeof(pe32);
   if (Process32FirstW(hSnapshot, &pe32)) {
     do {
-      const DWORD pid         = pe32.th32ProcessID;
+      const DWORD   pid       = pe32.th32ProcessID;
       const QString imagePath = queryProcessPathByPid(pid);
       if (normalizeProcessPath(imagePath) != targetPath) {
         continue;

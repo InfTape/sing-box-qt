@@ -135,7 +135,7 @@ void ProxyService::fetchConnections() {
     return;
   }
   m_connectionsInFlight = true;
-  QString url = buildApiUrl("/connections");
+  QString url           = buildApiUrl("/connections");
   m_httpClient->get(url, [this](bool success, const QByteArray& data) {
     m_connectionsInFlight = false;
     if (success) {

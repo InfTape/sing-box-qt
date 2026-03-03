@@ -30,12 +30,12 @@ bool isPreReleaseTag(const QString& tag) {
 }
 
 QStringList extractVersionsFromReleasesHtml(const QByteArray& htmlData) {
-  const QString html = QString::fromUtf8(htmlData);
+  const QString      html = QString::fromUtf8(htmlData);
   QRegularExpression re(
       R"(\/SagerNet\/sing-box\/releases\/tag\/v?(\d+\.\d+\.\d+(?:-[A-Za-z0-9._-]+)?))");
-  QStringList versions;
+  QStringList   versions;
   QSet<QString> seen;
-  auto matchIt = re.globalMatch(html);
+  auto          matchIt = re.globalMatch(html);
   while (matchIt.hasNext()) {
     const QString tag = matchIt.next().captured(1).trimmed();
     if (tag.isEmpty() || isPreReleaseTag(tag) || seen.contains(tag)) {
@@ -71,7 +71,8 @@ QStringList KernelManager::kernelReleasesApiUrls() const {
 }
 
 QStringList KernelManager::kernelReleasesPageUrls() const {
-  return GitHubMirror::buildUrls("https://github.com/SagerNet/sing-box/releases");
+  return GitHubMirror::buildUrls(
+      "https://github.com/SagerNet/sing-box/releases");
 }
 
 void KernelManager::refreshInstalledInfo() {
@@ -84,79 +85,78 @@ void KernelManager::fetchReleaseList() {
   if (!m_httpClient) {
     return;
   }
-  const QStringList apiUrls  = kernelReleasesApiUrls();
-  const QStringList pageUrls = kernelReleasesPageUrls();
-  auto tryPageFetch = std::make_shared<std::function<void(int)>>();
-  *tryPageFetch = [this, pageUrls, tryPageFetch](int index) {
+  const QStringList apiUrls      = kernelReleasesApiUrls();
+  const QStringList pageUrls     = kernelReleasesPageUrls();
+  auto              tryPageFetch = std::make_shared<std::function<void(int)>>();
+  *tryPageFetch                  = [this, pageUrls, tryPageFetch](int index) {
     if (index >= pageUrls.size()) {
       Logger::warn(tr("Failed to fetch kernel version list"));
       emit releasesReady(QStringList(), QString());
       return;
     }
     const QString url = pageUrls.at(index);
-    m_httpClient->get(
-        url,
-        [this, pageUrls, index, tryPageFetch](bool success,
-                                               const QByteArray& data) {
-          if (!success) {
-            (*tryPageFetch)(index + 1);
-            return;
-          }
-          const QStringList versions = extractVersionsFromReleasesHtml(data);
-          if (versions.isEmpty()) {
-            (*tryPageFetch)(index + 1);
-            return;
-          }
-          m_latestKernelVersion = versions.first();
-          emit releasesReady(versions, m_latestKernelVersion);
-        });
+    m_httpClient->get(url,
+                      [this, pageUrls, index, tryPageFetch](
+                          bool success, const QByteArray& data) {
+                        if (!success) {
+                          (*tryPageFetch)(index + 1);
+                          return;
+                        }
+                        const QStringList versions =
+                            extractVersionsFromReleasesHtml(data);
+                        if (versions.isEmpty()) {
+                          (*tryPageFetch)(index + 1);
+                          return;
+                        }
+                        m_latestKernelVersion = versions.first();
+                        emit releasesReady(versions, m_latestKernelVersion);
+                      });
   };
 
   auto tryApiFetch = std::make_shared<std::function<void(int)>>();
-  *tryApiFetch = [this, apiUrls, tryApiFetch, tryPageFetch](int index) {
+  *tryApiFetch     = [this, apiUrls, tryApiFetch, tryPageFetch](int index) {
     if (index >= apiUrls.size()) {
       (*tryPageFetch)(0);
       return;
     }
     const QString url = apiUrls.at(index);
-    m_httpClient->get(
-        url,
-        [this, apiUrls, index, tryApiFetch, tryPageFetch](
-            bool success, const QByteArray& data) {
-          if (!success) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          QJsonDocument doc = QJsonDocument::fromJson(data);
-          if (!doc.isArray()) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          QStringList      versions;
-          const QJsonArray arr = doc.array();
-          for (const QJsonValue& item : arr) {
-            const QJsonObject obj = item.toObject();
-            const bool prerelease = obj.value("prerelease").toBool(false);
-            if (prerelease) {
-              continue;
-            }
-            const QString tag = obj.value("tag_name").toString();
-            if (tag.isEmpty() || isPreReleaseTag(tag)) {
-              continue;
-            }
-            versions.append(normalizeVersionTag(tag));
-          }
-          if (versions.isEmpty()) {
-            (*tryApiFetch)(index + 1);
-            return;
-          }
-          m_latestKernelVersion = versions.first();
-          emit releasesReady(versions, m_latestKernelVersion);
-        });
+    m_httpClient->get(url,
+                      [this, apiUrls, index, tryApiFetch, tryPageFetch](
+                          bool success, const QByteArray& data) {
+                        if (!success) {
+                          (*tryApiFetch)(index + 1);
+                          return;
+                        }
+                        QJsonDocument doc = QJsonDocument::fromJson(data);
+                        if (!doc.isArray()) {
+                          (*tryApiFetch)(index + 1);
+                          return;
+                        }
+                        QStringList      versions;
+                        const QJsonArray arr = doc.array();
+                        for (const QJsonValue& item : arr) {
+                          const QJsonObject obj = item.toObject();
+                          const bool        prerelease =
+                              obj.value("prerelease").toBool(false);
+                          if (prerelease) {
+                            continue;
+                          }
+                          const QString tag = obj.value("tag_name").toString();
+                          if (tag.isEmpty() || isPreReleaseTag(tag)) {
+                            continue;
+                          }
+                          versions.append(normalizeVersionTag(tag));
+                        }
+                        if (versions.isEmpty()) {
+                          (*tryApiFetch)(index + 1);
+                          return;
+                        }
+                        m_latestKernelVersion = versions.first();
+                        emit releasesReady(versions, m_latestKernelVersion);
+                      });
   };
   (*tryApiFetch)(0);
 }
-
 
 void KernelManager::downloadAndInstall(const QString& versionOrEmpty) {
   if (m_isDownloading) {
@@ -237,7 +237,7 @@ void KernelManager::tryDownloadUrl(int                index,
         }
         const QString dataDir = KernelPlatform::kernelInstallDir();
         QDir().mkpath(dataDir);
-        const QString destPath   = dataDir + "/" + exeName;
+        const QString destPath = dataDir + "/" + exeName;
         ProcessManager::killProcessByPath(destPath);
         const QString backupPath = destPath + ".old";
         if (QFile::exists(destPath)) {

@@ -94,8 +94,8 @@ class SubscriptionService : public QObject {
                                                const QJsonObject& headers);
   void              updateSubscriptionUserinfoFromHeader(SubscriptionInfo& info,
                                                          const QByteArray& header);
-  void syncSharedRulesToConfig(const SubscriptionInfo& info,
-                               const QStringList&      cleanupRuleSets = {});
+  void              syncSharedRulesToConfig(const SubscriptionInfo& info,
+                                            const QStringList&      cleanupRuleSets = {});
   void              requestCoalescedApplyConfig(const QString& configPath);
   QString           generateId() const;
   QList<SubscriptionInfo> m_subscriptions;
@@ -103,6 +103,6 @@ class SubscriptionService : public QObject {
   QString                 m_activeConfigPath;
   QString                 m_pendingApplyConfigPath;
   bool                    m_applyRequestScheduled = false;
-  ConfigRepository*       m_configRepo = nullptr;
+  ConfigRepository*       m_configRepo            = nullptr;
 };
 #endif  // SUBSCRIPTIONSERVICE_H

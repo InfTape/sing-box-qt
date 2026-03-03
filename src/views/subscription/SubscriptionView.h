@@ -73,7 +73,7 @@ class SubscriptionView : public QWidget {
   SubscriptionService*          m_subscriptionService;
   class SubscriptionController* m_subscriptionController;
   QTimer*                       m_autoUpdateTimer;
-  ThemeService*                 m_themeService = nullptr;
+  ThemeService*                 m_themeService  = nullptr;
   SubscriptionLoadingDialog*    m_loadingDialog = nullptr;
   bool                          m_waitingUrlAdd = false;
 };

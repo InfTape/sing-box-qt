@@ -16,9 +16,12 @@ const QColor  kTrackGreen(168, 236, 177);
 }  // namespace
 
 SubscriptionLoadingDialog::SubscriptionLoadingDialog(QWidget* parent)
-    : QDialog(parent), m_spinTimer(new QTimer(this)), m_closeTimer(new QTimer(this)) {
+    : QDialog(parent),
+      m_spinTimer(new QTimer(this)),
+      m_closeTimer(new QTimer(this)) {
   setObjectName("SubscriptionLoadingDialog");
-  setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint | Qt::CustomizeWindowHint);
+  setWindowFlags(Qt::Dialog | Qt::FramelessWindowHint |
+                 Qt::CustomizeWindowHint);
   setWindowModality(Qt::ApplicationModal);
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_NoSystemBackground);
@@ -65,10 +68,11 @@ void SubscriptionLoadingDialog::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  const QRectF panelRect = rect();
+  const QRectF  panelRect = rect();
   const QPointF center(panelRect.center().x(), panelRect.center().y());
-  const qreal  half = kIconSize / 2.0;
-  const QRectF iconRect(center.x() - half, center.y() - half, kIconSize, kIconSize);
+  const qreal   half = kIconSize / 2.0;
+  const QRectF  iconRect(
+      center.x() - half, center.y() - half, kIconSize, kIconSize);
 
   if (m_state == State::Loading) {
     QPen basePen(kTrackGreen);

@@ -132,7 +132,6 @@ void ProxyView::updateStyle() {
   if (m_treeWidget && m_treeWidget->viewport()) {
     m_treeWidget->viewport()->update();
   }
-
 }
 
 void ProxyView::setController(ProxyViewController* controller) {
@@ -214,8 +213,8 @@ void ProxyView::onAddGroupClicked() {
     if (i == activeIndex) {
       continue;
     }
-    const SubscriptionInfo& sub = subs[i];
-    QString label = sub.name;
+    const SubscriptionInfo& sub   = subs[i];
+    QString                 label = sub.name;
     if (sub.nodeCount > 0) {
       label += QString(" (%1)").arg(sub.nodeCount);
     }
@@ -235,7 +234,7 @@ void ProxyView::onAddGroupClicked() {
   const QString sourceId = chosen->data().toString();
   QString       error;
   if (!m_subscriptionService->addSubscriptionNodesToActiveGroup(sourceId,
-                                                                 &error)) {
+                                                                &error)) {
     if (error.isEmpty()) {
       error = tr("Failed to add nodes to active subscription.");
     }
@@ -280,7 +279,7 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
     if (groupTag.isEmpty()) {
       return;
     }
-    const bool isBuiltIn = (groupTag == ConfigConstants::TAG_MANUAL ||
+    const bool  isBuiltIn = (groupTag == ConfigConstants::TAG_MANUAL ||
                             groupTag == ConfigConstants::TAG_AUTO ||
                             groupTag == ConfigConstants::TAG_DIRECT ||
                             groupTag == ConfigConstants::TAG_BLOCK);
@@ -290,8 +289,9 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       menu.setThemeColors(m_themeService->color("bg-secondary"),
                           m_themeService->color("primary"));
     }
-    QAction* testAct   = menu.addAction(tr("Test Group"));
-    QAction* deleteAct = isBuiltIn ? nullptr : menu.addAction(tr("Delete Group"));
+    QAction* testAct = menu.addAction(tr("Test Group"));
+    QAction* deleteAct =
+        isBuiltIn ? nullptr : menu.addAction(tr("Delete Group"));
     QAction* chosen = menu.exec(m_treeWidget->viewport()->mapToGlobal(pos));
     if (!chosen) {
       return;
@@ -342,7 +342,7 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       }
       QString error;
       if (!m_subscriptionService->removeGroupFromActiveConfig(groupTag,
-                                                               &error)) {
+                                                              &error)) {
         if (error.isEmpty()) {
           error = tr("Failed to delete group.");
         }
@@ -406,13 +406,11 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       m_singleTesting       = true;
       m_singleTestingTarget = nodeName;
       m_controller->startSingleDelayTest(nodeName);
-
     }
   } else if (chosen == speedAct) {
     startSpeedTest(item);
   }
 }
-
 
 QJsonObject ProxyView::loadNodeOutbound(const QString& tag) const {
   if (!m_controller) {
@@ -546,8 +544,6 @@ void ProxyView::onTestSelectedClicked() {
   }
 }
 
-
-
 void ProxyView::onSearchTextChanged(const QString& text) {
   ProxyTreeUtils::filterTreeNodes(m_treeWidget, text);
 }
@@ -622,8 +618,6 @@ QString ProxyView::formatDelay(int delay) const {
   }
   return QString::number(delay) + " ms";
 }
-
-
 
 void ProxyView::onSelectionChanged(const QItemSelection& selected,
                                    const QItemSelection& deselected) {

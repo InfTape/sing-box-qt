@@ -21,7 +21,7 @@ QJsonObject makeRemoteRuleSet(const QString& tag,
 }
 
 QJsonObject parseDnsServerAddress(const QString& rawAddress) {
-  QJsonObject dnsServer;
+  QJsonObject   dnsServer;
   const QString address = rawAddress.trimmed();
   if (address.isEmpty()) {
     return dnsServer;
@@ -38,7 +38,7 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
 
   auto fillRemoteServer = [&dnsServer](const QString& type, const QUrl& url) {
     dnsServer["type"] = type;
-    QString host = url.host().trimmed();
+    QString host      = url.host().trimmed();
     if (host.isEmpty()) {
       host = url.path().trimmed();
       if (host.startsWith('/')) {
@@ -72,7 +72,7 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
       return dnsServer;
     }
     if (scheme == "dhcp") {
-      dnsServer["type"] = "dhcp";
+      dnsServer["type"]     = "dhcp";
       QString interfaceName = url.host().trimmed();
       if (interfaceName.isEmpty()) {
         interfaceName = url.path().trimmed();
@@ -90,11 +90,11 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
   }
 
   dnsServer["type"] = "udp";
-  const QUrl udpUrl(QString("udp://%1").arg(address));
+  const QUrl    udpUrl(QString("udp://%1").arg(address));
   const QString host = udpUrl.host().trimmed();
   if (!host.isEmpty()) {
     dnsServer["server"] = host;
-    const int port = udpUrl.port(-1);
+    const int port      = udpUrl.port(-1);
     if (port > 0) {
       dnsServer["server_port"] = port;
     }
@@ -153,8 +153,10 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   QJsonArray         servers;
   servers.append(makeManagedDnsServer(
       ConfigConstants::DNS_PROXY, settings.dnsProxy(), defaultOutbound, true));
-  servers.append(makeManagedDnsServer(
-      ConfigConstants::DNS_CN, settings.dnsCn(), ConfigConstants::TAG_DIRECT, true));
+  servers.append(makeManagedDnsServer(ConfigConstants::DNS_CN,
+                                      settings.dnsCn(),
+                                      ConfigConstants::TAG_DIRECT,
+                                      true));
   servers.append(makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
                                       settings.dnsResolver(),
                                       ConfigConstants::TAG_DIRECT,
@@ -285,13 +287,13 @@ QJsonArray ConfigBuilder::buildInbounds() {
       addresses.append(settings.tunIpv6());
     }
     QJsonObject tun;
-    tun["type"]                       = "tun";
-    tun["tag"]                        = "tun-in";
-    tun["address"]                    = addresses;
-    tun["auto_route"]                 = settings.tunAutoRoute();
-    tun["strict_route"]               = settings.tunStrictRoute();
-    tun["stack"]                      = settings.tunStack();
-    tun["mtu"]                        = settings.tunMtu();
+    tun["type"]         = "tun";
+    tun["tag"]          = "tun-in";
+    tun["address"]      = addresses;
+    tun["auto_route"]   = settings.tunAutoRoute();
+    tun["strict_route"] = settings.tunStrictRoute();
+    tun["stack"]        = settings.tunStack();
+    tun["mtu"]          = settings.tunMtu();
     tun["route_exclude_address"] =
         QJsonArray::fromStringList(ConfigConstants::tunRouteExcludes());
     inbounds.append(tun);
@@ -350,31 +352,36 @@ QJsonArray ConfigBuilder::buildOutbounds() {
 QJsonArray ConfigBuilder::buildRuleSets() {
   const AppSettings& settings       = AppSettings::instance();
   const QString      downloadDetour = settings.normalizedDownloadDetour();
+  const QString      baseUrl        = settings.rulesetBaseUrl();
   QJsonArray         ruleSets;
   if (settings.blockAds()) {
     ruleSets.append(makeRemoteRuleSet(
         ConfigConstants::RS_GEOSITE_ADS,
-        ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_ADS),
+        ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_ADS, baseUrl),
         downloadDetour,
         "1d"));
   }
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_CN,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_CN),
+      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_CN, baseUrl),
       downloadDetour,
       "1d"));
-  ruleSets.append(
-      makeRemoteRuleSet(ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN,
-                        ConfigConstants::ruleSetUrl(
-                            ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN),
-                        downloadDetour,
-                        "1d"));
+  ruleSets.append(makeRemoteRuleSet(
+      ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN,
+      ConfigConstants::ruleSetUrl(
+          ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN, baseUrl),
+      downloadDetour,
+      "1d"));
   if (settings.enableAppGroups()) {
     // Helper lambda to add app-specific rule sets.
-    auto addAppRuleSet = [&ruleSets, &downloadDetour](const QString& tag) {
-      ruleSets.append(makeRemoteRuleSet(
-          tag, ConfigConstants::ruleSetUrl(tag), downloadDetour, "7d"));
-    };
+    auto addAppRuleSet =
+        [&ruleSets, &downloadDetour, &baseUrl](const QString& tag) {
+          ruleSets.append(
+              makeRemoteRuleSet(tag,
+                                ConfigConstants::ruleSetUrl(tag, baseUrl),
+                                downloadDetour,
+                                "7d"));
+        };
     addAppRuleSet(ConfigConstants::RS_GEOSITE_TELEGRAM);
     addAppRuleSet(ConfigConstants::RS_GEOSITE_YOUTUBE);
     addAppRuleSet(ConfigConstants::RS_GEOSITE_NETFLIX);
@@ -382,12 +389,12 @@ QJsonArray ConfigBuilder::buildRuleSets() {
   }
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_PRIVATE,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE),
+      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE, baseUrl),
       downloadDetour,
       "7d"));
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOIP_CN,
-      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN),
+      ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN, baseUrl),
       downloadDetour,
       "1d"));
   return ruleSets;

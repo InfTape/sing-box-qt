@@ -293,7 +293,6 @@ void SubscriptionView::wireCardSignals(SubscriptionCard* card) {
           &SubscriptionCard::copyLinkClicked,
           this,
           &SubscriptionView::handleCopyLink);
-
 }
 
 void SubscriptionView::handleUseSubscription(const QString& id) {
@@ -404,8 +403,6 @@ void SubscriptionView::handleCopyLink(const QString& id) {
   }
   QApplication::clipboard()->setText(target.url);
 }
-
-
 
 void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
   SubscriptionInfo target;
@@ -528,10 +525,9 @@ void SubscriptionView::layoutCards() {
   m_columnCount              = columns;
   const bool firstRowNotFull = m_cards.size() <= columns;
   const int  horizontalMargin =
-      firstRowNotFull
-          ? 0
-          : CardGridLayoutHelper::computeHorizontalMargin(
-                availableWidth, spacing, columns);
+      firstRowNotFull ? 0
+                       : CardGridLayoutHelper::computeHorizontalMargin(
+                            availableWidth, spacing, columns);
   m_cardsLayout->setContentsMargins(horizontalMargin, 0, horizontalMargin, 0);
   int             row = 0;
   int             col = 0;

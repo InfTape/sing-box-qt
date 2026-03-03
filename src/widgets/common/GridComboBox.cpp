@@ -14,12 +14,12 @@
 #include "widgets/common/RoundedMenu.h"
 
 namespace {
-constexpr int kPopupPadding        = 8;
-constexpr int kMinCellWidth        = 180;
-constexpr int kMaxCellWidth        = 240;
-constexpr int kCellTextPadding     = 28;
-constexpr int kPopupScreenMargin   = 24;
-constexpr int kPopupMaxWidth       = 760;
+constexpr int kPopupPadding         = 8;
+constexpr int kMinCellWidth         = 180;
+constexpr int kMaxCellWidth         = 240;
+constexpr int kCellTextPadding      = 28;
+constexpr int kPopupScreenMargin    = 24;
+constexpr int kPopupMaxWidth        = 760;
 constexpr int kMinimumItemRowHeight = 36;
 }  // namespace
 
@@ -161,8 +161,8 @@ void GridComboBox::updatePopupLayout() {
   if (!m_menu || !m_listWidget || !m_popupContent) {
     return;
   }
-  QScreen* screen = QGuiApplication::screenAt(
-      mapToGlobal(QPoint(width() / 2, height() / 2)));
+  QScreen* screen =
+      QGuiApplication::screenAt(mapToGlobal(QPoint(width() / 2, height() / 2)));
   if (!screen) {
     screen = QGuiApplication::primaryScreen();
   }
@@ -174,16 +174,16 @@ void GridComboBox::updatePopupLayout() {
 
   int longestText = 0;
   for (int i = 0; i < count(); ++i) {
-    longestText = qMax(longestText, fontMetrics().horizontalAdvance(itemText(i)));
+    longestText =
+        qMax(longestText, fontMetrics().horizontalAdvance(itemText(i)));
   }
-  const int rowHeight = qMax(
-      kMinimumItemRowHeight, fontMetrics().height() + 16);
+  const int rowHeight =
+      qMax(kMinimumItemRowHeight, fontMetrics().height() + 16);
   const int cellWidth =
       qBound(kMinCellWidth, longestText + kCellTextPadding, kMaxCellWidth);
 
   const int maxPopupWidth = qMax(
-      width(),
-      qMin(available.width() - kPopupScreenMargin, kPopupMaxWidth));
+      width(), qMin(available.width() - kPopupScreenMargin, kPopupMaxWidth));
   const int maxColumnsByWidth =
       qMax(1, (maxPopupWidth - kPopupPadding * 2) / cellWidth);
   int columns = qMin(m_maxColumns, maxColumnsByWidth);
@@ -191,23 +191,23 @@ void GridComboBox::updatePopupLayout() {
   columns     = qMax(1, columns);
 
   int listWidth = qMax(width(), columns * cellWidth);
-  listWidth = qMin(listWidth, maxPopupWidth - kPopupPadding * 2);
+  listWidth     = qMin(listWidth, maxPopupWidth - kPopupPadding * 2);
 
   const int adjustedCellWidth = qMax(kMinCellWidth, listWidth / columns);
   m_listWidget->setGridSize(QSize(adjustedCellWidth, rowHeight));
 
-  const int rowCount    = qMax(1, (count() + columns - 1) / columns);
-  const int visibleRows = qBound(m_minVisibleRows, rowCount, m_maxVisibleRows);
-  const bool needScroll = rowCount > visibleRows;
+  const int  rowCount    = qMax(1, (count() + columns - 1) / columns);
+  const int  visibleRows = qBound(m_minVisibleRows, rowCount, m_maxVisibleRows);
+  const bool needScroll  = rowCount > visibleRows;
   if (needScroll) {
     const int scrollExtent = m_listWidget->style()->pixelMetric(
         QStyle::PM_ScrollBarExtent, nullptr, m_listWidget);
     listWidth += scrollExtent + 2;
   }
 
-  int listHeight = visibleRows * rowHeight;
-  const int maxPopupHeight = qMax(
-      rowHeight * 2, available.height() - kPopupScreenMargin);
+  int       listHeight = visibleRows * rowHeight;
+  const int maxPopupHeight =
+      qMax(rowHeight * 2, available.height() - kPopupScreenMargin);
   int popupHeight = qMin(maxPopupHeight, listHeight + kPopupPadding * 2);
   listHeight      = qMax(rowHeight * 2, popupHeight - kPopupPadding * 2);
 
@@ -226,6 +226,6 @@ void GridComboBox::updateMenuStyle() {
                            m_themeService->color("primary"));
     return;
   }
-  m_menu->setThemeColors(
-      palette().color(QPalette::Base), palette().color(QPalette::Mid));
+  m_menu->setThemeColors(palette().color(QPalette::Base),
+                         palette().color(QPalette::Mid));
 }

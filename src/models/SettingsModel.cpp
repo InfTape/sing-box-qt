@@ -21,15 +21,16 @@ SettingsModel::Data SettingsModel::load() {
   d.tunMtu = config.value("tunMtu").toInt(ConfigConstants::DEFAULT_TUN_MTU);
   d.tunStack =
       config.value("tunStack").toString(ConfigConstants::DEFAULT_TUN_STACK);
-  d.tunEnableIpv6   = config.value("tunEnableIpv6").toBool(false);
-  d.tunAutoRoute    = config.value("tunAutoRoute").toBool(true);
-  d.tunStrictRoute  = config.value("tunStrictRoute").toBool(true);
+  d.tunEnableIpv6     = config.value("tunEnableIpv6").toBool(false);
+  d.tunAutoRoute      = config.value("tunAutoRoute").toBool(true);
+  d.tunStrictRoute    = config.value("tunStrictRoute").toBool(true);
   d.routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
-  d.defaultOutbound = config.value("defaultOutbound").toString("manual");
-  d.downloadDetour  = config.value("downloadDetour").toString("manual");
-  d.blockAds        = config.value("blockAds").toBool(false);
-  d.dnsHijack       = config.value("dnsHijack").toBool(true);
-  d.enableAppGroups = config.value("enableAppGroups").toBool(false);
+  d.defaultOutbound   = config.value("defaultOutbound").toString("manual");
+  d.downloadDetour    = config.value("downloadDetour").toString("manual");
+  d.rulesetBaseUrl    = config.value("rulesetBaseUrl").toString();
+  d.blockAds          = config.value("blockAds").toBool(false);
+  d.dnsHijack         = config.value("dnsHijack").toBool(true);
+  d.enableAppGroups   = config.value("enableAppGroups").toBool(false);
   d.dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
   d.dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
@@ -66,9 +67,10 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["tunEnableIpv6"]      = data.tunEnableIpv6;
   config["tunAutoRoute"]       = data.tunAutoRoute;
   config["tunStrictRoute"]     = data.tunStrictRoute;
-  config["routeSniffEnabled"] = data.routeSniffEnabled;
+  config["routeSniffEnabled"]  = data.routeSniffEnabled;
   config["defaultOutbound"]    = data.defaultOutbound;
   config["downloadDetour"]     = data.downloadDetour;
+  config["rulesetBaseUrl"]     = data.rulesetBaseUrl;
   config["blockAds"]           = data.blockAds;
   config["dnsHijack"]          = data.dnsHijack;
   config["enableAppGroups"]    = data.enableAppGroups;

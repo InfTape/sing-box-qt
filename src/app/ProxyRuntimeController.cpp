@@ -50,7 +50,8 @@ ProxyRuntimeController::ProxyRuntimeController(KernelService*   kernelService,
             &KernelService::errorOccurred,
             this,
             [this](const QString& error) {
-              emit apiLogMessage("error", QString("[Kernel Error] %1").arg(error));
+              emit apiLogMessage("error",
+                                 QString("[Kernel Error] %1").arg(error));
             });
   }
   if (m_proxyService) {
@@ -86,7 +87,8 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
         m_proxyService->fetchConnections();
       }
       if (m_logWsClient) {
-        QString url = QString("ws://127.0.0.1:%1/logs?level=info").arg(m_proxyService->getApiPort());
+        QString url = QString("ws://127.0.0.1:%1/logs?level=info")
+                          .arg(m_proxyService->getApiPort());
         const QString token = m_proxyService->getApiToken();
         if (!token.isEmpty()) {
           url += QString("&token=%1").arg(token);
@@ -153,9 +155,9 @@ void ProxyRuntimeController::clearDataUsage() {
 void ProxyRuntimeController::onApiLogMessageReceived(const QString& message) {
   QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
   if (doc.isObject()) {
-    QJsonObject obj = doc.object();
-    QString type = obj["type"].toString();
-    QString payload = obj["payload"].toString();
+    QJsonObject obj     = doc.object();
+    QString     type    = obj["type"].toString();
+    QString     payload = obj["payload"].toString();
     if (!type.isEmpty() && !payload.isEmpty()) {
       emit apiLogMessage(type, payload);
     }

@@ -103,8 +103,12 @@ class AppSettings : public QObject {
   // Detour for rule set downloads: "direct" or "manual".
   QString downloadDetour() const { return m_downloadDetour; }
 
+  // Base URL for rule set downloads.
+  QString rulesetBaseUrl() const { return m_rulesetBaseUrl; }
+
   void setDefaultOutbound(const QString& outbound);
   void setDownloadDetour(const QString& detour);
+  void setRulesetBaseUrl(const QString& url);
   // Helper methods.
   QString normalizedDefaultOutbound() const;
   QString normalizedDownloadDetour() const;
@@ -113,7 +117,7 @@ class AppSettings : public QObject {
   void load();
   void reload();
   void save();
-signals:
+ signals:
   void settingsChanged();
   void apiPortChanged(int port);
   void settingsReloaded();
@@ -153,5 +157,6 @@ signals:
   // Outbound selection.
   QString m_defaultOutbound;
   QString m_downloadDetour;
+  QString m_rulesetBaseUrl;
 };
 #endif  // APPSETTINGS_H

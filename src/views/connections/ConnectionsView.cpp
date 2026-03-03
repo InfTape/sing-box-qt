@@ -27,7 +27,7 @@ class ConnectionsItemDelegate : public QStyledItemDelegate {
 };
 
 QStringList extractConnectionChains(const QJsonObject& conn) {
-  QStringList chains;
+  QStringList      chains;
   const QJsonArray chainArray = conn.value("chains").toArray();
   for (const auto& chainVal : chainArray) {
     const QString chain = chainVal.toString().trimmed();
@@ -44,7 +44,7 @@ QStringList extractConnectionChains(const QJsonObject& conn) {
   return chains;
 }
 
-QString resolveGroupToNode(const QString& outbound,
+QString resolveGroupToNode(const QString&                 outbound,
                            const QHash<QString, QString>& groupNowMap) {
   QString current = outbound.trimmed();
   if (current.isEmpty()) {
@@ -65,7 +65,7 @@ QString resolveGroupToNode(const QString& outbound,
   return current;
 }
 
-QString resolveNodeFromConnection(const QJsonObject&              conn,
+QString resolveNodeFromConnection(const QJsonObject&             conn,
                                   const QHash<QString, QString>& groupNowMap) {
   const QStringList chains = extractConnectionChains(conn);
   if (!chains.isEmpty()) {
@@ -100,7 +100,7 @@ QString extractRouteGroupFromRule(const QString& rawRule) {
   return match.captured(1).trimmed();
 }
 
-QString formatRuleText(const QJsonObject& conn,
+QString formatRuleText(const QJsonObject&             conn,
                        const QHash<QString, QString>& groupNowMap) {
   const QString rawRule = conn.value("rule").toString().trimmed();
   if (rawRule.isEmpty()) {
@@ -108,10 +108,9 @@ QString formatRuleText(const QJsonObject& conn,
   }
   const QString routeGroup = extractRouteGroupFromRule(rawRule);
   if (!routeGroup.isEmpty()) {
-    const QString node       = resolveGroupToNode(routeGroup, groupNowMap);
-    if (!node.isEmpty() &&
-        node.compare(routeGroup, Qt::CaseInsensitive) != 0) {
-      QString result = rawRule;
+    const QString node = resolveGroupToNode(routeGroup, groupNowMap);
+    if (!node.isEmpty() && node.compare(routeGroup, Qt::CaseInsensitive) != 0) {
+      QString                         result = rawRule;
       static const QRegularExpression routeExpr(R"(route\(([^)]+)\))");
       const QRegularExpressionMatch   match = routeExpr.match(rawRule);
       result.replace(match.capturedStart(0),
@@ -174,7 +173,7 @@ void ConnectionsView::setupUI() {
   titleLayout->addWidget(titleLabel);
   titleLayout->addWidget(subtitleLabel);
   headerLayout->addLayout(titleLayout);
-  m_closeAllBtn      = new QPushButton(tr("Close All"));
+  m_closeAllBtn = new QPushButton(tr("Close All"));
   m_closeAllBtn->setObjectName("CloseAllBtn");
   headerLayout->addStretch();
   headerLayout->addWidget(m_closeAllBtn);
@@ -202,8 +201,8 @@ void ConnectionsView::setupUI() {
           [this]() {
             const bool hasSelection =
                 !m_tableWidget->selectionModel()->selectedRows().isEmpty();
-            m_closeAllBtn->setText(
-                hasSelection ? tr("Close Selected") : tr("Close All"));
+            m_closeAllBtn->setText(hasSelection ? tr("Close Selected")
+                                                : tr("Close All"));
           });
   updateStyle();
 }
@@ -242,7 +241,7 @@ void ConnectionsView::setProxyService(ProxyService* service) {
             for (int i = 0; i < conns.count(); ++i) {
               QJsonObject conn     = conns[i].toObject();
               QJsonObject metadata = conn["metadata"].toObject();
-              auto readPort = [](const QJsonValue& value) -> int {
+              auto        readPort = [](const QJsonValue& value) -> int {
                 if (value.isString()) {
                   bool      ok     = false;
                   const int parsed = value.toString().toInt(&ok);
@@ -256,7 +255,7 @@ void ConnectionsView::setProxyService(ProxyService* service) {
                 return ok ? parsed : 0;
               };
               {
-                QString source = metadata["sourceIP"].toString();
+                QString    source       = metadata["sourceIP"].toString();
                 QJsonValue srcPortValue = metadata.value("sourcePort");
                 if (srcPortValue.isUndefined()) {
                   srcPortValue = metadata.value("source_port");
@@ -291,8 +290,8 @@ void ConnectionsView::setProxyService(ProxyService* service) {
               setCell(i, 3, formatRuleText(conn, groupNowMap));
               setCell(i,
                       4,
-                      QString::number(
-                          conn["upload"].toVariant().toLongLong() / 1024) +
+                      QString::number(conn["upload"].toVariant().toLongLong() /
+                                      1024) +
                           " KB");
               setCell(i,
                       5,

@@ -43,18 +43,18 @@ class RulesView : public QWidget {
   void onAddRuleClicked();
 
  private:
-  void              setupUI();
-  void              applyFilters();
-  void              updateFilterOptions();
-  void              sortRules();
-  void              rebuildCards();
-  void              layoutCards();
-  void              updateEmptyState();
-  void              handleEditRule(const RuleItem& rule);
-  void              handleDeleteRule(const RuleItem& rule);
-  ProxyService*     m_proxyService  = nullptr;
-  QLabel*           m_titleLabel    = nullptr;
-  QLabel*           m_subtitleLabel = nullptr;
+  void          setupUI();
+  void          applyFilters();
+  void          updateFilterOptions();
+  void          sortRules();
+  void          rebuildCards();
+  void          layoutCards();
+  void          updateEmptyState();
+  void          handleEditRule(const RuleItem& rule);
+  void          handleDeleteRule(const RuleItem& rule);
+  ProxyService* m_proxyService  = nullptr;
+  QLabel*       m_titleLabel    = nullptr;
+  QLabel*       m_subtitleLabel = nullptr;
 
   QPushButton*      m_addBtn        = nullptr;
   QPushButton*      m_ruleSetBtn    = nullptr;

@@ -38,8 +38,7 @@ class SubscriptionController {
   void                    refresh(const QString& id, bool applyRuntime);
   bool                    rollback(const QString& id);
   void                    remove(const QString& id);
-  bool                    addToActiveGroup(const QString& id,
-                                           QString*       error = nullptr);
+  bool addToActiveGroup(const QString& id, QString* error = nullptr);
 
   void removeSubscription(const QString& id) { remove(id); }
 

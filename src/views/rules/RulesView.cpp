@@ -167,12 +167,11 @@ void RulesView::setProxyService(ProxyService* service) {
             for (const auto& item : rules) {
               const QJsonObject rule = item.toObject();
               RuleItem          data;
-              data.type            = rule.value("type").toString();
-              data.payload         = rule.value("payload").toString();
-              data.proxy           = rule.value("proxy").toString();
+              data.type    = rule.value("type").toString();
+              data.payload = rule.value("payload").toString();
+              data.proxy   = rule.value("proxy").toString();
               data.ruleSet =
-                  RuleConfigService::findRuleSet(m_configRepo, data)
-                      .trimmed();
+                  RuleConfigService::findRuleSet(m_configRepo, data).trimmed();
               data.isCustom = !data.ruleSet.isEmpty();
               if (data.ruleSet.isEmpty()) {
                 data.ruleSet = QStringLiteral("default");
@@ -225,7 +224,7 @@ void RulesView::onAddRuleClicked() {
   rebuildCards();
   updateFilterOptions();
   applyFilters();
-  emit ruleSetChanged(normalizeRuleSetName(data.ruleSet));
+  emit  ruleSetChanged(normalizeRuleSetName(data.ruleSet));
   auto* box = new QMessageBox(
       QMessageBox::Information,
       tr("Add Rule"),
@@ -522,7 +521,7 @@ void RulesView::handleEditRule(const RuleItem& rule) {
   applyFilters();
   const QString oldSet = normalizeRuleSetName(rule.ruleSet);
   const QString newSet = normalizeRuleSetName(data.ruleSet);
-  emit ruleSetChanged(newSet);
+  emit          ruleSetChanged(newSet);
   if (oldSet != newSet) {
     emit ruleSetChanged(oldSet);
   }

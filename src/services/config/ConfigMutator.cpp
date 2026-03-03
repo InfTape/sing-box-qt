@@ -145,7 +145,7 @@ void normalizeCacheFileConfig(QJsonObject& experimental) {
 }
 
 QJsonObject parseDnsServerAddress(const QString& rawAddress) {
-  QJsonObject dnsServer;
+  QJsonObject   dnsServer;
   const QString address = rawAddress.trimmed();
   if (address.isEmpty()) {
     return dnsServer;
@@ -162,7 +162,7 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
 
   auto fillRemoteServer = [&dnsServer](const QString& type, const QUrl& url) {
     dnsServer["type"] = type;
-    QString host = url.host().trimmed();
+    QString host      = url.host().trimmed();
     if (host.isEmpty()) {
       host = url.path().trimmed();
       if (host.startsWith('/')) {
@@ -196,7 +196,7 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
       return dnsServer;
     }
     if (scheme == "dhcp") {
-      dnsServer["type"] = "dhcp";
+      dnsServer["type"]     = "dhcp";
       QString interfaceName = url.host().trimmed();
       if (interfaceName.isEmpty()) {
         interfaceName = url.path().trimmed();
@@ -214,11 +214,11 @@ QJsonObject parseDnsServerAddress(const QString& rawAddress) {
   }
 
   dnsServer["type"] = "udp";
-  const QUrl udpUrl(QString("udp://%1").arg(address));
+  const QUrl    udpUrl(QString("udp://%1").arg(address));
   const QString host = udpUrl.host().trimmed();
   if (!host.isEmpty()) {
     dnsServer["server"] = host;
-    const int port = udpUrl.port(-1);
+    const int port      = udpUrl.port(-1);
     if (port > 0) {
       dnsServer["server_port"] = port;
     }
@@ -361,19 +361,19 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       QJsonObject   server = serverVal.toObject();
       const QString tag    = server.value("tag").toString();
       if (tag == ConfigConstants::DNS_PROXY) {
-        server = makeManagedDnsServer(ConfigConstants::DNS_PROXY,
+        server         = makeManagedDnsServer(ConfigConstants::DNS_PROXY,
                                       settings.dnsProxy(),
                                       settings.normalizedDefaultOutbound(),
                                       true);
         hasProxyServer = true;
       } else if (tag == ConfigConstants::DNS_CN) {
-        server = makeManagedDnsServer(ConfigConstants::DNS_CN,
+        server      = makeManagedDnsServer(ConfigConstants::DNS_CN,
                                       settings.dnsCn(),
                                       ConfigConstants::TAG_DIRECT,
                                       true);
         hasCnServer = true;
       } else if (tag == ConfigConstants::DNS_RESOLVER) {
-        server = makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
+        server            = makeManagedDnsServer(ConfigConstants::DNS_RESOLVER,
                                       settings.dnsResolver(),
                                       ConfigConstants::TAG_DIRECT,
                                       false);
@@ -493,7 +493,8 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         QJsonObject rs = ruleSets[i].toObject();
         if (rs.value("type").toString() == "remote") {
           const QString tag = rs.value("tag").toString();
-          const QString url = ConfigConstants::ruleSetUrl(tag);
+          const QString url =
+              ConfigConstants::ruleSetUrl(tag, settings.rulesetBaseUrl());
           if (!url.isEmpty()) {
             rs["url"] = url;
           }

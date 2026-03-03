@@ -9,7 +9,6 @@ class QJsonObject;
 class QTimer;
 class WebSocketClient;
 
-
 /**
  * @brief ProxyRuntimeController
  * Listens to Kernel/Proxy service runtime state, dispatching

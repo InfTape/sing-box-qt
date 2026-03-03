@@ -11,13 +11,13 @@ inline QStringList prefixes() {
       "https://ghproxy.net/",
       // gh-proxy.org main endpoint (recommended by upstream mirror provider).
       "https://gh-proxy.org/",
-      // Additional mirrors with different CDN/region coverage, as secondary fallbacks.
+      // Additional mirrors with different CDN/region coverage, as secondary
+      // fallbacks.
       "https://v6.gh-proxy.org/",
       // Additional gh-proxy.org CDN/region mirrors.
       "https://hk.gh-proxy.org/",
       "https://cdn.gh-proxy.org/",
-      "https://edgeone.gh-proxy.org/"
-  };
+      "https://edgeone.gh-proxy.org/"};
 }
 
 inline QStringList buildUrls(const QString& rawUrl) {
@@ -25,7 +25,7 @@ inline QStringList buildUrls(const QString& rawUrl) {
     return {};
   }
   const QString url = rawUrl.trimmed();
-  QStringList urls;
+  QStringList   urls;
   for (const QString& prefix : prefixes()) {
     if (prefix.isEmpty()) {
       urls.append(url);

@@ -16,10 +16,9 @@ class ProxyToolbar : public QFrame {
   void searchTextChanged(const QString& text);
   void addGroupClicked();
 
-
  private:
-  QLineEdit*    m_searchEdit  = nullptr;
-  QPushButton*  m_addGroupBtn = nullptr;
+  QLineEdit*   m_searchEdit  = nullptr;
+  QPushButton* m_addGroupBtn = nullptr;
 
   QProgressBar* m_progressBar = nullptr;
 };

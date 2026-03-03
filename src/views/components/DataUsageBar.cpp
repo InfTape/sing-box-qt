@@ -24,7 +24,7 @@ int DataUsageBar::calculateScaledValue(qint64 total, qint64 maxTotal) {
 
   // Power-curve mapping: ratio^0.4 gives good visual separation
   // between top and tail entries without over-compressing differences.
-  constexpr double kExponent = 0.4;
+  constexpr double kExponent  = 0.4;
   const double     emphasized = qPow(ratio, kExponent);
   int              value      = static_cast<int>(emphasized * 1000.0 + 0.5);
 

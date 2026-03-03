@@ -35,9 +35,9 @@ bool isPortableEnabled() {
     return cached == 1;
   }
 
-  bool requested = false;
-  const QStringList args = QCoreApplication::arguments();
-  requested = args.contains("--portable");
+  bool              requested = false;
+  const QStringList args      = QCoreApplication::arguments();
+  requested                   = args.contains("--portable");
 
   if (!requested) {
     requested = parseTruthy(qEnvironmentVariable("SING_BOX_QT_PORTABLE"));

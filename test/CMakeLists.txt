@@ -66,3 +66,7 @@ add_test(
         "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
         $<TARGET_FILE:sing-box-qt-unit-tests>
 )
+
+# Standalone GUI demo for debugging (test/main.cpp)
+add_executable(placeholder-bug-demo main.cpp)
+target_link_libraries(placeholder-bug-demo PRIVATE Qt6::Core Qt6::Widgets)

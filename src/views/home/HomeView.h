@@ -45,6 +45,6 @@ class HomeView : public QWidget {
   ProxyModeSection* m_proxyModeSection = nullptr;
   DataUsageCard*    m_dataUsageCard    = nullptr;
   bool              m_isRunning        = false;
-  ThemeService*     m_themeService = nullptr;
+  ThemeService*     m_themeService     = nullptr;
 };
 #endif  // HOMEVIEW_H

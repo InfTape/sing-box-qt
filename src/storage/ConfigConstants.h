@@ -2,7 +2,6 @@
 #define CONFIGCONSTANTS_H
 #include <QString>
 #include <QStringList>
-#include "utils/GitHubMirror.h"
 
 namespace ConfigConstants {
 // ==================== Outbound tags ====================
@@ -31,39 +30,32 @@ const QString RS_GEOSITE_NETFLIX            = "geosite-netflix";
 const QString RS_GEOSITE_OPENAI             = "geosite-openai";
 const QString RS_GEOIP_CN                   = "geoip-cn";
 // ==================== Rule set URLs ====================
-const QString RULE_SET_BASE = "https://raw.githubusercontent.com";
+const QString DEFAULT_RULESET_BASE_URL =
+    "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo";
 
-inline QString ruleSetRawUrl(const QString& tag) {
+inline QString ruleSetUrl(const QString& tag,
+                          const QString& baseUrl = QString()) {
+  const QString base = baseUrl.isEmpty() ? DEFAULT_RULESET_BASE_URL : baseUrl;
   if (tag == RS_GEOSITE_CN) {
-    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-cn.srs";
+    return base + "/geosite/cn.srs";
   } else if (tag == RS_GEOSITE_GEOLOCATION_NOT_CN) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs";
+    return base + "/geosite/geolocation-!cn.srs";
   } else if (tag == RS_GEOSITE_PRIVATE) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-private.srs";
+    return base + "/geosite/private.srs";
   } else if (tag == RS_GEOSITE_ADS) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs";
+    return base + "/geosite/category-ads-all.srs";
   } else if (tag == RS_GEOSITE_TELEGRAM) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-telegram.srs";
+    return base + "/geosite/telegram.srs";
   } else if (tag == RS_GEOSITE_YOUTUBE) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-youtube.srs";
+    return base + "/geosite/youtube.srs";
   } else if (tag == RS_GEOSITE_NETFLIX) {
-    return RULE_SET_BASE +
-           "/SagerNet/sing-geosite/rule-set/geosite-netflix.srs";
+    return base + "/geosite/netflix.srs";
   } else if (tag == RS_GEOSITE_OPENAI) {
-    return RULE_SET_BASE + "/SagerNet/sing-geosite/rule-set/geosite-openai.srs";
+    return base + "/geosite/openai.srs";
   } else if (tag == RS_GEOIP_CN) {
-    return RULE_SET_BASE + "/SagerNet/sing-geoip/rule-set/geoip-cn.srs";
+    return base + "/geoip/cn.srs";
   }
   return QString();
-}
-
-inline QString ruleSetUrl(const QString& tag) {
-  return GitHubMirror::withMirror(ruleSetRawUrl(tag), 0);
 }
 
 // ==================== Private IP ranges ====================

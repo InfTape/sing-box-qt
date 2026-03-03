@@ -41,8 +41,6 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
           &ProxyToolbar::addGroupClicked);
 }
 
-
-
 void ProxyToolbar::setProgress(int progress) {
   if (!m_progressBar) {
     return;

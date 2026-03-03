@@ -14,10 +14,10 @@ class ProxyService : public QObject {
   explicit ProxyService(QObject* parent = nullptr);
   ~ProxyService();
   // API port config.
-  void    setApiPort(int port);
-  int     getApiPort() const;
-  void    setApiToken(const QString& token);
-  QString getApiToken() const;
+  void                    setApiPort(int port);
+  int                     getApiPort() const;
+  void                    setApiToken(const QString& token);
+  QString                 getApiToken() const;
   QHash<QString, QString> groupNowCache() const;
   QString                 resolveGroupNow(const QString& group) const;
   // Fetch proxy data.
@@ -42,12 +42,12 @@ class ProxyService : public QObject {
   void trafficUpdated(qint64 up, qint64 down);
 
  private:
-  QString          buildApiUrl(const QString& path) const;
-  HttpClient*      m_httpClient;
-  WebSocketClient* m_wsClient;
-  int              m_apiPort;
-  QString          m_apiToken;
+  QString                 buildApiUrl(const QString& path) const;
+  HttpClient*             m_httpClient;
+  WebSocketClient*        m_wsClient;
+  int                     m_apiPort;
+  QString                 m_apiToken;
   QHash<QString, QString> m_groupNowCache;
-  bool                   m_connectionsInFlight = false;
+  bool                    m_connectionsInFlight = false;
 };
 #endif  // PROXYSERVICE_H

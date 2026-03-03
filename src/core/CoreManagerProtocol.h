@@ -17,8 +17,8 @@ inline QString coreManagerServerName() {
                       : QString("sing-box-qt-core");
   const QString appDir = QDir::cleanPath(
       QFileInfo(QCoreApplication::applicationFilePath()).absolutePath());
-  const QByteArray hash = QCryptographicHash::hash(
-      appDir.toUtf8(), QCryptographicHash::Sha1);
+  const QByteArray hash =
+      QCryptographicHash::hash(appDir.toUtf8(), QCryptographicHash::Sha1);
   const QString suffix = QString::fromLatin1(hash.toHex().left(8));
   return QString("%1-%2").arg(baseName, suffix);
 }

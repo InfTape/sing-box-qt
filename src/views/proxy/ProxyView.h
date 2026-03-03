@@ -41,11 +41,11 @@ class ProxyView : public QWidget {
   void onAddGroupClicked();
 
  private:
-  void            setupUI();
-  void            handleNodeActivation(QTreeWidgetItem* item);
-  QString         formatDelay(int delay) const;
-  void            onSelectionChanged(const QItemSelection& selected,
-                                     const QItemSelection& deselected);
+  void    setupUI();
+  void    handleNodeActivation(QTreeWidgetItem* item);
+  QString formatDelay(int delay) const;
+  void    onSelectionChanged(const QItemSelection& selected,
+                             const QItemSelection& deselected);
 
   QJsonObject     loadNodeOutbound(const QString& tag) const;
   bool            isTesting() const;
@@ -59,8 +59,8 @@ class ProxyView : public QWidget {
   QHash<QString, QString>             m_pendingSelection;  // group -> proxy
   bool                                m_singleTesting{false};
   QString                             m_singleTestingTarget;
-  ThemeService*                       m_themeService = nullptr;
+  ThemeService*                       m_themeService        = nullptr;
   SubscriptionService*                m_subscriptionService = nullptr;
-  ProxyViewController*                m_controller   = nullptr;
+  ProxyViewController*                m_controller          = nullptr;
 };
 #endif  // PROXYVIEW_H

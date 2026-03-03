@@ -309,19 +309,10 @@ void UnitUtilsTest::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QVERIFY(privateIdx >= 0);
   const QString cnRuleSetUrl =
       ruleSets[cnIdx].toObject().value("url").toString();
-  bool hasKnownMirrorPrefix = false;
-  for (const QString& prefix : GitHubMirror::prefixes()) {
-    if (cnRuleSetUrl.startsWith(prefix)) {
-      hasKnownMirrorPrefix = true;
-      break;
-    }
-  }
-  QVERIFY(hasKnownMirrorPrefix);
-  QVERIFY(ruleSets[cnIdx]
-              .toObject()
-              .value("url")
-              .toString()
-              .contains("https://raw.githubusercontent.com/"));
+  QVERIFY(cnRuleSetUrl.startsWith(
+      "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/"));
+
+
   QCOMPARE(ruleSets[cnIdx].toObject().value("download_detour").toString(),
            ConfigConstants::TAG_MANUAL);
   QCOMPARE(ruleSets[privateIdx].toObject().value("download_detour").toString(),
@@ -1148,14 +1139,9 @@ void UnitUtilsTest::configMutator_shouldApplySettingsFeatureInsertions() {
            ConfigConstants::TAG_MANUAL);
   const QString cnRuleSetUrl =
       ruleSets[cnIdx].toObject().value("url").toString();
-  bool hasKnownMirrorPrefix = false;
-  for (const QString& prefix : GitHubMirror::prefixes()) {
-    if (cnRuleSetUrl.startsWith(prefix)) {
-      hasKnownMirrorPrefix = true;
-      break;
-    }
-  }
-  QVERIFY(hasKnownMirrorPrefix);
+  QVERIFY(cnRuleSetUrl.startsWith(
+      "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/"));
+
 }
 
 void UnitUtilsTest::subscriptionParser_shouldParseAdvancedProtocols() {

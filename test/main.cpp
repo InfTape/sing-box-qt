@@ -1,71 +1,45 @@
 #include <QApplication>
-#include <QGraphicsDropShadowEffect>
-#include <QPropertyAnimation>
-#include <QPushButton>
+#include <QDialog>
+#include <QFormLayout>
+#include <QLineEdit>
+#include <QPlainTextEdit>
 #include <QVBoxLayout>
-#include <QWidget>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
-    QWidget window;
-    window.setWindowTitle("荧光按钮测试");
-    window.setMinimumSize(360, 240);
-    window.setStyleSheet(
-        "QWidget { background-color: #0b1021; }"
-        "QPushButton {"
-        "  color: #9efcff;"
-        "  background-color: #0b1021;"
-        "  border: 2px solid #38f8ff;"
-        "  border-radius: 14px;"
-        "  padding: 12px 28px;"
-        "  font-size: 18px;"
-        "  font-weight: 700;"
-        "  letter-spacing: 0.6px;"
-        "  text-transform: uppercase;"
-        "}"
-        "QPushButton:hover {"
-        "  background-color: #11203b;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #0c182c;"
-        "}"
-    );
+    // Global stylesheet
+    app.setStyleSheet(R"(
+        QLineEdit, QPlainTextEdit {
+            background-color: #f0f4f8;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        QLineEdit:focus, QPlainTextEdit:focus {
+            border: 1px solid #5b9bd5;
+        }
+    )");
 
-    auto *btn = new QPushButton("Glow");
-    btn->setCursor(Qt::PointingHandCursor);
-    btn->setMinimumHeight(60);
+    QDialog dialog;
+    dialog.setWindowTitle("QPlainTextEdit Placeholder Bug");
+    dialog.setMinimumWidth(400);
 
-    // 荧光效果：强发光阴影 + 呼吸动画
-    auto *glow = new QGraphicsDropShadowEffect(btn);
-    glow->setBlurRadius(26);
-    glow->setColor(QColor(56, 248, 255, 190));
-    glow->setOffset(0, 0);
-    btn->setGraphicsEffect(glow);
+    QFormLayout* form = new QFormLayout(&dialog);
 
-    auto *pulse = new QPropertyAnimation(glow, "blurRadius", btn);
-    pulse->setStartValue(18);
-    pulse->setEndValue(36);
-    pulse->setDuration(1400);
-    pulse->setEasingCurve(QEasingCurve::InOutSine);
-    pulse->setLoopCount(-1);
-    pulse->start();
+    // QLineEdit — placeholder works correctly
+    QLineEdit* lineEdit = new QLineEdit;
+    lineEdit->setPlaceholderText("This placeholder disappears correctly");
+    form->addRow("QLineEdit:", lineEdit);
 
-    auto *colorPulse = new QPropertyAnimation(glow, "color", btn);
-    colorPulse->setStartValue(QColor(56, 248, 255, 150));
-    colorPulse->setEndValue(QColor(158, 255, 255, 230));
-    colorPulse->setDuration(1400);
-    colorPulse->setEasingCurve(QEasingCurve::InOutSine);
-    colorPulse->setLoopCount(-1);
-    colorPulse->start();
+    // QPlainTextEdit — placeholder does NOT disappear when typing
+    QPlainTextEdit* plainEdit = new QPlainTextEdit;
+    plainEdit->setPlaceholderText("This placeholder stays visible when typing!");
+    plainEdit->setFixedHeight(80);
+    form->addRow("QPlainTextEdit:", plainEdit);
 
-    auto *layout = new QVBoxLayout(&window);
-    layout->setContentsMargins(36, 32, 36, 32);
-    layout->addStretch();
-    layout->addWidget(btn, 0, Qt::AlignHCenter);
-    layout->addStretch();
-
-    window.show();
+    dialog.show();
     return app.exec();
 }
