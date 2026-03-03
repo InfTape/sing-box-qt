@@ -10,7 +10,8 @@ Write-Host "Configuring unit tests..." -ForegroundColor Cyan
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nBuilding (Release)..." -ForegroundColor Cyan
-    & $CmakeExe --build $BuildDir --config Release
+    $Jobs = [Environment]::ProcessorCount
+    & $CmakeExe --build $BuildDir --config Release --parallel $Jobs
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`nRunning unit tests with CTest..." -ForegroundColor Cyan

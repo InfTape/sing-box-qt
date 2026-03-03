@@ -12,16 +12,13 @@ Write-Host "Configuring project..." -ForegroundColor Cyan
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nBuilding project (Release)..." -ForegroundColor Cyan
-    & $CvPath --build build --config Release
+    $Jobs = [Environment]::ProcessorCount
+    & $CvPath --build build --config Release --parallel $Jobs
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`nBuild SUCCESS!" -ForegroundColor Green
         Write-Host "Executable: .\build\Release\sing-box-qt.exe" -ForegroundColor Green
         Write-Host "Executable: .\build\Release\sing-box-core-manager.exe" -ForegroundColor Green
-        
-        # Try to run
-        Write-Host "`nLaunching..."
-        Start-Process ".\build\Release\sing-box-qt.exe"
     }
     else {
         Write-Host "`nBuild FAILED" -ForegroundColor Red

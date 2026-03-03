@@ -44,7 +44,8 @@ if ($LASTEXITCODE -ne 0) {
 
 # Build
 Write-Host "Building (Release)..." -ForegroundColor Cyan
-& $cmakeCmd --build $buildDir --config Release
+$Jobs = [Environment]::ProcessorCount
+& $cmakeCmd --build $buildDir --config Release --parallel $Jobs
 if ($LASTEXITCODE -ne 0) {
     throw "CMake build failed"
 }

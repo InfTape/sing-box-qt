@@ -310,7 +310,8 @@ if(WIN32)
         wininet
     )
     if(MSVC)
-        target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+        target_compile_options(${PROJECT_NAME} PRIVATE /utf-8 /MP)
+        target_compile_options(sing-box-core-manager PRIVATE /utf-8 /MP)
     endif()
     # Set Windows application icon.
     set_target_properties(${PROJECT_NAME} PROPERTIES
