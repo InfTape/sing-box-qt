@@ -6,7 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QLabel>
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 #include <QPushButton>
 #include <QTabWidget>
 #include <QTextEdit>
@@ -119,7 +119,7 @@ void MultiSelectMenuBox::updateButtonText() {
 SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
                                                QWidget*      parent)
     : QDialog(parent),
-      m_nameEdit(new QLineEdit),
+      m_nameEdit(new StyledLineEdit),
       m_tabs(new QTabWidget),
       m_urlEdit(new QTextEdit),
       m_manualEdit(new QTextEdit),

@@ -4,7 +4,7 @@
 #include <QGroupBox>
 #include <QJsonArray>
 #include <QLabel>
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 #include <QSpinBox>
 
 GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent)
@@ -17,8 +17,8 @@ void GenericNodeEditor::setupUI() {
   QFormLayout* layout = new QFormLayout(this);
   layout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
   // Common
-  m_nameEdit   = new QLineEdit;
-  m_serverEdit = new QLineEdit;
+  m_nameEdit   = new StyledLineEdit;
+  m_serverEdit = new StyledLineEdit;
   m_portScan   = new QSpinBox;
   m_portScan->setRange(1, 65535);
   m_portScan->setValue(443);
@@ -27,13 +27,13 @@ void GenericNodeEditor::setupUI() {
   layout->addRow(tr("Server"), m_serverEdit);
   layout->addRow(tr("Port"), m_portScan);
   // Auth
-  m_uuidEdit     = new QLineEdit;
-  m_passwordEdit = new QLineEdit;
+  m_uuidEdit     = new StyledLineEdit;
+  m_passwordEdit = new StyledLineEdit;
   m_passwordEdit->setEchoMode(QLineEdit::PasswordEchoOnEdit);
-  m_alterIdEdit = new QLineEdit;
+  m_alterIdEdit = new StyledLineEdit;
   m_alterIdEdit->setText("0");
-  m_methodEdit   = new QLineEdit;
-  m_securityEdit = new QLineEdit;
+  m_methodEdit   = new StyledLineEdit;
+  m_securityEdit = new StyledLineEdit;
   if (m_type == "vmess" || m_type == "vless" || m_type == "tuic" ||
       m_type == "hysteria2") {
     layout->addRow(m_type == "tuic"
@@ -81,26 +81,26 @@ void GenericNodeEditor::setupUI() {
       m_tlsCheck->setChecked(true);
     }
     transportLayout->addRow(tr("Security"), m_tlsCheck);
-    m_serverNameEdit  = new QLineEdit;
-    m_alpnEdit        = new QLineEdit;
-    m_fingerprintEdit = new QLineEdit;
+    m_serverNameEdit  = new StyledLineEdit;
+    m_alpnEdit        = new StyledLineEdit;
+    m_fingerprintEdit = new StyledLineEdit;
     m_insecureCheck   = new QCheckBox(tr("Allow Insecure"));
     transportLayout->addRow(tr("SNI"), m_serverNameEdit);
     transportLayout->addRow(tr("ALPN"), m_alpnEdit);
     transportLayout->addRow(tr("Fingerprint"), m_fingerprintEdit);
     transportLayout->addRow(tr(""), m_insecureCheck);
     // Path/Host/ServiceName
-    m_pathEdit        = new QLineEdit;
-    m_hostEdit        = new QLineEdit;
-    m_serviceNameEdit = new QLineEdit;
+    m_pathEdit        = new StyledLineEdit;
+    m_hostEdit        = new StyledLineEdit;
+    m_serviceNameEdit = new StyledLineEdit;
     transportLayout->addRow(tr("Path"), m_pathEdit);
     transportLayout->addRow(tr("Host"), m_hostEdit);
     transportLayout->addRow(tr("Service Name"), m_serviceNameEdit);
     // Reality
     if (m_type == "vless" || m_type == "trojan") {
-      m_publicKeyEdit = new QLineEdit;
-      m_shortIdEdit   = new QLineEdit;
-      m_spiderXEdit   = new QLineEdit;
+      m_publicKeyEdit = new StyledLineEdit;
+      m_shortIdEdit   = new StyledLineEdit;
+      m_spiderXEdit   = new StyledLineEdit;
       transportLayout->addRow(tr("Reality Public Key"), m_publicKeyEdit);
       transportLayout->addRow(tr("Reality Short ID"), m_shortIdEdit);
       transportLayout->addRow(tr("Reality SpiderX"), m_spiderXEdit);

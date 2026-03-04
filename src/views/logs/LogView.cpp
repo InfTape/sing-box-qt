@@ -6,7 +6,7 @@
 #include <QFileDialog>
 #include <QFrame>
 #include <QLabel>
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QScrollArea>
@@ -97,7 +97,7 @@ void LogView::setupUI() {
   QHBoxLayout* filterLayout = new QHBoxLayout(filterCard);
   filterLayout->setContentsMargins(14, 12, 14, 12);
   filterLayout->setSpacing(12);
-  m_searchEdit = new QLineEdit;
+  m_searchEdit = new StyledLineEdit;
   m_searchEdit->setObjectName("SearchInput");
   m_searchEdit->setPlaceholderText(tr("Search logs..."));
   m_searchEdit->setClearButtonEnabled(true);

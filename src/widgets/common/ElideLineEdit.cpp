@@ -3,7 +3,7 @@
 #include <QPainter>
 #include <QStyleOptionFrame>
 
-ElideLineEdit::ElideLineEdit(QWidget* parent) : QLineEdit(parent) {}
+ElideLineEdit::ElideLineEdit(QWidget* parent) : StyledLineEdit(parent) {}
 
 void ElideLineEdit::setElideMode(Qt::TextElideMode mode) {
   if (m_elideMode == mode) {
@@ -15,7 +15,7 @@ void ElideLineEdit::setElideMode(Qt::TextElideMode mode) {
 
 void ElideLineEdit::paintEvent(QPaintEvent* event) {
   if (hasFocus() || text().isEmpty()) {
-    QLineEdit::paintEvent(event);
+    StyledLineEdit::paintEvent(event);
     return;
   }
   QStyleOptionFrame panel;

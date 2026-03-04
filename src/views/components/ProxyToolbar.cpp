@@ -1,5 +1,5 @@
 #include "ProxyToolbar.h"
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 #include <QProgressBar>
 #include <QPushButton>
 #include <QStyle>
@@ -13,7 +13,7 @@ ProxyToolbar::ProxyToolbar(QWidget* parent) : QFrame(parent) {
   auto* toolbarLayout = new QHBoxLayout;
   toolbarLayout->setContentsMargins(0, 0, 0, 0);
   toolbarLayout->setSpacing(12);
-  m_searchEdit = new QLineEdit(this);
+  m_searchEdit = new StyledLineEdit(this);
   m_searchEdit->setPlaceholderText(tr("Search nodes..."));
   m_searchEdit->setObjectName("SearchInput");
   m_searchEdit->setClearButtonEnabled(true);

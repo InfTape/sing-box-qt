@@ -2,9 +2,9 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMessageBox>
-#include <QPlainTextEdit>
+#include "widgets/common/StyledLineEdit.h"
+#include "widgets/common/StyledPlainTextEdit.h"
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QVBoxLayout>
@@ -20,9 +20,9 @@ RuleEditorDialog::RuleEditorDialog(Mode          mode,
       m_mode(mode),
       m_fields(RuleConfigService::fieldInfos()),
       m_typeCombo(new MenuComboBox(this, themeService)),
-      m_valueEdit(new QPlainTextEdit(this)),
+      m_valueEdit(new StyledPlainTextEdit(this)),
       m_outboundCombo(new GridComboBox(this, themeService)),
-      m_ruleSetEdit(new QLineEdit(this)),
+      m_ruleSetEdit(new StyledLineEdit(this)),
       m_hintLabel(new QLabel(this)) {
   setModal(true);
   setWindowTitle(m_mode == Mode::Add ? tr("Add Rule") : tr("Edit Match Type"));

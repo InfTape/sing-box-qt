@@ -1,9 +1,9 @@
 #ifndef ELIDELINEEDIT_H
 #define ELIDELINEEDIT_H
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 class QPaintEvent;
 
-class ElideLineEdit : public QLineEdit {
+class ElideLineEdit : public StyledLineEdit {
   Q_OBJECT
  public:
   explicit ElideLineEdit(QWidget* parent = nullptr);

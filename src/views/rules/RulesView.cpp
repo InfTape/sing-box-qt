@@ -5,7 +5,7 @@
 #include <QHBoxLayout>
 #include <QHash>
 #include <QLabel>
-#include <QLineEdit>
+#include "widgets/common/StyledLineEdit.h"
 #include <QMap>
 #include <QMessageBox>
 #include <QPushButton>
@@ -83,7 +83,7 @@ void RulesView::setupUI() {
   QHBoxLayout* filterLayout = new QHBoxLayout(filterCard);
   filterLayout->setContentsMargins(14, 12, 14, 12);
   filterLayout->setSpacing(12);
-  m_searchEdit = new QLineEdit;
+  m_searchEdit = new StyledLineEdit;
   m_searchEdit->setObjectName("SearchInput");
   m_searchEdit->setPlaceholderText(tr("Search rules or proxies..."));
   m_searchEdit->setClearButtonEnabled(true);

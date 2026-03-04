@@ -25,6 +25,7 @@
 #include "widgets/common/FlowLayout.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/ToggleSwitch.h"
+#include "widgets/common/StyledPlainTextEdit.h"
 
 namespace {
 constexpr int  kLanguageDefaultIndex       = 1;
@@ -304,7 +305,7 @@ QWidget* SettingsView::buildProxyAdvancedSection() {
       kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   advancedLayout->setSpacing(kCardSpacing);
   QLabel* bypassLabel     = new QLabel(tr("System proxy bypass domains"));
-  m_systemProxyBypassEdit = new QPlainTextEdit;
+  m_systemProxyBypassEdit = new StyledPlainTextEdit;
   m_systemProxyBypassEdit->setPlaceholderText(
       ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
   m_systemProxyBypassEdit->setFixedHeight(kBypassEditHeight);
