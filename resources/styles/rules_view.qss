@@ -119,7 +119,7 @@
     height: 14px;
 }
 #RuleMenu::indicator:checked {
-    image: url(:/icons/check.svg);
+    image: url(:/icons/check-blue.svg);
 }
 #RuleMenu::indicator:unchecked {
     image: none;

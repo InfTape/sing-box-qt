@@ -100,7 +100,7 @@
 }
 
 #SubscriptionMenu::indicator:checked, #RuleMenu::indicator:checked, #CardMenu::indicator:checked {
-    image: url(:/icons/check.svg);
+    image: url(:/icons/check-blue.svg);
 }
 
 #SubscriptionMenu::indicator:unchecked, #RuleMenu::indicator:unchecked, #CardMenu::indicator:unchecked {

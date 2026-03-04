@@ -155,9 +155,9 @@ QCheckBox::indicator {
     background-color: @input-bg@;
 }
 QCheckBox::indicator:checked {
-    background-color: @primary@;
-    border-color: @border-solid@;
-    image: url(:/icons/check.svg);
+    background-color: @input-bg@;
+    border-color: @primary@;
+    image: url(:/icons/check-blue.svg);
 }
 QCheckBox::indicator:disabled {
     border-color: @border-solid@;
