@@ -83,14 +83,21 @@ jobs:
             ninja-build \
             qt6-base-dev \
             qt6-base-dev-tools \
+            qt6-svg-dev \
+            qt6-websockets-dev \
             clang-tidy
 
-      - name: Configure (with clang-tidy)
+      - name: Configure
         run: >
-          cmake -S test -B build/test-tidy -G Ninja
+          cmake -S . -B build/tidy -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+          -DBUILD_TESTING=OFF
 
-      - name: Build (run clang-tidy)
-        run: cmake --build build/test-tidy --config Debug
+      - name: Run clang-tidy (src only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          find src -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' \) -print0 \
+            | sort -z \
+            | xargs -0 -r clang-tidy -p build/tidy -header-filter='^.*/src/'
