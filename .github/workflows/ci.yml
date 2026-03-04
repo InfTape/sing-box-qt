@@ -81,11 +81,17 @@ jobs:
           sudo apt-get install -y \
             cmake \
             ninja-build \
-            qt6-base-dev \
-            qt6-base-dev-tools \
-            qt6-svg-dev \
-            qt6-websockets-dev \
             clang-tidy
+
+      - name: Install Qt 6.10.1
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.10.1
+          host: linux
+          target: desktop
+          arch: gcc_64
+          modules: qtwebsockets qtsvg
+          cache: true
 
       - name: Configure
         run: >
@@ -93,6 +99,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DBUILD_TESTING=OFF
+          -DQt6_DIR="$Qt6_DIR"
 
       - name: Run clang-tidy (src only)
         shell: bash

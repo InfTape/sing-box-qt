@@ -23,16 +23,8 @@ WebSocketClient::WebSocketClient(QObject* parent)
                    &QWebSocket::binaryMessageReceived,
                    this,
                    &WebSocketClient::onBinaryMessageReceived);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
   QObject::connect(
       m_socket, &QWebSocket::errorOccurred, this, &WebSocketClient::onError);
-#else
-  QObject::connect(
-      m_socket,
-      QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
-      this,
-      &WebSocketClient::onError);
-#endif
   m_reconnectTimer->setSingleShot(true);
   QObject::connect(m_reconnectTimer,
                    &QTimer::timeout,
