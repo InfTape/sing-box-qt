@@ -197,6 +197,36 @@ QFrame#Card, QWidget#Card {
     border-radius: 10px;
 }
 
+/* Tabs */
+QTabWidget::pane {
+    border: 1px solid @border-solid@;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: transparent;
+    top: -1px;
+}
+QTabBar::tab {
+    background-color: @bg-tertiary@;
+    color: @text-secondary@;
+    padding: 6px 14px;
+    border: 1px solid @border-solid@;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    margin-right: 2px;
+}
+QTabBar::tab:hover {
+    background-color: @primary-12@;
+    color: @text-primary@;
+}
+QTabBar::tab:selected {
+    background-color: @panel-bg@;
+    color: @primary@;
+    font-weight: bold;
+    border-bottom: 2px solid @primary@;
+}
+
 /* Menus */
 #ComboMenu, #TrayMenu {
     background: transparent;
