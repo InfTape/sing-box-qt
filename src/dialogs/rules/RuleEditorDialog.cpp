@@ -1,4 +1,5 @@
 #include "dialogs/rules/RuleEditorDialog.h"
+#include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>

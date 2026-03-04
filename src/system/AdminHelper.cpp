@@ -6,6 +6,8 @@
 #include <windows.h>
 #include <shellapi.h>
 // clang-format on
+#else
+#include <unistd.h>
 #endif
 AdminHelper::AdminHelper(QObject* parent) : QObject(parent) {}
 
