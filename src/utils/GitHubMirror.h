@@ -26,6 +26,8 @@ inline QStringList buildUrls(const QString& rawUrl) {
   }
   const QString url = rawUrl.trimmed();
   QStringList   urls;
+  // Try direct GitHub URL first, then fallback to mirrors.
+  urls.append(url);
   for (const QString& prefix : prefixes()) {
     if (prefix.isEmpty()) {
       urls.append(url);

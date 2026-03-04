@@ -107,13 +107,14 @@ void MiscServicesTests::kernelPlatform_shouldBuildUrlsAndFilename() {
 
   const QStringList urls =
       KernelPlatform::buildDownloadUrls("1.2.3", "sing-box-1.2.3-windows-amd64.zip");
-  QCOMPARE(urls.size(), 6);
-  QVERIFY(urls[0].startsWith("https://ghproxy.net/"));
-  QVERIFY(urls[1].startsWith("https://gh-proxy.org/"));
-  QVERIFY(urls[2].startsWith("https://v6.gh-proxy.org/"));
-  QVERIFY(urls[3].startsWith("https://hk.gh-proxy.org/"));
-  QVERIFY(urls[4].startsWith("https://cdn.gh-proxy.org/"));
-  QVERIFY(urls[5].startsWith("https://edgeone.gh-proxy.org/"));
+  QCOMPARE(urls.size(), 7);
+  QVERIFY(urls[0].startsWith("https://github.com/SagerNet/sing-box/releases/download/"));
+  QVERIFY(urls[1].startsWith("https://ghproxy.net/"));
+  QVERIFY(urls[2].startsWith("https://gh-proxy.org/"));
+  QVERIFY(urls[3].startsWith("https://v6.gh-proxy.org/"));
+  QVERIFY(urls[4].startsWith("https://hk.gh-proxy.org/"));
+  QVERIFY(urls[5].startsWith("https://cdn.gh-proxy.org/"));
+  QVERIFY(urls[6].startsWith("https://edgeone.gh-proxy.org/"));
   QVERIFY(urls[1].contains("/download/v1.2.3/"));
   QVERIFY(urls[1].contains("sing-box-1.2.3-windows-amd64.zip"));
 }
