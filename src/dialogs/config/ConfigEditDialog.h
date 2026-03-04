@@ -2,7 +2,7 @@
 #define CONFIGEDITDIALOG_H
 #include <QDialog>
 #include <QString>
-class QTextEdit;
+class StyledTextEdit;
 
 class ConfigEditDialog : public QDialog {
   Q_OBJECT
@@ -12,6 +12,6 @@ class ConfigEditDialog : public QDialog {
   QString content() const;
 
  private:
-  QTextEdit* m_editor;
+  StyledTextEdit* m_editor;
 };
 #endif  // CONFIGEDITDIALOG_H

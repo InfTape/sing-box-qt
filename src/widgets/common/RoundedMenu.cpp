@@ -1,16 +1,22 @@
 #include "widgets/common/RoundedMenu.h"
+#include "utils/ThemeManager.h"
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
 
 RoundedMenu::RoundedMenu(QWidget* parent)
-    : QMenu(parent),
-      m_bgColor(QColor(30, 41, 59)),
-      m_borderColor(QColor(255, 255, 255, 26)) {
+    : QMenu(parent) {
+  m_bgColor = ThemeManager::instance().getColor("panel-bg");
+  m_borderColor = ThemeManager::instance().getColor("border-solid");
   setWindowFlags(windowFlags() | Qt::FramelessWindowHint |
                  Qt::NoDropShadowWindowHint);
   setAttribute(Qt::WA_TranslucentBackground, true);
   setAttribute(Qt::WA_NoSystemBackground, true);
+  connect(&ThemeManager::instance(), &ThemeManager::themeChanged, this, [this]() {
+    m_bgColor = ThemeManager::instance().getColor("panel-bg");
+    m_borderColor = ThemeManager::instance().getColor("border-solid");
+    update();
+  });
 }
 
 void RoundedMenu::setThemeColors(const QColor& bg, const QColor& border) {

@@ -9,7 +9,7 @@
 #include "widgets/common/StyledLineEdit.h"
 #include <QPushButton>
 #include <QTabWidget>
-#include <QTextEdit>
+#include "widgets/common/StyledTextEdit.h"
 #include <QToolButton>
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
@@ -121,9 +121,9 @@ SubscriptionFormDialog::SubscriptionFormDialog(ThemeService* themeService,
     : QDialog(parent),
       m_nameEdit(new StyledLineEdit),
       m_tabs(new QTabWidget),
-      m_urlEdit(new QTextEdit),
-      m_manualEdit(new QTextEdit),
-      m_uriEdit(new QTextEdit),
+      m_urlEdit(new StyledTextEdit),
+      m_manualEdit(new StyledTextEdit),
+      m_uriEdit(new StyledTextEdit),
       m_useOriginalCheck(new QCheckBox(tr("Use original config"))),
       m_sharedRulesCheck(new QCheckBox(tr("Enable shared rule set"))),
       m_ruleSetsBox(new MultiSelectMenuBox(this, themeService)),
@@ -306,7 +306,7 @@ bool SubscriptionFormDialog::validateInput(QString* error) const {
   return true;
 }
 
-QWidget* SubscriptionFormDialog::createTextTab(QTextEdit*     edit,
+QWidget* SubscriptionFormDialog::createTextTab(StyledTextEdit*     edit,
                                                const QString& placeholder) {
   QWidget*     widget = new QWidget;
   QVBoxLayout* layout = new QVBoxLayout(widget);

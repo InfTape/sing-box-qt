@@ -120,6 +120,7 @@ set(SOURCES
     src/widgets/common/RoundedMenu.cpp
     src/widgets/common/StyledLineEdit.cpp
     src/widgets/common/StyledPlainTextEdit.cpp
+    src/widgets/common/StyledTextEdit.cpp
     src/widgets/common/SubscriptionLoadingDialog.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
@@ -224,6 +225,7 @@ set(HEADERS
     src/widgets/common/RoundedMenu.h
     src/widgets/common/StyledLineEdit.h
     src/widgets/common/StyledPlainTextEdit.h
+    src/widgets/common/StyledTextEdit.h
     src/widgets/common/SubscriptionLoadingDialog.h
     src/utils/PortableMode.h
     src/utils/Logger.h

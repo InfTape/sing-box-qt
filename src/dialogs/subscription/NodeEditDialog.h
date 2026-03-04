@@ -6,7 +6,7 @@
 class QVBoxLayout;
 class NodeEditor;
 class QTabWidget;
-class QTextEdit;
+class StyledTextEdit;
 class QScrollArea;
 class QWidget;
 class QCheckBox;
@@ -36,7 +36,7 @@ class NodeEditDialog : public QDialog {
   QVBoxLayout*  m_editorContainer;
   NodeEditor*   m_currentEditor;
   QTabWidget*   m_tabs;  // Tab 1: Editor, Tab 2: JSON Preview
-  QTextEdit*    m_jsonPreview;
+  StyledTextEdit*    m_jsonPreview;
   QScrollArea*  m_scrollArea;
   QWidget*      m_editorPage;
   QCheckBox*    m_sharedRulesCheck;

@@ -7,7 +7,7 @@
 class QCheckBox;
 class QLabel;
 class QTabWidget;
-class QTextEdit;
+class StyledTextEdit;
 class QToolButton;
 class RoundedMenu;
 class QLineEdit;
@@ -55,14 +55,14 @@ class SubscriptionFormDialog : public QDialog {
   bool        validateInput(QString* error) const;
 
  private:
-  QWidget*    createTextTab(QTextEdit* edit, const QString& placeholder);
+  QWidget*    createTextTab(StyledTextEdit* edit, const QString& placeholder);
   int         indexForInterval(int minutes) const;
   void        updateState();
   QLineEdit*  m_nameEdit;
   QTabWidget* m_tabs;
-  QTextEdit*  m_urlEdit;
-  QTextEdit*  m_manualEdit;
-  QTextEdit*  m_uriEdit;
+  StyledTextEdit*  m_urlEdit;
+  StyledTextEdit*  m_manualEdit;
+  StyledTextEdit*  m_uriEdit;
   QCheckBox*  m_useOriginalCheck;
   QCheckBox*  m_sharedRulesCheck;
   MultiSelectMenuBox* m_ruleSetsBox;

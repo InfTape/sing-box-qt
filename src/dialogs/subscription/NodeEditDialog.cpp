@@ -9,11 +9,12 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QTabWidget>
-#include <QTextEdit>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "dialogs/editors/GenericNodeEditor.h"
+#include "dialogs/editors/NodeEditor.h"
+#include "widgets/common/StyledTextEdit.h"
 #include "services/rules/SharedRulesStore.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/common/RoundedMenu.h"
@@ -123,7 +124,7 @@ void NodeEditDialog::setupUI() {
   editorLayout->addWidget(m_scrollArea);
   m_tabs->addTab(editorTab, tr("Settings"));
   // Preview Tab
-  m_jsonPreview = new QTextEdit;
+  m_jsonPreview = new StyledTextEdit;
   m_jsonPreview->setReadOnly(true);
   m_tabs->addTab(m_jsonPreview, tr("JSON Preview"));
   // Buttons

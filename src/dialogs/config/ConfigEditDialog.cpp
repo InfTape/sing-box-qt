@@ -1,10 +1,10 @@
 #include "dialogs/config/ConfigEditDialog.h"
 #include <QPushButton>
-#include <QTextEdit>
+#include "widgets/common/StyledTextEdit.h"
 #include <QVBoxLayout>
 
 ConfigEditDialog::ConfigEditDialog(QWidget* parent)
-    : QDialog(parent), m_editor(new QTextEdit) {
+    : QDialog(parent), m_editor(new StyledTextEdit) {
   setWindowTitle(tr("Edit current config"));
   setModal(true);
   setMinimumWidth(720);
