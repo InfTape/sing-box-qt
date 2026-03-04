@@ -13,7 +13,7 @@ ThemeManager& ThemeManager::instance() {
 
 ThemeManager::ThemeManager(QObject* parent)
     : QObject(parent),
-      m_currentMode(Dark)  // Default to dark.
+      m_currentMode(Light)  // Default to light.
 {}
 
 ThemeManager::~ThemeManager() {}
@@ -21,14 +21,14 @@ ThemeManager::~ThemeManager() {}
 void ThemeManager::init() {
   // Load theme settings from database.
   QJsonObject themeConfig = DatabaseService::instance().getThemeConfig();
-  QString     themeEntry  = themeConfig.value("theme").toString("dark");
-  if (themeEntry == "light") {
-    m_currentMode = Light;
+  QString     themeEntry  = themeConfig.value("theme").toString("light");
+  if (themeEntry == "dark") {
+    m_currentMode = Dark;
   } else if (themeEntry == "auto") {
     m_currentMode = Auto;
     // Actual palette will follow the system theme inside loadThemeColors().
   } else {
-    m_currentMode = Dark;
+    m_currentMode = Light;
   }
   loadThemeColors();
   updateApplicationStyle();
