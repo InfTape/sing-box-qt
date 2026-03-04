@@ -232,15 +232,51 @@ sing-box-qt/
 
 ---
 
-## 许可证
+## 致谢
 
-本项目采用 [MIT](LICENSE) 许可证开源。
+本项目的开发离不开以下优秀的开源项目：
+
+* **[SagerNet/sing-box](https://github.com/SagerNet/sing-box)**
+  高性能代理核心。本项目作为第三方 GUI 客户端，仅调用其可执行程序，不包含其源码。
+
+* **[Qt Project](https://www.qt.io/)**
+  跨平台 C++ GUI 框架，用于构建本项目的桌面界面。（Qt 开源版本采用 LGPL / GPL 双许可证）
+
+* **[nlohmann/json](https://github.com/nlohmann/json)**
+  现代 C++ JSON 库，用于 JSON 数据解析与生成。（MIT License）
+
+* **[yaml-cpp](https://github.com/jbeder/yaml-cpp)**
+  C++ YAML 解析库，用于 YAML 配置处理。（MIT License）
+
+感谢这些项目的作者和贡献者为开源社区做出的贡献。
 
 ---
 
-## 致谢
+## 许可证
 
-- [SagerNet/sing-box](https://github.com/SagerNet/sing-box) - 强大的代理内核
-- [Qt Project](https://www.qt.io/) - 跨平台 GUI 框架
-- [nlohmann/json](https://github.com/nlohmann/json) - 现代 C++ JSON 库
-- [yaml-cpp](https://github.com/jbeder/yaml-cpp) - C++ YAML 解析库
+本项目采用 **MIT License** 开源。
+详情请参阅 [LICENSE](LICENSE)。
+
+---
+
+## 第三方许可证
+
+本项目依赖以下开源项目及其许可证：
+
+* Qt — LGPL v3 / GPL v3
+* nlohmann/json — MIT License
+* yaml-cpp — MIT License
+* sing-box — 依据其原始项目许可证发布
+
+使用本项目时应同时遵守这些第三方组件的许可证条款。
+
+---
+
+## 免责声明
+
+本项目是 **sing-box 的第三方图形界面客户端**，
+与 **SagerNet** 官方项目没有隶属关系或官方认可关系。
+
+sing-box 是 SagerNet 项目的商标或项目名称，
+相关版权归原作者所有。
+
