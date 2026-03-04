@@ -28,7 +28,7 @@ bool SystemProxy::setProxy(const QString& host, int port) {
   Logger::info(QString("System proxy set: %1").arg(proxyServer));
   return true;
 #else
-  // TODO: implement for macOS/Linux.
+  // TODO(yourdaddy): implement for macOS/Linux.
   Q_UNUSED(host)
   Q_UNUSED(port)
   return false;

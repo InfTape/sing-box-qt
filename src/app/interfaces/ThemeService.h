@@ -18,10 +18,13 @@ class ThemeService : public QObject {
   virtual QString colorString(const QString& key) const = 0;
   virtual QString loadStyleSheet(
       const QString&                resourcePath,
-      const QMap<QString, QString>& extra = {}) const = 0;
+      const QMap<QString, QString>& extra) const = 0;
+  QString loadStyleSheet(const QString& resourcePath) const {
+    return loadStyleSheet(resourcePath, {});
+  }
   virtual ThemeMode themeMode() const                 = 0;
   virtual void      setThemeMode(ThemeMode mode)      = 0;
- signals:
+signals:
   void themeChanged();
 };
 #endif  // THEMESERVICE_H

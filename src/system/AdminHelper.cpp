@@ -74,7 +74,7 @@ bool AdminHelper::runAsAdmin(const QString&     program,
     return false;
   }
 #else
-  // TODO: use pkexec or similar on Linux/macOS.
+  // TODO(yourdaddy): use pkexec or similar on Linux/macOS.
   Q_UNUSED(program)
   Q_UNUSED(arguments)
   return false;

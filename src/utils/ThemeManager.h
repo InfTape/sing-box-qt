@@ -27,7 +27,7 @@ class ThemeManager : public QObject {
   void themeChanged();
 
  private:
-  ThemeManager(QObject* parent = nullptr);
+  explicit ThemeManager(QObject* parent = nullptr);
   ~ThemeManager();
   void                   loadThemeColors();
   void                   updateApplicationStyle();

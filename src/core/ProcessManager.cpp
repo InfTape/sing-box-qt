@@ -115,7 +115,7 @@ bool ProcessManager::isProcessRunning(qint64 pid) {
   }
   return false;
 #else
-  // TODO: implement for Unix.
+  // TODO(yourdaddy): implement for Unix.
   return false;
 #endif
 }
@@ -135,7 +135,7 @@ bool ProcessManager::killProcess(qint64 pid) {
   Logger::warn(QString("Failed to terminate process: PID=%1").arg(pid));
   return false;
 #else
-  // TODO: implement for Unix.
+  // TODO(yourdaddy): implement for Unix.
   return false;
 #endif
 }

@@ -11,7 +11,7 @@ class ThemeServiceAdapter : public ThemeService {
   QString colorString(const QString& key) const override;
   QString loadStyleSheet(
       const QString&                resourcePath,
-      const QMap<QString, QString>& extra = {}) const override;
+      const QMap<QString, QString>& extra) const override;
   ThemeMode themeMode() const override;
   void      setThemeMode(ThemeMode mode) override;
 };
