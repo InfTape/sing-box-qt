@@ -6,6 +6,7 @@ class SubscriptionParserBasicTests : public QObject {
  private slots:
   void initTestCase();
   void subscriptionParser_shouldParseCommonUris();
+  void subscriptionParser_shouldParseNaiveUri();
   void subscriptionParser_shouldParseWireguardConfig();
   void subscriptionParser_shouldHandleBase64Fallbacks();
 };
@@ -57,6 +58,40 @@ void SubscriptionParserBasicTests::subscriptionParser_shouldParseCommonUris() {
   QCOMPARE(socks.value("server_port").toInt(), 1080);
   QCOMPARE(socks.value("username").toString(), QString("u"));
   QCOMPARE(socks.value("password").toString(), QString("p"));
+}
+
+
+
+void SubscriptionParserBasicTests::subscriptionParser_shouldParseNaiveUri() {
+  // naive:// with tag
+  const QJsonObject n1 = SubscriptionParser::parseNaiveURI(
+      "naive://alice:secret@proxy.example.com:8443#My-Naive");
+  QCOMPARE(n1.value("type").toString(), QString("naive"));
+  QCOMPARE(n1.value("server").toString(), QString("proxy.example.com"));
+  QCOMPARE(n1.value("server_port").toInt(), 8443);
+  QCOMPARE(n1.value("username").toString(), QString("alice"));
+  QCOMPARE(n1.value("password").toString(), QString("secret"));
+  QCOMPARE(n1.value("tag").toString(), QString("My-Naive"));
+  QVERIFY(n1.value("tls").toObject().value("enabled").toBool());
+  QCOMPARE(n1.value("tls").toObject().value("server_name").toString(),
+           QString("proxy.example.com"));
+
+  // naive+https:// with explicit sni param
+  const QJsonObject n2 = SubscriptionParser::parseNaiveURI(
+      "naive+https://bob:p4ss@cdn.example.com:443?sni=sni.example.com#CDN");
+  QCOMPARE(n2.value("type").toString(), QString("naive"));
+  QCOMPARE(n2.value("server").toString(), QString("cdn.example.com"));
+  QCOMPARE(n2.value("username").toString(), QString("bob"));
+  QCOMPARE(n2.value("password").toString(), QString("p4ss"));
+  QCOMPARE(n2.value("tls").toObject().value("server_name").toString(),
+           QString("sni.example.com"));
+
+  // parseSingBoxConfig should recognise naive type
+  const QByteArray singboxJson =
+      R"({"outbounds":[{"type":"naive","tag":"n1","server":"s.example.com","server_port":8443,"username":"u","password":"p"}]})"; 
+  const QJsonArray parsedSingBox = SubscriptionParser::parseSingBoxConfig(singboxJson);
+  QCOMPARE(parsedSingBox.size(), 1);
+  QCOMPARE(parsedSingBox[0].toObject().value("type").toString(), QString("naive"));
 }
 
 

@@ -80,6 +80,17 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   menu->addSeparator();
   QAction* deleteAction = menu->addAction(tr("Delete Subscription"));
   deleteAction->setObjectName("DeleteAction");
+  // Manual subscriptions don't have a remote URL — hide URL-only actions
+  // but keep editAction visible (renamed to "Edit Node") to reuse
+  // handleEditSubscription -> NodeEditDialog flow.
+  if (info.isManual) {
+    editAction->setText(tr("Edit Node"));
+    deleteAction->setText(tr("Delete Node"));
+    copyAction->setVisible(false);
+    refreshAction->setVisible(false);
+    refreshApplyAction->setVisible(false);
+    rollbackAction->setVisible(false);
+  }
   connect(menuBtn, &QPushButton::clicked, [menuBtn, menu]() {
     menu->exec(menuBtn->mapToGlobal(QPoint(0, menuBtn->height())));
   });

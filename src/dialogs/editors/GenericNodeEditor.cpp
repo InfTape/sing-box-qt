@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QLabel>
 #include "widgets/common/StyledLineEdit.h"
+#include "widgets/common/StyledSpinBox.h"
 #include <QSpinBox>
 
 GenericNodeEditor::GenericNodeEditor(const QString& type, QWidget* parent)
@@ -19,7 +20,7 @@ void GenericNodeEditor::setupUI() {
   // Common
   m_nameEdit   = new StyledLineEdit;
   m_serverEdit = new StyledLineEdit;
-  m_portScan   = new QSpinBox;
+  m_portScan   = new StyledSpinBox;
   m_portScan->setRange(1, 65535);
   m_portScan->setValue(443);
   m_portScan->setButtonSymbols(QAbstractSpinBox::NoButtons);
@@ -30,6 +31,7 @@ void GenericNodeEditor::setupUI() {
   m_uuidEdit     = new StyledLineEdit;
   m_passwordEdit = new StyledLineEdit;
   m_passwordEdit->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+  m_usernameEdit = new StyledLineEdit;
   m_alterIdEdit = new StyledLineEdit;
   m_alterIdEdit->setText("0");
   m_methodEdit   = new StyledLineEdit;
@@ -41,8 +43,12 @@ void GenericNodeEditor::setupUI() {
                        : (m_type == "hysteria2" ? tr("Password") : tr("UUID")),
                    m_type == "hysteria2" ? m_passwordEdit : m_uuidEdit);
   }
-  if (m_type == "shadowsocks" || m_type == "trojan" || m_type == "tuic") {
+  if (m_type == "shadowsocks" || m_type == "trojan" || m_type == "tuic" ||
+      m_type == "naive") {
     layout->addRow(tr("Password"), m_passwordEdit);
+  }
+  if (m_type == "naive") {
+    layout->addRow(tr("Username"), m_usernameEdit);
   }
   if (m_type == "shadowsocks") {
     layout->addRow(tr("Method"), m_methodEdit);
@@ -120,6 +126,45 @@ void GenericNodeEditor::setupUI() {
               this,
               &GenericNodeEditor::updateVisibility);
     }
+  }
+  // Naive: advanced options — all checkboxes in one row, then concurrency
+  if (m_type == "naive") {
+    QGroupBox*   naiveAdvGroup  = new QGroupBox(tr("Advanced"));
+    QFormLayout* naiveAdvLayout = new QFormLayout(naiveAdvGroup);
+    // Row 1: TLS + Use QUIC + UDP over TCP on the same line
+    m_naiveTlsCheck = new QCheckBox(tr("TLS"));
+    m_naiveTlsCheck->setChecked(true);
+    m_quicCheck     = new QCheckBox(tr("Use QUIC"));
+    m_udpOverTcpCheck = new QCheckBox(tr("UDP over TCP"));
+    QHBoxLayout* checkRow = new QHBoxLayout;
+    checkRow->setContentsMargins(0, 0, 0, 0);
+    checkRow->addWidget(m_naiveTlsCheck);
+    checkRow->addWidget(m_quicCheck);
+    checkRow->addWidget(m_udpOverTcpCheck);
+    checkRow->addStretch();
+    naiveAdvLayout->addRow(tr(""), checkRow);
+    // Row 2: Congestion Control (only when QUIC on)
+    m_quicCongestionCombo = new MenuComboBox;
+    m_quicCongestionCombo->addItems({"bbr", "bbr2", "cubic", "reno"});
+    m_quicCongestionCombo->setWheelEnabled(false);
+    naiveAdvLayout->addRow(tr("Congestion Control"), m_quicCongestionCombo);
+    // Row 3: Insecure Concurrency
+    m_insecureConcurrencySpin = new StyledSpinBox;
+    m_insecureConcurrencySpin->setRange(0, 64);
+    m_insecureConcurrencySpin->setValue(0);
+    m_insecureConcurrencySpin->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    naiveAdvLayout->addRow(tr("Insecure Concurrency"), m_insecureConcurrencySpin);
+    layout->addRow(naiveAdvGroup);
+    // Show/hide congestion combo based on quic checkbox
+    auto updateQuicVis = [this, naiveAdvLayout]() {
+      const bool on = m_quicCheck->isChecked();
+      m_quicCongestionCombo->setVisible(on);
+      if (QWidget* lbl = naiveAdvLayout->labelForField(m_quicCongestionCombo)) {
+        lbl->setVisible(on);
+      }
+    };
+    updateQuicVis();
+    connect(m_quicCheck, &QCheckBox::toggled, this, updateQuicVis);
   }
   // Connect signals
   QList<QWidget*> widgets = findChildren<QWidget*>();
@@ -226,6 +271,35 @@ QJsonObject GenericNodeEditor::getOutbound() const {
     outbound["password"] = m_passwordEdit->text();
   } else if (m_type == "hysteria2") {
     outbound["password"] = m_passwordEdit->text();
+  } else if (m_type == "naive") {
+    if (m_usernameEdit && !m_usernameEdit->text().isEmpty()) {
+      outbound["username"] = m_usernameEdit->text();
+    }
+    if (m_passwordEdit && !m_passwordEdit->text().isEmpty()) {
+      outbound["password"] = m_passwordEdit->text();
+    }
+    if (m_quicCheck && m_quicCheck->isChecked()) {
+      outbound["quic"] = true;
+      if (m_quicCongestionCombo) {
+        const QString cc = m_quicCongestionCombo->currentText();
+        if (!cc.isEmpty()) {
+          outbound["quic_congestion_control"] = cc;
+        }
+      }
+    }
+    if (m_insecureConcurrencySpin && m_insecureConcurrencySpin->value() > 0) {
+      outbound["insecure_concurrency"] = m_insecureConcurrencySpin->value();
+    }
+    if (m_udpOverTcpCheck && m_udpOverTcpCheck->isChecked()) {
+      outbound["udp_over_tcp"] =
+          QJsonObject{{"enabled", true}, {"version", 2}};
+    }
+  }
+  // Naive TLS — only written when TLS checkbox is checked (default on)
+  if (m_type == "naive") {
+    if (m_naiveTlsCheck && m_naiveTlsCheck->isChecked()) {
+      outbound["tls"] = QJsonObject{{"enabled", true}};
+    }
   }
   // Hysteria2 enforces TLS, SNI required
   if (m_type == "hysteria2") {
@@ -351,45 +425,105 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
     m_passwordEdit->setText(outbound["password"].toString());
   } else if (m_type == "hysteria2") {
     m_passwordEdit->setText(outbound["password"].toString());
+  } else if (m_type == "naive") {
+    if (m_usernameEdit) {
+      m_usernameEdit->setText(outbound["username"].toString());
+    }
+    if (m_passwordEdit) {
+      m_passwordEdit->setText(outbound["password"].toString());
+    }
+    if (m_naiveTlsCheck) {
+      const QJsonValue tlsVal = outbound.value("tls");
+      bool tlsEnabled = true;  // default on
+      if (tlsVal.isObject()) {
+        tlsEnabled = tlsVal.toObject().value("enabled").toBool(true);
+      }
+      m_naiveTlsCheck->setChecked(tlsEnabled);
+    }
+    if (m_quicCheck) {
+      m_quicCheck->setChecked(outbound.value("quic").toBool());
+    }
+    if (m_quicCongestionCombo) {
+      const QString cc = outbound.value("quic_congestion_control").toString();
+      if (!cc.isEmpty()) {
+        int idx = m_quicCongestionCombo->findText(cc);
+        if (idx >= 0) {
+          m_quicCongestionCombo->setCurrentIndex(idx);
+        }
+      }
+    }
+    if (m_insecureConcurrencySpin) {
+      m_insecureConcurrencySpin->setValue(
+          outbound.value("insecure_concurrency").toInt(0));
+    }
+    if (m_udpOverTcpCheck) {
+      const QJsonValue uot = outbound.value("udp_over_tcp");
+      bool enabled = false;
+      if (uot.isBool()) {
+        enabled = uot.toBool();
+      } else if (uot.isObject()) {
+        enabled = uot.toObject().value("enabled").toBool();
+      }
+      m_udpOverTcpCheck->setChecked(enabled);
+    }
   }
   if (outbound.contains("transport")) {
-    QJsonObject t = outbound["transport"].toObject();
-    m_networkCombo->setCurrentText(t["type"].toString());
-    m_pathEdit->setText(t["path"].toString());
-    m_serviceNameEdit->setText(t["service_name"].toString());
-    // Handle loading host
-    if (t.contains("headers")) {
-      QJsonObject headers = t["headers"].toObject();
-      if (headers.contains("Host")) {
-        m_hostEdit->setText(headers["Host"].toString());
+    if (m_networkCombo) {
+      QJsonObject t = outbound["transport"].toObject();
+      m_networkCombo->setCurrentText(t["type"].toString());
+      if (m_pathEdit) {
+        m_pathEdit->setText(t["path"].toString());
       }
-    } else if (t.contains("host")) {
-      QJsonArray hosts = t["host"].toArray();
-      if (!hosts.isEmpty()) {
-        m_hostEdit->setText(hosts[0].toString());
+      if (m_serviceNameEdit) {
+        m_serviceNameEdit->setText(t["service_name"].toString());
+      }
+      // Handle loading host
+      if (t.contains("headers")) {
+        QJsonObject headers = t["headers"].toObject();
+        if (headers.contains("Host") && m_hostEdit) {
+          m_hostEdit->setText(headers["Host"].toString());
+        }
+      } else if (t.contains("host")) {
+        QJsonArray hosts = t["host"].toArray();
+        if (!hosts.isEmpty() && m_hostEdit) {
+          m_hostEdit->setText(hosts[0].toString());
+        }
       }
     }
   }
   QString detectedSecurity;
-  if (outbound.contains("tls")) {
+  // naive handles TLS in its own branch above; skip the generic TLS block
+  if (outbound.contains("tls") && m_type != "naive") {
     QJsonObject t = outbound["tls"].toObject();
-    m_tlsCheck->setChecked(t["enabled"].toBool());
-    m_serverNameEdit->setText(t["server_name"].toString());
-    m_insecureCheck->setChecked(t["insecure"].toBool());
+    if (m_tlsCheck) {
+      m_tlsCheck->setChecked(t["enabled"].toBool());
+    }
+    if (m_serverNameEdit) {
+      m_serverNameEdit->setText(t["server_name"].toString());
+    }
+    if (m_insecureCheck) {
+      m_insecureCheck->setChecked(t["insecure"].toBool());
+    }
     if (t.contains("reality")) {
       QJsonObject r = t["reality"].toObject();
-      m_publicKeyEdit->setText(r["public_key"].toString());
-      m_shortIdEdit->setText(r["short_id"].toString());
+      if (m_publicKeyEdit) {
+        m_publicKeyEdit->setText(r["public_key"].toString());
+      }
+      if (m_shortIdEdit) {
+        m_shortIdEdit->setText(r["short_id"].toString());
+      }
       detectedSecurity = "reality";
     }
     if (t.contains("utls")) {
       QJsonObject u = t["utls"].toObject();
-      m_fingerprintEdit->setText(u["fingerprint"].toString());
+      if (m_fingerprintEdit) {
+        m_fingerprintEdit->setText(u["fingerprint"].toString());
+      }
     }
     if (detectedSecurity.isEmpty() && t.value("enabled").toBool()) {
       detectedSecurity = "tls";
     }
-  } else {
+  } else if (m_type != "naive") {
     detectedSecurity = "none";
   }
   if (m_securityCombo) {
@@ -397,6 +531,17 @@ void GenericNodeEditor::setOutbound(const QJsonObject& outbound) {
       m_securityCombo->setCurrentText(detectedSecurity);
     } else {
       m_securityCombo->setCurrentText("tls");
+    }
+  }
+  // Load naive TLS fields (SNI + insecure) from the naive branch above;
+  // here we restore server_name and insecure for naive from the tls object.
+  if (m_type == "naive" && outbound.contains("tls")) {
+    QJsonObject t = outbound["tls"].toObject();
+    if (m_serverNameEdit) {
+      m_serverNameEdit->setText(t["server_name"].toString());
+    }
+    if (m_insecureCheck) {
+      m_insecureCheck->setChecked(t["insecure"].toBool());
     }
   }
 }

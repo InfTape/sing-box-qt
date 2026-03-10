@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(sing-box-qt VERSION 1.2.0 LANGUAGES CXX)
+project(sing-box-qt VERSION 1.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -119,6 +119,7 @@ set(SOURCES
     src/widgets/common/ChevronToggle.cpp
     src/widgets/common/RoundedMenu.cpp
     src/widgets/common/StyledLineEdit.cpp
+    src/widgets/common/StyledSpinBox.cpp
     src/widgets/common/StyledPlainTextEdit.cpp
     src/widgets/common/StyledTextEdit.cpp
     src/widgets/common/SubscriptionLoadingDialog.cpp
@@ -224,6 +225,7 @@ set(HEADERS
     src/widgets/common/ChevronToggle.h
     src/widgets/common/RoundedMenu.h
     src/widgets/common/StyledLineEdit.h
+    src/widgets/common/StyledSpinBox.h
     src/widgets/common/StyledPlainTextEdit.h
     src/widgets/common/StyledTextEdit.h
     src/widgets/common/SubscriptionLoadingDialog.h

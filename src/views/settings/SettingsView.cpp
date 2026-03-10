@@ -24,8 +24,9 @@
 #include "widgets/common/ElideLineEdit.h"
 #include "widgets/common/FlowLayout.h"
 #include "widgets/common/MenuComboBox.h"
-#include "widgets/common/ToggleSwitch.h"
 #include "widgets/common/StyledPlainTextEdit.h"
+#include "widgets/common/StyledSpinBox.h"
+#include "widgets/common/ToggleSwitch.h"
 
 namespace {
 constexpr int  kLanguageDefaultIndex       = 1;
@@ -121,9 +122,9 @@ QIcon colorizedSvgIcon(const QString& resourcePath,
   return QIcon(rotated);
 }
 
-class NoWheelSpinBox : public QSpinBox {
+class NoWheelSpinBox : public StyledSpinBox {
  public:
-  explicit NoWheelSpinBox(QWidget* parent = nullptr) : QSpinBox(parent) {}
+  explicit NoWheelSpinBox(QWidget* parent = nullptr) : StyledSpinBox(parent) {}
 
  protected:
   void wheelEvent(QWheelEvent* event) override { event->ignore(); }
@@ -220,8 +221,8 @@ QSpinBox* SettingsView::createSpinBox(int  min,
                                       int  max,
                                       int  value,
                                       bool blockWheel) {
-  QSpinBox* spin =
-      blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox) : new QSpinBox;
+  QSpinBox* spin = blockWheel ? static_cast<QSpinBox*>(new NoWheelSpinBox)
+                              : static_cast<QSpinBox*>(new StyledSpinBox);
   spin->setButtonSymbols(QAbstractSpinBox::NoButtons);
   spin->setRange(min, max);
   spin->setValue(value);

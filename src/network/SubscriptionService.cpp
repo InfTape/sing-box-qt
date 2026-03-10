@@ -762,16 +762,45 @@ void SubscriptionService::updateSubscriptionMeta(const QString& id,
     }
   }
   saveToDatabase();
+  // For manual subscriptions, regenerate the config file from new content,
+  // just like refreshSubscription does. Without this the node JSON changes
+  // are only persisted to the DB but never written to the sing-box config.
+  if (isManual && !manualContent.trimmed().isEmpty() &&
+      !sub->configPath.isEmpty()) {
+    const QString trimmed = manualContent.trimmed();
+    bool saved = false;
+    if (useOriginalConfig) {
+      saved = SubscriptionConfigStore::saveOriginalConfig(
+          m_configRepo, trimmed, sub->configPath);
+    } else {
+      QJsonArray nodes = SubscriptionParser::extractNodesWithFallback(trimmed);
+      if (nodes.isEmpty() && isJsonContent(trimmed)) {
+        sub->useOriginalConfig = true;
+        saved = SubscriptionConfigStore::saveOriginalConfig(
+            m_configRepo, trimmed, sub->configPath);
+      } else if (!nodes.isEmpty()) {
+        sub->nodeCount = nodes.count();
+        saved = SubscriptionConfigStore::saveConfigWithNodes(
+            m_configRepo, nodes, sub->configPath);
+        DatabaseService::instance().saveSubscriptionNodes(sub->id, nodes);
+      }
+    }
+    if (!saved) {
+      emit errorOccurred(tr("Failed to save subscription config"));
+    }
+    sub->lastUpdate = QDateTime::currentMSecsSinceEpoch();
+    saveToDatabase();
+  }
   syncSharedRulesToConfig(*sub, cleanupRuleSets);
-  emit       subscriptionUpdated(id);
+  emit subscriptionUpdated(id);
   const bool sharedRulesChanged =
       sub->ruleSets != oldRuleSets ||
       sub->enableSharedRules != oldEnableSharedRules;
   const bool isActiveSubscription =
       m_activeIndex >= 0 && m_activeIndex < m_subscriptions.count() &&
       m_subscriptions[m_activeIndex].id == sub->id;
-  if (sharedRulesChanged && isActiveSubscription &&
-      !sub->configPath.isEmpty()) {
+  if (isActiveSubscription && !sub->configPath.isEmpty() &&
+      (sharedRulesChanged || isManual)) {
     emit applyConfigRequested(sub->configPath, true);
   }
 }

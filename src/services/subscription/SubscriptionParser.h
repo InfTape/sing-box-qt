@@ -18,6 +18,7 @@ class SubscriptionParser {
   static QJsonObject parseHysteria2URI(const QString& uri);
   static QJsonObject parseHysteriaURI(const QString& uri);
   static QJsonObject parseTuicURI(const QString& uri);
+  static QJsonObject parseNaiveURI(const QString& uri);
   static QJsonObject parseSocksURI(const QString& uri);
   static QJsonObject parseHttpURI(const QString& uri);
   static QJsonObject parseWireguardConfig(const QString& content);

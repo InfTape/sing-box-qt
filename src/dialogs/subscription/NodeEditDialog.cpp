@@ -40,7 +40,7 @@ void NodeEditDialog::setupUI() {
   typeLayout->addWidget(new QLabel(tr("Type:")));
   m_typeCombo = new MenuComboBox(this, m_themeService);
   m_typeCombo->addItems(
-      {"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2"});
+      {"vmess", "vless", "shadowsocks", "trojan", "tuic", "hysteria2", "naive"});
   m_typeCombo->setWheelEnabled(false);
   typeLayout->addWidget(m_typeCombo);
   // Rule set controls

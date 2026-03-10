@@ -155,6 +155,7 @@ QJsonArray SubscriptionParser::parseSingBoxConfig(const QByteArray& content) {
                                              "hysteria",
                                              "hysteria2",
                                              "tuic",
+                                             "naive",
                                              "wireguard",
                                              "ssh"};
     if (!proxyTypes.contains(type)) {
@@ -497,6 +498,8 @@ QJsonArray SubscriptionParser::parseURIList(const QByteArray& content) {
       node = parseHysteriaURI(uri);
     } else if (uri.startsWith("tuic://")) {
       node = parseTuicURI(uri);
+    } else if (uri.startsWith("naive://") || uri.startsWith("naive+https://")) {
+      node = parseNaiveURI(uri);
     } else if (uri.startsWith("socks://") || uri.startsWith("socks5://") ||
                uri.startsWith("socks4://") || uri.startsWith("socks4a://")) {
       node = parseSocksURI(uri);
@@ -1032,6 +1035,53 @@ QJsonObject SubscriptionParser::parseTuicURI(const QString& uri) {
   return node;
 }
 
+QJsonObject SubscriptionParser::parseNaiveURI(const QString& uri) {
+  QJsonObject node;
+  // Normalize: naive+https:// -> naive:// for QUrl parsing
+  QString normalized = uri;
+  if (normalized.startsWith("naive+https://")) {
+    normalized = "naive://" + normalized.mid(14);
+  } else if (normalized.startsWith("naive+http://")) {
+    normalized = "naive://" + normalized.mid(13);
+  }
+  // QUrl can't parse naive://, rewrite to https:// temporarily
+  const QString httpsUri = "https://" + normalized.mid(8);
+  QUrl          url(httpsUri);
+  if (!url.isValid()) {
+    return node;
+  }
+  const QString host = url.host();
+  int           port = url.port();
+  if (host.isEmpty() || port <= 0) {
+    return node;
+  }
+  node["type"]        = "naive";
+  node["server"]      = host;
+  node["server_port"] = port;
+  const QString username = QUrl::fromPercentEncoding(url.userName().toUtf8());
+  const QString password = QUrl::fromPercentEncoding(url.password().toUtf8());
+  if (!username.isEmpty()) {
+    node["username"] = username;
+  }
+  if (!password.isEmpty()) {
+    node["password"] = password;
+  }
+  QString tag = QUrl::fromPercentEncoding(url.fragment().toUtf8());
+  if (tag.isEmpty()) {
+    tag = QString("naive-%1:%2").arg(host).arg(port);
+  }
+  node["tag"] = tag;
+  // naive always uses TLS
+  QJsonObject tls;
+  tls["enabled"] = true;
+  // Try sni query param
+  QUrlQuery     query(url.query());
+  const QString sni = query.queryItemValue("sni");
+  tls["server_name"] = sni.isEmpty() ? host : sni;
+  node["tls"]        = tls;
+  return node;
+}
+
 QJsonObject SubscriptionParser::parseSocksURI(const QString& uri) {
   QJsonObject node;
   QUrl        url(uri);
@@ -1245,6 +1295,8 @@ QJsonArray SubscriptionParser::extractNodesWithFallback(
   stripped.replace("hy2://", "");
   stripped.replace("hysteria://", "");
   stripped.replace("tuic://", "");
+  stripped.replace("naive://", "");
+  stripped.replace("naive+https://", "");
   stripped.replace("wg://", "");
   const QString decodedStripped = tryDecodeBase64ToText(stripped);
   if (!decodedStripped.isEmpty()) {

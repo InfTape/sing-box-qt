@@ -78,6 +78,9 @@ resources/icons/128px-Sing-box.svg
 resources/icons/256px-Sing-box.svg
 resources/icons/512px-Sing-box.svg
 /src/sing-box
+
+# Local test projects
+dpi_border_test/
 /test/build-coverage-clang/.ninja_deps
 /test/build-coverage-clang/_deps/yaml-cpp-subbuild/.ninja_log
 /test/build-coverage-clang/.ninja_log

@@ -30,9 +30,10 @@ class GenericNodeEditor : public NodeEditor {
   MenuComboBox* m_flowCombo = nullptr;  // VLESS flow
   QLineEdit*    m_alterIdEdit =
       nullptr;  // VMess alterId (deprecated but maybe needed?)
-  // Shadowsocks / Trojan / Tuic / Hysteria
-  QLineEdit* m_methodEdit   = nullptr;  // SS method
-  QLineEdit* m_passwordEdit = nullptr;
+  // Shadowsocks / Trojan / Tuic / Hysteria / Naive
+  QLineEdit* m_methodEdit    = nullptr;  // SS method
+  QLineEdit* m_passwordEdit  = nullptr;
+  QLineEdit* m_usernameEdit  = nullptr;  // Naive username
   // VMess/VLESS/Trojan Transport & TLS
   MenuComboBox* m_networkCombo   = nullptr;  // tcp, ws, grpc, etc.
   MenuComboBox* m_securityCombo  = nullptr;  // VLESS security: none/tls/reality
@@ -51,5 +52,11 @@ class GenericNodeEditor : public NodeEditor {
   // Hysteria2
   QLineEdit* m_obfsTypeEdit     = nullptr;
   QLineEdit* m_obfsPasswordEdit = nullptr;
+  // Naive
+  QCheckBox*    m_naiveTlsCheck          = nullptr;
+  QCheckBox*    m_quicCheck              = nullptr;
+  MenuComboBox* m_quicCongestionCombo    = nullptr;
+  QSpinBox*     m_insecureConcurrencySpin = nullptr;
+  QCheckBox*    m_udpOverTcpCheck        = nullptr;
 };
 #endif  // GENERICNODEEDITOR_H
