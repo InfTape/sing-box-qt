@@ -6,9 +6,11 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QScrollArea>
+#include <QSet>
 #include <QString>
 #include <QTimer>
 #include <QWidget>
+#include "widgets/common/ToastNotification.h"
 class QScrollArea;
 class QEvent;
 class QShowEvent;
@@ -57,7 +59,9 @@ class SubscriptionView : public QWidget {
   bool getSubscriptionById(const QString& id, SubscriptionInfo* out) const;
   void showUrlAddLoadingPopup();
   void closeUrlAddLoadingPopup();
-  void showUrlAddSuccessPopup();
+  void showSubscriptionToast(const QString&           message,
+                             ToastNotification::Tone tone,
+                             int                     durationMs = 2500);
 
  protected:
   void         resizeEvent(QResizeEvent* event) override;
@@ -76,5 +80,7 @@ class SubscriptionView : public QWidget {
   ThemeService*                 m_themeService  = nullptr;
   SubscriptionLoadingDialog*    m_loadingDialog = nullptr;
   bool                          m_waitingUrlAdd = false;
+  QList<QString>                m_pendingRefreshToastIds;
+  QSet<QString>                 m_pendingRefreshActivateIds;
 };
 #endif  // SUBSCRIPTIONVIEW_H

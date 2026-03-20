@@ -23,6 +23,7 @@
 #include "views/subscription/SubscriptionController.h"
 #include "widgets/common/RoundedMenu.h"
 #include "widgets/common/SubscriptionLoadingDialog.h"
+#include "widgets/common/ToastNotification.h"
 
 // ==================== SubscriptionView ====================
 SubscriptionView::SubscriptionView(SubscriptionService* service,
@@ -104,7 +105,9 @@ void SubscriptionView::setupUI() {
               return;
             }
             m_waitingUrlAdd = false;
-            showUrlAddSuccessPopup();
+            closeUrlAddLoadingPopup();
+            showSubscriptionToast(tr("Subscription downloaded successfully"),
+                                  ToastNotification::Tone::Success);
           });
   connect(m_subscriptionService,
           &SubscriptionService::subscriptionRemoved,
@@ -125,6 +128,18 @@ void SubscriptionView::setupUI() {
             if (m_waitingUrlAdd) {
               m_waitingUrlAdd = false;
               closeUrlAddLoadingPopup();
+              showSubscriptionToast(err, ToastNotification::Tone::Primary, 3200);
+              return;
+            }
+            if (!m_pendingRefreshToastIds.isEmpty()) {
+              const QString failedRefreshId =
+                  m_pendingRefreshToastIds.takeFirst();
+              m_pendingRefreshActivateIds.remove(failedRefreshId);
+              if (SubscriptionCard* card = findCardById(failedRefreshId)) {
+                card->setUpdating(false);
+              }
+              showSubscriptionToast(err, ToastNotification::Tone::Primary, 3200);
+              return;
             }
             QMessageBox::warning(this, tr("Notice"), err);
           });
@@ -152,11 +167,10 @@ void SubscriptionView::closeUrlAddLoadingPopup() {
   m_loadingDialog->closePopup();
 }
 
-void SubscriptionView::showUrlAddSuccessPopup() {
-  if (!m_loadingDialog) {
-    return;
-  }
-  m_loadingDialog->showSuccessAndAutoClose();
+void SubscriptionView::showSubscriptionToast(const QString&           message,
+                                             ToastNotification::Tone tone,
+                                             int                     durationMs) {
+  ToastNotification::show(this, message, m_themeService, durationMs, tone);
 }
 
 void SubscriptionView::onAddClicked() {
@@ -374,6 +388,17 @@ void SubscriptionView::handleEditConfig(const QString& id) {
 
 void SubscriptionView::handleRefreshSubscription(const QString& id,
                                                  bool           applyRuntime) {
+  if (!id.isEmpty() && !m_pendingRefreshToastIds.contains(id)) {
+    m_pendingRefreshToastIds.append(id);
+  }
+  if (applyRuntime && !id.isEmpty()) {
+    m_pendingRefreshActivateIds.insert(id);
+  } else {
+    m_pendingRefreshActivateIds.remove(id);
+  }
+  if (SubscriptionCard* card = findCardById(id)) {
+    card->setUpdating(true);
+  }
   SubscriptionActions::refreshSubscription(
       m_subscriptionController->service(), id, applyRuntime);
 }
@@ -402,17 +427,33 @@ void SubscriptionView::handleCopyLink(const QString& id) {
     return;
   }
   QApplication::clipboard()->setText(target.url);
+  showSubscriptionToast(tr("Copied"), ToastNotification::Tone::Success, 1800);
 }
 
 void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
+  const bool showRefreshSuccessToast = m_pendingRefreshToastIds.removeOne(id);
+  const bool activateAfterRefresh = m_pendingRefreshActivateIds.remove(id);
+  if (showRefreshSuccessToast) {
+    if (SubscriptionCard* card = findCardById(id)) {
+      card->setUpdating(false);
+    }
+  }
   SubscriptionInfo target;
   if (!getSubscriptionById(id, &target)) {
     refreshList();
+    if (showRefreshSuccessToast) {
+      showSubscriptionToast(tr("Subscription updated successfully"),
+                            ToastNotification::Tone::Success);
+    }
     return;
   }
   SubscriptionCard* card = findCardById(id);
   if (!card) {
     refreshList();
+    if (showRefreshSuccessToast) {
+      showSubscriptionToast(tr("Subscription updated successfully"),
+                            ToastNotification::Tone::Success);
+    }
     return;
   }
   QString                       activeId;
@@ -423,6 +464,13 @@ void SubscriptionView::handleSubscriptionUpdated(const QString& id) {
     activeId = subs[activeIndex].id;
   }
   card->updateInfo(target, !activeId.isEmpty() && activeId == id);
+  if (activateAfterRefresh && activeId != id) {
+    m_subscriptionController->service()->setActiveSubscription(id, false);
+  }
+  if (showRefreshSuccessToast) {
+    showSubscriptionToast(tr("Subscription updated successfully"),
+                          ToastNotification::Tone::Success);
+  }
 }
 
 void SubscriptionView::handleActiveSubscriptionChanged(

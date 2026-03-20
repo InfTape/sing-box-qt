@@ -12,7 +12,7 @@ class ToastNotification : public QWidget {
   Q_PROPERTY(int   offsetY READ offsetY WRITE setOffsetY)
 
  public:
-  enum class Tone { Primary, Error };
+  enum class Tone { Primary, Success, Error };
 
   static void show(QWidget*       parent,
                    const QString& message,

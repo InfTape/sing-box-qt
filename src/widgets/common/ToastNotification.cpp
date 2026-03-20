@@ -18,7 +18,7 @@ constexpr int kSlideDistance = 18;
 constexpr int kAnimDuration  = 320;
 constexpr int kFontSize      = 13;
 
-const QColor kToastTextColor(255, 255, 0);
+const QColor kToastPrimaryTextColor(255, 255, 0);
 
 QColor toastBackgroundColor(ThemeService* theme) {
   if (theme) {
@@ -36,6 +36,15 @@ QColor toastBackgroundColor(ThemeService*           theme,
     return QColor(239, 68, 68);
   }
   return toastBackgroundColor(theme);
+}
+
+QColor toastTextColor(ThemeService*           theme,
+                      ToastNotification::Tone tone) {
+  if (tone == ToastNotification::Tone::Success) {
+    Q_UNUSED(theme)
+    return QColor(255, 255, 255);
+  }
+  return kToastPrimaryTextColor;
 }
 }  // namespace
 
@@ -67,7 +76,7 @@ ToastNotification::ToastNotification(QWidget*       parent,
 
   QFont font;
   font.setPixelSize(kFontSize);
-  font.setWeight(QFont::Medium);
+  font.setWeight(QFont::Bold);
   QFontMetrics metrics(font);
   const int    textWidth  = metrics.horizontalAdvance(m_message);
   const int    textHeight = metrics.height();
@@ -110,9 +119,9 @@ void ToastNotification::paintEvent(QPaintEvent* /*event*/) {
 
   QFont font = painter.font();
   font.setPixelSize(kFontSize);
-  font.setWeight(QFont::Medium);
+  font.setWeight(QFont::Bold);
   painter.setFont(font);
-  painter.setPen(kToastTextColor);
+  painter.setPen(toastTextColor(m_theme, m_tone));
   painter.drawText(rect(), Qt::AlignCenter, m_message);
 }
 

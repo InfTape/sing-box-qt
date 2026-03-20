@@ -20,7 +20,13 @@ SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info,
     : QFrame(parent),
       m_subId(info.id),
       m_active(active),
+      m_updatingTimer(new QTimer(this)),
       m_themeService(themeService) {
+  m_updatingTimer->setInterval(360);
+  connect(m_updatingTimer, &QTimer::timeout, this, [this]() {
+    m_updatingDotCount = (m_updatingDotCount % 3) + 1;
+    updateActionButton();
+  });
   setupUI(info);
   updateInfo(info, active);
   if (m_themeService) {
@@ -38,6 +44,21 @@ void SubscriptionCard::setActive(bool active) {
   m_active = active;
   applyActiveState();
   updateStyle();
+}
+
+void SubscriptionCard::setUpdating(bool updating) {
+  if (m_updating == updating) {
+    return;
+  }
+  m_updating = updating;
+  if (m_updating) {
+    m_updatingDotCount = 1;
+    m_updatingTimer->start();
+  } else {
+    m_updatingTimer->stop();
+    m_updatingDotCount = 1;
+  }
+  updateActionButton();
 }
 
 void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
@@ -74,8 +95,8 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
 
   QAction* editAction         = menu->addAction(tr("Edit Subscription"));
   m_editConfigAction          = menu->addAction(tr("Edit Current Config"));
-  QAction* refreshAction      = menu->addAction(tr("Refresh Now"));
-  QAction* refreshApplyAction = menu->addAction(tr("Refresh and Apply"));
+  QAction* refreshAction      = menu->addAction(tr("Update"));
+  QAction* refreshApplyAction = menu->addAction(tr("Update and Apply"));
   QAction* rollbackAction     = menu->addAction(tr("Rollback Config"));
   menu->addSeparator();
   QAction* deleteAction = menu->addAction(tr("Delete Subscription"));
@@ -158,18 +179,22 @@ void SubscriptionCard::applyActiveState() {
     m_statusTag->setText(m_active ? tr("Active") : tr("Inactive"));
     m_statusTag->setObjectName(m_active ? "CardTagActive" : "CardTag");
   }
-  if (m_useBtn) {
-    if (m_active) {
-      m_useBtn->setText(tr("Refresh"));
-      m_useBtn->setObjectName("CardActionBtnActive");
-    } else {
-      m_useBtn->setText(tr("Use"));
-      m_useBtn->setObjectName("CardActionBtn");
-    }
-  }
+  updateActionButton();
   if (m_editConfigAction) {
     m_editConfigAction->setVisible(m_active);
   }
+}
+
+void SubscriptionCard::updateActionButton() {
+  if (!m_useBtn) {
+    return;
+  }
+  m_useBtn->setObjectName(m_active ? "CardActionBtnActive" : "CardActionBtn");
+  if (m_updating) {
+    m_useBtn->setText(tr("updating%1").arg(QString(m_updatingDotCount, '.')));
+    return;
+  }
+  m_useBtn->setText(m_active ? tr("Refresh") : tr("Use"));
 }
 
 void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {

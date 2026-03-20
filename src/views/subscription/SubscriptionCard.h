@@ -7,6 +7,7 @@ class QEvent;
 class QLabel;
 class QPushButton;
 class QResizeEvent;
+class QTimer;
 class ThemeService;
 struct SubscriptionInfo;
 
@@ -21,6 +22,7 @@ class SubscriptionCard : public QFrame {
   QString subscriptionId() const { return m_subId; }
 
   void setActive(bool active);
+  void setUpdating(bool updating);
   void updateInfo(const SubscriptionInfo& info, bool active);
  signals:
   void useClicked(const QString& id);
@@ -34,6 +36,7 @@ class SubscriptionCard : public QFrame {
  private:
   void         setupUI(const SubscriptionInfo& info);
   void         applyActiveState();
+  void         updateActionButton();
   void         updateStyle();
   void         updateUrlLabelText();
   void         resizeEvent(QResizeEvent* event) override;
@@ -50,8 +53,11 @@ class SubscriptionCard : public QFrame {
   QLabel*      m_expireLabel      = nullptr;
   QPushButton* m_useBtn           = nullptr;
   QAction*     m_editConfigAction = nullptr;
+  QTimer*      m_updatingTimer    = nullptr;
 
-  ThemeService* m_themeService = nullptr;
+  ThemeService* m_themeService     = nullptr;
+  bool          m_updating         = false;
+  int           m_updatingDotCount = 1;
   QString       m_urlRawText;
 };
 #endif  // SUBSCRIPTIONCARD_H
