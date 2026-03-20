@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(sing-box-qt VERSION 1.2.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -123,6 +123,7 @@ set(SOURCES
     src/widgets/common/StyledPlainTextEdit.cpp
     src/widgets/common/StyledTextEdit.cpp
     src/widgets/common/SubscriptionLoadingDialog.cpp
+    src/widgets/common/ToastNotification.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
@@ -229,6 +230,7 @@ set(HEADERS
     src/widgets/common/StyledPlainTextEdit.h
     src/widgets/common/StyledTextEdit.h
     src/widgets/common/SubscriptionLoadingDialog.h
+    src/widgets/common/ToastNotification.h
     src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/Crypto.h

@@ -26,6 +26,7 @@ QWidget* buildNodeRow(QTreeWidget*   treeWidget,
   card->setObjectName("ProxyNodeCard");
   card->setAttribute(Qt::WA_Hover, true);
   card->setMouseTracking(true);
+  card->setProperty("active", false);
   card->setProperty("selected", false);
   auto* layout = new QHBoxLayout(card);
   layout->setContentsMargins(14, 10, 14, 10);
@@ -80,6 +81,21 @@ void updateNodeRowSelected(QTreeWidget*     treeWidget,
   row->style()->polish(row);
 }
 
+void updateNodeRowActive(QTreeWidget*     treeWidget,
+                         QTreeWidgetItem* item,
+                         bool             active) {
+  if (!treeWidget || !item) {
+    return;
+  }
+  QWidget* row = treeWidget->itemWidget(item, 0);
+  if (!row) {
+    return;
+  }
+  row->setProperty("active", active);
+  row->style()->unpolish(row);
+  row->style()->polish(row);
+}
+
 void markNodeState(QTreeWidget*     treeWidget,
                    QTreeWidgetItem* item,
                    const QString&   now,
@@ -104,8 +120,8 @@ void markNodeState(QTreeWidget*     treeWidget,
       nameLabel->setText(displayName);
     }
   }
+  updateNodeRowActive(treeWidget, item, isActive);
   updateNodeRowDelay(treeWidget, item, delayText, state);
-  updateNodeRowSelected(treeWidget, item, item->isSelected());
 }
 
 void applyTreeItemColors(QTreeWidget* treeWidget, const QJsonObject& proxies) {

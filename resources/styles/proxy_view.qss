@@ -131,12 +131,21 @@ QTreeView::branch:open, QTreeView::branch:closed {
     border-radius: 12px;
 }
 #ProxyNodeCard[selected="true"] {
+    background-color: @bg-secondary@;
+    border-color: @border-solid@;
+}
+#ProxyNodeCard[active="true"],
+#ProxyNodeCard[active="true"][selected="true"] {
     background-color: @success-12@;
     border-color: @success@;
 }
 #ProxyNodeCard:hover {
     background-color: @primary-12@;
     border-color: @primary@;
+}
+#ProxyNodeCard[active="true"]:hover {
+    background-color: @success-12@;
+    border-color: @success@;
 }
 #ProxyNodeName {
     font-weight: 600;

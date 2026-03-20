@@ -511,7 +511,7 @@ QWidget* SettingsView::buildKernelSection() {
       kCardMargin, kCardMargin, kCardMargin, kCardMargin);
   kernelLayout->setSpacing(kKernelFormSpacing);
   kernelLayout->setLabelAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-  m_kernelVersionLabel = new QLabel(tr("Not installed"));
+  m_kernelVersionLabel = new QLabel(tr("Not installed (click to download)"));
   m_kernelVersionLabel->setObjectName("KernelVersionLabel");
   m_kernelVersionLabel->setProperty("status", "error");
   m_kernelVersionHintLabel = new QLabel;
@@ -1000,7 +1000,7 @@ void SettingsView::onKernelInstalledReady(const QString& path,
   }
   if (m_kernelVersionLabel) {
     if (m_installedKernelVersion.isEmpty()) {
-      m_kernelVersionLabel->setText(tr("Not installed"));
+      m_kernelVersionLabel->setText(tr("Not installed (click to download)"));
     } else {
       m_kernelVersionLabel->setText(m_installedKernelVersion);
     }

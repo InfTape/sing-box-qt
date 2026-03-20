@@ -46,6 +46,11 @@ class ProxyView : public QWidget {
   QString formatDelay(int delay) const;
   void    onSelectionChanged(const QItemSelection& selected,
                              const QItemSelection& deselected);
+  void    rememberLockedSelection();
+  void    restoreLockedSelection();
+  void    syncSelectionVisualState();
+  QTreeWidgetItem* findNodeItem(const QString& group,
+                                const QString& nodeName) const;
 
   QJsonObject     loadNodeOutbound(const QString& tag) const;
   bool            isTesting() const;
@@ -59,6 +64,9 @@ class ProxyView : public QWidget {
   QHash<QString, QString>             m_pendingSelection;  // group -> proxy
   bool                                m_singleTesting{false};
   QString                             m_singleTestingTarget;
+  QString                             m_lockedSelectionGroup;
+  QString                             m_lockedSelectionNode;
+  bool                                m_restoringSelection = false;
   ThemeService*                       m_themeService        = nullptr;
   SubscriptionService*                m_subscriptionService = nullptr;
   ProxyViewController*                m_controller          = nullptr;

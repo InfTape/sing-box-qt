@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QLabel>
 #include <QMessageBox>
+#include <QSignalBlocker>
 #include <QStyledItemDelegate>
 #include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
@@ -17,6 +18,7 @@
 #include "network/SubscriptionService.h"
 #include "storage/ConfigConstants.h"
 #include "widgets/common/RoundedMenu.h"
+#include "widgets/common/ToastNotification.h"
 
 namespace {
 class ProxyTreeDelegate : public QStyledItemDelegate {
@@ -255,6 +257,7 @@ void ProxyView::onProxiesReceived(const QJsonObject& proxies) {
       [this](int delay) { return formatDelay(delay); },
       [this](int count) { return tr("%1 nodes").arg(count); },
       [this](const QString& proxy) { return tr("Current: %1").arg(proxy); });
+  syncSelectionVisualState();
 }
 
 void ProxyView::onItemClicked(QTreeWidgetItem* item, int column) {
@@ -322,6 +325,8 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       for (const QString& node : nodesToTest) {
         m_testingNodes.insert(node);
       }
+      rememberLockedSelection();
+      syncSelectionVisualState();
       if (m_toolbar) {
         m_toolbar->showProgress(true);
         m_toolbar->setProgress(0);
@@ -405,6 +410,8 @@ void ProxyView::onTreeContextMenu(const QPoint& pos) {
       m_testingNodes.insert(nodeName);
       m_singleTesting       = true;
       m_singleTestingTarget = nodeName;
+      rememberLockedSelection();
+      syncSelectionVisualState();
       m_controller->startSingleDelayTest(nodeName);
     }
   } else if (chosen == speedAct) {
@@ -425,6 +432,15 @@ bool ProxyView::isTesting() const {
 
 void ProxyView::handleNodeActivation(QTreeWidgetItem* item) {
   if (!item || !m_controller) {
+    return;
+  }
+  // Block node switching while a delay/speed test is running.
+  if (isTesting()) {
+    ToastNotification::show(
+        this,
+        tr("Please wait for the test to complete before switching nodes"),
+        m_themeService);
+    restoreLockedSelection();
     return;
   }
   const QString role = item->data(0, Qt::UserRole).toString();
@@ -533,6 +549,8 @@ void ProxyView::onTestSelectedClicked() {
   m_testingNodes.insert(name);
   m_singleTesting       = true;
   m_singleTestingTarget = name;
+  rememberLockedSelection();
+  syncSelectionVisualState();
   if (m_testSelectedBtn) {
     m_testSelectedBtn->setEnabled(false);
     m_testSelectedBtn->setProperty("testing", true);
@@ -580,10 +598,7 @@ void ProxyView::onDelayResult(const ProxyDelayTestResult& result) {
       m_testSelectedBtn->style()->polish(m_testSelectedBtn);
     }
   }
-  if (QTreeWidgetItem* current = m_treeWidget->currentItem()) {
-    ProxyTreeUtils::updateNodeRowSelected(
-        m_treeWidget, current, current->isSelected());
-  }
+  syncSelectionVisualState();
 }
 
 void ProxyView::onTestProgress(int current, int total) {
@@ -600,16 +615,15 @@ void ProxyView::onTestCompleted() {
     m_toolbar->showProgress(false);
   }
   m_testingNodes.clear();
+  m_lockedSelectionGroup.clear();
+  m_lockedSelectionNode.clear();
   if (m_testSelectedBtn) {
     m_testSelectedBtn->setEnabled(true);
     m_testSelectedBtn->setProperty("testing", false);
     m_testSelectedBtn->style()->unpolish(m_testSelectedBtn);
     m_testSelectedBtn->style()->polish(m_testSelectedBtn);
   }
-  if (QTreeWidgetItem* current = m_treeWidget->currentItem()) {
-    ProxyTreeUtils::updateNodeRowSelected(
-        m_treeWidget, current, current->isSelected());
-  }
+  syncSelectionVisualState();
 }
 
 QString ProxyView::formatDelay(int delay) const {
@@ -621,24 +635,134 @@ QString ProxyView::formatDelay(int delay) const {
 
 void ProxyView::onSelectionChanged(const QItemSelection& selected,
                                    const QItemSelection& deselected) {
-  for (const QModelIndex& idx : selected.indexes()) {
-    if (idx.column() != 0) {
-      continue;
-    }
-    if (auto* item = m_treeWidget->itemFromIndex(idx)) {
-      if (item->data(0, Qt::UserRole).toString() == "node") {
-        ProxyTreeUtils::updateNodeRowSelected(m_treeWidget, item, true);
-      }
-    }
+  Q_UNUSED(selected)
+  Q_UNUSED(deselected)
+  if (isTesting()) {
+    restoreLockedSelection();
+    return;
   }
-  for (const QModelIndex& idx : deselected.indexes()) {
-    if (idx.column() != 0) {
-      continue;
-    }
-    if (auto* item = m_treeWidget->itemFromIndex(idx)) {
-      if (item->data(0, Qt::UserRole).toString() == "node") {
-        ProxyTreeUtils::updateNodeRowSelected(m_treeWidget, item, false);
-      }
-    }
+  syncSelectionVisualState();
+}
+
+void ProxyView::rememberLockedSelection() {
+  m_lockedSelectionGroup.clear();
+  m_lockedSelectionNode.clear();
+  if (!m_treeWidget) {
+    return;
+  }
+
+  QTreeWidgetItem* item = nullptr;
+  const auto       selectedItems = m_treeWidget->selectedItems();
+  if (!selectedItems.isEmpty()) {
+    item = selectedItems.first();
+  } else {
+    item = m_treeWidget->currentItem();
+  }
+  if (!item || item->data(0, Qt::UserRole).toString() != "node") {
+    return;
+  }
+
+  m_lockedSelectionGroup = item->data(0, Qt::UserRole + 1).toString();
+  m_lockedSelectionNode  = ProxyTreeUtils::nodeDisplayName(item);
+  if (m_lockedSelectionNode.startsWith("* ")) {
+    m_lockedSelectionNode = m_lockedSelectionNode.mid(2);
   }
 }
+
+void ProxyView::restoreLockedSelection() {
+  if (!m_treeWidget || m_restoringSelection) {
+    return;
+  }
+  auto* selectionModel = m_treeWidget->selectionModel();
+  if (!selectionModel) {
+    return;
+  }
+
+  m_restoringSelection = true;
+  {
+    QSignalBlocker blocker(selectionModel);
+    m_treeWidget->clearSelection();
+    if (QTreeWidgetItem* lockedItem =
+            findNodeItem(m_lockedSelectionGroup, m_lockedSelectionNode)) {
+      lockedItem->setSelected(true);
+      m_treeWidget->setCurrentItem(lockedItem);
+    }
+  }
+  syncSelectionVisualState();
+  m_restoringSelection = false;
+}
+
+void ProxyView::syncSelectionVisualState() {
+  if (!m_treeWidget) {
+    return;
+  }
+
+  QString selectedGroup;
+  QString selectedNode;
+  if (isTesting() && !m_lockedSelectionGroup.isEmpty() &&
+      !m_lockedSelectionNode.isEmpty()) {
+    selectedGroup = m_lockedSelectionGroup;
+    selectedNode  = m_lockedSelectionNode;
+  } else {
+    QTreeWidgetItem* selectedItem = nullptr;
+    const auto       selectedItems = m_treeWidget->selectedItems();
+    if (!selectedItems.isEmpty()) {
+      selectedItem = selectedItems.first();
+    } else {
+      selectedItem = m_treeWidget->currentItem();
+    }
+    if (selectedItem &&
+        selectedItem->data(0, Qt::UserRole).toString() == "node") {
+      selectedGroup = selectedItem->data(0, Qt::UserRole + 1).toString();
+      selectedNode  = ProxyTreeUtils::nodeDisplayName(selectedItem);
+      if (selectedNode.startsWith("* ")) {
+        selectedNode = selectedNode.mid(2);
+      }
+    }
+  }
+
+  QTreeWidgetItemIterator it(m_treeWidget);
+  while (*it) {
+    QTreeWidgetItem* item = *it;
+    if (item->data(0, Qt::UserRole).toString() == "node") {
+      const QString itemGroup = item->data(0, Qt::UserRole + 1).toString();
+      QString       itemName  = ProxyTreeUtils::nodeDisplayName(item);
+      if (itemName.startsWith("* ")) {
+        itemName = itemName.mid(2);
+      }
+      const bool isSelected =
+          !selectedGroup.isEmpty() && itemGroup == selectedGroup &&
+          itemName == selectedNode;
+      ProxyTreeUtils::updateNodeRowSelected(m_treeWidget, item, isSelected);
+    }
+    ++it;
+  }
+}
+
+QTreeWidgetItem* ProxyView::findNodeItem(const QString& group,
+                                         const QString& nodeName) const {
+  if (!m_treeWidget || group.isEmpty() || nodeName.isEmpty()) {
+    return nullptr;
+  }
+
+  QTreeWidgetItemIterator it(m_treeWidget);
+  while (*it) {
+    QTreeWidgetItem* item = *it;
+    if (item->data(0, Qt::UserRole).toString() != "node") {
+      ++it;
+      continue;
+    }
+
+    const QString itemGroup = item->data(0, Qt::UserRole + 1).toString();
+    QString       itemName  = ProxyTreeUtils::nodeDisplayName(item);
+    if (itemName.startsWith("* ")) {
+      itemName = itemName.mid(2);
+    }
+    if (itemGroup == group && itemName == nodeName) {
+      return item;
+    }
+    ++it;
+  }
+  return nullptr;
+}
+

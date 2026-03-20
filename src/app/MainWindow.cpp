@@ -36,6 +36,7 @@
 #include "views/settings/SettingsController.h"
 #include "views/settings/SettingsView.h"
 #include "views/subscription/SubscriptionView.h"
+#include "widgets/common/ToastNotification.h"
 
 namespace {
 QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
@@ -473,22 +474,14 @@ void MainWindow::openSettingsPage() {
 }
 
 bool MainWindow::promptOpenSettingsForKernelDownload() {
-  QMessageBox box(this);
-  box.setIcon(QMessageBox::Warning);
-  box.setWindowTitle(tr("Kernel not installed"));
-  box.setText(tr("Kernel is not installed yet."));
-  box.setInformativeText(
-      tr("Please go to Settings and download the kernel first."));
-  box.addButton(tr("Cancel"), QMessageBox::RejectRole);
-  auto* goToSettingsBtn =
-      box.addButton(tr("Go to Settings"), QMessageBox::AcceptRole);
-  box.setDefaultButton(goToSettingsBtn);
-  box.exec();
-  if (box.clickedButton() == goToSettingsBtn) {
-    openSettingsPage();
-    return true;
-  }
-  return false;
+  ToastNotification::show(
+      this,
+      tr("Kernel is not installed yet. Please download it first."),
+      m_themeService,
+      3200,
+      ToastNotification::Tone::Error);
+  openSettingsPage();
+  return true;
 }
 
 void MainWindow::updateStyle() {

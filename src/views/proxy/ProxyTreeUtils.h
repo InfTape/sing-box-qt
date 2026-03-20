@@ -16,6 +16,9 @@ void     updateNodeRowDelay(QTreeWidget*     treeWidget,
                             QTreeWidgetItem* item,
                             const QString&   delayText,
                             const QString&   state);
+void     updateNodeRowActive(QTreeWidget*     treeWidget,
+                             QTreeWidgetItem* item,
+                             bool             active);
 void     updateNodeRowSelected(QTreeWidget*     treeWidget,
                                QTreeWidgetItem* item,
                                bool             selected);
