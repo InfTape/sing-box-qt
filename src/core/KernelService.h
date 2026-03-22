@@ -20,6 +20,10 @@ class KernelService : public QObject {
   bool    isRunning() const;
   QString getVersion() const;
   QString getKernelPath() const;
+  bool checkConfigFile(const QString& configPath,
+                       const QString& workingDirectory,
+                       QString*       output = nullptr,
+                       QString*       error  = nullptr) const;
  signals:
   void statusChanged(bool running);
   void outputReceived(const QString& output);

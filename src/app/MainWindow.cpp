@@ -148,7 +148,8 @@ void MainWindow::setupUI() {
   m_homeView      = new HomeView(m_themeService);
   m_proxyView     = new ProxyView(m_themeService, this);
   m_subscriptionView =
-      new SubscriptionView(m_subscriptionService, m_themeService, this);
+      new SubscriptionView(
+          m_subscriptionService, m_ctx.kernelService(), m_themeService, this);
   m_connectionsView = new ConnectionsView(m_themeService);
   m_rulesView       = new RulesView(m_ctx.configRepository(), m_themeService);
   m_logView         = new LogView(m_themeService);

@@ -124,6 +124,9 @@ set(SOURCES
     src/widgets/common/StyledTextEdit.cpp
     src/widgets/common/SubscriptionLoadingDialog.cpp
     src/widgets/common/ToastNotification.cpp
+    src/widgets/config/JsonCodeEditor.cpp
+    src/widgets/config/JsonEditorWidget.cpp
+    src/widgets/config/JsonSyntaxHighlighter.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
     src/utils/Crypto.cpp
@@ -231,6 +234,9 @@ set(HEADERS
     src/widgets/common/StyledTextEdit.h
     src/widgets/common/SubscriptionLoadingDialog.h
     src/widgets/common/ToastNotification.h
+    src/widgets/config/JsonCodeEditor.h
+    src/widgets/config/JsonEditorWidget.h
+    src/widgets/config/JsonSyntaxHighlighter.h
     src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/Crypto.h

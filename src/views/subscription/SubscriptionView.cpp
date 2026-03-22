@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QtGlobal>
 #include "app/interfaces/ThemeService.h"
+#include "core/KernelService.h"
 #include "dialogs/config/ConfigEditDialog.h"
 #include "dialogs/subscription/NodeEditDialog.h"
 #include "dialogs/subscription/SubscriptionFormDialog.h"
@@ -27,12 +28,14 @@
 
 // ==================== SubscriptionView ====================
 SubscriptionView::SubscriptionView(SubscriptionService* service,
+                                   KernelService*       kernelService,
                                    ThemeService*        themeService,
                                    QWidget*             parent)
     : QWidget(parent),
       m_subscriptionService(service),
       m_subscriptionController(new SubscriptionController(service)),
       m_autoUpdateTimer(new QTimer(this)),
+      m_kernelService(kernelService),
       m_themeService(themeService) {
   Q_ASSERT(m_subscriptionService);
   setupUI();
@@ -377,7 +380,8 @@ void SubscriptionView::handleEditConfig(const QString& id) {
     QMessageBox::warning(this, tr("Notice"), tr("Current config not found"));
     return;
   }
-  ConfigEditDialog dialog(this);
+  ConfigEditDialog dialog(
+      m_kernelService, m_subscriptionController->activeConfigPath(), this);
   dialog.setContent(current);
   if (dialog.exec() == QDialog::Accepted) {
     if (!m_subscriptionController->saveCurrentConfig(dialog.content(), true)) {

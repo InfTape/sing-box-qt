@@ -4,6 +4,7 @@
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QFile>
+#include <QProcessEnvironment>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QTimer>
@@ -151,6 +152,76 @@ QString KernelService::getVersion() const {
 
 QString KernelService::getKernelPath() const {
   return m_kernelPath.isEmpty() ? findKernelPath() : m_kernelPath;
+}
+
+bool KernelService::checkConfigFile(const QString& configPath,
+                                    const QString& workingDirectory,
+                                    QString*       output,
+                                    QString*       error) const {
+  const QString kernelPath = getKernelPath();
+  if (kernelPath.isEmpty() || !QFile::exists(kernelPath)) {
+    if (error) {
+      *error = tr("sing-box kernel not found");
+    }
+    return false;
+  }
+  if (configPath.isEmpty() || !QFile::exists(configPath)) {
+    if (error) {
+      *error = tr("Config file not found");
+    }
+    return false;
+  }
+
+  QProcess process;
+  if (!workingDirectory.isEmpty()) {
+    process.setWorkingDirectory(workingDirectory);
+  }
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert("ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS", "true");
+  process.setProcessEnvironment(env);
+
+  QStringList args;
+  args << "--disable-color";
+  if (!workingDirectory.isEmpty()) {
+    args << "-D" << workingDirectory;
+  }
+  args << "-c" << configPath << "check";
+
+  process.start(kernelPath, args);
+  if (!process.waitForStarted(3000)) {
+    if (error) {
+      *error = tr("Failed to start sing-box check");
+    }
+    return false;
+  }
+  if (!process.waitForFinished(10000)) {
+    process.kill();
+    if (error) {
+      *error = tr("sing-box check timed out");
+    }
+    return false;
+  }
+
+  const QString stdOut =
+      QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  const QString stdErr =
+      QString::fromUtf8(process.readAllStandardError()).trimmed();
+  QString combinedOutput = stdOut;
+  if (!stdErr.isEmpty()) {
+    combinedOutput =
+        combinedOutput.isEmpty() ? stdErr : combinedOutput + "\n" + stdErr;
+  }
+  if (output) {
+    *output = combinedOutput;
+  }
+
+  const bool ok = process.exitStatus() == QProcess::NormalExit &&
+                  process.exitCode() == 0;
+  if (!ok && error) {
+    *error = combinedOutput.isEmpty() ? tr("sing-box check failed")
+                                      : combinedOutput;
+  }
+  return ok;
 }
 
 void KernelService::onManagerStatus(bool running) {

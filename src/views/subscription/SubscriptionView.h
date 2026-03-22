@@ -19,12 +19,14 @@ class NodeEditDialog;
 class SubscriptionService;
 class ThemeService;
 class SubscriptionLoadingDialog;
+class KernelService;
 struct SubscriptionInfo;
 
 class SubscriptionView : public QWidget {
   Q_OBJECT
- public:
+  public:
   explicit SubscriptionView(SubscriptionService* service,
+                            KernelService*       kernelService,
                             ThemeService*        themeService,
                             QWidget*             parent = nullptr);
   SubscriptionService* getService() const;
@@ -77,6 +79,7 @@ class SubscriptionView : public QWidget {
   SubscriptionService*          m_subscriptionService;
   class SubscriptionController* m_subscriptionController;
   QTimer*                       m_autoUpdateTimer;
+  KernelService*                m_kernelService = nullptr;
   ThemeService*                 m_themeService  = nullptr;
   SubscriptionLoadingDialog*    m_loadingDialog = nullptr;
   bool                          m_waitingUrlAdd = false;
