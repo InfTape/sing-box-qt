@@ -1,6 +1,6 @@
-﻿#include "views/subscription/SubscriptionCard.h"
+#include "views/subscription/SubscriptionCard.h"
+
 #include <QAction>
-#include <QEvent>
 #include <QLabel>
 #include <QPoint>
 #include <QPushButton>
@@ -11,6 +11,7 @@
 #include "app/interfaces/ThemeService.h"
 #include "network/SubscriptionService.h"
 #include "utils/subscription/SubscriptionFormat.h"
+#include "widgets/common/ElideLabel.h"
 #include "widgets/common/RoundedMenu.h"
 
 SubscriptionCard::SubscriptionCard(const SubscriptionInfo& info,
@@ -147,11 +148,10 @@ void SubscriptionCard::setupUI(const SubscriptionInfo& info) {
   QVBoxLayout* infoPanelLayout = new QVBoxLayout(infoPanel);
   infoPanelLayout->setContentsMargins(12, 10, 12, 10);
   infoPanelLayout->setSpacing(6);
-  m_urlLabel = new QLabel(infoPanel);
+  m_urlLabel = new ElideLabel(infoPanel);
   m_urlLabel->setObjectName("CardInfoText");
   m_urlLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   m_urlLabel->setMinimumWidth(0);
-  m_urlLabel->installEventFilter(this);
   m_timeLabel = new QLabel(infoPanel);
   m_timeLabel->setObjectName("CardInfoText");
   m_trafficLabel = new QLabel(infoPanel);
@@ -218,9 +218,7 @@ void SubscriptionCard::updateInfo(const SubscriptionInfo& info, bool active) {
       m_scheduleTag->setVisible(false);
     }
   }
-  m_urlRawText = info.isManual ? tr("Manual config content") : info.url;
-  updateUrlLabelText();
-  QTimer::singleShot(0, this, [this]() { updateUrlLabelText(); });
+  m_urlLabel->setFullText(info.isManual ? tr("Manual config content") : info.url);
   if (m_timeLabel) {
     m_timeLabel->setText(tr("Updated: ") +
                          SubscriptionFormat::formatTimestamp(info.lastUpdate));
@@ -268,42 +266,4 @@ void SubscriptionCard::updateStyle() {
   }
   QString qss = ts->loadStyleSheet(":/styles/card_common.qss");
   setStyleSheet(qss);
-}
-
-void SubscriptionCard::updateUrlLabelText() {
-  if (!m_urlLabel) {
-    return;
-  }
-  if (m_urlRawText.isEmpty()) {
-    m_urlLabel->clear();
-    m_urlLabel->setToolTip(QString());
-    return;
-  }
-  int availableWidth = m_urlLabel->contentsRect().width();
-  if (availableWidth <= 0) {
-    availableWidth = m_urlLabel->width();
-  }
-  if (availableWidth <= 0) {
-    m_urlLabel->setText(m_urlRawText);
-    m_urlLabel->setToolTip(m_urlRawText);
-    return;
-  }
-  const QString elided = m_urlLabel->fontMetrics().elidedText(
-      m_urlRawText, Qt::ElideRight, availableWidth);
-  m_urlLabel->setText(elided);
-  m_urlLabel->setToolTip(m_urlRawText);
-}
-
-void SubscriptionCard::resizeEvent(QResizeEvent* event) {
-  QFrame::resizeEvent(event);
-  QTimer::singleShot(0, this, [this]() { updateUrlLabelText(); });
-}
-
-bool SubscriptionCard::eventFilter(QObject* watched, QEvent* event) {
-  if (watched == m_urlLabel &&
-      (event->type() == QEvent::Resize || event->type() == QEvent::Show ||
-       event->type() == QEvent::FontChange)) {
-    updateUrlLabelText();
-  }
-  return QFrame::eventFilter(watched, event);
 }

@@ -3,10 +3,9 @@
 #include <QFrame>
 #include <QString>
 class QAction;
-class QEvent;
+class ElideLabel;
 class QLabel;
 class QPushButton;
-class QResizeEvent;
 class QTimer;
 class ThemeService;
 struct SubscriptionInfo;
@@ -38,16 +37,13 @@ class SubscriptionCard : public QFrame {
   void         applyActiveState();
   void         updateActionButton();
   void         updateStyle();
-  void         updateUrlLabelText();
-  void         resizeEvent(QResizeEvent* event) override;
-  bool         eventFilter(QObject* watched, QEvent* event) override;
   QString      m_subId;
   bool         m_active           = false;
   QLabel*      m_nameLabel        = nullptr;
   QLabel*      m_typeTag          = nullptr;
   QLabel*      m_statusTag        = nullptr;
   QLabel*      m_scheduleTag      = nullptr;
-  QLabel*      m_urlLabel         = nullptr;
+  ElideLabel*  m_urlLabel         = nullptr;
   QLabel*      m_timeLabel        = nullptr;
   QLabel*      m_trafficLabel     = nullptr;
   QLabel*      m_expireLabel      = nullptr;
@@ -58,6 +54,5 @@ class SubscriptionCard : public QFrame {
   ThemeService* m_themeService     = nullptr;
   bool          m_updating         = false;
   int           m_updatingDotCount = 1;
-  QString       m_urlRawText;
 };
 #endif  // SUBSCRIPTIONCARD_H
