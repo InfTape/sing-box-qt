@@ -126,6 +126,9 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
         1000, this, &ProxyRuntimeController::refreshProxyViewRequested);
     QTimer::singleShot(
         1200, this, &ProxyRuntimeController::refreshRulesViewRequested);
+    startStartupPolling();
+  } else {
+    stopStartupPolling();
   }
 }
 
@@ -162,4 +165,29 @@ void ProxyRuntimeController::onApiLogMessageReceived(const QString& message) {
       emit apiLogMessage(type, payload);
     }
   }
+}
+
+void ProxyRuntimeController::startStartupPolling() {
+  stopStartupPolling();
+  m_startupPollCount = 0;
+  m_startupPollTimer = new QTimer(this);
+  m_startupPollTimer->setInterval(1500);
+  connect(m_startupPollTimer, &QTimer::timeout, this, [this]() {
+    ++m_startupPollCount;
+    emit refreshProxyViewRequested();
+    // Stop after ~15 seconds (10 ticks × 1.5s)
+    if (m_startupPollCount >= 10) {
+      stopStartupPolling();
+    }
+  });
+  m_startupPollTimer->start();
+}
+
+void ProxyRuntimeController::stopStartupPolling() {
+  if (m_startupPollTimer) {
+    m_startupPollTimer->stop();
+    m_startupPollTimer->deleteLater();
+    m_startupPollTimer = nullptr;
+  }
+  m_startupPollCount = 0;
 }

@@ -40,11 +40,16 @@ class ProxyRuntimeController : public QObject {
   void onApiLogMessageReceived(const QString& message);
 
  private:
+  void startStartupPolling();
+  void stopStartupPolling();
+
   KernelService*    m_kernelService    = nullptr;
   ProxyService*     m_proxyService     = nullptr;
   ProxyController*  m_proxyController  = nullptr;
   DataUsageTracker* m_dataUsageTracker = nullptr;
   QTimer*           m_connectionsTimer = nullptr;
   WebSocketClient*  m_logWsClient      = nullptr;
+  QTimer*           m_startupPollTimer = nullptr;
+  int               m_startupPollCount = 0;
 };
 #endif  // PROXYRUNTIMECONTROLLER_H

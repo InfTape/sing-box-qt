@@ -23,10 +23,12 @@ add_executable(sing-box-qt-unit-tests
     config/config_mutator_test.cpp
     subscription/subscription_parser_basic_test.cpp
     subscription/subscription_parser_advanced_test.cpp
+    subscription/subscription_service_test.cpp
     utils/rule_and_ruleconfig_test.cpp
     utils/format_and_proxy_test.cpp
     utils/log_and_subscription_meta_test.cpp
     utils/misc_services_test.cpp
+    ../src/network/SubscriptionService.cpp
     ../src/services/config/ConfigBuilder.cpp
     ../src/services/config/ConfigMutator.cpp
     ../src/services/rules/RuleConfigService.cpp
@@ -36,6 +38,7 @@ add_executable(sing-box-qt-unit-tests
     ../src/storage/AppSettings.cpp
     ../src/storage/ConfigIO.cpp
     ../src/storage/DatabaseService.cpp
+    ../src/storage/SubscriptionConfigStore.cpp
     ../src/utils/Crypto.cpp
     ../src/utils/PortableMode.cpp
     ../src/utils/home/HomeFormat.cpp

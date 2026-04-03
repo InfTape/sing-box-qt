@@ -111,6 +111,22 @@ QString makeUniqueTag(const QString& preferred, const QSet<QString>& existing) {
   }
 }
 
+void moveTagAfterAnchor(QStringList&    members,
+                        const QString&  tag,
+                        const QString&  anchorTag) {
+  const QString normalizedTag = tag.trimmed();
+  if (normalizedTag.isEmpty()) {
+    return;
+  }
+  members.removeAll(normalizedTag);
+  const int anchorIndex = members.indexOf(anchorTag);
+  if (anchorIndex < 0) {
+    members.prepend(normalizedTag);
+    return;
+  }
+  members.insert(anchorIndex + 1, normalizedTag);
+}
+
 QJsonArray loadSourceNodes(const SubscriptionInfo& source,
                            ConfigRepository*       cfgRepo) {
   QJsonArray nodes =
@@ -1017,11 +1033,9 @@ bool SubscriptionService::addSubscriptionNodesToActiveGroup(
         members.append(member);
       }
     }
-    if (!members.contains(finalGroupTag)) {
-      members.append(finalGroupTag);
-      ob["outbounds"] = QJsonArray::fromStringList(members);
-      outbounds[i]    = ob;
-    }
+    moveTagAfterAnchor(members, finalGroupTag, ConfigConstants::TAG_AUTO);
+    ob["outbounds"] = QJsonArray::fromStringList(members);
+    outbounds[i]    = ob;
     break;
   }
 
