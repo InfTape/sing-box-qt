@@ -102,6 +102,7 @@ class SettingsView : public QWidget {
   QLineEdit*    m_urltestUrlEdit;
   QLineEdit*    m_rulesetBaseUrlEdit;
   MenuComboBox* m_dnsStrategyCombo;
+  MenuComboBox* m_dnsStrategyCnCombo;
   // Appearance settings.
   MenuComboBox* m_themeCombo;
   MenuComboBox* m_languageCombo;

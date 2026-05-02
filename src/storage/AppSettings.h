@@ -66,6 +66,8 @@ class AppSettings : public QObject {
 
   QString dnsStrategyValue() const { return m_dnsStrategy; }
 
+  QString dnsStrategyCnValue() const { return m_dnsStrategyCn; }
+
   bool dnsHijack() const { return m_dnsHijack; }
 
   bool routeSniffEnabled() const { return m_routeSniffEnabled; }
@@ -77,6 +79,7 @@ class AppSettings : public QObject {
   void setBlockAds(bool enabled);
   void setEnableAppGroups(bool enabled);
   void setDnsStrategy(const QString& strategy);
+  void setDnsStrategyCn(const QString& strategy);
   void setDnsHijack(bool enabled);
   void setRouteSniffEnabled(bool enabled);
   void setSystemProxyEnabled(bool enabled);
@@ -113,6 +116,7 @@ class AppSettings : public QObject {
   QString normalizedDefaultOutbound() const;
   QString normalizedDownloadDetour() const;
   QString dnsStrategy() const;
+  QString dnsStrategyCn() const;
   // Load and save.
   void load();
   void reload();
@@ -145,6 +149,7 @@ class AppSettings : public QObject {
   bool    m_blockAds;
   bool    m_enableAppGroups;
   QString m_dnsStrategy;
+  QString m_dnsStrategyCn;
   bool    m_dnsHijack;
   bool    m_routeSniffEnabled;
   bool    m_systemProxyEnabled;

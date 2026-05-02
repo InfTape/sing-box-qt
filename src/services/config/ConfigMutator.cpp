@@ -347,7 +347,6 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   normalizeCacheFileConfig(experimental);
   config["experimental"] = experimental;
   QJsonObject dns        = config.value("dns").toObject();
-  dns["strategy"]        = settings.dnsStrategy();
   if (dns.contains("servers") && dns["servers"].isArray()) {
     const QJsonArray inputServers = dns.value("servers").toArray();
     QJsonArray       servers;
@@ -418,6 +417,23 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   }
   if (dns.contains("rules") && dns["rules"].isArray()) {
     QJsonArray rules    = dns.value("rules").toArray();
+    // Inject per-rule strategy based on server tag.
+    const QString proxyStrategy = settings.dnsStrategy();
+    const QString cnStrategy    = settings.dnsStrategyCn();
+    for (int i = 0; i < rules.size(); ++i) {
+      if (!rules[i].isObject()) {
+        continue;
+      }
+      QJsonObject rule      = rules[i].toObject();
+      const QString server  = rule.value("server").toString();
+      if (server == ConfigConstants::DNS_CN) {
+        rule["strategy"] = cnStrategy;
+        rules[i] = rule;
+      } else if (server == ConfigConstants::DNS_PROXY) {
+        rule["strategy"] = proxyStrategy;
+        rules[i] = rule;
+      }
+    }
     int        adsIndex = -1;
     for (int i = 0; i < rules.size(); ++i) {
       if (!rules[i].isObject()) {
@@ -459,6 +475,13 @@ void ConfigMutator::applySettings(QJsonObject& config) {
         ob["idle_timeout"]                = "10m";
         ob["url"]                         = settings.urltestUrl();
         outbounds[i]                      = ob;
+      } else if (ob.value("tag").toString() == ConfigConstants::TAG_DIRECT) {
+        QJsonObject domainResolver;
+        domainResolver["server"]   = ConfigConstants::DNS_RESOLVER;
+        domainResolver["strategy"] = settings.dnsStrategyCn();
+        ob["domain_resolver"]      = domainResolver;
+        ob.remove("domain_strategy");
+        outbounds[i] = ob;
       }
     }
     if (!settings.enableAppGroups()) {

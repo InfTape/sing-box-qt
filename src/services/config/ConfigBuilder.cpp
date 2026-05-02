@@ -162,13 +162,17 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
                                       ConfigConstants::TAG_DIRECT,
                                       false));
   QJsonArray  rules;
+  const QString proxyStrategy = settings.dnsStrategy();
+  const QString cnStrategy    = settings.dnsStrategyCn();
   QJsonObject directRule;
   directRule["clash_mode"] = "direct";
   directRule["server"]     = ConfigConstants::DNS_CN;
+  directRule["strategy"]   = cnStrategy;
   rules.append(directRule);
   QJsonObject globalRule;
   globalRule["clash_mode"] = "global";
   globalRule["server"]     = ConfigConstants::DNS_PROXY;
+  globalRule["strategy"]   = proxyStrategy;
   rules.append(globalRule);
   if (settings.blockAds()) {
     rules.append(makeAdsBlockDnsRule());
@@ -179,17 +183,18 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   cnSets.append(ConfigConstants::RS_GEOIP_CN);
   cnRule["rule_set"] = cnSets;
   cnRule["server"]   = ConfigConstants::DNS_CN;
+  cnRule["strategy"] = cnStrategy;
   rules.append(cnRule);
   QJsonObject notCnRule;
   notCnRule["rule_set"] = ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN;
   notCnRule["server"]   = ConfigConstants::DNS_PROXY;
+  notCnRule["strategy"] = proxyStrategy;
   rules.append(notCnRule);
   QJsonObject dns;
   dns["servers"]           = servers;
   dns["rules"]             = rules;
   dns["independent_cache"] = true;
   dns["final"]             = ConfigConstants::DNS_PROXY;
-  dns["strategy"]          = settings.dnsStrategy();
   return dns;
 }
 
@@ -341,6 +346,12 @@ QJsonArray ConfigBuilder::buildOutbounds() {
   QJsonObject direct;
   direct["type"] = "direct";
   direct["tag"]  = ConfigConstants::TAG_DIRECT;
+  {
+    QJsonObject domainResolver;
+    domainResolver["server"]   = ConfigConstants::DNS_RESOLVER;
+    domainResolver["strategy"] = settings.dnsStrategyCn();
+    direct["domain_resolver"]  = domainResolver;
+  }
   outbounds.append(direct);
   QJsonObject block;
   block["type"] = "block";

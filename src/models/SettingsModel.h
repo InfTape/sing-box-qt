@@ -23,6 +23,7 @@ class SettingsModel {
     bool    dnsHijack       = true;
     bool    enableAppGroups = false;
     QString dnsStrategy     = "prefer_ipv4";
+    QString dnsStrategyCn   = "ipv4_only";
     QString dnsProxy;
     QString dnsCn;
     QString dnsResolver;

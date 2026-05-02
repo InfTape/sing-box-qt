@@ -450,6 +450,9 @@ QWidget* SettingsView::buildProfileSection() {
   m_dnsStrategyCombo = createMenuComboBox();
   m_dnsStrategyCombo->addItems(
       {tr("IPv4 only"), tr("Prefer IPv4"), tr("Prefer IPv6")});
+  m_dnsStrategyCnCombo = createMenuComboBox();
+  m_dnsStrategyCnCombo->addItems(
+      {tr("IPv4 only"), tr("Prefer IPv4"), tr("Prefer IPv6")});
   QLabel* dnsProxyLabel = createFormLabel(tr("Proxy DNS (non-CN)"));
   QLabel* dnsCnLabel    = createFormLabel(tr("CN DNS"));
   prepareFormLabelPair(dnsProxyLabel, dnsCnLabel);
@@ -457,7 +460,8 @@ QWidget* SettingsView::buildProfileSection() {
       createFormLabel(tr("Resolver DNS (for DoH hostname resolving)"));
   m_urltestLabel = createFormLabel(tr("URLTest URL"));
   prepareFormLabelPair(m_dnsResolverLabel, m_urltestLabel);
-  QLabel* dnsStrategyLabel = createFormLabel(tr("DNS strategy"));
+  QLabel* dnsStrategyLabel   = createFormLabel(tr("Proxy DNS strategy"));
+  QLabel* dnsStrategyCnLabel = createFormLabel(tr("CN DNS strategy"));
   dnsGrid->addWidget(dnsProxyLabel, 0, 0);
   dnsGrid->addWidget(m_dnsProxyEdit, 0, 1);
   dnsGrid->addWidget(dnsCnLabel, 0, 2);
@@ -468,6 +472,8 @@ QWidget* SettingsView::buildProfileSection() {
   dnsGrid->addWidget(m_urltestUrlEdit, 1, 3);
   dnsGrid->addWidget(dnsStrategyLabel, 2, 0);
   dnsGrid->addWidget(m_dnsStrategyCombo, 2, 1);
+  dnsGrid->addWidget(dnsStrategyCnLabel, 2, 2);
+  dnsGrid->addWidget(m_dnsStrategyCnCombo, 2, 3);
   singboxProfileCardLayout->addLayout(dnsGrid);
   singboxProfileLayout->addWidget(singboxProfileCard);
   return singboxProfileSection;
@@ -708,6 +714,7 @@ void SettingsView::setupAutoSave() {
   connectLine(m_urltestUrlEdit);
   connectLine(m_rulesetBaseUrlEdit);
   connectCombo(m_dnsStrategyCombo);
+  connectCombo(m_dnsStrategyCnCombo);
 }
 
 void SettingsView::scheduleAutoSave() {
@@ -886,6 +893,14 @@ void SettingsView::fillProfileFromUi(SettingsModel::Data& data) const {
   } else {
     data.dnsStrategy = "prefer_ipv4";
   }
+  const int strategyCnIdx = m_dnsStrategyCnCombo->currentIndex();
+  if (strategyCnIdx == 0) {
+    data.dnsStrategyCn = "ipv4_only";
+  } else if (strategyCnIdx == 2) {
+    data.dnsStrategyCn = "prefer_ipv6";
+  } else {
+    data.dnsStrategyCn = "prefer_ipv4";
+  }
 }
 
 void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
@@ -925,6 +940,13 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
     m_dnsStrategyCombo->setCurrentIndex(2);
   } else {
     m_dnsStrategyCombo->setCurrentIndex(1);
+  }
+  if (data.dnsStrategyCn == "ipv4_only") {
+    m_dnsStrategyCnCombo->setCurrentIndex(0);
+  } else if (data.dnsStrategyCn == "prefer_ipv6") {
+    m_dnsStrategyCnCombo->setCurrentIndex(2);
+  } else {
+    m_dnsStrategyCnCombo->setCurrentIndex(1);
   }
   {
     QSignalBlocker blocker(m_themeCombo);

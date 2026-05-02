@@ -37,6 +37,7 @@ SettingsModel::Data SettingsModel::load() {
     d.dnsStrategy = config.value("preferIpv6").toBool(false) ? "prefer_ipv6"
                                                              : "prefer_ipv4";
   }
+  d.dnsStrategyCn = config.value("dnsStrategyCn").toString("ipv4_only");
   d.dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
   d.dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
@@ -81,6 +82,7 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["dnsHijack"]          = data.dnsHijack;
   config["enableAppGroups"]    = data.enableAppGroups;
   config["dnsStrategy"]        = data.dnsStrategy;
+  config["dnsStrategyCn"]       = data.dnsStrategyCn;
   config.remove("preferIpv6");
   config["dnsProxy"]           = data.dnsProxy;
   config["dnsCn"]              = data.dnsCn;

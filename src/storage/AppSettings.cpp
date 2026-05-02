@@ -34,6 +34,7 @@ AppSettings::AppSettings(QObject* parent)
       m_blockAds(false),
       m_enableAppGroups(false),
       m_dnsStrategy("prefer_ipv4"),
+      m_dnsStrategyCn("ipv4_only"),
       m_dnsHijack(true),
       m_routeSniffEnabled(true),
       m_systemProxyEnabled(true),
@@ -86,6 +87,7 @@ void AppSettings::load() {
     m_dnsStrategy = config.value("preferIpv6").toBool(false) ? "prefer_ipv6"
                                                              : "prefer_ipv4";
   }
+  m_dnsStrategyCn = config.value("dnsStrategyCn").toString("ipv4_only");
   m_dnsHijack         = config.value("dnsHijack").toBool(true);
   m_routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   if (config.contains("systemProxyEnabled")) {
@@ -143,6 +145,7 @@ void AppSettings::save() {
   config["blockAds"]           = m_blockAds;
   config["enableAppGroups"]    = m_enableAppGroups;
   config["dnsStrategy"]        = m_dnsStrategy;
+  config["dnsStrategyCn"]       = m_dnsStrategyCn;
   config.remove("preferIpv6");
   config["dnsHijack"]          = m_dnsHijack;
   config["routeSniffEnabled"]  = m_routeSniffEnabled;
@@ -292,6 +295,14 @@ void AppSettings::setDnsStrategy(const QString& strategy) {
   }
 }
 
+void AppSettings::setDnsStrategyCn(const QString& strategy) {
+  if (m_dnsStrategyCn != strategy) {
+    m_dnsStrategyCn = strategy;
+    save();
+    emit settingsChanged();
+  }
+}
+
 void AppSettings::setDnsHijack(bool enabled) {
   if (m_dnsHijack != enabled) {
     m_dnsHijack = enabled;
@@ -406,4 +417,8 @@ QString AppSettings::normalizedDownloadDetour() const {
 
 QString AppSettings::dnsStrategy() const {
   return m_dnsStrategy;
+}
+
+QString AppSettings::dnsStrategyCn() const {
+  return m_dnsStrategyCn;
 }
