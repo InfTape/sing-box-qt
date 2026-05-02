@@ -112,7 +112,7 @@ struct AppSettingsScopeGuard {
   QString dnsResolver;
   bool    blockAds;
   bool    enableAppGroups;
-  bool    preferIpv6;
+  QString dnsStrategy;
   bool    dnsHijack;
   bool    systemProxyEnabled;
   QString systemProxyBypass;
@@ -140,7 +140,7 @@ struct AppSettingsScopeGuard {
         dnsResolver(s.dnsResolver()),
         blockAds(s.blockAds()),
         enableAppGroups(s.enableAppGroups()),
-        preferIpv6(s.preferIpv6()),
+        dnsStrategy(s.dnsStrategyValue()),
         dnsHijack(s.dnsHijack()),
         systemProxyEnabled(s.systemProxyEnabled()),
         systemProxyBypass(s.systemProxyBypass()),
@@ -168,7 +168,7 @@ struct AppSettingsScopeGuard {
     s.setDnsResolver(dnsResolver);
     s.setBlockAds(blockAds);
     s.setEnableAppGroups(enableAppGroups);
-    s.setPreferIpv6(preferIpv6);
+    s.setDnsStrategy(dnsStrategy);
     s.setDnsHijack(dnsHijack);
     s.setSystemProxyEnabled(systemProxyEnabled);
     s.setSystemProxyBypass(systemProxyBypass);

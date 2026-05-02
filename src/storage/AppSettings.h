@@ -64,7 +64,7 @@ class AppSettings : public QObject {
 
   bool enableAppGroups() const { return m_enableAppGroups; }
 
-  bool preferIpv6() const { return m_preferIpv6; }
+  QString dnsStrategyValue() const { return m_dnsStrategy; }
 
   bool dnsHijack() const { return m_dnsHijack; }
 
@@ -76,7 +76,7 @@ class AppSettings : public QObject {
 
   void setBlockAds(bool enabled);
   void setEnableAppGroups(bool enabled);
-  void setPreferIpv6(bool enabled);
+  void setDnsStrategy(const QString& strategy);
   void setDnsHijack(bool enabled);
   void setRouteSniffEnabled(bool enabled);
   void setSystemProxyEnabled(bool enabled);
@@ -144,7 +144,7 @@ class AppSettings : public QObject {
   // Feature flags.
   bool    m_blockAds;
   bool    m_enableAppGroups;
-  bool    m_preferIpv6;
+  QString m_dnsStrategy;
   bool    m_dnsHijack;
   bool    m_routeSniffEnabled;
   bool    m_systemProxyEnabled;

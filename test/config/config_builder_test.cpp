@@ -22,7 +22,7 @@ void ConfigBuilderTests::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   settings.setEnableAppGroups(true);
   settings.setDnsHijack(true);
   settings.setRouteSniffEnabled(true);
-  settings.setPreferIpv6(true);
+  settings.setDnsStrategy("prefer_ipv6");
   settings.setTunEnabled(true);
   settings.setTunAutoRoute(true);
   settings.setTunStrictRoute(true);
@@ -130,7 +130,7 @@ void ConfigBuilderTests::configBuilder_shouldBuildMinimalBaseConfigWhenFeaturesD
   settings.setEnableAppGroups(false);
   settings.setDnsHijack(false);
   settings.setRouteSniffEnabled(false);
-  settings.setPreferIpv6(false);
+  settings.setDnsStrategy("ipv4_only");
   settings.setTunEnabled(false);
   settings.setDefaultOutbound("manual");
   settings.setDownloadDetour("direct");

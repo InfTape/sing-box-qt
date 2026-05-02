@@ -33,7 +33,7 @@ AppSettings::AppSettings(QObject* parent)
       ,
       m_blockAds(false),
       m_enableAppGroups(false),
-      m_preferIpv6(false),
+      m_dnsStrategy("prefer_ipv4"),
       m_dnsHijack(true),
       m_routeSniffEnabled(true),
       m_systemProxyEnabled(true),
@@ -79,7 +79,13 @@ void AppSettings::load() {
   // Feature flags.
   m_blockAds          = config.value("blockAds").toBool(false);
   m_enableAppGroups   = config.value("enableAppGroups").toBool(false);
-  m_preferIpv6        = config.value("preferIpv6").toBool(false);
+  if (config.contains("dnsStrategy")) {
+    m_dnsStrategy = config.value("dnsStrategy").toString("prefer_ipv4");
+  } else {
+    // Migrate legacy preferIpv6 boolean.
+    m_dnsStrategy = config.value("preferIpv6").toBool(false) ? "prefer_ipv6"
+                                                             : "prefer_ipv4";
+  }
   m_dnsHijack         = config.value("dnsHijack").toBool(true);
   m_routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   if (config.contains("systemProxyEnabled")) {
@@ -136,7 +142,8 @@ void AppSettings::save() {
   // Feature flags.
   config["blockAds"]           = m_blockAds;
   config["enableAppGroups"]    = m_enableAppGroups;
-  config["preferIpv6"]         = m_preferIpv6;
+  config["dnsStrategy"]        = m_dnsStrategy;
+  config.remove("preferIpv6");
   config["dnsHijack"]          = m_dnsHijack;
   config["routeSniffEnabled"]  = m_routeSniffEnabled;
   config["systemProxyEnabled"] = m_systemProxyEnabled;
@@ -277,9 +284,9 @@ void AppSettings::setEnableAppGroups(bool enabled) {
   }
 }
 
-void AppSettings::setPreferIpv6(bool enabled) {
-  if (m_preferIpv6 != enabled) {
-    m_preferIpv6 = enabled;
+void AppSettings::setDnsStrategy(const QString& strategy) {
+  if (m_dnsStrategy != strategy) {
+    m_dnsStrategy = strategy;
     save();
     emit settingsChanged();
   }
@@ -398,8 +405,5 @@ QString AppSettings::normalizedDownloadDetour() const {
 }
 
 QString AppSettings::dnsStrategy() const {
-  if (m_preferIpv6) {
-    return "prefer_ipv6";
-  }
-  return "ipv4_only";
+  return m_dnsStrategy;
 }

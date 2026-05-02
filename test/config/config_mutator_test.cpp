@@ -182,7 +182,7 @@ void ConfigMutatorTests::configMutator_shouldApplyPortSettingsAndFeatureRemovals
   settings.setDnsHijack(false);
   settings.setDefaultOutbound("manual");
   settings.setDownloadDetour("direct");
-  settings.setPreferIpv6(false);
+  settings.setDnsStrategy("ipv4_only");
   settings.setDnsProxy("https://1.0.0.1/dns-query");
   settings.setDnsCn("223.5.5.5");
   settings.setDnsResolver("223.5.5.5");
@@ -326,7 +326,7 @@ void ConfigMutatorTests::configMutator_shouldApplySettingsFeatureInsertions() {
   settings.setBlockAds(true);
   settings.setEnableAppGroups(true);
   settings.setDnsHijack(true);
-  settings.setPreferIpv6(true);
+  settings.setDnsStrategy("prefer_ipv6");
   settings.setDefaultOutbound("auto");
   settings.setDownloadDetour("manual");
   settings.setUrltestUrl("http://example.com/test");

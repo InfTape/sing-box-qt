@@ -31,6 +31,12 @@ SettingsModel::Data SettingsModel::load() {
   d.blockAds          = config.value("blockAds").toBool(false);
   d.dnsHijack         = config.value("dnsHijack").toBool(true);
   d.enableAppGroups   = config.value("enableAppGroups").toBool(false);
+  if (config.contains("dnsStrategy")) {
+    d.dnsStrategy = config.value("dnsStrategy").toString("prefer_ipv4");
+  } else {
+    d.dnsStrategy = config.value("preferIpv6").toBool(false) ? "prefer_ipv6"
+                                                             : "prefer_ipv4";
+  }
   d.dnsProxy =
       config.value("dnsProxy").toString(ConfigConstants::DEFAULT_DNS_PROXY);
   d.dnsCn = config.value("dnsCn").toString(ConfigConstants::DEFAULT_DNS_CN);
@@ -74,6 +80,8 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["blockAds"]           = data.blockAds;
   config["dnsHijack"]          = data.dnsHijack;
   config["enableAppGroups"]    = data.enableAppGroups;
+  config["dnsStrategy"]        = data.dnsStrategy;
+  config.remove("preferIpv6");
   config["dnsProxy"]           = data.dnsProxy;
   config["dnsCn"]              = data.dnsCn;
   config["dnsResolver"]        = data.dnsResolver;

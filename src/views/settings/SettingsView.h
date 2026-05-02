@@ -1,4 +1,4 @@
-﻿#ifndef SETTINGSVIEW_H
+#ifndef SETTINGSVIEW_H
 #define SETTINGSVIEW_H
 #include <QCheckBox>
 #include <QIcon>
@@ -101,6 +101,7 @@ class SettingsView : public QWidget {
   QLineEdit*    m_dnsResolverEdit;
   QLineEdit*    m_urltestUrlEdit;
   QLineEdit*    m_rulesetBaseUrlEdit;
+  MenuComboBox* m_dnsStrategyCombo;
   // Appearance settings.
   MenuComboBox* m_themeCombo;
   MenuComboBox* m_languageCombo;
