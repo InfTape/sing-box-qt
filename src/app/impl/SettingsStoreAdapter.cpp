@@ -16,3 +16,11 @@ bool SettingsStoreAdapter::tunEnabled() const {
 void SettingsStoreAdapter::setTunEnabled(bool enabled) {
   AppSettings::instance().setTunEnabled(enabled);
 }
+
+bool SettingsStoreAdapter::kernelAutoStartEnabled() const {
+  return AppSettings::instance().kernelAutoStartEnabled();
+}
+
+void SettingsStoreAdapter::setKernelAutoStartEnabled(bool enabled) {
+  AppSettings::instance().setKernelAutoStartEnabled(enabled);
+}

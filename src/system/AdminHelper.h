@@ -15,5 +15,8 @@ class AdminHelper : public QObject {
   // Request UAC elevation to run a command.
   static bool runAsAdmin(const QString&     program,
                          const QStringList& arguments = QStringList());
+  static bool runAsAdminAndWait(const QString&     program,
+                                const QStringList& arguments = QStringList(),
+                                int                timeoutMs = 30000);
 };
 #endif  // ADMINHELPER_H

@@ -8,5 +8,7 @@ class SettingsStoreAdapter : public SettingsStore {
   void setSystemProxyEnabled(bool enabled) override;
   bool tunEnabled() const override;
   void setTunEnabled(bool enabled) override;
+  bool kernelAutoStartEnabled() const override;
+  void setKernelAutoStartEnabled(bool enabled) override;
 };
 #endif  // SETTINGSSTOREADAPTER_H

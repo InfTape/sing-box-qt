@@ -38,7 +38,8 @@ AppSettings::AppSettings(QObject* parent)
       m_dnsHijack(true),
       m_routeSniffEnabled(true),
       m_systemProxyEnabled(true),
-      m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS)
+      m_systemProxyBypass(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS),
+      m_kernelAutoStartEnabled(true)
       // URL test.
       ,
       m_urltestUrl(ConfigConstants::DEFAULT_URLTEST_URL),
@@ -78,8 +79,8 @@ void AppSettings::load() {
   m_dnsResolver = config.value("dnsResolver")
                       .toString(ConfigConstants::DEFAULT_DNS_RESOLVER);
   // Feature flags.
-  m_blockAds          = config.value("blockAds").toBool(false);
-  m_enableAppGroups   = config.value("enableAppGroups").toBool(false);
+  m_blockAds        = config.value("blockAds").toBool(false);
+  m_enableAppGroups = config.value("enableAppGroups").toBool(false);
   if (config.contains("dnsStrategy")) {
     m_dnsStrategy = config.value("dnsStrategy").toString("prefer_ipv4");
   } else {
@@ -87,7 +88,7 @@ void AppSettings::load() {
     m_dnsStrategy = config.value("preferIpv6").toBool(false) ? "prefer_ipv6"
                                                              : "prefer_ipv4";
   }
-  m_dnsStrategyCn = config.value("dnsStrategyCn").toString("ipv4_only");
+  m_dnsStrategyCn     = config.value("dnsStrategyCn").toString("ipv4_only");
   m_dnsHijack         = config.value("dnsHijack").toBool(true);
   m_routeSniffEnabled = config.value("routeSniffEnabled").toBool(true);
   if (config.contains("systemProxyEnabled")) {
@@ -98,6 +99,8 @@ void AppSettings::load() {
   m_systemProxyBypass =
       config.value("systemProxyBypass")
           .toString(ConfigConstants::DEFAULT_SYSTEM_PROXY_BYPASS);
+  m_kernelAutoStartEnabled =
+      config.value("kernelAutoStartEnabled").toBool(true);
   // URL test.
   m_urltestUrl =
       config.value("urltestUrl").toString(ConfigConstants::DEFAULT_URLTEST_URL);
@@ -142,16 +145,17 @@ void AppSettings::save() {
   config["dnsCn"]       = m_dnsCn;
   config["dnsResolver"] = m_dnsResolver;
   // Feature flags.
-  config["blockAds"]           = m_blockAds;
-  config["enableAppGroups"]    = m_enableAppGroups;
-  config["dnsStrategy"]        = m_dnsStrategy;
-  config["dnsStrategyCn"]       = m_dnsStrategyCn;
+  config["blockAds"]        = m_blockAds;
+  config["enableAppGroups"] = m_enableAppGroups;
+  config["dnsStrategy"]     = m_dnsStrategy;
+  config["dnsStrategyCn"]   = m_dnsStrategyCn;
   config.remove("preferIpv6");
-  config["dnsHijack"]          = m_dnsHijack;
-  config["routeSniffEnabled"]  = m_routeSniffEnabled;
-  config["systemProxyEnabled"] = m_systemProxyEnabled;
-  config["systemProxy"]        = m_systemProxyEnabled;
-  config["systemProxyBypass"]  = m_systemProxyBypass;
+  config["dnsHijack"]              = m_dnsHijack;
+  config["routeSniffEnabled"]      = m_routeSniffEnabled;
+  config["systemProxyEnabled"]     = m_systemProxyEnabled;
+  config["systemProxy"]            = m_systemProxyEnabled;
+  config["systemProxyBypass"]      = m_systemProxyBypass;
+  config["kernelAutoStartEnabled"] = m_kernelAutoStartEnabled;
   // URL test.
   config["urltestUrl"]         = m_urltestUrl;
   config["urltestTimeoutMs"]   = m_urltestTimeoutMs;
@@ -330,6 +334,14 @@ void AppSettings::setSystemProxyEnabled(bool enabled) {
 void AppSettings::setSystemProxyBypass(const QString& bypass) {
   if (m_systemProxyBypass != bypass) {
     m_systemProxyBypass = bypass;
+    save();
+    emit settingsChanged();
+  }
+}
+
+void AppSettings::setKernelAutoStartEnabled(bool enabled) {
+  if (m_kernelAutoStartEnabled != enabled) {
+    m_kernelAutoStartEnabled = enabled;
     save();
     emit settingsChanged();
   }

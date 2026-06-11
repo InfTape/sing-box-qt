@@ -21,12 +21,15 @@ class ProxyUiController : public QObject {
                              SettingsStore*   settingsStore,
                              AdminActions*    adminActions,
                              QObject*         parent = nullptr);
-  bool      isKernelRunning() const;
-  bool      isKernelInstalled() const;
-  QString   currentProxyMode() const;
-  bool      systemProxyEnabled() const;
-  bool      tunModeEnabled() const;
-  bool      toggleKernel(QString* error = nullptr);
+  bool    isKernelRunning() const;
+  bool    isKernelInstalled() const;
+  QString currentProxyMode() const;
+  bool    systemProxyEnabled() const;
+  bool    tunModeEnabled() const;
+  bool    toggleKernel(QString* error = nullptr);
+  bool    restoreStartupRuntime(
+         const std::function<bool()>& confirmRestartAdmin = {},
+         QString*                     error               = nullptr);
   bool      switchProxyMode(const QString& mode, QString* error = nullptr);
   bool      setSystemProxyEnabled(bool enabled, QString* error = nullptr);
   TunResult setTunModeEnabled(

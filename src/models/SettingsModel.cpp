@@ -9,7 +9,8 @@ SettingsModel::Data SettingsModel::load() {
   d.mixedPort =
       config.value("mixedPort").toInt(ConfigConstants::DEFAULT_MIXED_PORT);
   d.apiPort = config.value("apiPort").toInt(ConfigConstants::DEFAULT_API_PORT);
-  d.autoStart = config.value("autoStart").toBool(false);
+  d.autoStart          = config.value("autoStart").toBool(false);
+  d.coreServiceEnabled = config.value("coreServiceEnabled").toBool(false);
   if (config.contains("systemProxyEnabled")) {
     d.systemProxyEnabled = config.value("systemProxyEnabled").toBool(true);
   } else {
@@ -66,6 +67,7 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["mixedPort"]          = data.mixedPort;
   config["apiPort"]            = data.apiPort;
   config["autoStart"]          = data.autoStart;
+  config["coreServiceEnabled"] = data.coreServiceEnabled;
   config["systemProxyEnabled"] = data.systemProxyEnabled;
   config["systemProxy"]        = data.systemProxyEnabled;
   config["systemProxyBypass"]  = data.systemProxyBypass;
@@ -82,12 +84,12 @@ bool SettingsModel::save(const SettingsModel::Data& data,
   config["dnsHijack"]          = data.dnsHijack;
   config["enableAppGroups"]    = data.enableAppGroups;
   config["dnsStrategy"]        = data.dnsStrategy;
-  config["dnsStrategyCn"]       = data.dnsStrategyCn;
+  config["dnsStrategyCn"]      = data.dnsStrategyCn;
   config.remove("preferIpv6");
-  config["dnsProxy"]           = data.dnsProxy;
-  config["dnsCn"]              = data.dnsCn;
-  config["dnsResolver"]        = data.dnsResolver;
-  config["urltestUrl"]         = data.urltestUrl;
+  config["dnsProxy"]    = data.dnsProxy;
+  config["dnsCn"]       = data.dnsCn;
+  config["dnsResolver"] = data.dnsResolver;
+  config["urltestUrl"]  = data.urltestUrl;
   if (!DatabaseService::instance().saveAppConfig(config)) {
     if (errorMessage) {
       *errorMessage = QObject::tr("Failed to save settings");

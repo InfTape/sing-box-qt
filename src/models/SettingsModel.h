@@ -8,6 +8,7 @@ class SettingsModel {
     int     mixedPort          = 7890;
     int     apiPort            = 9090;
     bool    autoStart          = false;
+    bool    coreServiceEnabled = false;
     bool    systemProxyEnabled = true;
     QString systemProxyBypass;
     int     tunMtu            = 1500;

@@ -117,6 +117,7 @@ struct AppSettingsScopeGuard {
   bool    dnsHijack;
   bool    systemProxyEnabled;
   QString systemProxyBypass;
+  bool    kernelAutoStartEnabled;
   QString urltestUrl;
   int     urltestTimeoutMs;
   int     urltestConcurrency;
@@ -146,6 +147,7 @@ struct AppSettingsScopeGuard {
         dnsHijack(s.dnsHijack()),
         systemProxyEnabled(s.systemProxyEnabled()),
         systemProxyBypass(s.systemProxyBypass()),
+        kernelAutoStartEnabled(s.kernelAutoStartEnabled()),
         urltestUrl(s.urltestUrl()),
         urltestTimeoutMs(s.urltestTimeoutMs()),
         urltestConcurrency(s.urltestConcurrency()),
@@ -175,6 +177,7 @@ struct AppSettingsScopeGuard {
     s.setDnsHijack(dnsHijack);
     s.setSystemProxyEnabled(systemProxyEnabled);
     s.setSystemProxyBypass(systemProxyBypass);
+    s.setKernelAutoStartEnabled(kernelAutoStartEnabled);
     s.setUrltestUrl(urltestUrl);
     s.setUrltestTimeoutMs(urltestTimeoutMs);
     s.setUrltestConcurrency(urltestConcurrency);
@@ -184,4 +187,3 @@ struct AppSettingsScopeGuard {
   }
 };
 }  // namespace
-

@@ -79,6 +79,7 @@ class SettingsView : public QWidget {
   QSpinBox*       m_mixedPortSpin;
   QSpinBox*       m_apiPortSpin;
   QCheckBox*      m_autoStartCheck;
+  QCheckBox*      m_coreServiceCheck;
   QPlainTextEdit* m_systemProxyBypassEdit;
   QSpinBox*       m_tunMtuSpin;
   MenuComboBox*   m_tunStackCombo;

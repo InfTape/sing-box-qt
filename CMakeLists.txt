@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(sing-box-qt VERSION 1.2.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -84,6 +84,7 @@ set(SOURCES
     src/system/UpdateService.cpp
     src/system/AdminHelper.cpp
     src/system/SingleInstanceGuard.cpp
+    src/system/CoreService.cpp
     src/views/home/HomeView.cpp
     src/views/components/DataUsageCard.cpp
     src/views/components/DataUsageBar.cpp
@@ -198,6 +199,7 @@ set(HEADERS
     src/system/UpdateService.h
     src/system/AdminHelper.h
     src/system/SingleInstanceGuard.h
+    src/system/CoreService.h
     src/views/home/HomeView.h
     src/views/components/DataUsageCard.h
     src/views/components/DataUsageBar.h
@@ -328,6 +330,11 @@ if(WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         ws2_32
         wininet
+        advapi32
+    )
+    target_link_libraries(sing-box-core-manager PRIVATE
+        advapi32
+        shell32
     )
     if(MSVC)
         target_compile_options(${PROJECT_NAME} PRIVATE /utf-8 /MP)

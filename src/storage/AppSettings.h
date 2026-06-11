@@ -76,6 +76,8 @@ class AppSettings : public QObject {
 
   QString systemProxyBypass() const { return m_systemProxyBypass; }
 
+  bool kernelAutoStartEnabled() const { return m_kernelAutoStartEnabled; }
+
   void setBlockAds(bool enabled);
   void setEnableAppGroups(bool enabled);
   void setDnsStrategy(const QString& strategy);
@@ -84,6 +86,7 @@ class AppSettings : public QObject {
   void setRouteSniffEnabled(bool enabled);
   void setSystemProxyEnabled(bool enabled);
   void setSystemProxyBypass(const QString& bypass);
+  void setKernelAutoStartEnabled(bool enabled);
 
   // URL test config.
   QString urltestUrl() const { return m_urltestUrl; }
@@ -154,6 +157,7 @@ class AppSettings : public QObject {
   bool    m_routeSniffEnabled;
   bool    m_systemProxyEnabled;
   QString m_systemProxyBypass;
+  bool    m_kernelAutoStartEnabled;
   // URL test.
   QString m_urltestUrl;
   int     m_urltestTimeoutMs;

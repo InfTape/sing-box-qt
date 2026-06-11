@@ -42,7 +42,7 @@ bool AutoStart::setEnabled(bool enabled, const QString& appName) {
   if (enabled) {
     const QString appPath =
         QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-    const QString value = QString("\"%1\"").arg(appPath);
+    const QString value = QString("\"%1\" --hide").arg(appPath);
     settings.setValue(name, value);
     settings.sync();
     if (settings.status() != QSettings::NoError) {

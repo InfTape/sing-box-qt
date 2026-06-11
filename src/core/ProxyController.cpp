@@ -93,7 +93,6 @@ bool ProxyController::toggleKernel() {
     return false;
   }
   if (m_kernel->isRunning()) {
-    m_kernel->stop();
     return true;
   }
   return startKernel();

@@ -3,6 +3,7 @@
 #include <QObject>
 #include "storage/DatabaseService.h"
 #include "system/AutoStart.h"
+#include "system/CoreService.h"
 #include "utils/Logger.h"
 
 SettingsModel::Data SettingsService::loadSettings() {
@@ -13,6 +14,9 @@ SettingsModel::Data SettingsService::loadSettings() {
       AutoStart::setEnabled(data.autoStart);
     }
     data.autoStart = AutoStart::isEnabled();
+  }
+  if (CoreService::isSupported()) {
+    data.coreServiceEnabled = CoreService::isInstalled();
   }
   return data;
 }
@@ -32,6 +36,16 @@ bool SettingsService::saveSettings(const SettingsModel::Data& data,
       return false;
     }
     mutableData.autoStart = AutoStart::isEnabled();
+  }
+  if (CoreService::isSupported()) {
+    if (!CoreService::setEnabled(mutableData.coreServiceEnabled)) {
+      mutableData.coreServiceEnabled = CoreService::isInstalled();
+      if (errorMessage) {
+        *errorMessage = QObject::tr("Failed to update core service");
+      }
+      return false;
+    }
+    mutableData.coreServiceEnabled = CoreService::isInstalled();
   }
   // Save general settings.
   if (!SettingsModel::save(mutableData, errorMessage)) {

@@ -19,7 +19,6 @@ class TrayIcon : public QSystemTrayIcon {
  private slots:
   void onActivated(QSystemTrayIcon::ActivationReason reason);
   void onShowWindow();
-  void onToggleProxy();
   void onSelectGlobal();
   void onSelectRule();
   void onQuit();
@@ -31,7 +30,6 @@ class TrayIcon : public QSystemTrayIcon {
   KernelService*        m_kernelService     = nullptr;
   std::function<void()> m_showWindow;
   QMenu*                m_menu;
-  QAction*              m_toggleAction;
   QAction*              m_globalAction;
   QAction*              m_ruleAction;
   QAction*              m_showAction;

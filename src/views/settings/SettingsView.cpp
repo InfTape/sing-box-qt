@@ -279,6 +279,7 @@ QWidget* SettingsView::buildProxySection() {
   m_mixedPortSpin        = createSpinBox(1, 65535, 7890, false);
   m_apiPortSpin          = createSpinBox(1, 65535, 9090, false);
   m_autoStartCheck       = new QCheckBox(tr("Auto start on boot"));
+  m_coreServiceCheck     = new QCheckBox(tr("Run core as Windows service"));
   QLabel* mixedPortLabel = createFormLabel(tr("Mixed port:"));
   QLabel* apiPortLabel   = createFormLabel(tr("API port:"));
   prepareFormLabelPair(mixedPortLabel, apiPortLabel);
@@ -287,6 +288,7 @@ QWidget* SettingsView::buildProxySection() {
   proxyLayout->addWidget(apiPortLabel, 0, 2);
   proxyLayout->addWidget(m_apiPortSpin, 0, 3);
   proxyLayout->addWidget(m_autoStartCheck, 1, 0, 1, 4);
+  proxyLayout->addWidget(m_coreServiceCheck, 2, 0, 1, 4);
   proxySectionLayout->addWidget(proxyCard);
   return proxySection;
 }
@@ -697,6 +699,9 @@ void SettingsView::setupAutoSave() {
   connect(m_autoStartCheck, &QCheckBox::toggled, this, [this](bool) {
     scheduleAutoSave();
   });
+  connect(m_coreServiceCheck, &QCheckBox::toggled, this, [this](bool) {
+    scheduleAutoSave();
+  });
   connect(
       m_systemProxyBypassEdit, &QPlainTextEdit::textChanged, this, [this]() {
         scheduleAutoSave();
@@ -841,9 +846,10 @@ QString SettingsView::normalizeBypassText(const QString& text) const {
 }
 
 void SettingsView::fillGeneralFromUi(SettingsModel::Data& data) const {
-  data.mixedPort = m_mixedPortSpin->value();
-  data.apiPort   = m_apiPortSpin->value();
-  data.autoStart = m_autoStartCheck->isChecked();
+  data.mixedPort          = m_mixedPortSpin->value();
+  data.apiPort            = m_apiPortSpin->value();
+  data.autoStart          = m_autoStartCheck->isChecked();
+  data.coreServiceEnabled = m_coreServiceCheck->isChecked();
 }
 
 void SettingsView::fillAdvancedFromUi(SettingsModel::Data& data) const {
@@ -907,6 +913,7 @@ void SettingsView::applySettingsToUi(const SettingsModel::Data& data) {
   m_mixedPortSpin->setValue(data.mixedPort);
   m_apiPortSpin->setValue(data.apiPort);
   m_autoStartCheck->setChecked(data.autoStart);
+  m_coreServiceCheck->setChecked(data.coreServiceEnabled);
   m_systemProxyBypassEdit->setPlainText(data.systemProxyBypass);
   m_tunMtuSpin->setValue(data.tunMtu);
   if (data.tunStack == "system") {

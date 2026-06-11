@@ -5,12 +5,17 @@
 #include <QLocalServer>
 #include <QLocalSocket>
 class KernelRunner;
+class QTimer;
 
 class CoreManagerServer : public QObject {
   Q_OBJECT
  public:
   explicit CoreManagerServer(QObject* parent = nullptr);
   bool    startListening(const QString& name, QString* error = nullptr);
+  bool    startKernel(const QString& configPath);
+  void    setKeepKernelRunning(bool enabled, const QString& configPath);
+  bool    isKernelRunning() const;
+  QString lastKernelError() const;
   QString serverName() const;
  private slots:
   void onNewConnection();
@@ -23,6 +28,7 @@ class CoreManagerServer : public QObject {
 
  private:
   void          handleMessage(const QJsonObject& obj);
+  void          restartManagedKernel();
   void          sendResponse(int                id,
                              bool               ok,
                              const QJsonObject& result,
@@ -32,6 +38,9 @@ class CoreManagerServer : public QObject {
   QLocalSocket* m_client;
   QByteArray    m_buffer;
   KernelRunner* m_kernel;
+  QTimer*       m_restartTimer;
   QString       m_serverName;
+  QString       m_keepAliveConfigPath;
+  bool          m_keepKernelRunning = false;
 };
 #endif  // COREMANAGERSERVER_H

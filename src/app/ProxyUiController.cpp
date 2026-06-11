@@ -43,13 +43,91 @@ bool ProxyUiController::toggleKernel(QString* error) {
     }
     return false;
   }
-  if (!m_proxyController->toggleKernel()) {
+  const bool wasRunning = m_kernelService && m_kernelService->isRunning();
+  if (wasRunning) {
+    if (m_settings) {
+      m_settings->setKernelAutoStartEnabled(true);
+    }
+    return true;
+  }
+  if (!m_proxyController->startKernel()) {
     if (error) {
       *error =
           tr("Config file not found at the expected location; startup failed.");
     }
     return false;
   }
+  if (m_settings) {
+    m_settings->setKernelAutoStartEnabled(true);
+  }
+  return true;
+}
+
+bool ProxyUiController::restoreStartupRuntime(
+    const std::function<bool()>& confirmRestartAdmin, QString* error) {
+  if (!m_proxyController || !m_settings) {
+    if (error) {
+      *error = tr("Proxy components are unavailable.");
+    }
+    return false;
+  }
+  m_settings->setKernelAutoStartEnabled(true);
+  if (!isKernelInstalled()) {
+    if (error) {
+      *error = tr("Kernel is not installed yet. Please download it first.");
+    }
+    return false;
+  }
+  if (m_settings->tunEnabled()) {
+    if (m_settings->systemProxyEnabled()) {
+      if (!m_proxyController->setSystemProxyEnabled(false)) {
+        if (error) {
+          *error = tr("Failed to disable system proxy for TUN mode.");
+        }
+        return false;
+      }
+    }
+  } else if (m_settings->systemProxyEnabled()) {
+    if (!m_proxyController->setSystemProxyEnabled(true)) {
+      if (error) {
+        *error = tr("Failed to restore system proxy settings.");
+      }
+      return false;
+    }
+  }
+  if (m_kernelService && m_kernelService->isRunning()) {
+    emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+    emit tunModeStateChanged(m_settings->tunEnabled());
+    return true;
+  }
+  if (!m_proxyController->syncSettingsToActiveConfig(false)) {
+    if (error) {
+      *error =
+          tr("Config file not found at the expected location; startup failed.");
+    }
+    return false;
+  }
+  if (!m_proxyController->startKernel()) {
+    const bool needsTunElevation =
+        m_settings->tunEnabled() &&
+        !(m_adminActions && m_adminActions->isAdmin());
+    if (needsTunElevation && confirmRestartAdmin && confirmRestartAdmin()) {
+      const bool restarted =
+          m_adminActions ? m_adminActions->restartAsAdmin() : false;
+      if (!restarted && error) {
+        *error = tr("Failed to restart as administrator.");
+      }
+      return restarted;
+    }
+    if (error) {
+      *error =
+          tr("Config file not found at the expected location; startup failed.");
+    }
+    return false;
+  }
+  m_settings->setKernelAutoStartEnabled(true);
+  emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+  emit tunModeStateChanged(m_settings->tunEnabled());
   return true;
 }
 
@@ -159,25 +237,13 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
 }
 
 void ProxyUiController::prepareForExit() {
-  if (m_proxyController) {
-    m_proxyController->updateSystemProxyForKernelState(false);
-  }
-  if (m_kernelService && m_kernelService->isRunning()) {
-    m_kernelService->stop();
+  if (m_settings) {
+    m_settings->setKernelAutoStartEnabled(true);
   }
 }
 
 void ProxyUiController::broadcastCurrentStates() {
   if (m_settings) {
-    const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
-    if (!isAdmin && m_settings->tunEnabled()) {
-      m_settings->setTunEnabled(false);
-      if (m_proxyController) {
-        m_proxyController->setSystemProxyEnabled(true);
-      } else {
-        m_settings->setSystemProxyEnabled(true);
-      }
-    }
     emit systemProxyStateChanged(m_settings->systemProxyEnabled());
     emit tunModeStateChanged(m_settings->tunEnabled());
   }

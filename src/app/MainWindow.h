@@ -3,7 +3,6 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QMainWindow>
-#include <QPushButton>
 #include <QStackedWidget>
 #include <memory>
 class HomeView;
@@ -42,13 +41,10 @@ class MainWindow : public QMainWindow {
   void closeEvent(QCloseEvent* event) override;
  private slots:
   void onNavigationItemClicked(QListWidgetItem* item);
-  void onKernelStatusChanged(bool running);
-  void onStartStopClicked();
 
  private:
   void setupUI();
   void setupNavigation();
-  void setupStatusBar();
   void setupConnections();
   void setupNavigationConnections();
   void setupThemeConnections();
@@ -58,17 +54,13 @@ class MainWindow : public QMainWindow {
   void loadSettings();
   void saveSettings();
   void openSettingsPage();
-  bool promptOpenSettingsForKernelDownload();
   void updateStyle();
   void updateNavIcons();
-  void applyStartStopStyle();
-  void showStopFailedToast();
+  void restoreRuntimeOnStartup();
   // UI components.
   QWidget*        m_centralWidget;
   QListWidget*    m_navList;
   QStackedWidget* m_stackedWidget;
-  // Status bar components.
-  QPushButton* m_startStopBtn;
   // Views.
   HomeView*         m_homeView;
   ProxyView*        m_proxyView;
@@ -88,6 +80,5 @@ class MainWindow : public QMainWindow {
   AdminActions*                    m_adminActions;
   SettingsController*              m_settingsController;
   std::unique_ptr<RuntimeUiBinder> m_runtimeBinder;
-  int                              m_stopCheckSeq = 0;
 };
 #endif  // MAINWINDOW_H

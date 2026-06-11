@@ -6,8 +6,6 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
-#include <QSystemTrayIcon>
-#include <QSplitter>
 #include <QStyle>
 #include <QSvgRenderer>
 #include <QTimer>
@@ -36,7 +34,6 @@
 #include "views/settings/SettingsController.h"
 #include "views/settings/SettingsView.h"
 #include "views/subscription/SubscriptionView.h"
-#include "widgets/common/ToastNotification.h"
 
 namespace {
 QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
@@ -108,6 +105,7 @@ MainWindow::MainWindow(AppContext& ctx, QWidget* parent)
                                  : QStringLiteral("rule"));
   }
   updateStyle();
+  QTimer::singleShot(0, this, &MainWindow::restoreRuntimeOnStartup);
   Logger::info(QStringLiteral("Main window initialized"));
 }
 
@@ -144,12 +142,11 @@ void MainWindow::setupUI() {
   QVBoxLayout* contentLayout = new QVBoxLayout(contentContainer);
   contentLayout->setContentsMargins(0, 0, 0, 0);
   contentLayout->setSpacing(0);
-  m_stackedWidget = new QStackedWidget;
-  m_homeView      = new HomeView(m_themeService);
-  m_proxyView     = new ProxyView(m_themeService, this);
-  m_subscriptionView =
-      new SubscriptionView(
-          m_subscriptionService, m_ctx.kernelService(), m_themeService, this);
+  m_stackedWidget    = new QStackedWidget;
+  m_homeView         = new HomeView(m_themeService);
+  m_proxyView        = new ProxyView(m_themeService, this);
+  m_subscriptionView = new SubscriptionView(
+      m_subscriptionService, m_ctx.kernelService(), m_themeService, this);
   m_connectionsView = new ConnectionsView(m_themeService);
   m_rulesView       = new RulesView(m_ctx.configRepository(), m_themeService);
   m_logView         = new LogView(m_themeService);
@@ -169,7 +166,6 @@ void MainWindow::setupUI() {
   m_stackedWidget->addWidget(m_settingsView);
   contentLayout->addWidget(m_stackedWidget, 1);
   mainLayout->addWidget(contentContainer, 1);
-  setupStatusBar();
 }
 
 void MainWindow::setupNavigation() {
@@ -199,27 +195,6 @@ void MainWindow::setupNavigation() {
   updateNavIcons();
 }
 
-void MainWindow::setupStatusBar() {
-  QWidget* statusWidget = new QWidget;
-  statusWidget->setObjectName("StatusBar");
-  statusWidget->setFixedHeight(48);
-  QHBoxLayout* statusLayout = new QHBoxLayout(statusWidget);
-  statusLayout->setContentsMargins(20, 0, 20, 0);
-  m_startStopBtn = new QPushButton(tr("Start"));
-  m_startStopBtn->setFixedHeight(36);
-  m_startStopBtn->setMinimumWidth(88);
-  m_startStopBtn->setCursor(Qt::PointingHandCursor);
-  m_startStopBtn->setObjectName("StartStopBtn");
-  m_startStopBtn->setProperty("state", "start");
-  applyStartStopStyle();
-  statusLayout->addStretch();
-  statusLayout->addWidget(m_startStopBtn);
-  QWidget* contentContainer = findChild<QWidget*>("ContentContainer");
-  if (contentContainer) {
-    contentContainer->layout()->addWidget(statusWidget);
-  }
-}
-
 void MainWindow::setupConnections() {
   setupNavigationConnections();
   setupThemeConnections();
@@ -234,7 +209,7 @@ void MainWindow::setupConnections() {
                                           m_proxyView,
                                           m_rulesView,
                                           m_logView,
-                                          m_startStopBtn);
+                                          nullptr);
     m_runtimeBinder->bind();
   } else {
     if (m_homeView) {
@@ -254,10 +229,6 @@ void MainWindow::setupNavigationConnections() {
           &QListWidget::itemClicked,
           this,
           &MainWindow::onNavigationItemClicked);
-  connect(m_startStopBtn,
-          &QPushButton::clicked,
-          this,
-          &MainWindow::onStartStopClicked);
 }
 
 void MainWindow::setupThemeConnections() {
@@ -422,44 +393,6 @@ void MainWindow::setProxyModeUI(const QString& mode) {
   }
 }
 
-void MainWindow::onKernelStatusChanged(bool running) {
-  if (!m_startStopBtn) {
-    return;
-  }
-  m_startStopBtn->setText(running ? tr("Stop") : tr("Start"));
-  m_startStopBtn->setProperty("state", running ? "stop" : "start");
-  applyStartStopStyle();
-}
-
-void MainWindow::onStartStopClicked() {
-  QString    error;
-  const bool wasRunning =
-      m_proxyUiController && m_proxyUiController->isKernelRunning();
-  if (!wasRunning && m_proxyUiController &&
-      !m_proxyUiController->isKernelInstalled()) {
-    promptOpenSettingsForKernelDownload();
-    return;
-  }
-  const int stopSeq = ++m_stopCheckSeq;
-  if (wasRunning) {
-    QTimer::singleShot(5000, this, [this, stopSeq]() {
-      if (stopSeq != m_stopCheckSeq) {
-        return;
-      }
-      if (m_proxyUiController && m_proxyUiController->isKernelRunning()) {
-        showStopFailedToast();
-      }
-    });
-  }
-  if (!m_proxyUiController || !m_proxyUiController->toggleKernel(&error)) {
-    if (error.isEmpty()) {
-      error =
-          tr("Config file not found at the expected location; startup failed.");
-    }
-    QMessageBox::warning(this, tr("Start kernel"), error);
-  }
-}
-
 void MainWindow::openSettingsPage() {
   if (!m_stackedWidget || !m_settingsView) {
     return;
@@ -474,23 +407,11 @@ void MainWindow::openSettingsPage() {
   }
 }
 
-bool MainWindow::promptOpenSettingsForKernelDownload() {
-  ToastNotification::show(
-      this,
-      tr("Kernel is not installed yet. Please download it first."),
-      m_themeService,
-      3200,
-      ToastNotification::Tone::Error);
-  openSettingsPage();
-  return true;
-}
-
 void MainWindow::updateStyle() {
   if (m_themeService) {
     setStyleSheet(m_themeService->loadStyleSheet(":/styles/main_window.qss"));
   }
   updateNavIcons();
-  applyStartStopStyle();
 }
 
 void MainWindow::showAndActivate() {
@@ -502,27 +423,6 @@ void MainWindow::showAndActivate() {
 void MainWindow::closeEvent(QCloseEvent* event) {
   hide();
   event->ignore();
-}
-
-void MainWindow::applyStartStopStyle() {
-  // Qt will automatically update styles when properties change.
-  // We only need to polish if the style doesn't update automatically.
-  m_startStopBtn->style()->polish(m_startStopBtn);
-}
-
-void MainWindow::showStopFailedToast() {
-  const QString title = tr("Stop kernel");
-  const QString body =
-      tr("Kernel did not stop within 5 seconds. Please check logs.");
-  if (QSystemTrayIcon::isSystemTrayAvailable()) {
-    if (auto* tray = qApp->findChild<QSystemTrayIcon*>()) {
-      if (tray->supportsMessages()) {
-        tray->showMessage(title, body, QSystemTrayIcon::Warning, 5000);
-        return;
-      }
-    }
-  }
-  QMessageBox::warning(this, title, body);
 }
 
 void MainWindow::updateNavIcons() {
@@ -556,6 +456,33 @@ void MainWindow::updateNavIcons() {
     settingsItem->setIcon(svgIcon(":/icons/slider.svg", iconSize, iconColor));
   }
   m_navList->setIconSize(QSize(iconSize, iconSize));
+}
+
+void MainWindow::restoreRuntimeOnStartup() {
+  if (!m_proxyUiController) {
+    return;
+  }
+  QString    error;
+  const bool ok = m_proxyUiController->restoreStartupRuntime(
+      [this]() {
+        QMessageBox box(this);
+        box.setIcon(QMessageBox::Warning);
+        box.setWindowTitle(tr("Administrator permission required"));
+        box.setText(
+            tr("TUN mode requires administrator privileges. Restart as "
+               "administrator now to start the kernel?"));
+        box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+        auto* restartBtn = box.addButton(tr("Restart as administrator"),
+                                         QMessageBox::AcceptRole);
+        box.setDefaultButton(restartBtn);
+        box.exec();
+        return box.clickedButton() == restartBtn;
+      },
+      &error);
+  if (!ok && !error.isEmpty()) {
+    Logger::warn(QStringLiteral("Startup restore failed: %1").arg(error));
+    QMessageBox::warning(this, tr("Start kernel"), error);
+  }
 }
 
 void MainWindow::loadSettings() {

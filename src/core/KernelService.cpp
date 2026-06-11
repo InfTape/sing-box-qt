@@ -10,8 +10,72 @@
 #include <QTimer>
 #include "core/CoreManagerClient.h"
 #include "core/CoreManagerProtocol.h"
+#include "system/AdminHelper.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
+
+#ifdef Q_OS_WIN
+// clang-format off
+#include <windows.h>
+// clang-format on
+#endif
+
+namespace {
+#ifdef Q_OS_WIN
+enum class ServiceStartResult {
+  Started,
+  NotInstalled,
+  AccessDenied,
+  Failed,
+};
+
+ServiceStartResult startInstalledCoreManagerService(DWORD* errorCode) {
+  if (errorCode) {
+    *errorCode = ERROR_SUCCESS;
+  }
+  const QString serviceName = coreManagerServiceName();
+  SC_HANDLE     scm = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+  if (!scm) {
+    if (errorCode) {
+      *errorCode = GetLastError();
+    }
+    return ServiceStartResult::Failed;
+  }
+  SC_HANDLE service =
+      OpenServiceW(scm,
+                   reinterpret_cast<LPCWSTR>(serviceName.utf16()),
+                   SERVICE_START | SERVICE_QUERY_STATUS);
+  if (!service) {
+    const DWORD openError = GetLastError();
+    CloseServiceHandle(scm);
+    if (errorCode) {
+      *errorCode = openError;
+    }
+    if (openError == ERROR_SERVICE_DOES_NOT_EXIST) {
+      return ServiceStartResult::NotInstalled;
+    }
+    if (openError == ERROR_ACCESS_DENIED) {
+      return ServiceStartResult::AccessDenied;
+    }
+    return ServiceStartResult::Failed;
+  }
+  const bool  startOk    = StartServiceW(service, 0, nullptr);
+  const DWORD startError = startOk ? ERROR_SUCCESS : GetLastError();
+  CloseServiceHandle(service);
+  CloseServiceHandle(scm);
+  if (errorCode) {
+    *errorCode = startError;
+  }
+  if (startOk || startError == ERROR_SERVICE_ALREADY_RUNNING) {
+    return ServiceStartResult::Started;
+  }
+  if (startError == ERROR_ACCESS_DENIED) {
+    return ServiceStartResult::AccessDenied;
+  }
+  return ServiceStartResult::Failed;
+}
+#endif
+}  // namespace
 
 KernelService::KernelService(QObject* parent)
     : QObject(parent),
@@ -215,11 +279,11 @@ bool KernelService::checkConfigFile(const QString& configPath,
     *output = combinedOutput;
   }
 
-  const bool ok = process.exitStatus() == QProcess::NormalExit &&
-                  process.exitCode() == 0;
+  const bool ok =
+      process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
   if (!ok && error) {
-    *error = combinedOutput.isEmpty() ? tr("sing-box check failed")
-                                      : combinedOutput;
+    *error =
+        combinedOutput.isEmpty() ? tr("sing-box check failed") : combinedOutput;
   }
   return ok;
 }
@@ -258,11 +322,61 @@ bool KernelService::ensureManagerReady(QString* error) {
   if (m_client->isConnected()) {
     return true;
   }
-  m_client->connectToServer(m_serverName);
-  if (m_client->waitForConnected(300)) {
+  auto waitForManager = [this](int timeoutMs) {
+    QElapsedTimer timer;
+    timer.start();
+    while (timer.elapsed() < timeoutMs) {
+      m_client->connectToServer(m_serverName);
+      if (m_client->waitForConnected(300)) {
+        return true;
+      }
+      m_client->abort();
+    }
+    return false;
+  };
+  if (waitForManager(300)) {
     return true;
   }
-  m_client->abort();
+#ifdef Q_OS_WIN
+  DWORD serviceError = ERROR_SUCCESS;
+  const ServiceStartResult serviceStart =
+      startInstalledCoreManagerService(&serviceError);
+  if (serviceStart == ServiceStartResult::Started) {
+    Logger::info("Core manager service start requested");
+    if (waitForManager(5000)) {
+      return true;
+    }
+    Logger::warn("Core manager service started but IPC did not connect");
+  } else if (serviceStart == ServiceStartResult::AccessDenied ||
+             serviceStart == ServiceStartResult::Failed) {
+    const QString exePath = findCoreManagerPath();
+    if (!exePath.isEmpty() && QFile::exists(exePath)) {
+      Logger::warn(
+          QString("Core manager service start needs elevation, error code: %1")
+              .arg(static_cast<qulonglong>(serviceError)));
+      if (AdminHelper::runAsAdminAndWait(
+              exePath, {"--start-service"}, 30000)) {
+        if (waitForManager(5000)) {
+          return true;
+        }
+        Logger::warn(
+            "Elevated core manager service start completed but IPC did not "
+            "connect");
+      }
+    }
+  } else if (serviceStart == ServiceStartResult::NotInstalled) {
+    Logger::warn("Core manager service is not installed");
+    if (error) {
+      *error = tr("Core manager service is not installed");
+    }
+    return false;
+  }
+
+  if (error) {
+    *error = tr("Failed to start or connect to core manager service");
+  }
+  return false;
+#else
   if (!m_managerProcess || m_managerProcess->state() == QProcess::NotRunning) {
     const QString exePath = findCoreManagerPath();
     if (exePath.isEmpty() || !QFile::exists(exePath)) {
@@ -295,19 +409,14 @@ bool KernelService::ensureManagerReady(QString* error) {
     }
     m_spawnedManager = true;
   }
-  QElapsedTimer timer;
-  timer.start();
-  while (timer.elapsed() < 3000) {
-    m_client->connectToServer(m_serverName);
-    if (m_client->waitForConnected(300)) {
-      return true;
-    }
-    m_client->abort();
+  if (waitForManager(3000)) {
+    return true;
   }
   if (error) {
     *error = tr("Failed to connect to core manager");
   }
   return false;
+#endif
 }
 
 bool KernelService::sendRequestAndWait(const QString&     method,

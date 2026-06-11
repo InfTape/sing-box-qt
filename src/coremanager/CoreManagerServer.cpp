@@ -1,5 +1,6 @@
 #include "CoreManagerServer.h"
 #include <QCoreApplication>
+#include <QFile>
 #include <QJsonDocument>
 #include <QTimer>
 #include "coremanager/KernelRunner.h"
@@ -13,11 +14,17 @@ CoreManagerServer::CoreManagerServer(QObject* parent)
     : QObject(parent),
       m_server(new QLocalServer(this)),
       m_client(nullptr),
-      m_kernel(new KernelRunner(this)) {
+      m_kernel(new KernelRunner(this)),
+      m_restartTimer(new QTimer(this)) {
+  m_restartTimer->setSingleShot(true);
   connect(m_server,
           &QLocalServer::newConnection,
           this,
           &CoreManagerServer::onNewConnection);
+  connect(m_restartTimer,
+          &QTimer::timeout,
+          this,
+          &CoreManagerServer::restartManagedKernel);
   connect(m_kernel,
           &KernelRunner::statusChanged,
           this,
@@ -42,6 +49,9 @@ bool CoreManagerServer::startListening(const QString& name, QString* error) {
   }
   m_serverName = name;
   QLocalServer::removeServer(name);
+#ifdef Q_OS_WIN
+  m_server->setSocketOptions(QLocalServer::WorldAccessOption);
+#endif
   if (!m_server->listen(name)) {
     if (error) {
       *error = QString("Failed to listen on %1: %2")
@@ -55,6 +65,45 @@ bool CoreManagerServer::startListening(const QString& name, QString* error) {
 
 QString CoreManagerServer::serverName() const {
   return m_serverName;
+}
+
+bool CoreManagerServer::startKernel(const QString& configPath) {
+  if (!m_kernel) {
+    return false;
+  }
+  if (!configPath.isEmpty()) {
+    m_keepAliveConfigPath = configPath;
+  }
+  if (m_kernel->isRunning()) {
+    if (!configPath.isEmpty()) {
+      m_kernel->setConfigPath(configPath);
+    }
+    return true;
+  }
+  return m_kernel->start(configPath);
+}
+
+void CoreManagerServer::setKeepKernelRunning(bool        enabled,
+                                             const QString& configPath) {
+  m_keepKernelRunning = enabled;
+  if (!configPath.isEmpty()) {
+    m_keepAliveConfigPath = configPath;
+  }
+  if (!enabled) {
+    m_restartTimer->stop();
+    return;
+  }
+  if (!isKernelRunning()) {
+    QTimer::singleShot(0, this, &CoreManagerServer::restartManagedKernel);
+  }
+}
+
+bool CoreManagerServer::isKernelRunning() const {
+  return m_kernel && m_kernel->isRunning();
+}
+
+QString CoreManagerServer::lastKernelError() const {
+  return m_kernel ? m_kernel->lastError() : QString();
 }
 
 void CoreManagerServer::onNewConnection() {
@@ -123,6 +172,9 @@ void CoreManagerServer::onKernelStatusChanged(bool running) {
   event["event"]   = "status";
   event["running"] = running;
   sendEvent(event);
+  if (!running && m_keepKernelRunning && !m_restartTimer->isActive()) {
+    m_restartTimer->start(1000);
+  }
 }
 
 void CoreManagerServer::onKernelOutput(const QString& output) {
@@ -154,13 +206,14 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
   const QJsonObject params = obj.value("params").toObject();
   if (method == "start") {
     const QString configPath = params.value("configPath").toString();
-    const bool    ok         = m_kernel->start(configPath);
+    const bool    ok         = startKernel(configPath);
     QJsonObject   result;
-    result["running"] = m_kernel->isRunning();
-    sendResponse(id, ok, result, ok ? QString() : m_kernel->lastError());
+    result["running"] = isKernelRunning();
+    sendResponse(id, ok, result, ok ? QString() : lastKernelError());
     return;
   }
   if (method == "stop") {
+    setKeepKernelRunning(false, QString());
     m_kernel->stop();
     QJsonObject result;
     result["running"] = m_kernel->isRunning();
@@ -169,6 +222,9 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
   }
   if (method == "restart") {
     const QString configPath = params.value("configPath").toString();
+    if (!configPath.isEmpty()) {
+      m_keepAliveConfigPath = configPath;
+    }
     if (!configPath.isEmpty()) {
       m_kernel->restartWithConfig(configPath);
     } else {
@@ -189,6 +245,7 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
     const QString configPath = params.value("configPath").toString();
     if (!configPath.isEmpty()) {
       m_kernel->setConfigPath(configPath);
+      m_keepAliveConfigPath = configPath;
     }
     QJsonObject result;
     result["configPath"] = m_kernel->getConfigPath();
@@ -196,12 +253,38 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
     return;
   }
   if (method == "shutdown") {
+    setKeepKernelRunning(false, QString());
     sendResponse(id, true, QJsonObject(), QString());
     QTimer::singleShot(0, qApp, &QCoreApplication::quit);
     return;
   }
   sendResponse(
       id, false, QJsonObject(), QString("Unknown method: %1").arg(method));
+}
+
+void CoreManagerServer::restartManagedKernel() {
+  if (!m_keepKernelRunning || isKernelRunning()) {
+    return;
+  }
+  if (m_keepAliveConfigPath.isEmpty()) {
+    Logger::warn("Kernel keep-alive skipped: config path is empty");
+    m_restartTimer->start(5000);
+    return;
+  }
+  if (!QFile::exists(m_keepAliveConfigPath)) {
+    Logger::warn(QString("Kernel keep-alive skipped, config not found: %1")
+                     .arg(m_keepAliveConfigPath));
+    m_restartTimer->start(5000);
+    return;
+  }
+  if (startKernel(m_keepAliveConfigPath)) {
+    Logger::info(QString("Kernel keep-alive started: %1")
+                     .arg(m_keepAliveConfigPath));
+    return;
+  }
+  Logger::error(QString("Kernel keep-alive start failed: %1")
+                    .arg(lastKernelError()));
+  m_restartTimer->start(5000);
 }
 
 void CoreManagerServer::sendResponse(int                id,
