@@ -462,6 +462,7 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     }
     dns["rules"] = rules;
   }
+  dns["strategy"] = settings.dnsStrategy();
   config["dns"] = dns;
   if (config.contains("outbounds") && config["outbounds"].isArray()) {
     QJsonArray outbounds = config.value("outbounds").toArray();

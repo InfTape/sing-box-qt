@@ -195,6 +195,7 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   dns["rules"]             = rules;
   dns["independent_cache"] = true;
   dns["final"]             = ConfigConstants::DNS_PROXY;
+  dns["strategy"]          = proxyStrategy;
   return dns;
 }
 

@@ -26,6 +26,11 @@ QString appRootDir() {
 }
 
 QString portableDataDir() {
+  const QString configuredDir =
+      qEnvironmentVariable("SING_BOX_QT_DATA_DIR").trimmed();
+  if (!configuredDir.isEmpty()) {
+    return QDir(configuredDir).absolutePath();
+  }
   return QDir(appRootDir()).filePath("data");
 }
 
@@ -41,6 +46,10 @@ bool isPortableEnabled() {
 
   if (!requested) {
     requested = parseTruthy(qEnvironmentVariable("SING_BOX_QT_PORTABLE"));
+  }
+  if (!requested) {
+    requested =
+        !qEnvironmentVariable("SING_BOX_QT_DATA_DIR").trimmed().isEmpty();
   }
   if (!requested) {
     requested = hasPortableMarker(appRootDir());

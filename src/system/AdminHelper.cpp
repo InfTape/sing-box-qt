@@ -9,6 +9,11 @@
 #else
 #include <unistd.h>
 #endif
+
+namespace {
+constexpr auto kReplaceExistingInstanceArg = "--replace-existing-instance";
+}
+
 AdminHelper::AdminHelper(QObject* parent) : QObject(parent) {}
 
 bool AdminHelper::isAdmin() {
@@ -41,6 +46,10 @@ bool AdminHelper::restartAsAdmin() {
   QString     program = QCoreApplication::applicationFilePath();
   QStringList args    = QCoreApplication::arguments();
   args.removeFirst();  // Remove program path.
+  const QString replaceArg = QString::fromLatin1(kReplaceExistingInstanceArg);
+  if (!args.contains(replaceArg)) {
+    args.append(replaceArg);
+  }
   if (runAsAdmin(program, args)) {
     // Exit current instance.
     QCoreApplication::quit();

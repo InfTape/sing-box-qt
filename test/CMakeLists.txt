@@ -71,9 +71,13 @@ if (MSVC AND TARGET yaml-cpp)
 endif()
 
 enable_testing()
+set(SING_BOX_QT_TEST_DATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/data")
+file(MAKE_DIRECTORY "${SING_BOX_QT_TEST_DATA_DIR}")
 add_test(
     NAME sing-box-qt-unit-tests
     COMMAND ${CMAKE_COMMAND} -E env
+        "SING_BOX_QT_PORTABLE=1"
+        "SING_BOX_QT_DATA_DIR=${SING_BOX_QT_TEST_DATA_DIR}"
         "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
         $<TARGET_FILE:sing-box-qt-unit-tests>
 )

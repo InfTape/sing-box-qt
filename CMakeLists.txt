@@ -83,6 +83,7 @@ set(SOURCES
     src/system/AutoStart.cpp
     src/system/UpdateService.cpp
     src/system/AdminHelper.cpp
+    src/system/SingleInstanceGuard.cpp
     src/views/home/HomeView.cpp
     src/views/components/DataUsageCard.cpp
     src/views/components/DataUsageBar.cpp
@@ -196,6 +197,7 @@ set(HEADERS
     src/system/AutoStart.h
     src/system/UpdateService.h
     src/system/AdminHelper.h
+    src/system/SingleInstanceGuard.h
     src/views/home/HomeView.h
     src/views/components/DataUsageCard.h
     src/views/components/DataUsageBar.h
