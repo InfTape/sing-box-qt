@@ -165,7 +165,7 @@ bool ProxyUiController::setSystemProxyEnabled(bool enabled, QString* error) {
 }
 
 ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
-    bool enabled, const std::function<bool()>& confirmRestartAdmin) {
+    bool enabled) {
   if (!m_proxyController || !m_settings) {
     return TunResult::Failed;
   }
@@ -190,37 +190,6 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
     const bool ok = m_proxyController->setTunModeEnabled(false);
     emitCurrentStates();
     return ok ? TunResult::Applied : TunResult::Failed;
-  }
-  const bool isAdmin = m_adminActions ? m_adminActions->isAdmin() : false;
-  if (!isAdmin) {
-    if (confirmRestartAdmin && confirmRestartAdmin()) {
-      const bool proxyDisabled = disableSystemProxyIfNeeded();
-      if (!proxyDisabled) {
-        restoreSystemProxyIfNeeded();
-        emitCurrentStates();
-        return TunResult::Failed;
-      }
-      const bool tunPrepared =
-          m_proxyController->setTunModeEnabled(true, false);
-      if (!tunPrepared) {
-        restoreSystemProxyIfNeeded();
-        emitCurrentStates();
-        return TunResult::Failed;
-      }
-      const bool restarted =
-          m_adminActions ? m_adminActions->restartAsAdmin() : false;
-      if (!restarted) {
-        m_proxyController->setTunModeEnabled(false, false);
-        restoreSystemProxyIfNeeded();
-        emitCurrentStates();
-        return TunResult::Failed;
-      }
-      emitCurrentStates();
-      return TunResult::Applied;
-    }
-    m_settings->setTunEnabled(false);
-    emitCurrentStates();
-    return TunResult::Cancelled;
   }
   const bool proxyDisabled = disableSystemProxyIfNeeded();
   if (!proxyDisabled) {

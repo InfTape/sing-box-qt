@@ -15,7 +15,7 @@ class AdminActions;
 class ProxyUiController : public QObject {
   Q_OBJECT
  public:
-  enum class TunResult { Applied, Cancelled, Failed };
+  enum class TunResult { Applied, Failed };
   explicit ProxyUiController(ProxyController* proxyController,
                              KernelService*   kernelService,
                              SettingsStore*   settingsStore,
@@ -32,8 +32,7 @@ class ProxyUiController : public QObject {
          QString*                     error               = nullptr);
   bool      switchProxyMode(const QString& mode, QString* error = nullptr);
   bool      setSystemProxyEnabled(bool enabled, QString* error = nullptr);
-  TunResult setTunModeEnabled(
-      bool enabled, const std::function<bool()>& confirmRestartAdmin = {});
+  TunResult setTunModeEnabled(bool enabled);
   void prepareForExit();
   void broadcastCurrentStates();
  signals:

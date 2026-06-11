@@ -313,23 +313,8 @@ void MainWindow::setupHomeViewConnections() {
     if (!m_proxyUiController) {
       return;
     }
-    const auto result =
-        m_proxyUiController->setTunModeEnabled(enabled, [this]() {
-          QMessageBox box(this);
-          box.setIcon(QMessageBox::Warning);
-          box.setWindowTitle(tr("Administrator permission required"));
-          box.setText(
-              tr("Switching to TUN mode requires restarting with administrator "
-                 "privileges. Restart as administrator now?"));
-          box.addButton(tr("Cancel"), QMessageBox::RejectRole);
-          auto* restartBtn = box.addButton(tr("Restart as administrator"),
-                                           QMessageBox::AcceptRole);
-          box.setDefaultButton(restartBtn);
-          box.exec();
-          return box.clickedButton() == restartBtn;
-        });
-    if (result == ProxyUiController::TunResult::Failed ||
-        result == ProxyUiController::TunResult::Cancelled) {
+    const auto result = m_proxyUiController->setTunModeEnabled(enabled);
+    if (result == ProxyUiController::TunResult::Failed) {
       m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
       m_homeView->setSystemProxyEnabled(
           m_proxyUiController->systemProxyEnabled());
