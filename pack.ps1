@@ -37,7 +37,12 @@ if (!(Get-Command $cmakeCmd -ErrorAction SilentlyContinue)) {
 
 # Always configure to avoid stale/broken cache and fail fast on CI
 Write-Host "Configuring project..." -ForegroundColor Cyan
-& $cmakeCmd -S . -B $buildDir -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="$qtRoot"
+$configureArgs = @(
+    "-S", ".",
+    "-B", $buildDir,
+    "-DCMAKE_PREFIX_PATH=$qtRoot"
+)
+& $cmakeCmd @configureArgs
 if ($LASTEXITCODE -ne 0) {
     throw "CMake configure failed"
 }

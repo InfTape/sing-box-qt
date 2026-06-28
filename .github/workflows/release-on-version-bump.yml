@@ -7,6 +7,8 @@ on:
       - master
     paths:
       - CMakeLists.txt
+      - pack.ps1
+      - .github/workflows/release-on-version-bump.yml
   workflow_dispatch:
 
 permissions:
@@ -24,6 +26,7 @@ jobs:
       current_version: ${{ steps.detect.outputs.current_version }}
       previous_version: ${{ steps.detect.outputs.previous_version }}
       version_changed: ${{ steps.detect.outputs.version_changed }}
+      release_inputs_changed: ${{ steps.detect.outputs.release_inputs_changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,18 +59,28 @@ jobs:
             version_changed="true"
           fi
 
+          release_inputs_changed="false"
+          if [[ -n "${before_sha:-}" && "$before_sha" != "0000000000000000000000000000000000000000" ]]; then
+            if ! git diff --quiet "$before_sha" "$GITHUB_SHA" -- \
+              pack.ps1 .github/workflows/release-on-version-bump.yml; then
+              release_inputs_changed="true"
+            fi
+          fi
+
           echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
           echo "previous_version=$previous_version" >> "$GITHUB_OUTPUT"
           echo "version_changed=$version_changed" >> "$GITHUB_OUTPUT"
+          echo "release_inputs_changed=$release_inputs_changed" >> "$GITHUB_OUTPUT"
 
           echo "Current version: $current_version"
           echo "Previous version: ${previous_version:-<none>}"
           echo "Version changed: $version_changed"
+          echo "Release inputs changed: $release_inputs_changed"
 
   build-and-release:
     name: Build Portable And Publish Release
     needs: detect-version
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-version.outputs.version_changed == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-version.outputs.version_changed == 'true' || needs.detect-version.outputs.release_inputs_changed == 'true' }}
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -107,6 +120,7 @@ jobs:
           $cmakeExe = (Get-Command cmake).Source
           "QT_ROOT=$qtRoot" | Out-File -FilePath $env:GITHUB_ENV -Append
           "CMAKE_BIN=$cmakeExe" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CMAKE_GENERATOR=Ninja" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build portable package
         shell: pwsh
