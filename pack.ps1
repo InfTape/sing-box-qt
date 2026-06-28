@@ -21,8 +21,6 @@ $buildDir = "build"
 $distDir = "dist"
 $exeName = "sing-box-qt.exe"
 $coreManagerName = "sing-box-core-manager.exe"
-$exePath = Join-Path $buildDir "Release\$exeName"
-$coreManagerPath = Join-Path $buildDir "Release\$coreManagerName"
 $zipName = "sing-box-qt-portable.zip"
 $desktopPath = [Environment]::GetFolderPath('Desktop')
 $desktopExePath = Join-Path $desktopPath $exeName
@@ -40,7 +38,8 @@ Write-Host "Configuring project..." -ForegroundColor Cyan
 $configureArgs = @(
     "-S", ".",
     "-B", $buildDir,
-    "-DCMAKE_PREFIX_PATH=$qtRoot"
+    "-DCMAKE_PREFIX_PATH=$qtRoot",
+    "-DCMAKE_BUILD_TYPE=Release"
 )
 & $cmakeCmd @configureArgs
 if ($LASTEXITCODE -ne 0) {
@@ -55,12 +54,19 @@ if ($LASTEXITCODE -ne 0) {
     throw "CMake build failed"
 }
 
-if (!(Test-Path $exePath)) {
-    throw "Release exe not found: $exePath"
+$binaryDir = @(
+    (Join-Path $buildDir "Release"),
+    $buildDir
+) | Where-Object {
+    (Test-Path (Join-Path $_ $exeName)) -and
+    (Test-Path (Join-Path $_ $coreManagerName))
+} | Select-Object -First 1
+
+if ([string]::IsNullOrWhiteSpace($binaryDir)) {
+    throw "Release executables not found under: $buildDir\Release or $buildDir"
 }
-if (!(Test-Path $coreManagerPath)) {
-    throw "Core manager exe not found: $coreManagerPath"
-}
+$exePath = Join-Path $binaryDir $exeName
+$coreManagerPath = Join-Path $binaryDir $coreManagerName
 
 # Prepare dist
 if (Test-Path $distDir) { Remove-Item $distDir -Recurse -Force }
