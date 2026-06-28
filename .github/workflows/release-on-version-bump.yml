@@ -82,6 +82,10 @@ jobs:
     needs: detect-version
     if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-version.outputs.version_changed == 'true' || needs.detect-version.outputs.release_inputs_changed == 'true' }}
     runs-on: windows-latest
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      SCCACHE_IGNORE_SERVER_IO_ERROR: "1"
+      CMAKE_CXX_COMPILER_LAUNCHER: sccache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -90,6 +94,9 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
