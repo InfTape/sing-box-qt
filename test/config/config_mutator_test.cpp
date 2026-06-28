@@ -296,6 +296,8 @@ void ConfigMutatorTests::configMutator_shouldApplyPortSettingsAndFeatureRemovals
 
   const QJsonArray dnsRules = dnsObj.value("rules").toArray();
   QCOMPARE(findRuleSetIndex(dnsRules, ConfigConstants::RS_GEOSITE_ADS), -1);
+  QCOMPARE(dnsRules[0].toObject().value("action").toString(),
+           QString("route"));
 
   const QJsonArray outbounds = config.value("outbounds").toArray();
   QVERIFY(findObjectByTag(outbounds, ConfigConstants::TAG_AUTO)

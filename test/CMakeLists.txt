@@ -28,6 +28,7 @@ add_executable(sing-box-qt-unit-tests
     utils/format_and_proxy_test.cpp
     utils/log_and_subscription_meta_test.cpp
     utils/misc_services_test.cpp
+    ../src/coremanager/RuntimeConfigResolver.cpp
     ../src/network/SubscriptionService.cpp
     ../src/services/config/ConfigBuilder.cpp
     ../src/services/config/ConfigMutator.cpp

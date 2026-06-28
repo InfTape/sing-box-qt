@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include "core/CoreManagerProtocol.h"
 #include "coremanager/CoreManagerServer.h"
+#include "coremanager/RuntimeConfigResolver.h"
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 
@@ -24,10 +25,6 @@ void applyRuntimeOptions(const QStringList& args) {
   if (!dataDir.trimmed().isEmpty()) {
     qputenv("SING_BOX_QT_DATA_DIR", QDir(dataDir).absolutePath().toUtf8());
   }
-}
-
-QString defaultRuntimeConfigPath() {
-  return QDir(appDataDir()).filePath("config.json");
 }
 
 int runCoreManager(QCoreApplication& app, bool serviceMode = false) {
@@ -51,7 +48,8 @@ int runCoreManager(QCoreApplication& app, bool serviceMode = false) {
   }
   if (serviceMode) {
     Logger::info("Core manager service is running");
-    server.setKeepKernelRunning(true, defaultRuntimeConfigPath());
+    server.setKeepKernelRunning(
+        true, RuntimeConfigResolver::resolveConfigPath());
   }
   return app.exec();
 }

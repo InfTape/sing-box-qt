@@ -166,11 +166,13 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   const QString cnStrategy    = settings.dnsStrategyCn();
   QJsonObject directRule;
   directRule["clash_mode"] = "direct";
+  directRule["action"]     = "route";
   directRule["server"]     = ConfigConstants::DNS_CN;
   directRule["strategy"]   = cnStrategy;
   rules.append(directRule);
   QJsonObject globalRule;
   globalRule["clash_mode"] = "global";
+  globalRule["action"]     = "route";
   globalRule["server"]     = ConfigConstants::DNS_PROXY;
   globalRule["strategy"]   = proxyStrategy;
   rules.append(globalRule);
@@ -182,11 +184,13 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
   cnSets.append(ConfigConstants::RS_GEOSITE_CN);
   cnSets.append(ConfigConstants::RS_GEOIP_CN);
   cnRule["rule_set"] = cnSets;
+  cnRule["action"]   = "route";
   cnRule["server"]   = ConfigConstants::DNS_CN;
   cnRule["strategy"] = cnStrategy;
   rules.append(cnRule);
   QJsonObject notCnRule;
   notCnRule["rule_set"] = ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN;
+  notCnRule["action"]   = "route";
   notCnRule["server"]   = ConfigConstants::DNS_PROXY;
   notCnRule["strategy"] = proxyStrategy;
   rules.append(notCnRule);

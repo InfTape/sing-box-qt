@@ -32,6 +32,7 @@ class KernelRunner : public QObject {
   void onReadyReadStandardError();
 
  private:
+  bool      checkConfig(const QString& configPath);
   QString   findKernelPath() const;
   QString   getDefaultConfigPath() const;
   QProcess* m_process;

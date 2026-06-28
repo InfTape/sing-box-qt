@@ -26,6 +26,7 @@
 #include "utils/subscription/SubscriptionHelpers.h"
 #include "utils/subscription/SubscriptionFormat.h"
 #include "utils/subscription/SubscriptionUserinfo.h"
+#include "coremanager/RuntimeConfigResolver.h"
 
 namespace {
 QJsonObject findObjectByTag(const QJsonArray& arr, const QString& tag) {

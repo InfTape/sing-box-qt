@@ -69,6 +69,12 @@ void ConfigBuilderTests::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
       !findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER).contains("detour"));
   const QJsonArray dnsRules = dnsObj.value("rules").toArray();
   QVERIFY(findRuleSetIndex(dnsRules, ConfigConstants::RS_GEOSITE_ADS) >= 0);
+  for (const auto& ruleValue : dnsRules) {
+    const QJsonObject rule = ruleValue.toObject();
+    if (rule.contains("server")) {
+      QCOMPARE(rule.value("action").toString(), QString("route"));
+    }
+  }
 
   const QJsonArray outbounds = config.value("outbounds").toArray();
   QCOMPARE(findObjectByTag(outbounds, ConfigConstants::TAG_AUTO)

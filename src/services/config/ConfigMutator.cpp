@@ -426,6 +426,10 @@ void ConfigMutator::applySettings(QJsonObject& config) {
       }
       QJsonObject rule      = rules[i].toObject();
       const QString server  = rule.value("server").toString();
+      if (!server.isEmpty() &&
+          rule.value("action").toString().trimmed().isEmpty()) {
+        rule["action"] = "route";
+      }
       if (server == ConfigConstants::DNS_CN) {
         rule["strategy"] = cnStrategy;
         rules[i] = rule;

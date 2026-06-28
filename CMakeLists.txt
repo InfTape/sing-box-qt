@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(sing-box-qt VERSION 1.2.3 LANGUAGES CXX)
+project(sing-box-qt VERSION 1.2.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -282,7 +282,9 @@ set(CORE_MANAGER_SOURCES
     src/coremanager/CoreManagerMain.cpp
     src/coremanager/CoreManagerServer.cpp
     src/coremanager/KernelRunner.cpp
+    src/coremanager/RuntimeConfigResolver.cpp
     src/core/ProcessManager.cpp
+    src/storage/DatabaseService.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
 )
@@ -290,8 +292,10 @@ set(CORE_MANAGER_SOURCES
 set(CORE_MANAGER_HEADERS
     src/coremanager/CoreManagerServer.h
     src/coremanager/KernelRunner.h
+    src/coremanager/RuntimeConfigResolver.h
     src/core/CoreManagerProtocol.h
     src/core/ProcessManager.h
+    src/storage/DatabaseService.h
     src/utils/PortableMode.h
     src/utils/Logger.h
     src/utils/AppPaths.h
@@ -318,6 +322,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_link_libraries(sing-box-core-manager PRIVATE
     Qt6::Core
     Qt6::Network
+    Qt6::Sql
 )
 
 # Silence noisy third-party conversion warnings from yaml-cpp on MSVC.

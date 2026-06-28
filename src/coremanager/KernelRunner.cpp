@@ -8,6 +8,14 @@
 #include "utils/AppPaths.h"
 #include "utils/Logger.h"
 
+namespace {
+QProcessEnvironment kernelProcessEnvironment() {
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert("ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS", "true");
+  return env;
+}
+}  // namespace
+
 KernelRunner::KernelRunner(QObject* parent)
     : QObject(parent), m_process(nullptr), m_running(false) {}
 
@@ -44,6 +52,9 @@ bool KernelRunner::start(const QString& configPath) {
     emit errorOccurred(m_lastError);
     return false;
   }
+  if (!checkConfig(m_configPath)) {
+    return false;
+  }
   if (m_process) {
     m_process->deleteLater();
   }
@@ -72,9 +83,7 @@ bool KernelRunner::start(const QString& configPath) {
   m_process->setWorkingDirectory(workDir);
   QStringList args;
   args << "run" << "-c" << m_configPath;
-  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert("ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS", "true");
-  m_process->setProcessEnvironment(env);
+  m_process->setProcessEnvironment(kernelProcessEnvironment());
   Logger::info(tr("Starting kernel: %1").arg(m_kernelPath));
   m_process->start(m_kernelPath, args);
   if (!m_process->waitForStarted(5000)) {
@@ -152,6 +161,49 @@ QString KernelRunner::getKernelPath() const {
 
 QString KernelRunner::lastError() const {
   return m_lastError;
+}
+
+bool KernelRunner::checkConfig(const QString& configPath) {
+  QProcess process;
+  const QString workDir = appDataDir();
+  process.setWorkingDirectory(workDir);
+  process.setProcessEnvironment(kernelProcessEnvironment());
+  const QStringList args = {
+      "--disable-color", "-D", workDir, "-c", configPath, "check"};
+  process.start(m_kernelPath, args);
+  if (!process.waitForStarted(3000)) {
+    m_lastError = tr("Failed to start sing-box config check");
+    Logger::error(m_lastError);
+    emit errorOccurred(m_lastError);
+    return false;
+  }
+  if (!process.waitForFinished(10000)) {
+    process.kill();
+    process.waitForFinished(1000);
+    m_lastError = tr("sing-box config check timed out");
+    Logger::error(m_lastError);
+    emit errorOccurred(m_lastError);
+    return false;
+  }
+
+  QString output =
+      QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+  const QString stdErr =
+      QString::fromUtf8(process.readAllStandardError()).trimmed();
+  if (!stdErr.isEmpty()) {
+    output = output.isEmpty() ? stdErr : output + "\n" + stdErr;
+  }
+  const bool ok =
+      process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
+  if (ok) {
+    return true;
+  }
+
+  m_lastError =
+      output.isEmpty() ? tr("sing-box config check failed") : output;
+  Logger::error(QString("Kernel config check failed: %1").arg(m_lastError));
+  emit errorOccurred(m_lastError);
+  return false;
 }
 
 void KernelRunner::onProcessStarted() {

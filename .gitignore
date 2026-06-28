@@ -5,6 +5,7 @@ cmake-build-*/
 out/
 debug/
 release/
+/.qt/
 sing-box-qt-portable/
 
 # CMake generated files

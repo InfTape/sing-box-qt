@@ -10,6 +10,7 @@ class MiscServicesTests : public QObject {
   void subscriptionHelpers_shouldDetectSingleManualNode();
   void kernelPlatform_shouldBuildUrlsAndFilename();
   void kernelPlatform_shouldHandlePathUtilities();
+  void runtimeConfigResolver_shouldPreferExistingPersistedConfig();
   void dataUsageTracker_shouldTrackGlobalTotals();
 };
 
@@ -146,6 +147,36 @@ void MiscServicesTests::kernelPlatform_shouldHandlePathUtilities() {
                                              tmpDir.filePath("out"),
                                              &err));
   QVERIFY(!err.isEmpty());
+}
+
+void MiscServicesTests::
+    runtimeConfigResolver_shouldPreferExistingPersistedConfig() {
+  QTemporaryDir tmpDir;
+  QVERIFY(tmpDir.isValid());
+  const QString activePath   = tmpDir.filePath("active.json");
+  const QString fallbackPath = tmpDir.filePath("config.json");
+  for (const QString& path : {activePath, fallbackPath}) {
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("{}");
+  }
+
+  QCOMPARE(RuntimeConfigResolver::selectConfigPath(activePath, fallbackPath),
+           QDir::cleanPath(QFileInfo(activePath).absoluteFilePath()));
+
+  DatabaseService& db = DatabaseService::instance();
+  struct ActiveConfigPathGuard {
+    DatabaseService& db;
+    QString          originalPath;
+    ~ActiveConfigPathGuard() { db.saveActiveConfigPath(originalPath); }
+  } guard{db, db.getActiveConfigPath()};
+  QVERIFY(db.saveActiveConfigPath(activePath));
+  QCOMPARE(RuntimeConfigResolver::resolveConfigPath(),
+           QDir::cleanPath(QFileInfo(activePath).absoluteFilePath()));
+
+  QVERIFY(QFile::remove(activePath));
+  QCOMPARE(RuntimeConfigResolver::selectConfigPath(activePath, fallbackPath),
+           QDir::cleanPath(QFileInfo(fallbackPath).absoluteFilePath()));
 }
 
 
