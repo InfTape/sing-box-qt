@@ -11,6 +11,14 @@ constexpr auto kReplaceExistingInstanceArg = "--replace-existing-instance";
 }
 
 int main(int argc, char* argv[]) {
+#ifdef Q_OS_WIN
+  // Qt 6's DirectWrite engine only does grayscale antialiasing, which looks
+  // fuzzy on standard-DPI displays; FreeType renders noticeably crisper.
+  // Users can still override via QT_QPA_PLATFORM or -platform.
+  if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
+    qputenv("QT_QPA_PLATFORM", "windows:fontengine=freetype");
+  }
+#endif
   // Enable high DPI support
   QApplication::setHighDpiScaleFactorRoundingPolicy(
       Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
