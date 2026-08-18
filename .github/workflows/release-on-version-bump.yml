@@ -8,6 +8,8 @@ on:
     paths:
       - CMakeLists.txt
       - pack.ps1
+      - pack-linux.sh
+      - resources/linux/**
       - .github/workflows/release-on-version-bump.yml
   workflow_dispatch:
 
@@ -62,7 +64,8 @@ jobs:
           release_inputs_changed="false"
           if [[ -n "${before_sha:-}" && "$before_sha" != "0000000000000000000000000000000000000000" ]]; then
             if ! git diff --quiet "$before_sha" "$GITHUB_SHA" -- \
-              pack.ps1 .github/workflows/release-on-version-bump.yml; then
+              pack.ps1 pack-linux.sh resources/linux \
+              .github/workflows/release-on-version-bump.yml; then
               release_inputs_changed="true"
             fi
           fi
@@ -162,3 +165,64 @@ jobs:
           replacesArtifacts: true
           artifactErrorsFailBuild: true
           generateReleaseNotes: true
+
+  linux-build-and-release:
+    name: Build Fedora RPM And Publish Release
+    needs:
+      - detect-version
+      - build-and-release
+    if: ${{ needs.build-and-release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:44
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    steps:
+      - name: Install Fedora build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            cmake \
+            gcc-c++ \
+            git \
+            kf6-kconfig \
+            ninja-build \
+            qt6-qtbase-devel \
+            qt6-qtsvg-devel \
+            qt6-qtwebsockets-devel \
+            rpm-build \
+            tar
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and test Fedora RPM
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./pack-linux.sh
+          mapfile -t rpms < <(find . -maxdepth 1 -type f -name 'sing-box-qt-*.rpm')
+          if [[ "${#rpms[@]}" -ne 1 ]]; then
+            echo "Expected exactly one RPM, found ${#rpms[@]}"
+            exit 1
+          fi
+          version="${{ needs.detect-version.outputs.current_version }}"
+          release_rpm="sing-box-qt-fedora-kde-44-v${version}.x86_64.rpm"
+          mv "${rpms[0]}" "$release_rpm"
+          echo "RELEASE_RPM=$release_rpm" >> "$GITHUB_ENV"
+
+      - name: Attest Fedora RPM
+        uses: actions/attest@v4
+        with:
+          subject-path: ${{ env.RELEASE_RPM }}
+
+      - name: Add Fedora RPM to release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.detect-version.outputs.current_version }}
+          artifacts: ${{ env.RELEASE_RPM }}
+          allowUpdates: true
+          replacesArtifacts: true
+          artifactErrorsFailBuild: true

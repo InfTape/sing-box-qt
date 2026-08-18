@@ -7,6 +7,7 @@ debug/
 release/
 /.qt/
 sing-box-qt-portable/
+sing-box-qt-*.rpm
 
 # CMake generated files
 CMakeFiles/

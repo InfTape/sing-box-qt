@@ -220,8 +220,9 @@ void KernelManager::tryDownloadUrl(int                index,
           return;
         }
         QString errorMessage;
-        if (!KernelPlatform::extractZipArchive(
-                savePath, extractDir, &errorMessage)) {
+        if (!KernelPlatform::extractArchive(savePath,
+                                            extractDir,
+                                            &errorMessage)) {
           m_isDownloading = false;
           emit finished(false, tr("Extract failed: %1").arg(errorMessage));
           return;
@@ -249,6 +250,22 @@ void KernelManager::tryDownloadUrl(int                index,
           emit finished(false, tr("Install failed: cannot write kernel file"));
           return;
         }
+#ifdef Q_OS_LINUX
+        QFile kernelFile(destPath);
+        QFileDevice::Permissions permissions = kernelFile.permissions();
+        permissions |= QFileDevice::ExeOwner | QFileDevice::ExeUser |
+                       QFileDevice::ExeGroup | QFileDevice::ExeOther;
+        if (!kernelFile.setPermissions(permissions)) {
+          QFile::remove(destPath);
+          if (QFile::exists(backupPath)) {
+            QFile::rename(backupPath, destPath);
+          }
+          m_isDownloading = false;
+          emit finished(false,
+                        tr("Install failed: cannot make kernel executable"));
+          return;
+        }
+#endif
         m_isDownloading = false;
         emit statusChanged(tr("Download complete"));
         refreshInstalledInfo();

@@ -12,6 +12,73 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  fedora-44-build:
+    name: Fedora 44 Build + Smoke Test
+    runs-on: ubuntu-24.04
+    container: registry.fedoraproject.org/fedora:44
+
+    steps:
+      - name: Install dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            appstream \
+            cmake \
+            desktop-file-utils \
+            gcc-c++ \
+            git \
+            kf6-kconfig \
+            ninja-build \
+            qt6-qtbase-devel \
+            qt6-qtsvg-devel \
+            qt6-qtwebsockets-devel \
+            rpm-build \
+            tar
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: >
+          cmake -S . -B build/fedora-44 -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build/fedora-44 --parallel 2
+
+      - name: Run tests
+        run: ctest --test-dir build/fedora-44 --output-on-failure
+
+      - name: Validate desktop metadata
+        run: |
+          desktop-file-validate resources/linux/io.github.inftape.sing-box-qt.desktop
+          appstreamcli validate --no-net resources/linux/io.github.inftape.sing-box-qt.metainfo.xml
+
+      - name: Verify install layout
+        run: DESTDIR="$PWD/build/fedora-44/stage" cmake --install build/fedora-44
+
+      - name: Build Fedora RPM
+        run: |
+          cpack --config build/fedora-44/CPackConfig.cmake \
+            -G RPM -B build/fedora-44/packages
+          rpm -qpl build/fedora-44/packages/*.rpm
+
+      - name: Headless application smoke test
+        shell: bash
+        run: |
+          set +e
+          timeout 5s env QT_QPA_PLATFORM=offscreen \
+            build/fedora-44/sing-box-qt --portable
+          app_status=$?
+          mkdir -p build/fedora-44/manager-smoke-data
+          timeout 5s build/fedora-44/sing-box-core-manager \
+            --control-name sing-box-qt-manager-smoke \
+            --data-dir build/fedora-44/manager-smoke-data
+          manager_status=$?
+          set -e
+          test "$app_status" -eq 124
+          test "$manager_status" -eq 124
+
   unit-test:
     name: Unit Tests + Coverage
     runs-on: ubuntu-24.04

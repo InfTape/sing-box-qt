@@ -135,14 +135,17 @@ bool ProxyController::restartKernelWithConfig(const QString& configPath) {
 }
 
 bool ProxyController::setSystemProxyEnabled(bool enabled) {
+  bool proxyUpdated = false;
   if (enabled) {
     const int port = m_configRepo ? m_configRepo->mixedPort() : 1080;
-    m_systemProxy->setProxy("127.0.0.1", port);
-    m_settings->setSystemProxyEnabled(true);
+    proxyUpdated = m_systemProxy->setProxy("127.0.0.1", port);
   } else {
-    m_systemProxy->clearProxy();
-    m_settings->setSystemProxyEnabled(false);
+    proxyUpdated = m_systemProxy->clearProxy();
   }
+  if (!proxyUpdated) {
+    return false;
+  }
+  m_settings->setSystemProxyEnabled(enabled);
   // System proxy toggle should not force a kernel restart.
   return applySettingsToActiveConfig(false);
 }

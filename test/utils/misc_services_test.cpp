@@ -10,6 +10,7 @@ class MiscServicesTests : public QObject {
   void subscriptionHelpers_shouldDetectSingleManualNode();
   void kernelPlatform_shouldBuildUrlsAndFilename();
   void kernelPlatform_shouldHandlePathUtilities();
+  void linuxDesktopIntegration_shouldManageProxyAndAutoStart();
   void runtimeConfigResolver_shouldPreferExistingPersistedConfig();
   void dataUsageTracker_shouldTrackGlobalTotals();
 };
@@ -102,8 +103,13 @@ void MiscServicesTests::kernelPlatform_shouldBuildUrlsAndFilename() {
 
   const QString filename = KernelPlatform::buildKernelFilename("v1.2.3");
   QVERIFY(filename.contains("1.2.3"));
+#ifdef Q_OS_WIN
   QVERIFY(filename.contains("windows"));
   QVERIFY(filename.endsWith(".zip"));
+#elif defined(Q_OS_LINUX)
+  QVERIFY(filename.contains("linux"));
+  QVERIFY(filename.endsWith(".tar.gz"));
+#endif
   QVERIFY(!filename.contains("v1.2.3"));
 
   const QStringList urls =
@@ -143,10 +149,98 @@ void MiscServicesTests::kernelPlatform_shouldHandlePathUtilities() {
            QDir::fromNativeSeparators(exePath));
 
   QString err;
-  QVERIFY(!KernelPlatform::extractZipArchive(tmpDir.filePath("missing.zip"),
-                                             tmpDir.filePath("out"),
-                                             &err));
+  QVERIFY(!KernelPlatform::extractArchive(tmpDir.filePath("missing.zip"),
+                                          tmpDir.filePath("out"),
+                                          &err));
   QVERIFY(!err.isEmpty());
+
+#ifdef Q_OS_LINUX
+  const QString archiveRoot = tmpDir.filePath("archive-root/sing-box-test");
+  QVERIFY(QDir().mkpath(archiveRoot));
+  QFile archivedKernel(QDir(archiveRoot).filePath("sing-box"));
+  QVERIFY(archivedKernel.open(QIODevice::WriteOnly));
+  archivedKernel.write("test-kernel");
+  archivedKernel.close();
+  const QString archivePath = tmpDir.filePath("kernel.tar.gz");
+  QProcess      tar;
+  tar.start("tar",
+            {"-czf",
+             archivePath,
+             "-C",
+             tmpDir.filePath("archive-root"),
+             "sing-box-test"});
+  QVERIFY(tar.waitForFinished(10000));
+  QCOMPARE(tar.exitCode(), 0);
+  const QString extractPath = tmpDir.filePath("extracted");
+  QVERIFY2(KernelPlatform::extractArchive(archivePath, extractPath, &err),
+           qPrintable(err));
+  QCOMPARE(KernelPlatform::findExecutableInDir(extractPath, "sing-box"),
+           QDir(extractPath).filePath("sing-box-test/sing-box"));
+#endif
+}
+
+void MiscServicesTests::linuxDesktopIntegration_shouldManageProxyAndAutoStart() {
+#ifndef Q_OS_LINUX
+  QSKIP("Linux-only desktop integration test");
+#else
+  QTemporaryDir tmpDir;
+  QVERIFY(tmpDir.isValid());
+
+  const QString proxyConfig = tmpDir.filePath("kioslaverc");
+  qputenv("SING_BOX_QT_KDE_PROXY_CONFIG", proxyConfig.toUtf8());
+  QVERIFY(SystemProxy::setProxy("127.0.0.1", 2080));
+  QVERIFY(SystemProxy::isProxyEnabled());
+  QCOMPARE(SystemProxy::getProxyHost(), QString("127.0.0.1"));
+  QCOMPARE(SystemProxy::getProxyPort(), 2080);
+
+  const QString kreadconfig = QStandardPaths::findExecutable("kreadconfig6");
+  QVERIFY(!kreadconfig.isEmpty());
+  auto readKConfig = [&](const QString& key) {
+    QProcess kread;
+    kread.start(kreadconfig,
+                {"--file",
+                 proxyConfig,
+                 "--group",
+                 "Proxy Settings",
+                 "--key",
+                 key});
+    if (!kread.waitForFinished(5000) || kread.exitCode() != 0) {
+      return QString();
+    }
+    return QString::fromUtf8(kread.readAllStandardOutput()).trimmed();
+  };
+  QCOMPARE(readKConfig("ProxyType"), QString("1"));
+  QCOMPARE(readKConfig("httpProxy"), QString("http://127.0.0.1:2080"));
+  QCOMPARE(readKConfig("httpsProxy"), QString("http://127.0.0.1:2080"));
+  QCOMPARE(readKConfig("socksProxy"), QString("socks://127.0.0.1:2080"));
+
+  QFile proxyFile(proxyConfig);
+  QVERIFY(proxyFile.open(QIODevice::ReadOnly | QIODevice::Text));
+  const QString proxyText = QString::fromUtf8(proxyFile.readAll());
+  QVERIFY(proxyText.contains("[Proxy Settings]"));
+  QVERIFY(!proxyText.contains("[Proxy%20Settings]"));
+  proxyFile.close();
+
+  QVERIFY(SystemProxy::clearProxy());
+  QCOMPARE(readKConfig("ProxyType"), QString("0"));
+  QVERIFY(readKConfig("httpProxy").isEmpty());
+  QVERIFY(readKConfig("httpsProxy").isEmpty());
+  QVERIFY(readKConfig("socksProxy").isEmpty());
+  qunsetenv("SING_BOX_QT_KDE_PROXY_CONFIG");
+
+  const QString autostartFile = tmpDir.filePath("sing-box-qt.desktop");
+  qputenv("SING_BOX_QT_AUTOSTART_FILE", autostartFile.toUtf8());
+  QVERIFY(AutoStart::setEnabled(true, "Sing-Box Qt"));
+  QVERIFY(AutoStart::isEnabled("Sing-Box Qt"));
+  QFile entry(autostartFile);
+  QVERIFY(entry.open(QIODevice::ReadOnly | QIODevice::Text));
+  const QString entryText = QString::fromUtf8(entry.readAll());
+  QVERIFY(entryText.contains("Exec="));
+  QVERIFY(entryText.contains(" --hide"));
+  QVERIFY(AutoStart::setEnabled(false, "Sing-Box Qt"));
+  QVERIFY(!QFile::exists(autostartFile));
+  qunsetenv("SING_BOX_QT_AUTOSTART_FILE");
+#endif
 }
 
 void MiscServicesTests::

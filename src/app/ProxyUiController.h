@@ -15,7 +15,7 @@ class AdminActions;
 class ProxyUiController : public QObject {
   Q_OBJECT
  public:
-  enum class TunResult { Applied, Failed };
+  enum class TunResult { Applied, PermissionDenied, Failed };
   explicit ProxyUiController(ProxyController* proxyController,
                              KernelService*   kernelService,
                              SettingsStore*   settingsStore,

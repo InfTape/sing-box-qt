@@ -5,7 +5,7 @@
 
 class SystemProxyAdapter : public SystemProxyGateway {
  public:
-  void setProxy(const QString& host, int port) override;
-  void clearProxy() override;
+  bool setProxy(const QString& host, int port) override;
+  bool clearProxy() override;
 };
 #endif  // SYSTEMPROXYADAPTER_H

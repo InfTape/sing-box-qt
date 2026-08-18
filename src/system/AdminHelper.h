@@ -18,5 +18,8 @@ class AdminHelper : public QObject {
   static bool runAsAdminAndWait(const QString&     program,
                                 const QStringList& arguments = QStringList(),
                                 int                timeoutMs = 30000);
+  // Linux TUN support without running the whole GUI as root.
+  static bool hasTunPermission(const QString& program);
+  static bool grantTunPermission(const QString& program);
 };
 #endif  // ADMINHELPER_H

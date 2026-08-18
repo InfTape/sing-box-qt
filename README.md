@@ -26,8 +26,8 @@
 - **内核管理** - 自动下载、启动和管理 sing-box 内核进程
 - **订阅管理** - 支持多种订阅格式（Base64、YAML、JSON）的导入与更新
 - **代理切换** - 一键切换节点，支持延迟测试和自动选择
-- **系统代理** - 自动配置 Windows 系统代理设置
-- **TUN 模式** - 支持透明代理（需管理员权限）
+- **系统代理** - 自动配置 Windows 或 KDE Plasma 系统代理设置
+- **TUN 模式** - 支持透明代理（Windows 需管理员权限；Linux 按需授权内核）
 
 ### 订阅支持
 
@@ -73,8 +73,8 @@
 
 ### 系统要求
 
-- **操作系统**: Windows 10/11 (64-bit)
-- **运行时**: 无需额外安装（Qt 运行时已内置）
+- **操作系统**: Windows 10/11 (64-bit)，或 Fedora KDE 44 (x86_64/arm64)
+- **运行时**: Windows 便携包内置 Qt；Fedora 构建使用系统 Qt 6 运行库
 
 ### 首次使用
 
@@ -126,6 +126,27 @@ cmake --build build --config Release
 # .\build\Release\sing-box-qt.exe
 ```
 
+#### Fedora KDE 44
+
+```bash
+sudo dnf install -y \
+  cmake gcc-c++ git ninja-build \
+  qt6-qtbase-devel qt6-qtsvg-devel qt6-qtwebsockets-devel \
+  kf6-kconfig libcap polkit-kde rpm-build
+
+cmake -S . -B build/linux -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build/linux --parallel
+ctest --test-dir build/linux --output-on-failure
+sudo cmake --install build/linux
+```
+
+安装后可从 KDE 应用菜单启动，也可以运行 `sing-box-qt`。程序会写入
+`~/.config/kioslaverc` 来切换 Plasma 系统代理；启用 TUN 时会通过 KDE
+的 PolicyKit 对话框，仅为下载到用户数据目录的 `sing-box` 内核授予
+`cap_net_admin` 和 `cap_net_raw`，不会以 root 身份运行整个图形界面。
+
 ### 打包分发
 
 ```powershell
@@ -134,6 +155,10 @@ cmake --build build --config Release
 
 # 生成文件：sing-box-qt-portable.zip
 ```
+
+Fedora KDE 44 上可运行 `./pack-linux.sh` 生成 RPM，然后使用
+`sudo dnf install ./sing-box-qt-*.rpm` 安装。RPM 使用 Fedora 系统 Qt 6
+运行库。
 
 ---
 

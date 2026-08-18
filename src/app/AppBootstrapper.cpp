@@ -83,6 +83,9 @@ void AppBootstrapper::setupMeta() {
   m_app.setApplicationVersion("1.2.5");
   m_app.setOrganizationName("InfTape");
   m_app.setOrganizationDomain("github.com/inftape");
+#ifdef Q_OS_LINUX
+  m_app.setDesktopFileName("io.github.inftape.sing-box-qt");
+#endif
   m_app.setWindowIcon(QIcon(":/icons/app.png"));
 }
 

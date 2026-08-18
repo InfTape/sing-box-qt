@@ -19,6 +19,7 @@ class ProxyView : public QWidget {
   Q_OBJECT
  public:
   explicit ProxyView(ThemeService* themeService, QWidget* parent = nullptr);
+  ~ProxyView() override;
   void setController(ProxyViewController* controller);
   void setSubscriptionService(SubscriptionService* service);
   void refresh();

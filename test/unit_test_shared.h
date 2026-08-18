@@ -3,7 +3,9 @@
 #include <QObject>
 #include <QFile>
 #include <QJsonDocument>
+#include <QProcess>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
 #include "network/SubscriptionService.h"
@@ -15,6 +17,8 @@
 #include "storage/AppSettings.h"
 #include "storage/ConfigConstants.h"
 #include "storage/DatabaseService.h"
+#include "system/AutoStart.h"
+#include "system/SystemProxy.h"
 #include "utils/Crypto.h"
 #include "utils/GitHubMirror.h"
 #include "utils/LogParser.h"

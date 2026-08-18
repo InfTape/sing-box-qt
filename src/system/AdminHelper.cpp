@@ -1,6 +1,9 @@
 #include "AdminHelper.h"
 #include <QCoreApplication>
+#include <QFileInfo>
+#include <QProcess>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include "utils/Logger.h"
 #ifdef Q_OS_WIN
 // clang-format off
@@ -13,6 +16,13 @@
 
 namespace {
 constexpr auto kReplaceExistingInstanceArg = "--replace-existing-instance";
+
+#ifdef Q_OS_LINUX
+QString findPrivilegeTool(const QString& name) {
+  return QStandardPaths::findExecutable(
+      name, {"/usr/sbin", "/usr/bin", "/sbin", "/bin"});
+}
+#endif
 
 #ifdef Q_OS_WIN
 QString quoteWindowsArgument(const QString& arg) {
@@ -127,8 +137,21 @@ bool AdminHelper::runAsAdmin(const QString&     program,
     }
     return false;
   }
+#elif defined(Q_OS_LINUX)
+  const QString pkexec = findPrivilegeTool("pkexec");
+  if (pkexec.isEmpty()) {
+    Logger::error("pkexec is required for privilege elevation");
+    return false;
+  }
+  QStringList args{program};
+  args.append(arguments);
+  const bool started = QProcess::startDetached(pkexec, args);
+  if (!started) {
+    Logger::error(QString("Failed to start privileged command: %1")
+                      .arg(program));
+  }
+  return started;
 #else
-  // TODO(yourdaddy): use pkexec or similar on Linux/macOS.
   Q_UNUSED(program)
   Q_UNUSED(arguments)
   return false;
@@ -170,10 +193,98 @@ bool AdminHelper::runAsAdminAndWait(const QString&     program,
   GetExitCodeProcess(sei.hProcess, &exitCode);
   CloseHandle(sei.hProcess);
   return exitCode == 0;
+#elif defined(Q_OS_LINUX)
+  QString     command = program;
+  QStringList args    = arguments;
+  if (!isAdmin()) {
+    command = findPrivilegeTool("pkexec");
+    if (command.isEmpty()) {
+      Logger::error("pkexec is required for privilege elevation");
+      return false;
+    }
+    args.prepend(program);
+  }
+  QProcess process;
+  process.start(command, args);
+  if (!process.waitForStarted(5000)) {
+    Logger::error(QString("Failed to start privileged command: %1")
+                      .arg(program));
+    return false;
+  }
+  if (!process.waitForFinished(timeoutMs)) {
+    process.kill();
+    process.waitForFinished(1000);
+    Logger::error(QString("Privileged command timed out: %1").arg(program));
+    return false;
+  }
+  if (process.exitStatus() != QProcess::NormalExit ||
+      process.exitCode() != 0) {
+    const QString error =
+        QString::fromUtf8(process.readAllStandardError()).trimmed();
+    Logger::warn(error.isEmpty()
+                     ? QString("Privileged command failed: %1").arg(program)
+                     : error);
+    return false;
+  }
+  return true;
 #else
   Q_UNUSED(program)
   Q_UNUSED(arguments)
   Q_UNUSED(timeoutMs)
+  return false;
+#endif
+}
+
+bool AdminHelper::hasTunPermission(const QString& program) {
+#ifdef Q_OS_WIN
+  Q_UNUSED(program)
+  return isAdmin();
+#elif defined(Q_OS_LINUX)
+  if (isAdmin()) {
+    return true;
+  }
+  if (program.isEmpty() || !QFileInfo::exists(program)) {
+    return false;
+  }
+  const QString getcap = findPrivilegeTool("getcap");
+  if (getcap.isEmpty()) {
+    return false;
+  }
+  QProcess process;
+  process.start(getcap, {program});
+  if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+    return false;
+  }
+  const QString capabilities =
+      QString::fromUtf8(process.readAllStandardOutput()).toLower();
+  return capabilities.contains("cap_net_admin") &&
+         capabilities.contains("cap_net_raw");
+#else
+  Q_UNUSED(program)
+  return false;
+#endif
+}
+
+bool AdminHelper::grantTunPermission(const QString& program) {
+#ifdef Q_OS_WIN
+  Q_UNUSED(program)
+  return isAdmin();
+#elif defined(Q_OS_LINUX)
+  if (program.isEmpty() || !QFileInfo::exists(program)) {
+    return false;
+  }
+  const QString setcap = findPrivilegeTool("setcap");
+  if (setcap.isEmpty()) {
+    Logger::error("setcap is required for TUN mode (install the libcap package)");
+    return false;
+  }
+  if (!runAsAdminAndWait(
+          setcap, {"cap_net_admin,cap_net_raw+ep", program}, 30000)) {
+    return false;
+  }
+  return hasTunPermission(program);
+#else
+  Q_UNUSED(program)
   return false;
 #endif
 }

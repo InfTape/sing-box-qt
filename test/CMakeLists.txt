@@ -40,6 +40,8 @@ add_executable(sing-box-qt-unit-tests
     ../src/storage/ConfigIO.cpp
     ../src/storage/DatabaseService.cpp
     ../src/storage/SubscriptionConfigStore.cpp
+    ../src/system/AutoStart.cpp
+    ../src/system/SystemProxy.cpp
     ../src/utils/Crypto.cpp
     ../src/utils/PortableMode.cpp
     ../src/utils/home/HomeFormat.cpp
@@ -66,6 +68,10 @@ target_link_libraries(sing-box-qt-unit-tests PRIVATE
     Qt6::Widgets
     yaml-cpp::yaml-cpp
 )
+
+if(WIN32)
+    target_link_libraries(sing-box-qt-unit-tests PRIVATE wininet)
+endif()
 
 if (MSVC AND TARGET yaml-cpp)
     target_compile_options(yaml-cpp PRIVATE /wd4267)

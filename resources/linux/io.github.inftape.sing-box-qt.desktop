@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Sing-Box Qt
+Comment=Graphical client for sing-box
+Exec=sing-box-qt
+Icon=sing-box-qt
+Terminal=false
+Categories=Network;
+Keywords=proxy;vpn;sing-box;
+StartupNotify=true

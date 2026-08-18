@@ -5,7 +5,7 @@
 class SystemProxyGateway {
  public:
   virtual ~SystemProxyGateway()                        = default;
-  virtual void setProxy(const QString& host, int port) = 0;
-  virtual void clearProxy()                            = 0;
+  virtual bool setProxy(const QString& host, int port) = 0;
+  virtual bool clearProxy()                            = 0;
 };
 #endif  // SYSTEMPROXYGATEWAY_H

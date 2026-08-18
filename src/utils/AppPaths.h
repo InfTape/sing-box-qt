@@ -22,6 +22,9 @@ inline QString appDataRoot() {
   if (dir.dirName().compare("Roaming", Qt::CaseInsensitive) == 0) {
     return dir.absolutePath();
   }
+#elif defined(Q_OS_LINUX)
+  path =
+      QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
 #endif
   return QDir(path).absolutePath();
 }

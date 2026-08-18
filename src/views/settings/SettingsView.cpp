@@ -280,6 +280,9 @@ QWidget* SettingsView::buildProxySection() {
   m_apiPortSpin          = createSpinBox(1, 65535, 9090, false);
   m_autoStartCheck       = new QCheckBox(tr("Auto start on boot"));
   m_coreServiceCheck     = new QCheckBox(tr("Run core as Windows service"));
+#ifndef Q_OS_WIN
+  m_coreServiceCheck->setVisible(false);
+#endif
   QLabel* mixedPortLabel = createFormLabel(tr("Mixed port:"));
   QLabel* apiPortLabel   = createFormLabel(tr("API port:"));
   prepareFormLabelPair(mixedPortLabel, apiPortLabel);

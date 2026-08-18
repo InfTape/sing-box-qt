@@ -399,7 +399,7 @@ bool KernelService::ensureManagerReady(QString* error) {
     }
     m_managerProcess->setWorkingDirectory(workDir);
     QStringList args;
-    args << "--control-name" << m_serverName;
+    args << "--control-name" << m_serverName << "--data-dir" << workDir;
     m_managerProcess->start(exePath, args);
     if (!m_managerProcess->waitForStarted(3000)) {
       if (error) {

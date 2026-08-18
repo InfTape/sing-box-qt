@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(sing-box-qt VERSION 1.2.5 LANGUAGES CXX)
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -368,9 +370,33 @@ endif()
 
 # Install configuration.
 install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(TARGETS sing-box-core-manager
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+if(UNIX AND NOT APPLE)
+    install(FILES resources/linux/io.github.inftape.sing-box-qt.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    )
+    install(FILES resources/linux/io.github.inftape.sing-box-qt.metainfo.xml
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+    )
+    install(FILES resources/icons/app.png
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
+        RENAME sing-box-qt.png
+    )
+
+    set(CPACK_GENERATOR RPM)
+    set(CPACK_PACKAGE_NAME sing-box-qt)
+    set(CPACK_PACKAGE_VENDOR InfTape)
+    set(CPACK_PACKAGE_CONTACT InfTape)
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Qt graphical client for sing-box")
+    set(CPACK_RPM_PACKAGE_LICENSE MIT)
+    set(CPACK_RPM_PACKAGE_GROUP Applications/Internet)
+    set(CPACK_RPM_PACKAGE_REQUIRES "kf6-kconfig, libcap, polkit, tar")
+    set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+    include(CPack)
+endif()

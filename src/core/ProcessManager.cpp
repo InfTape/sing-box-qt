@@ -1,22 +1,31 @@
 #include "ProcessManager.h"
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include "utils/Logger.h"
 #ifdef Q_OS_WIN
 #include <windows.h>  // must be first for Windows types/macros
 #include <psapi.h>
 #include <tlhelp32.h>
+#elif defined(Q_OS_LINUX)
+#include <cerrno>
+#include <csignal>
+#include <unistd.h>
 #endif
 
-#ifdef Q_OS_WIN
 namespace {
 QString normalizeProcessPath(const QString& path) {
   if (path.trimmed().isEmpty()) {
     return QString();
   }
-  return QDir::cleanPath(QDir::fromNativeSeparators(path)).toLower();
+  QString normalized = QDir::cleanPath(QDir::fromNativeSeparators(path));
+#ifdef Q_OS_WIN
+  normalized = normalized.toLower();
+#endif
+  return normalized;
 }
 
+#ifdef Q_OS_WIN
 QString queryProcessPathByPid(DWORD pid) {
   HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
   if (!process) {
@@ -31,8 +40,21 @@ QString queryProcessPathByPid(DWORD pid) {
   CloseHandle(process);
   return result;
 }
-}  // namespace
+#elif defined(Q_OS_LINUX)
+ProcessInfo queryProcessInfo(qint64 pid) {
+  ProcessInfo info{pid, QString(), QString()};
+  QFile       comm(QString("/proc/%1/comm").arg(pid));
+  if (comm.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    info.name = QString::fromUtf8(comm.readAll()).trimmed();
+  }
+  info.path = QFileInfo(QString("/proc/%1/exe").arg(pid)).symLinkTarget();
+  if (info.name.isEmpty() && !info.path.isEmpty()) {
+    info.name = QFileInfo(info.path).fileName();
+  }
+  return info;
+}
 #endif
+}  // namespace
 
 ProcessManager::ProcessManager(QObject* parent) : QObject(parent) {}
 
@@ -58,6 +80,21 @@ QList<ProcessInfo> ProcessManager::findProcessesByName(const QString& name) {
     } while (Process32NextW(hSnapshot, &pe32));
   }
   CloseHandle(hSnapshot);
+#elif defined(Q_OS_LINUX)
+  QDir proc("/proc");
+  const QFileInfoList entries =
+      proc.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  for (const QFileInfo& entry : entries) {
+    bool         ok  = false;
+    const qint64 pid = entry.fileName().toLongLong(&ok);
+    if (!ok) {
+      continue;
+    }
+    const ProcessInfo info = queryProcessInfo(pid);
+    if (info.name.compare(name, Qt::CaseSensitive) == 0) {
+      processes.append(info);
+    }
+  }
 #endif
   return processes;
 }
@@ -91,6 +128,26 @@ QList<ProcessInfo> ProcessManager::findProcessesByPath(const QString& path) {
     } while (Process32NextW(hSnapshot, &pe32));
   }
   CloseHandle(hSnapshot);
+#elif defined(Q_OS_LINUX)
+  const QString targetPath =
+      normalizeProcessPath(QFileInfo(path).absoluteFilePath());
+  if (targetPath.isEmpty()) {
+    return processes;
+  }
+  QDir proc("/proc");
+  const QFileInfoList entries =
+      proc.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  for (const QFileInfo& entry : entries) {
+    bool         ok  = false;
+    const qint64 pid = entry.fileName().toLongLong(&ok);
+    if (!ok) {
+      continue;
+    }
+    const ProcessInfo info = queryProcessInfo(pid);
+    if (normalizeProcessPath(info.path) == targetPath) {
+      processes.append(info);
+    }
+  }
 #else
   Q_UNUSED(path)
 #endif
@@ -114,8 +171,16 @@ bool ProcessManager::isProcessRunning(qint64 pid) {
     CloseHandle(hProcess);
   }
   return false;
+#elif defined(Q_OS_LINUX)
+  if (pid <= 0) {
+    return false;
+  }
+  if (::kill(static_cast<pid_t>(pid), 0) == 0) {
+    return true;
+  }
+  return errno == EPERM;
 #else
-  // TODO(yourdaddy): implement for Unix.
+  Q_UNUSED(pid)
   return false;
 #endif
 }
@@ -134,8 +199,20 @@ bool ProcessManager::killProcess(qint64 pid) {
   }
   Logger::warn(QString("Failed to terminate process: PID=%1").arg(pid));
   return false;
+#elif defined(Q_OS_LINUX)
+  if (pid <= 0 || pid == static_cast<qint64>(::getpid())) {
+    return false;
+  }
+  if (::kill(static_cast<pid_t>(pid), SIGTERM) == 0) {
+    Logger::info(QString("Process termination requested: PID=%1").arg(pid));
+    return true;
+  }
+  Logger::warn(QString("Failed to terminate process: PID=%1, errno=%2")
+                   .arg(pid)
+                   .arg(errno));
+  return false;
 #else
-  // TODO(yourdaddy): implement for Unix.
+  Q_UNUSED(pid)
   return false;
 #endif
 }

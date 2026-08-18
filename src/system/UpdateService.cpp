@@ -11,7 +11,7 @@ UpdateService::UpdateService(QObject* parent)
       m_httpClient(new HttpClient(this)),
       m_currentVersion(QCoreApplication::applicationVersion()),
       m_updateUrl(
-          "https://api.github.com/repos/xinggaoya/sing-box-windows/releases/"
+          "https://api.github.com/repos/InfTape/sing-box-qt/releases/"
           "latest") {}
 
 UpdateService::~UpdateService() {}
@@ -51,6 +51,14 @@ void UpdateService::checkForUpdate() {
           info.downloadUrl = assetObj["browser_download_url"].toString();
           info.fileSize    = assetObj["size"].toVariant().toLongLong();
           break;
+        }
+#elif defined(Q_OS_LINUX)
+        if (name.endsWith(".rpm") || name.endsWith(".tar.gz")) {
+          info.downloadUrl = assetObj["browser_download_url"].toString();
+          info.fileSize    = assetObj["size"].toVariant().toLongLong();
+          if (name.endsWith(".rpm")) {
+            break;
+          }
         }
 #endif
       }

@@ -314,6 +314,13 @@ void MainWindow::setupHomeViewConnections() {
       return;
     }
     const auto result = m_proxyUiController->setTunModeEnabled(enabled);
+    if (result == ProxyUiController::TunResult::PermissionDenied) {
+      QMessageBox::warning(
+          this,
+          tr("TUN permission"),
+          tr("TUN mode needs network-administration permission for the "
+             "sing-box kernel. The permission request was not completed."));
+    }
     if (result == ProxyUiController::TunResult::Failed) {
       m_homeView->setTunModeEnabled(m_proxyUiController->tunModeEnabled());
       m_homeView->setSystemProxyEnabled(
@@ -452,6 +459,15 @@ void MainWindow::restoreRuntimeOnStartup() {
       [this]() {
         QMessageBox box(this);
         box.setIcon(QMessageBox::Warning);
+#ifdef Q_OS_LINUX
+        box.setWindowTitle(tr("TUN permission required"));
+        box.setText(
+            tr("TUN mode requires network-administration permission for the "
+               "sing-box kernel. Grant it now?"));
+        box.addButton(tr("Cancel"), QMessageBox::RejectRole);
+        auto* restartBtn =
+            box.addButton(tr("Grant permission"), QMessageBox::AcceptRole);
+#else
         box.setWindowTitle(tr("Administrator permission required"));
         box.setText(
             tr("TUN mode requires administrator privileges. Restart as "
@@ -459,6 +475,7 @@ void MainWindow::restoreRuntimeOnStartup() {
         box.addButton(tr("Cancel"), QMessageBox::RejectRole);
         auto* restartBtn = box.addButton(tr("Restart as administrator"),
                                          QMessageBox::AcceptRole);
+#endif
         box.setDefaultButton(restartBtn);
         box.exec();
         return box.clickedButton() == restartBtn;

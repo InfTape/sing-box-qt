@@ -74,6 +74,8 @@ ProxyView::ProxyView(ThemeService* themeService, QWidget* parent)
   }
 }
 
+ProxyView::~ProxyView() = default;
+
 void ProxyView::setupUI() {
   QVBoxLayout* mainLayout = new QVBoxLayout(this);
   mainLayout->setContentsMargins(24, 24, 24, 24);

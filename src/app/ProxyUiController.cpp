@@ -115,9 +115,22 @@ bool ProxyUiController::restoreStartupRuntime(
       const bool restarted =
           m_adminActions ? m_adminActions->restartAsAdmin() : false;
       if (!restarted && error) {
-        *error = tr("Failed to restart as administrator.");
+        *error = tr("Failed to obtain permission for TUN mode.");
       }
+#ifdef Q_OS_LINUX
+      if (restarted && m_proxyController->startKernel()) {
+        emit systemProxyStateChanged(m_settings->systemProxyEnabled());
+        emit tunModeStateChanged(m_settings->tunEnabled());
+        return true;
+      }
+      if (restarted && error) {
+        *error = tr("TUN permission was granted, but the kernel failed to "
+                    "start.");
+      }
+      return false;
+#else
       return restarted;
+#endif
     }
     if (error) {
       *error =
@@ -191,6 +204,13 @@ ProxyUiController::TunResult ProxyUiController::setTunModeEnabled(
     emitCurrentStates();
     return ok ? TunResult::Applied : TunResult::Failed;
   }
+#ifdef Q_OS_LINUX
+  if (!m_adminActions ||
+      (!m_adminActions->isAdmin() && !m_adminActions->restartAsAdmin())) {
+    emitCurrentStates();
+    return TunResult::PermissionDenied;
+  }
+#endif
   const bool proxyDisabled = disableSystemProxyIfNeeded();
   if (!proxyDisabled) {
     restoreSystemProxyIfNeeded();
