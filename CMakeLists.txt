@@ -397,6 +397,14 @@ if(UNIX AND NOT APPLE)
     set(CPACK_RPM_PACKAGE_LICENSE MIT)
     set(CPACK_RPM_PACKAGE_GROUP Applications/Internet)
     set(CPACK_RPM_PACKAGE_REQUIRES "kf6-kconfig, libcap, polkit, tar")
+    set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+        "/usr/share/applications"
+        "/usr/share/icons"
+        "/usr/share/icons/hicolor"
+        "/usr/share/icons/hicolor/512x512"
+        "/usr/share/icons/hicolor/512x512/apps"
+        "/usr/share/metainfo"
+    )
     set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
     include(CPack)
 endif()
