@@ -287,24 +287,32 @@ add_executable(${PROJECT_NAME} WIN32
 set(CORE_MANAGER_SOURCES
     src/coremanager/CoreManagerMain.cpp
     src/coremanager/CoreManagerServer.cpp
+    src/coremanager/CoreDataService.cpp
     src/coremanager/KernelRunner.cpp
     src/coremanager/RuntimeConfigResolver.cpp
     src/core/ProcessManager.cpp
+    src/core/DataUsageTracker.cpp
     src/storage/DatabaseService.cpp
+    src/storage/LogStore.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
+    src/utils/LogParser.cpp
     src/utils/LogRetention.cpp
 )
 
 set(CORE_MANAGER_HEADERS
     src/coremanager/CoreManagerServer.h
+    src/coremanager/CoreDataService.h
     src/coremanager/KernelRunner.h
     src/coremanager/RuntimeConfigResolver.h
     src/core/CoreManagerProtocol.h
     src/core/ProcessManager.h
+    src/core/DataUsageTracker.h
     src/storage/DatabaseService.h
+    src/storage/LogStore.h
     src/utils/PortableMode.h
     src/utils/Logger.h
+    src/utils/LogParser.h
     src/utils/LogRetention.h
     src/utils/AppPaths.h
 )
@@ -331,6 +339,7 @@ target_link_libraries(sing-box-core-manager PRIVATE
     Qt6::Core
     Qt6::Network
     Qt6::Sql
+    Qt6::Concurrent
 )
 
 # Silence noisy third-party conversion warnings from yaml-cpp on MSVC.

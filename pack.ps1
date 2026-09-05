@@ -8,14 +8,16 @@ if ([string]::IsNullOrWhiteSpace($qtRoot)) {
 $windeployqt = Join-Path $qtRoot "bin\windeployqt.exe"
 
 $cmake = $env:CMAKE_BIN
-if ([string]::IsNullOrWhiteSpace($cmake)) {
-    $cmake = "C:\Qt\Tools\CMake_64\bin\cmake.exe"
+if ([string]::IsNullOrWhiteSpace($cmake) -or !(Test-Path $cmake)) {
+    if (Test-Path "C:\Qt\Tools\CMake_64\bin\cmake.exe") {
+        $cmake = "C:\Qt\Tools\CMake_64\bin\cmake.exe"
+    } elseif (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe") {
+        $cmake = "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+    } else {
+        $cmake = "cmake"
+    }
 }
-if (Test-Path $cmake) {
-    $cmakeCmd = $cmake
-} else {
-    $cmakeCmd = "cmake"
-}
+$cmakeCmd = $cmake
 
 $buildDir = "build"
 $distDir = "dist"

@@ -1,7 +1,12 @@
 $ErrorActionPreference = "Stop"
 
-# Configuration
 $CvPath = "C:\Qt\Tools\CMake_64\bin\cmake.exe"
+if (!(Test-Path $CvPath)) {
+    $CvPath = "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
+}
+if (!(Test-Path $CvPath)) {
+    $CvPath = "cmake"
+}
 # $QtPath = "C:\Qt\6.10.1\msvc2022_64" 
 # Use environment variable or default path if you prefer, 
 # but previous script had hardcoded path which worked.

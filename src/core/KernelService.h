@@ -24,10 +24,14 @@ class KernelService : public QObject {
                        const QString& workingDirectory,
                        QString*       output = nullptr,
                        QString*       error  = nullptr) const;
+  void requestDataUsage();
+  void resetDataUsage();
  signals:
   void statusChanged(bool running);
   void outputReceived(const QString& output);
   void errorOccurred(const QString& error);
+  void dataUsageUpdated(const QJsonObject& snapshot);
+  void apiLogReceived(const QString& type, const QString& payload);
  private slots:
   void onManagerStatus(bool running);
   void onManagerLog(const QString& stream, const QString& message);

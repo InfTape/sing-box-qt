@@ -4,10 +4,8 @@
 class KernelService;
 class ProxyService;
 class ProxyController;
-class DataUsageTracker;
 class QJsonObject;
 class QTimer;
-class WebSocketClient;
 
 /**
  * @brief ProxyRuntimeController
@@ -24,6 +22,7 @@ class ProxyRuntimeController : public QObject {
                                   QObject*         parent = nullptr);
   bool isKernelRunning() const;
   void broadcastStates();
+  void setLogsStreamingActive(bool active);
  signals:
   void kernelRunningChanged(bool running);
   void trafficUpdated(qint64 upload, qint64 download);
@@ -37,14 +36,12 @@ class ProxyRuntimeController : public QObject {
  private slots:
   void onKernelStatusChanged(bool running);
   void handleConnectionsJson(const QJsonObject& connections);
-  void onApiLogMessageReceived(const QString& message);
 
  private:
-  KernelService*    m_kernelService    = nullptr;
-  ProxyService*     m_proxyService     = nullptr;
-  ProxyController*  m_proxyController  = nullptr;
-  DataUsageTracker* m_dataUsageTracker = nullptr;
-  QTimer*           m_connectionsTimer = nullptr;
-  WebSocketClient*  m_logWsClient      = nullptr;
+  KernelService*   m_kernelService    = nullptr;
+  ProxyService*    m_proxyService     = nullptr;
+  ProxyController* m_proxyController  = nullptr;
+  QTimer*          m_connectionsTimer = nullptr;
+  bool             m_logsPageActive   = false;
 };
 #endif  // PROXYRUNTIMECONTROLLER_H

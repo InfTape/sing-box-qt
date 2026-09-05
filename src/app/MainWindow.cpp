@@ -1,11 +1,13 @@
-﻿#include "MainWindow.h"
+#include "MainWindow.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDir>
 #include <QHBoxLayout>
+#include <QHideEvent>
 #include <QMessageBox>
 #include <QPainter>
 #include <QSettings>
+#include <QShowEvent>
 #include <QStyle>
 #include <QSvgRenderer>
 #include <QTimer>
@@ -225,6 +227,13 @@ void MainWindow::setupConnections() {
   if (m_proxyUiController) {
     m_proxyUiController->broadcastCurrentStates();
   }
+  if (m_proxyRuntimeController) {
+    connect(m_proxyRuntimeController,
+            &ProxyRuntimeController::kernelRunningChanged,
+            this,
+            [this](bool) { updatePageActiveStates(); });
+  }
+  updatePageActiveStates();
 }
 
 void MainWindow::setupNavigationConnections() {
@@ -232,6 +241,12 @@ void MainWindow::setupNavigationConnections() {
           &QListWidget::itemClicked,
           this,
           &MainWindow::onNavigationItemClicked);
+  if (m_stackedWidget) {
+    connect(m_stackedWidget,
+            &QStackedWidget::currentChanged,
+            this,
+            [this](int) { updatePageActiveStates(); });
+  }
 }
 
 void MainWindow::setupThemeConnections() {
@@ -356,6 +371,7 @@ void MainWindow::setupHomeViewConnections() {
 void MainWindow::onNavigationItemClicked(QListWidgetItem* item) {
   int index = m_navList->row(item);
   m_stackedWidget->setCurrentIndex(index);
+  updatePageActiveStates();
 }
 
 bool MainWindow::isKernelRunning() const {
@@ -410,7 +426,36 @@ void MainWindow::showAndActivate() {
 
 void MainWindow::closeEvent(QCloseEvent* event) {
   hide();
+  updatePageActiveStates();
   event->ignore();
+}
+
+void MainWindow::showEvent(QShowEvent* event) {
+  QMainWindow::showEvent(event);
+  updatePageActiveStates();
+}
+
+void MainWindow::hideEvent(QHideEvent* event) {
+  QMainWindow::hideEvent(event);
+  updatePageActiveStates();
+}
+
+void MainWindow::changeEvent(QEvent* event) {
+  QMainWindow::changeEvent(event);
+  if (event->type() == QEvent::WindowStateChange) {
+    updatePageActiveStates();
+  }
+}
+
+void MainWindow::updatePageActiveStates() {
+  if (!m_stackedWidget || !m_proxyRuntimeController) {
+    return;
+  }
+  const bool windowActive = isVisible() && !isMinimized();
+  QWidget* current = m_stackedWidget->currentWidget();
+  const bool logsActive = windowActive && (current == m_logView);
+
+  m_proxyRuntimeController->setLogsStreamingActive(logsActive);
 }
 
 void MainWindow::updateNavIcons() {

@@ -24,6 +24,8 @@ class CoreManagerClient : public QObject {
   void statusEvent(bool running);
   void logEvent(const QString& stream, const QString& message);
   void errorEvent(const QString& message);
+  void dataUsageEvent(const QJsonObject& snapshot);
+  void apiLogEvent(const QString& type, const QString& payload);
  private slots:
   void onReadyRead();
   void onDisconnected();

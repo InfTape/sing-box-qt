@@ -248,24 +248,32 @@ void LogView::appendApiLog(const QString& type, const QString& payload) {
   LogParser::LogEntry      entry;
   entry.type = type.toLower();
   if (kind.isConnection && entry.type == "info") {
+    QString label;
+    if (!kind.protocol.isEmpty() && !kind.nodeName.isEmpty()) {
+      label = QString("%1[%2]").arg(kind.protocol, kind.nodeName);
+    } else if (!kind.protocol.isEmpty()) {
+      label = kind.protocol;
+    } else if (!kind.nodeName.isEmpty()) {
+      label = QString("[%1]").arg(kind.nodeName);
+    }
     if (kind.direction == "outbound") {
-      QString label;
-      if (!kind.protocol.isEmpty() && !kind.nodeName.isEmpty()) {
-        label = QString("%1[%2]").arg(kind.protocol, kind.nodeName);
-      } else if (!kind.protocol.isEmpty()) {
-        label = kind.protocol;
-      } else if (!kind.nodeName.isEmpty()) {
-        label = QString("[%1]").arg(kind.nodeName);
+      if (!label.isEmpty() && !kind.host.isEmpty()) {
+        entry.payload = QString("%1 -> %2").arg(label, kind.host);
+      } else if (!kind.host.isEmpty()) {
+        entry.payload = QString("outbound -> %1").arg(kind.host);
+      } else {
+        entry.payload = label.isEmpty() ? payload : label;
       }
-      if (!kind.host.isEmpty()) {
-        entry.payload = label.isEmpty()
-                            ? kind.host
-                            : QString("%1 -> %2").arg(label, kind.host);
+    } else if (kind.direction == "inbound") {
+      if (!label.isEmpty() && !kind.host.isEmpty()) {
+        entry.payload = QString("%1 <- %2").arg(label, kind.host);
+      } else if (!kind.host.isEmpty()) {
+        entry.payload = QString("inbound <- %1").arg(kind.host);
       } else {
         entry.payload = label.isEmpty() ? payload : label;
       }
     } else {
-      entry.payload = kind.host.isEmpty() ? payload : kind.host;
+      entry.payload = payload;
     }
     entry.direction = kind.direction;
   } else if (kind.isDns) {

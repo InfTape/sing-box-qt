@@ -53,7 +53,8 @@ LogRowWidget::LogRowWidget(const LogParser::LogEntry& entry, QWidget* parent)
   }
   QWidget* badgeRow = new QWidget;
   badgeRow->setLayout(badgeLayout);
-  QLabel* content = new QLabel(entry.payload);
+  QLabel* content =
+      new QLabel(LogParser::stripSessionTracker(entry.payload));
   content->setObjectName("LogContent");
   content->setWordWrap(true);
   content->setAlignment(Qt::AlignLeft | Qt::AlignTop);

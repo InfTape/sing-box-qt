@@ -1,14 +1,11 @@
 #include "ProxyRuntimeController.h"
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
 #include <QTimer>
 #include "core/KernelService.h"
 #include "core/ProxyController.h"
 #include "core/ProxyService.h"
-#include "core/DataUsageTracker.h"
-#include "network/WebSocketClient.h"
 
 ProxyRuntimeController::ProxyRuntimeController(KernelService*   kernelService,
                                                ProxyService*    proxyService,
@@ -17,35 +14,20 @@ ProxyRuntimeController::ProxyRuntimeController(KernelService*   kernelService,
     : QObject(parent),
       m_kernelService(kernelService),
       m_proxyService(proxyService),
-      m_proxyController(proxyController),
-      m_dataUsageTracker(new DataUsageTracker(this)),
-      m_connectionsTimer(new QTimer(this)),
-      m_logWsClient(new WebSocketClient(this)) {
-  if (m_connectionsTimer) {
-    m_connectionsTimer->setInterval(2000);
-    connect(m_connectionsTimer, &QTimer::timeout, this, [this]() {
-      if (m_proxyService && isKernelRunning()) {
-        m_proxyService->fetchConnections();
-      }
-    });
-  }
-  if (m_dataUsageTracker) {
-    connect(m_dataUsageTracker,
-            &DataUsageTracker::dataUsageUpdated,
-            this,
-            &ProxyRuntimeController::dataUsageUpdated);
-  }
-  if (m_logWsClient) {
-    connect(m_logWsClient,
-            &WebSocketClient::messageReceived,
-            this,
-            &ProxyRuntimeController::onApiLogMessageReceived);
-  }
+      m_proxyController(proxyController) {
   if (m_kernelService) {
     connect(m_kernelService,
             &KernelService::statusChanged,
             this,
             &ProxyRuntimeController::onKernelStatusChanged);
+    connect(m_kernelService,
+            &KernelService::dataUsageUpdated,
+            this,
+            &ProxyRuntimeController::dataUsageUpdated);
+    connect(m_kernelService,
+            &KernelService::apiLogReceived,
+            this,
+            &ProxyRuntimeController::apiLogMessage);
     connect(m_kernelService,
             &KernelService::errorOccurred,
             this,
@@ -64,6 +46,13 @@ ProxyRuntimeController::ProxyRuntimeController(KernelService*   kernelService,
             this,
             &ProxyRuntimeController::handleConnectionsJson);
   }
+  m_connectionsTimer = new QTimer(this);
+  m_connectionsTimer->setInterval(2000);
+  connect(m_connectionsTimer, &QTimer::timeout, this, [this]() {
+    if (m_proxyService && isKernelRunning()) {
+      m_proxyService->fetchConnections();
+    }
+  });
 }
 
 bool ProxyRuntimeController::isKernelRunning() const {
@@ -72,9 +61,13 @@ bool ProxyRuntimeController::isKernelRunning() const {
 
 void ProxyRuntimeController::broadcastStates() {
   onKernelStatusChanged(isKernelRunning());
-  if (m_dataUsageTracker) {
-    emit dataUsageUpdated(m_dataUsageTracker->snapshot());
+  if (m_kernelService) {
+    m_kernelService->requestDataUsage();
   }
+}
+
+void ProxyRuntimeController::setLogsStreamingActive(bool active) {
+  m_logsPageActive = active;
 }
 
 void ProxyRuntimeController::onKernelStatusChanged(bool running) {
@@ -82,41 +75,24 @@ void ProxyRuntimeController::onKernelStatusChanged(bool running) {
   if (m_proxyService) {
     if (running) {
       m_proxyService->startTrafficMonitor();
-      if (m_connectionsTimer && !m_connectionsTimer->isActive()) {
-        m_connectionsTimer->start();
-        m_proxyService->fetchConnections();
-      }
-      if (m_logWsClient) {
-        QString url = QString("ws://127.0.0.1:%1/logs?level=info")
-                          .arg(m_proxyService->getApiPort());
-        const QString token = m_proxyService->getApiToken();
-        if (!token.isEmpty()) {
-          url += QString("&token=%1").arg(token);
-        }
-        if (m_logWsClient->isConnected()) {
-          m_logWsClient->disconnect();
-        }
-        m_logWsClient->connect(url);
-      }
     } else {
       m_proxyService->stopTrafficMonitor();
-      if (m_connectionsTimer) {
-        m_connectionsTimer->stop();
-      }
-      if (m_logWsClient) {
-        m_logWsClient->disconnect();
-      }
-    }
-  } else if (!running) {
-    if (m_connectionsTimer) {
-      m_connectionsTimer->stop();
-    }
-    if (m_logWsClient) {
-      m_logWsClient->disconnect();
     }
   }
-  if (!running && m_dataUsageTracker) {
-    m_dataUsageTracker->resetSession();
+  if (m_connectionsTimer) {
+    if (running) {
+      if (!m_connectionsTimer->isActive()) {
+        m_connectionsTimer->start();
+      }
+      if (m_proxyService) {
+        m_proxyService->fetchConnections();
+      }
+    } else {
+      m_connectionsTimer->stop();
+    }
+  }
+  if (running && m_kernelService) {
+    m_kernelService->requestDataUsage();
   }
   if (m_proxyController) {
     m_proxyController->updateSystemProxyForKernelState(running);
@@ -143,26 +119,11 @@ void ProxyRuntimeController::handleConnectionsJson(
   }
   const qint64 memoryUsage = memoryValue.toVariant().toLongLong();
   emit         connectionsUpdated(conns.count(), memoryUsage);
-  if (m_dataUsageTracker) {
-    m_dataUsageTracker->updateFromConnections(connections);
-  }
 }
 
 void ProxyRuntimeController::clearDataUsage() {
-  if (m_dataUsageTracker) {
-    m_dataUsageTracker->reset();
-  }
-}
-
-void ProxyRuntimeController::onApiLogMessageReceived(const QString& message) {
-  QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
-  if (doc.isObject()) {
-    QJsonObject obj     = doc.object();
-    QString     type    = obj["type"].toString();
-    QString     payload = obj["payload"].toString();
-    if (!type.isEmpty() && !payload.isEmpty()) {
-      emit apiLogMessage(type, payload);
-    }
+  if (m_kernelService) {
+    m_kernelService->resetDataUsage();
   }
 }
 

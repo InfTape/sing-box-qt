@@ -6,6 +6,7 @@
 #include <QLocalSocket>
 class KernelRunner;
 class QTimer;
+class CoreDataService;
 
 class CoreManagerServer : public QObject {
   Q_OBJECT
@@ -25,22 +26,25 @@ class CoreManagerServer : public QObject {
   void onKernelOutput(const QString& output);
   void onKernelErrorOutput(const QString& output);
   void onKernelError(const QString& error);
+  void onDataUsageUpdated(const QJsonObject& snapshot);
+  void onApiLogMessage(const QString& type, const QString& payload);
 
  private:
-  void          handleMessage(const QJsonObject& obj);
-  void          restartManagedKernel();
-  void          sendResponse(int                id,
-                             bool               ok,
-                             const QJsonObject& result,
-                             const QString&     error);
-  void          sendEvent(const QJsonObject& event);
-  QLocalServer* m_server;
-  QLocalSocket* m_client;
-  QByteArray    m_buffer;
-  KernelRunner* m_kernel;
-  QTimer*       m_restartTimer;
-  QString       m_serverName;
-  QString       m_keepAliveConfigPath;
-  bool          m_keepKernelRunning = false;
+  void              handleMessage(const QJsonObject& obj);
+  void              restartManagedKernel();
+  void              sendResponse(int                id,
+                                 bool               ok,
+                                 const QJsonObject& result,
+                                 const QString&     error);
+  void              sendEvent(const QJsonObject& event);
+  QLocalServer*     m_server;
+  QLocalSocket*     m_client;
+  QByteArray        m_buffer;
+  KernelRunner*     m_kernel;
+  CoreDataService*  m_dataService;
+  QTimer*           m_restartTimer;
+  QString           m_serverName;
+  QString           m_keepAliveConfigPath;
+  bool              m_keepKernelRunning = false;
 };
 #endif  // COREMANAGERSERVER_H

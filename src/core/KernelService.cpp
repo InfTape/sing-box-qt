@@ -98,6 +98,14 @@ KernelService::KernelService(QObject* parent)
           &CoreManagerClient::disconnected,
           this,
           &KernelService::onManagerDisconnected);
+  connect(m_client,
+          &CoreManagerClient::dataUsageEvent,
+          this,
+          &KernelService::dataUsageUpdated);
+  connect(m_client,
+          &CoreManagerClient::apiLogEvent,
+          this,
+          &KernelService::apiLogReceived);
 }
 
 KernelService::~KernelService() {
@@ -176,6 +184,22 @@ void KernelService::restartWithConfig(const QString& configPath) {
       emit errorOccurred(error);
     }
   }
+}
+
+void KernelService::requestDataUsage() {
+  QJsonObject result;
+  QString     error;
+  if (sendRequestAndWait("getDataUsage", QJsonObject(), &result, &error)) {
+    if (result.contains("globalTotals")) {
+      emit dataUsageUpdated(result);
+    }
+  }
+}
+
+void KernelService::resetDataUsage() {
+  QJsonObject result;
+  QString     error;
+  sendRequestAndWait("resetDataUsage", QJsonObject(), &result, &error);
 }
 
 void KernelService::setConfigPath(const QString& configPath) {

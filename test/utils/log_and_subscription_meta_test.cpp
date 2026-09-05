@@ -8,6 +8,7 @@ class LogAndSubscriptionMetaTests : public QObject {
   void logParser_shouldParseAndDetectTypes();
   void logParser_shouldHandleFallbackPaths();
   void logParser_shouldMapLabels();
+  void logParser_shouldStripSessionTracker();
   void subscriptionUserinfo_shouldParseHeader();
   void subscriptionUserinfo_shouldIgnoreInvalidSegments();
   void subscriptionFormat_shouldFormatFields();
@@ -31,6 +32,14 @@ void LogAndSubscriptionMetaTests::logParser_shouldParseAndDetectTypes() {
   QVERIFY(inbound.isConnection);
   QCOMPARE(inbound.direction, QString("inbound"));
   QCOMPARE(inbound.host, QString("127.0.0.1:12345"));
+
+  const LogParser::LogKind inboundNode = LogParser::parseLogKind(
+      "inbound/tun[tun-in]: inbound connection from 172.19.0.1:64560");
+  QVERIFY(inboundNode.isConnection);
+  QCOMPARE(inboundNode.direction, QString("inbound"));
+  QCOMPARE(inboundNode.host, QString("172.19.0.1:64560"));
+  QCOMPARE(inboundNode.protocol, QString("tun"));
+  QCOMPARE(inboundNode.nodeName, QString("tun-in"));
 
   const LogParser::LogKind outbound = LogParser::parseLogKind(
       "outbound connection to 1.1.1.1:443 outbound/vmess[Node-A]");
@@ -70,6 +79,39 @@ void LogAndSubscriptionMetaTests::logParser_shouldMapLabels() {
   QCOMPARE(LogParser::logTypeLabel("fatal"), QString("FATAL"));
   QCOMPARE(LogParser::logTypeLabel("panic"), QString("PANIC"));
   QCOMPARE(LogParser::logTypeLabel("unknown"), QString("INFO"));
+}
+
+void LogAndSubscriptionMetaTests::logParser_shouldStripSessionTracker() {
+  const QString dnsMsg =
+      "[3205663715 1m36s] dns: exchanged A challenge.rivers.chaitin.cn. 166 IN "
+      "A 121.196.236.254";
+  QCOMPARE(LogParser::stripSessionTracker(dnsMsg),
+           QString("dns: exchanged A challenge.rivers.chaitin.cn. 166 IN A "
+                   "121.196.236.254"));
+
+  const QString connMsg =
+      "[2579624508 12ms] outbound connection to 1.1.1.1:443";
+  QCOMPARE(LogParser::stripSessionTracker(connMsg),
+           QString("outbound connection to 1.1.1.1:443"));
+
+  QCOMPARE(LogParser::stripSessionTracker("[123 0s] test message"),
+           QString("test message"));
+  QCOMPARE(LogParser::stripSessionTracker("[12345 500us] message"),
+           QString("message"));
+  QCOMPARE(LogParser::stripSessionTracker("[999 1.5s] message"),
+           QString("message"));
+  QCOMPARE(LogParser::stripSessionTracker("no tracker present"),
+           QString("no tracker present"));
+  QCOMPARE(LogParser::stripSessionTracker("outbound/vless[Node-A]"),
+           QString("outbound/vless[Node-A]"));
+
+  const LogParser::LogKind kind = LogParser::parseLogKind(
+      "[2579624508 12ms] outbound connection to 1.1.1.1:443 "
+      "outbound/vmess[Node-A]");
+  QVERIFY(kind.isConnection);
+  QCOMPARE(kind.host, QString("1.1.1.1:443"));
+  QCOMPARE(kind.protocol, QString("vmess"));
+  QCOMPARE(kind.nodeName, QString("Node-A"));
 }
 
 

@@ -94,9 +94,9 @@ void RuntimeUiBinder::bind() {
     QObject::connect(m_runtime,
                      &ProxyRuntimeController::apiLogMessage,
                      m_log,
-                     [this](const QString& type, const QString& payload) {
+                     [this](const QString&, const QString&) {
                        if (m_log) {
-                         m_log->appendApiLog(type, payload);
+                         m_log->scheduleRefresh();
                        }
                      });
   }

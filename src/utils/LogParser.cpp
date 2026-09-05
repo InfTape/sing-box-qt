@@ -7,6 +7,8 @@ LogKind parseLogKind(const QString& message) {
   static const QRegularExpression kDnsPattern("\\bdns\\s*:");
   static const QRegularExpression kOutboundNode(
       R"(outbound/([^\[]+)\[([^\]]+)\])");
+  static const QRegularExpression kInboundNode(
+      R"(inbound/([^\[]+)\[([^\]]+)\])");
   if (message.contains(kDnsPattern)) {
     info.direction = "dns";
     info.isDns     = true;
@@ -27,6 +29,12 @@ LogKind parseLogKind(const QString& message) {
   }
   if (info.direction == "outbound") {
     const QRegularExpressionMatch nodeMatch = kOutboundNode.match(message);
+    if (nodeMatch.hasMatch()) {
+      info.protocol = nodeMatch.captured(1).trimmed();
+      info.nodeName = nodeMatch.captured(2).trimmed();
+    }
+  } else if (info.direction == "inbound") {
+    const QRegularExpressionMatch nodeMatch = kInboundNode.match(message);
     if (nodeMatch.hasMatch()) {
       info.protocol = nodeMatch.captured(1).trimmed();
       info.nodeName = nodeMatch.captured(2).trimmed();
@@ -59,5 +67,14 @@ QString logTypeLabel(const QString& type) {
     return "PANIC";
   }
   return "INFO";
+}
+
+QString stripSessionTracker(const QString& message) {
+  static const QRegularExpression sessionTrackerRegex(
+      R"(\[\d+\s+[0-9a-z\.\x{00B5}\x{03BC}]+\s*\]\s*)",
+      QRegularExpression::CaseInsensitiveOption);
+  QString result = message;
+  result.remove(sessionTrackerRegex);
+  return result.trimmed();
 }
 }  // namespace LogParser

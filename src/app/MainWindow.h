@@ -39,10 +39,14 @@ class MainWindow : public QMainWindow {
 
  protected:
   void closeEvent(QCloseEvent* event) override;
+  void showEvent(QShowEvent* event) override;
+  void hideEvent(QHideEvent* event) override;
+  void changeEvent(QEvent* event) override;
  private slots:
   void onNavigationItemClicked(QListWidgetItem* item);
 
  private:
+  void updatePageActiveStates();
   void setupUI();
   void setupNavigation();
   void setupConnections();

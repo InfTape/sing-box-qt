@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QTimer>
+#include "coremanager/CoreDataService.h"
 #include "coremanager/KernelRunner.h"
 #include "utils/Logger.h"
 
@@ -15,6 +16,7 @@ CoreManagerServer::CoreManagerServer(QObject* parent)
       m_server(new QLocalServer(this)),
       m_client(nullptr),
       m_kernel(new KernelRunner(this)),
+      m_dataService(new CoreDataService(this)),
       m_restartTimer(new QTimer(this)) {
   m_restartTimer->setSingleShot(true);
   connect(m_server,
@@ -41,6 +43,14 @@ CoreManagerServer::CoreManagerServer(QObject* parent)
           &KernelRunner::errorOccurred,
           this,
           &CoreManagerServer::onKernelError);
+  connect(m_dataService,
+          &CoreDataService::dataUsageUpdated,
+          this,
+          &CoreManagerServer::onDataUsageUpdated);
+  connect(m_dataService,
+          &CoreDataService::apiLogMessage,
+          this,
+          &CoreManagerServer::onApiLogMessage);
 }
 
 bool CoreManagerServer::startListening(const QString& name, QString* error) {
@@ -129,6 +139,12 @@ void CoreManagerServer::onNewConnection() {
   event["event"]   = "status";
   event["running"] = m_kernel->isRunning();
   sendEvent(event);
+  if (m_dataService) {
+    QJsonObject usageEvent;
+    usageEvent["event"]    = "dataUsageUpdated";
+    usageEvent["snapshot"] = m_dataService->dataUsageSnapshot();
+    sendEvent(usageEvent);
+  }
 }
 
 void CoreManagerServer::onReadyRead() {
@@ -172,12 +188,24 @@ void CoreManagerServer::onKernelStatusChanged(bool running) {
   event["event"]   = "status";
   event["running"] = running;
   sendEvent(event);
-  if (!running && m_keepKernelRunning && !m_restartTimer->isActive()) {
-    m_restartTimer->start(1000);
+  if (running) {
+    if (m_dataService) {
+      m_dataService->start(m_keepAliveConfigPath);
+    }
+  } else {
+    if (m_dataService) {
+      m_dataService->stop();
+    }
+    if (m_keepKernelRunning && !m_restartTimer->isActive()) {
+      m_restartTimer->start(1000);
+    }
   }
 }
 
 void CoreManagerServer::onKernelOutput(const QString& output) {
+  if (m_dataService) {
+    m_dataService->appendKernelOutput("stdout", output);
+  }
   QJsonObject event;
   event["event"]   = "log";
   event["stream"]  = "stdout";
@@ -186,6 +214,9 @@ void CoreManagerServer::onKernelOutput(const QString& output) {
 }
 
 void CoreManagerServer::onKernelErrorOutput(const QString& output) {
+  if (m_dataService) {
+    m_dataService->appendKernelOutput("stderr", output);
+  }
   QJsonObject event;
   event["event"]   = "log";
   event["stream"]  = "stderr";
@@ -197,6 +228,22 @@ void CoreManagerServer::onKernelError(const QString& error) {
   QJsonObject event;
   event["event"]   = "error";
   event["message"] = error;
+  sendEvent(event);
+}
+
+void CoreManagerServer::onDataUsageUpdated(const QJsonObject& snapshot) {
+  QJsonObject event;
+  event["event"]    = "dataUsageUpdated";
+  event["snapshot"] = snapshot;
+  sendEvent(event);
+}
+
+void CoreManagerServer::onApiLogMessage(const QString& type,
+                                        const QString& payload) {
+  QJsonObject event;
+  event["event"]   = "apiLog";
+  event["type"]    = type;
+  event["payload"] = payload;
   sendEvent(event);
 }
 
@@ -250,6 +297,21 @@ void CoreManagerServer::handleMessage(const QJsonObject& obj) {
     QJsonObject result;
     result["configPath"] = m_kernel->getConfigPath();
     sendResponse(id, true, result, QString());
+    return;
+  }
+  if (method == "getDataUsage") {
+    QJsonObject result;
+    if (m_dataService) {
+      result = m_dataService->dataUsageSnapshot();
+    }
+    sendResponse(id, true, result, QString());
+    return;
+  }
+  if (method == "resetDataUsage") {
+    if (m_dataService) {
+      m_dataService->resetDataUsage();
+    }
+    sendResponse(id, true, QJsonObject(), QString());
     return;
   }
   if (method == "shutdown") {

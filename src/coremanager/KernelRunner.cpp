@@ -82,7 +82,7 @@ bool KernelRunner::start(const QString& configPath) {
   }
   m_process->setWorkingDirectory(workDir);
   QStringList args;
-  args << "run" << "-c" << m_configPath;
+  args << "run" << "-c" << m_configPath << "--disable-color";
   m_process->setProcessEnvironment(kernelProcessEnvironment());
   Logger::info(tr("Starting kernel: %1").arg(m_kernelPath));
   m_process->start(m_kernelPath, args);

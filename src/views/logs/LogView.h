@@ -20,6 +20,7 @@ class LogView : public QWidget {
   explicit LogView(ThemeService* themeService, QWidget* parent = nullptr);
   void appendApiLog(const QString& type, const QString& payload);
   void clear();
+  void scheduleRefresh();
  public slots:
   void updateStyle();
  protected:
@@ -38,7 +39,6 @@ class LogView : public QWidget {
   void          appendLogRow(const LogParser::LogEntry& entry);
   void          removeFirstLogRow();
   void          clearListWidgets();
-  void scheduleRefresh();
   void scheduleTailScroll();
   void updateScrollIntent();
   QLabel*       m_titleLabel    = nullptr;

@@ -104,6 +104,11 @@ void CoreManagerClient::handleMessage(const QJsonObject& obj) {
                     obj.value("message").toString());
     } else if (event == "error") {
       emit errorEvent(obj.value("message").toString());
+    } else if (event == "dataUsageUpdated") {
+      emit dataUsageEvent(obj.value("snapshot").toObject());
+    } else if (event == "apiLog") {
+      emit apiLogEvent(obj.value("type").toString(),
+                       obj.value("payload").toString());
     }
     return;
   }

@@ -22,5 +22,6 @@ struct LogKind {
 
 LogKind parseLogKind(const QString& message);
 QString logTypeLabel(const QString& type);
+QString stripSessionTracker(const QString& message);
 }  // namespace LogParser
 #endif  // LOGPARSER_H
