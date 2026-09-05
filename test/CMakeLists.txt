@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Test Widgets Network Sql)
+find_package(Qt6 REQUIRED COMPONENTS Core Test Widgets Network Sql WebSockets)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -81,4 +81,28 @@ add_test(
         "SING_BOX_QT_DATA_DIR=${SING_BOX_QT_TEST_DATA_DIR}"
         "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
         $<TARGET_FILE:sing-box-qt-unit-tests>
+)
+
+add_executable(sing-box-qt-connections-tests
+    views/connections_view_test.cpp
+    ../src/views/connections/ConnectionsView.cpp
+    ../src/app/interfaces/ThemeService.h
+    ../src/core/ProxyService.cpp
+    ../src/network/HttpClient.cpp
+    ../src/network/WebSocketClient.cpp
+    ../src/utils/Logger.cpp
+    ../src/utils/PortableMode.cpp
+)
+target_include_directories(sing-box-qt-connections-tests PRIVATE ../src)
+target_link_libraries(sing-box-qt-connections-tests PRIVATE
+    Qt6::Core Qt6::Widgets Qt6::Test Qt6::Network Qt6::WebSockets
+)
+add_test(
+    NAME sing-box-qt-connections-tests
+    COMMAND ${CMAKE_COMMAND} -E env
+        "QT_QPA_PLATFORM=offscreen"
+        "SING_BOX_QT_PORTABLE=1"
+        "SING_BOX_QT_DATA_DIR=${SING_BOX_QT_TEST_DATA_DIR}"
+        "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
+        $<TARGET_FILE:sing-box-qt-connections-tests>
 )
