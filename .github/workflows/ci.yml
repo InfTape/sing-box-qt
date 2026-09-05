@@ -28,6 +28,7 @@ jobs:
             ninja-build \
             qt6-base-dev \
             qt6-base-dev-tools \
+            qt6-websockets-dev \
             python3-pip
           python3 -m pip install --upgrade gcovr
 
