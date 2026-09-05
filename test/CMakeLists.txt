@@ -91,6 +91,9 @@ add_executable(sing-box-qt-connections-tests
     views/connections_view_test.cpp
     ../src/views/connections/ConnectionsView.cpp
     ../src/widgets/common/HorizontalScrollBar.cpp
+    ../src/widgets/common/RoundedMenu.cpp
+    ../src/utils/ThemeManager.cpp
+    ../src/storage/DatabaseService.cpp
     ../src/app/interfaces/ThemeService.h
     ../src/core/ProxyService.cpp
     ../src/network/HttpClient.cpp
@@ -101,7 +104,7 @@ add_executable(sing-box-qt-connections-tests
 )
 target_include_directories(sing-box-qt-connections-tests PRIVATE ../src)
 target_link_libraries(sing-box-qt-connections-tests PRIVATE
-    Qt6::Core Qt6::Widgets Qt6::Test Qt6::Network Qt6::WebSockets
+    Qt6::Core Qt6::Widgets Qt6::Test Qt6::Network Qt6::WebSockets Qt6::Sql
 )
 
 add_executable(sing-box-qt-logs-tests

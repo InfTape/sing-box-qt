@@ -16,6 +16,7 @@ class ConnectionsView : public QWidget {
   void setAutoRefreshEnabled(bool enabled);
  private slots:
   void onCloseAll();
+  void onContextMenuRequested(const QPoint& position);
   void updateStyle();
 
  private:

@@ -1,9 +1,13 @@
 #include "ConnectionsView.h"
+#include <QApplication>
+#include <QClipboard>
 #include <QDateTime>
 #include <QHeaderView>
 #include <QHostAddress>
+#include <QIcon>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QKeySequence>
 #include <QLabel>
 #include <QRegularExpression>
 #include <QSet>
@@ -13,6 +17,7 @@
 #include "app/interfaces/ThemeService.h"
 #include "core/ProxyService.h"
 #include "widgets/common/HorizontalScrollBar.h"
+#include "widgets/common/RoundedMenu.h"
 
 namespace {
 constexpr int SortValueRole    = Qt::UserRole + 1;
@@ -255,6 +260,9 @@ void ConnectionsView::setupUI() {
   });
   m_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+  m_tableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(m_tableWidget, &QTableWidget::customContextMenuRequested,
+          this, &ConnectionsView::onContextMenuRequested);
   m_tableWidget->setItemDelegate(new ConnectionsItemDelegate(m_tableWidget));
   mainLayout->addWidget(m_tableWidget, 1);
   connect(
@@ -269,6 +277,31 @@ void ConnectionsView::setupUI() {
                                                 : tr("Close All"));
           });
   updateStyle();
+}
+
+void ConnectionsView::onContextMenuRequested(const QPoint& position) {
+  const auto* item = m_tableWidget->itemAt(position);
+  if (!item) {
+    return;
+  }
+  // The table may refresh or reorder while the menu's event loop is running.
+  // Capture the full cell text now, including text elided by the delegate.
+  const QString text = item->text();
+  RoundedMenu menu(this);
+  menu.setObjectName("ComboMenu");
+  if (m_themeService) {
+    menu.setThemeColors(m_themeService->color("panel-bg"),
+                        m_themeService->color("border-solid"));
+  }
+  // Use the same themed icon and mnemonic as the text editor's standard menu.
+  auto* copy = menu.addAction(QIcon::fromTheme("edit-copy"), tr("&Copy"));
+  copy->setObjectName("edit-copy");
+  copy->setShortcut(QKeySequence::Copy);
+  copy->setShortcutVisibleInContextMenu(true);
+  connect(copy, &QAction::triggered, &menu, [text]() {
+    QApplication::clipboard()->setText(text);
+  });
+  menu.exec(m_tableWidget->viewport()->mapToGlobal(position));
 }
 
 void ConnectionsView::setProxyService(ProxyService* service) {

@@ -1,7 +1,13 @@
 #include <QHeaderView>
+#include <QApplication>
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QKeySequence>
+#include <QTimer>
 #include <QtTest/QtTest>
 #include "core/ProxyService.h"
 #include "views/connections/ConnectionsView.h"
+#include "widgets/common/RoundedMenu.h"
 
 namespace {
 QJsonObject connection(const QString& id, const QString& start,
@@ -43,6 +49,88 @@ void clickHeader(QTableWidget* table, int column) {
 class ConnectionsViewTest : public QObject {
   Q_OBJECT
  private slots:
+  void copiesFullCellTextDuringRefresh_data() {
+    QTest::addColumn<int>("column");
+    for (int column = 0; column < 6; ++column) {
+      QTest::newRow(qPrintable(QString::number(column))) << column;
+    }
+  }
+
+  void copiesFullCellTextDuringRefresh() {
+    QFETCH(int, column);
+    ProxyService service;
+    ConnectionsView view(nullptr);
+    view.setProxyService(&service);
+    view.setAutoRefreshEnabled(true);
+    view.resize(1000, 500);
+    view.show();
+    auto* table = view.findChild<QTableWidget*>();
+    const QString longText = QString(160, 'x') + ".example.test";
+    const auto conn = connection("copy-target", "", longText, 102400);
+    emit service.connectionsReceived({{"connections", QJsonArray{conn}}});
+    auto* cell = table->item(0, column);
+    const QString expected = cell->text();
+    table->scrollToItem(cell);
+    QCoreApplication::processEvents();
+    const QPoint position = table->visualItemRect(cell).center();
+    bool foundMenu = false;
+    bool foundCopy = false;
+    QString copyText;
+    QKeySequence copyShortcut;
+    bool showsShortcut = false;
+    QTimer::singleShot(0, &view, [&]() {
+      auto* popup = qobject_cast<QMenu*>(QApplication::activePopupWidget());
+      foundMenu = qobject_cast<RoundedMenu*>(popup) != nullptr;
+      if (!popup) return;
+      // Delete the clicked item while the menu is open, as a closed connection
+      // would do. Copy must still use the text that was right-clicked.
+      emit service.connectionsReceived({{"connections", QJsonArray{}}});
+      for (auto* action : popup->actions()) {
+        if (action->objectName() == "edit-copy") {
+          foundCopy = true;
+          copyText = action->text();
+          copyShortcut = action->shortcut();
+          showsShortcut = action->isShortcutVisibleInContextMenu();
+          action->trigger();
+          break;
+        }
+      }
+      popup->close();
+    });
+    QContextMenuEvent event(QContextMenuEvent::Mouse, position,
+                           table->viewport()->mapToGlobal(position));
+    QApplication::sendEvent(table->viewport(), &event);
+    QVERIFY(foundMenu);
+    QVERIFY(foundCopy);
+    QCOMPARE(copyText, QString("&Copy"));
+    QCOMPARE(copyShortcut, QKeySequence(QKeySequence::Copy));
+    QVERIFY(showsShortcut);
+    QCOMPARE(QApplication::clipboard()->text(), expected);
+    QCOMPARE(table->rowCount(), 0);
+  }
+
+  void emptySpaceDoesNotOpenCopyMenu() {
+    ConnectionsView view(nullptr);
+    view.resize(1000, 500);
+    view.show();
+    auto* table = view.findChild<QTableWidget*>();
+    QApplication::clipboard()->setText("unchanged");
+    bool openedMenu = false;
+    QTimer::singleShot(0, &view, [&]() {
+      if (auto* popup = qobject_cast<QMenu*>(QApplication::activePopupWidget())) {
+        openedMenu = true;
+        popup->close();
+      }
+    });
+    const QPoint position(20, 100);
+    QContextMenuEvent event(QContextMenuEvent::Mouse, position,
+                           table->viewport()->mapToGlobal(position));
+    QApplication::sendEvent(table->viewport(), &event);
+    QCoreApplication::processEvents();
+    QVERIFY(!openedMenu);
+    QCOMPARE(QApplication::clipboard()->text(), QString("unchanged"));
+  }
+
   void sortCycle_data() {
     QTest::addColumn<int>("column");
     for (int column = 0; column < 6; ++column) {
