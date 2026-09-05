@@ -89,6 +89,41 @@ class LogViewTest : public QObject {
     view.appendApiLog("warning", "one warning\na second warning");
     QTRY_COMPARE(view.findChild<QLabel*>("WarningTag")->text(), QString("Warnings: 2"));
   }
+  void showsConnectionNetworkBadges() {
+    LogView view(nullptr);
+    view.show();
+    view.clear();
+    view.appendApiLog("info", "inbound/tun[tun-in]: inbound packet connection "
+                              "from 172.19.0.1:55057");
+    view.appendApiLog("info", "inbound/tun[tun-in]: inbound packet connection "
+                              "to 104.18.95.41:443");
+    view.appendApiLog("info", "outbound/vless[JP]: outbound packet connection "
+                              "to 104.18.95.41:443");
+    view.appendApiLog("info", "inbound/tun[tun-in]: inbound connection "
+                              "from 172.19.0.1:55058");
+    view.appendApiLog("info", "outbound/vless[JP]: outbound connection "
+                              "to 104.18.95.41:443");
+    QTRY_COMPARE(view.findChildren<LogRowWidget*>().size(), 5);
+    QStringList directions;
+    QStringList networks;
+    QStringList contents;
+    for (auto* row : view.findChildren<LogRowWidget*>()) {
+      const auto badges = row->findChildren<QLabel*>("LogBadge");
+      QCOMPARE(badges.size(), 3);
+      directions.append(badges.at(1)->text());
+      networks.append(badges.at(2)->text());
+      contents.append(row->findChild<QLabel*>("LogContent")->text());
+    }
+    QCOMPARE(directions, QStringList({"Inbound", "Inbound", "Outbound",
+                                      "Inbound", "Outbound"}));
+    QCOMPARE(networks, QStringList({"UDP", "UDP", "UDP", "TCP", "TCP"}));
+    QCOMPARE(contents, QStringList({"tun[tun-in] <- 172.19.0.1:55057",
+                                    "tun[tun-in] <- 104.18.95.41:443",
+                                    "vless[JP] -> 104.18.95.41:443",
+                                    "tun[tun-in] <- 172.19.0.1:55058",
+                                    "vless[JP] -> 104.18.95.41:443"}));
+    view.clear();
+  }
   void preservesReadingPosition() {
     LogView view(nullptr);
     view.resize(1600, 700);

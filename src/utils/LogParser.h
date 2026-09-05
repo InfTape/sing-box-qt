@@ -9,6 +9,7 @@ struct LogEntry {
   QString   payload;
   QString   direction;
   QDateTime timestamp;
+  QString   network;
 };
 
 struct LogKind {
@@ -16,6 +17,7 @@ struct LogKind {
   QString host;
   QString nodeName;
   QString protocol;
+  QString network;
   bool    isConnection = false;
   bool    isDns        = false;
 };

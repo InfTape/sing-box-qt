@@ -276,6 +276,7 @@ void LogView::appendApiLog(const QString& type, const QString& payload) {
       entry.payload = payload;
     }
     entry.direction = kind.direction;
+    entry.network = kind.network;
   } else if (kind.isDns) {
     entry.payload   = payload;
     entry.direction = kind.direction;

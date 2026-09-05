@@ -6,6 +6,7 @@ class LogAndSubscriptionMetaTests : public QObject {
  private slots:
   void initTestCase();
   void logParser_shouldParseAndDetectTypes();
+  void logParser_shouldParsePacketConnections();
   void logParser_shouldHandleFallbackPaths();
   void logParser_shouldMapLabels();
   void logParser_shouldStripSessionTracker();
@@ -26,12 +27,14 @@ void LogAndSubscriptionMetaTests::logParser_shouldParseAndDetectTypes() {
   QVERIFY(dns.isDns);
   QCOMPARE(dns.direction, QString("dns"));
   QVERIFY(!dns.isConnection);
+  QVERIFY(dns.network.isEmpty());
 
   const LogParser::LogKind inbound =
       LogParser::parseLogKind("inbound connection from 127.0.0.1:12345");
   QVERIFY(inbound.isConnection);
   QCOMPARE(inbound.direction, QString("inbound"));
   QCOMPARE(inbound.host, QString("127.0.0.1:12345"));
+  QCOMPARE(inbound.network, QString("tcp"));
 
   const LogParser::LogKind inboundNode = LogParser::parseLogKind(
       "inbound/tun[tun-in]: inbound connection from 172.19.0.1:64560");
@@ -47,10 +50,39 @@ void LogAndSubscriptionMetaTests::logParser_shouldParseAndDetectTypes() {
   QCOMPARE(outbound.direction, QString("outbound"));
   QCOMPARE(outbound.host, QString("1.1.1.1:443"));
   QCOMPARE(outbound.protocol, QString("vmess"));
+  QCOMPARE(outbound.network, QString("tcp"));
   QCOMPARE(outbound.nodeName, QString("Node-A"));
 }
 
 
+
+void LogAndSubscriptionMetaTests::logParser_shouldParsePacketConnections() {
+  const auto inbound = LogParser::parseLogKind(
+      "inbound/tun[tun-in]: inbound packet connection from 172.19.0.1:55057");
+  QVERIFY(inbound.isConnection);
+  QCOMPARE(inbound.direction, QString("inbound"));
+  QCOMPARE(inbound.host, QString("172.19.0.1:55057"));
+  QCOMPARE(inbound.network, QString("udp"));
+  QCOMPARE(inbound.protocol, QString("tun"));
+  QCOMPARE(inbound.nodeName, QString("tun-in"));
+
+  const auto inboundTo = LogParser::parseLogKind(
+      "inbound/tun[tun-in]: inbound packet connection to 104.18.95.41:443");
+  QVERIFY(inboundTo.isConnection);
+  QCOMPARE(inboundTo.direction, QString("inbound"));
+  QCOMPARE(inboundTo.host, QString("104.18.95.41:443"));
+  QCOMPARE(inboundTo.network, QString("udp"));
+
+  const auto outbound = LogParser::parseLogKind(
+      "[123 12ms] outbound/vless[JP]: outbound packet connection to "
+      "[2606:4700:4700::1111]:53");
+  QVERIFY(outbound.isConnection);
+  QCOMPARE(outbound.direction, QString("outbound"));
+  QCOMPARE(outbound.host, QString("[2606:4700:4700::1111]:53"));
+  QCOMPARE(outbound.protocol, QString("vless"));
+  QCOMPARE(outbound.network, QString("udp"));
+  QCOMPARE(outbound.nodeName, QString("JP"));
+}
 
 void LogAndSubscriptionMetaTests::logParser_shouldHandleFallbackPaths() {
   const LogParser::LogKind unknown = LogParser::parseLogKind("just a plain log");

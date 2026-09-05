@@ -253,6 +253,50 @@ class RetentionAndUsageTests : public QObject {
     }
   }
 
+  void logNetworkSurvivesReopenAndOldSchemaUpgrade() {
+    QTemporaryDir directory;
+    const auto path = directory.filePath("history.db");
+    const auto now = QDateTime::currentDateTime();
+    {
+      LogStore original(nullptr, path);
+      QVERIFY(original.append({"info", "old abbreviated log", "inbound", now}));
+      QVERIFY(original.flush());
+    }
+    // Reproduce the previous schema, which did not store the network type.
+    const QString connectionName = "old-log-schema";
+    {
+      auto db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+      db.setDatabaseName(path);
+      QVERIFY(db.open());
+      {
+        QSqlQuery query(db);
+        QVERIFY(query.exec("ALTER TABLE logs DROP COLUMN network"));
+      }
+      db.close();
+    }
+    QSqlDatabase::removeDatabase(connectionName);
+    {
+      LogStore upgraded(nullptr, path);
+      QVERIFY2(upgraded.error().isEmpty(), qPrintable(upgraded.error()));
+      const auto rows = upgraded.latest({}, {});
+      QCOMPARE(rows.size(), 1);
+      QCOMPARE(rows.first().entry.payload, QString("old abbreviated log"));
+      QVERIFY(rows.first().entry.network.isEmpty());
+      QVERIFY(upgraded.append({"info", "tcp log", "inbound", now, "tcp"}));
+      QVERIFY(upgraded.append({"info", "udp log", "outbound", now, "udp"}));
+      QVERIFY(upgraded.flush());
+    }
+    {
+      LogStore restored(nullptr, path);
+      const auto rows = restored.latest({}, {});
+      QCOMPARE(rows.size(), 3);
+      QVERIFY(rows.at(0).entry.network.isEmpty());
+      QCOMPARE(rows.at(1).entry.network, QString("tcp"));
+      QCOMPARE(rows.at(2).entry.network, QString("udp"));
+      QCOMPARE(restored.counts({}, {}).total, 3);
+    }
+  }
+
   void retriesClosedConnectionsBeforeReplacingAFailedBatch() {
     DataUsageTracker tracker;
     tracker.updateFromConnections(usageSnapshot({usageConnection("a", 100, 200)}));

@@ -3,6 +3,7 @@
 #include <QSaveFile>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QTextStream>
 #include <QTimer>
 #include <QUuid>
@@ -44,7 +45,8 @@ LogStore::Row readRow(const QSqlQuery& query) {
   return {query.value(0).toLongLong(),
           {query.value(2).toString(), query.value(3).toString(),
            query.value(4).toString(),
-           QDateTime::fromMSecsSinceEpoch(query.value(1).toLongLong())}};
+           QDateTime::fromMSecsSinceEpoch(query.value(1).toLongLong()),
+           query.value(5).toString()}};
 }
 
 // Returns an error string, or an empty string after an atomic successful save.
@@ -60,7 +62,8 @@ QString exportRows(QSqlDatabase& db, const QString& path, const QString& search,
   }
   QSqlQuery query(db);
   query.setForwardOnly(true);
-  query.prepare("SELECT id, stamp, type, payload, direction FROM logs WHERE " +
+  query.prepare("SELECT id, stamp, type, payload, direction, network "
+                "FROM logs WHERE " +
                 predicate(search, type) + " AND id <= :last ORDER BY id");
   bindFilter(query, search, type);
   query.bindValue(":last", lastId);
@@ -143,7 +146,8 @@ bool LogStore::open(const QString& path) {
       "PRAGMA journal_size_limit = 4194304",
       "CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, "
       "stamp INTEGER NOT NULL, type TEXT NOT NULL, payload TEXT NOT NULL, "
-      "direction TEXT NOT NULL, search_text TEXT NOT NULL)",
+      "direction TEXT NOT NULL, search_text TEXT NOT NULL, "
+      "network TEXT NOT NULL DEFAULT '')",
       "CREATE INDEX IF NOT EXISTS log_time ON logs(stamp)",
       "CREATE INDEX IF NOT EXISTS log_type_id ON logs(type, id)",
       "CREATE INDEX IF NOT EXISTS log_type_time ON logs(type, stamp)",
@@ -159,12 +163,21 @@ bool LogStore::open(const QString& path) {
       return fail(query.lastError().text());
     }
   }
+  // Older, abbreviated log payloads cannot reliably distinguish TCP from UDP.
+  // Leave their network empty and record it explicitly for new entries.
+  if (!m_db.record("logs").contains("network") &&
+      !query.exec("ALTER TABLE logs ADD COLUMN network TEXT NOT NULL DEFAULT ''") &&
+      !m_db.record("logs").contains("network")) {
+    // The UI and helper can open the shared database at the same time.
+    return fail(query.lastError().text());
+  }
   return true;
 }
 
 bool LogStore::append(const LogParser::LogEntry& entry) {
   const qsizetype bytes = (entry.payload.size() * 2 + entry.type.size() +
-                          entry.direction.size()) * sizeof(QChar);
+                          entry.direction.size() + entry.network.size()) *
+                         sizeof(QChar);
   if (!m_pending.isEmpty() &&
       (m_pending.size() >= kBatchRows || m_pendingBytes + bytes > kBatchBytes) &&
       !flush()) {
@@ -186,8 +199,8 @@ bool LogStore::flush() {
     return fail(m_db.lastError().text());
   }
   QSqlQuery query(m_db);
-  query.prepare("INSERT INTO logs(stamp, type, payload, direction, search_text) "
-                "VALUES (?, ?, ?, ?, ?)");
+  query.prepare("INSERT INTO logs(stamp, type, payload, direction, search_text, "
+                "network) VALUES (?, ?, ?, ?, ?, ?)");
   for (const auto& entry : std::as_const(m_pending)) {
     query.bindValue(0, entry.timestamp.toMSecsSinceEpoch());
     query.bindValue(1, entry.type.isNull() ? QStringLiteral("") : entry.type);
@@ -195,6 +208,7 @@ bool LogStore::flush() {
     query.bindValue(3, entry.direction.isNull() ? QStringLiteral("") : entry.direction);
     query.bindValue(4, entry.payload.isNull() ? QStringLiteral("")
                                             : entry.payload.toCaseFolded());
+    query.bindValue(5, entry.network.isNull() ? QStringLiteral("") : entry.network);
     if (!query.exec()) {
       m_db.rollback();
       return fail(query.lastError().text());
@@ -247,7 +261,8 @@ QVector<LogStore::Row> LogStore::latest(const QString& search,
   QVector<Row> result;
   QSqlQuery query(m_db);
   query.setForwardOnly(true);
-  query.prepare("SELECT id, stamp, type, payload, direction FROM logs WHERE " +
+  query.prepare("SELECT id, stamp, type, payload, direction, network "
+                "FROM logs WHERE " +
                 predicate(search, type) + " ORDER BY id DESC LIMIT " +
                 QString::number(kVisibleLimit));
   bindFilter(query, search, type);

@@ -14,15 +14,19 @@ LogKind parseLogKind(const QString& message) {
     info.isDns     = true;
     return info;
   }
-  if (message.contains("inbound connection")) {
+  if (message.contains("inbound connection") ||
+      message.contains("inbound packet connection")) {
     info.direction = "inbound";
-  } else if (message.contains("outbound connection")) {
+  } else if (message.contains("outbound connection") ||
+             message.contains("outbound packet connection")) {
     info.direction = "outbound";
   } else {
     return info;
   }
   static const QRegularExpression kConnHost(
       R"(connection (?:from|to) ([^\s]+))");
+  info.network = message.contains(info.direction + " packet connection")
+                     ? "udp" : "tcp";
   const QRegularExpressionMatch match = kConnHost.match(message);
   if (match.hasMatch()) {
     info.host = match.captured(1);
