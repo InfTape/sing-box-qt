@@ -8,6 +8,7 @@ on:
     paths:
       - CMakeLists.txt
       - pack.ps1
+      - .github/workflows/ci.yml
       - .github/workflows/release-on-version-bump.yml
   workflow_dispatch:
 
@@ -62,7 +63,7 @@ jobs:
           release_inputs_changed="false"
           if [[ -n "${before_sha:-}" && "$before_sha" != "0000000000000000000000000000000000000000" ]]; then
             if ! git diff --quiet "$before_sha" "$GITHUB_SHA" -- \
-              pack.ps1 .github/workflows/release-on-version-bump.yml; then
+              pack.ps1 .github/workflows/ci.yml .github/workflows/release-on-version-bump.yml; then
               release_inputs_changed="true"
             fi
           fi
