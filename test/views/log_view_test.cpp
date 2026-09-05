@@ -1,5 +1,9 @@
 #include <QApplication>
 #include <QClipboard>
+#include <QContextMenuEvent>
+#include <QFontMetrics>
+#include <QMouseEvent>
+#include <QTextLayout>
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QPointer>
@@ -12,6 +16,8 @@
 #include <QtTest/QtTest>
 #include "views/logs/LogView.h"
 #include "widgets/logs/LogRowWidget.h"
+#include "widgets/logs/LogTextSelection.h"
+#include "widgets/common/RoundedMenu.h"
 #include "utils/ThemeManager.h"
 #include "storage/DatabaseService.h"
 #ifdef Q_OS_WIN
@@ -23,6 +29,24 @@
 #endif
 
 namespace {
+void dragText(QLabel* first, const QPoint& start, QLabel* last,
+              const QPoint& end) {
+  QTest::mousePress(first, Qt::LeftButton, Qt::NoModifier, start);
+  const QPoint globalEnd = last->mapToGlobal(end);
+  const QPoint localEnd = first->mapFromGlobal(globalEnd);
+  QMouseEvent move(QEvent::MouseMove, QPointF(localEnd), QPointF(globalEnd),
+                   Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+  QApplication::sendEvent(first, &move);
+  QTest::mouseRelease(first, Qt::LeftButton, Qt::NoModifier, localEnd);
+}
+
+QPoint textPoint(QLabel* label, int offset) {
+  const QFontMetrics metrics(label->font());
+  return label->contentsRect().topLeft() +
+         QPoint(metrics.horizontalAdvance(label->text().left(offset)),
+                metrics.height() / 2);
+}
+
 qint64 privateMemoryBytes() {
 #ifdef Q_OS_WIN
   PROCESS_MEMORY_COUNTERS_EX counters{};
@@ -124,6 +148,173 @@ class LogViewTest : public QObject {
                                     "vless[JP] -> 104.18.95.41:443"}));
     view.clear();
   }
+  void selectsAcrossLogBodies_data() {
+    QTest::addColumn<bool>("reverse");
+    QTest::newRow("forward") << false;
+    QTest::newRow("reverse") << true;
+  }
+  void selectsAcrossLogBodies() {
+    QFETCH(bool, reverse);
+    LogView view(nullptr);
+    view.resize(1600, 700);
+    view.show();
+    view.clear();
+    view.appendApiLog("info", "first alpha");
+    view.appendApiLog("warning", "middle beta");
+    view.appendApiLog("error", "last gamma");
+    QTRY_COMPARE(view.findChildren<LogRowWidget*>().size(), 3);
+    const auto labels = view.findChildren<QLabel*>("LogContent");
+    if (reverse) {
+      dragText(labels[2], textPoint(labels[2], 4),
+               labels[0], textPoint(labels[0], 6));
+    } else {
+      dragText(labels[0], textPoint(labels[0], 6),
+               labels[2], textPoint(labels[2], 4));
+    }
+    const QString expected = "alpha\nmiddle beta\nlast";
+    auto* selection = view.findChild<LogTextSelection*>();
+    QCOMPARE(selection->selectedText(), expected);
+    QCOMPARE(labels[0]->selectedText(), QString("alpha"));
+    QCOMPARE(labels[1]->selectedText(), QString("middle beta"));
+    QCOMPARE(labels[2]->selectedText(), QString("last"));
+    for (auto* badge : view.findChildren<QLabel*>("LogBadge")) {
+      QVERIFY(!badge->hasSelectedText());
+    }
+    auto* area = view.findChild<QScrollArea*>();
+    QTest::keyClick(area->widget(), Qt::Key_C, Qt::ControlModifier);
+    QCOMPARE(QApplication::clipboard()->text(), expected);
+    QApplication::clipboard()->clear();
+    view.findChild<QPushButton*>("CopyBtn")->click();
+    QCOMPARE(QApplication::clipboard()->text(), expected);
+
+    bool foundMenu = false;
+    QTimer::singleShot(0, &view, [&]() {
+      auto* menu = qobject_cast<RoundedMenu*>(QApplication::activePopupWidget());
+      if (!menu) return;
+      if (auto* action = menu->findChild<QAction*>("edit-copy")) {
+        foundMenu = action->isEnabled();
+        action->trigger();
+      }
+      menu->close();
+    });
+    QApplication::clipboard()->clear();
+    QContextMenuEvent context(QContextMenuEvent::Mouse, QPoint(5, 5),
+                              labels[1]->mapToGlobal(QPoint(5, 5)));
+    QApplication::sendEvent(labels[1], &context);
+    QVERIFY(foundMenu);
+    QCOMPARE(QApplication::clipboard()->text(), expected);
+    QTest::keyClick(area->widget(), Qt::Key_Escape);
+    QVERIFY(!selection->isActive());
+    view.clear();
+  }
+
+  void selectsWrappedUnicodeTextWithoutBadges() {
+    LogView view(nullptr);
+    view.resize(1000, 500);
+    view.show();
+    view.clear();
+    const QString wrapped = QString::fromUtf8("中文🙂 <tag> & text ").repeated(50);
+    view.appendApiLog("info", wrapped);
+    view.appendApiLog("info", "outbound/vless[JP]: outbound packet connection "
+                              "to 1.1.1.1:53");
+    QTRY_COMPARE(view.findChildren<LogRowWidget*>().size(), 2);
+    auto* area = view.findChild<QScrollArea*>();
+    const auto labels = view.findChildren<QLabel*>("LogContent");
+    QTextLayout layout(labels[0]->text(), labels[0]->font());
+    QTextOption option;
+    option.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    layout.setTextOption(option);
+    layout.beginLayout();
+    auto firstLine = layout.createLine();
+    firstLine.setLineWidth(labels[0]->contentsRect().width());
+    auto secondLine = layout.createLine();
+    QVERIFY(secondLine.isValid());
+    secondLine.setLineWidth(labels[0]->contentsRect().width());
+    const int start = secondLine.textStart();
+    const QPoint secondLineStart(0, qRound(firstLine.height() +
+                                           secondLine.height() / 2));
+    layout.endLayout();
+    dragText(labels[0], secondLineStart, labels[1],
+             textPoint(labels[1], labels[1]->text().size()));
+    QCOMPARE(view.findChild<LogTextSelection*>()->selectedText(),
+              wrapped.trimmed().mid(start) + "\nvless[JP] -> 1.1.1.1:53");
+    QTest::keyClick(area->widget(), Qt::Key_A, Qt::ControlModifier);
+    QTest::keyClick(area->widget(), Qt::Key_C, Qt::ControlModifier);
+    QCOMPARE(QApplication::clipboard()->text(),
+              wrapped.trimmed() + "\nvless[JP] -> 1.1.1.1:53");
+    view.clear();
+    QVERIFY(!view.findChild<LogTextSelection*>()->isActive());
+  }
+
+  void keepsSelectionStableDuringNewLogs() {
+    LogView view(nullptr);
+    view.resize(1600, 700);
+    view.show();
+    view.clear();
+    for (int i = 0; i < 50; ++i) {
+      view.appendApiLog("info", QString("message-%1").arg(i));
+    }
+    QTRY_COMPARE(view.findChildren<LogRowWidget*>().size(), 50);
+    auto* area = view.findChild<QScrollArea*>();
+    auto* bar = area->verticalScrollBar();
+    QTRY_COMPARE(bar->value(), bar->maximum());
+    const auto labels = view.findChildren<QLabel*>("LogContent");
+    dragText(labels[48], textPoint(labels[48], 0),
+             labels[49], textPoint(labels[49], labels[49]->text().size()));
+    auto* selection = view.findChild<LogTextSelection*>();
+    const QString expected = "message-48\nmessage-49";
+    QCOMPARE(selection->selectedText(), expected);
+    QPointer<QLabel> first = labels.first();
+    for (int i = 0; i < 200; ++i) view.appendApiLog("info", "new arrival");
+    QTRY_COMPARE(view.findChild<QLabel*>("TotalTag")->text(), QString("250 entries"));
+    QCOMPARE(view.findChildren<LogRowWidget*>().size(), 50);
+    QVERIFY(first);
+    QCOMPARE(selection->selectedText(), expected);
+    QTest::keyClick(area->widget(), Qt::Key_Escape);
+    QTRY_VERIFY(first.isNull());
+    QCOMPARE(view.findChildren<LogRowWidget*>().size(), 50);
+    QTRY_COMPARE(bar->value(), bar->maximum());
+    view.clear();
+  }
+
+  void dragSelectionScrollsWithoutResumingLiveUpdates() {
+    LogView view(nullptr);
+    view.resize(1600, 700);
+    view.show();
+    view.clear();
+    for (int i = 0; i < 50; ++i) {
+      view.appendApiLog("info", QString("drag-scroll-%1").arg(i));
+    }
+    QTRY_COMPARE(view.findChildren<LogRowWidget*>().size(), 50);
+    auto* area = view.findChild<QScrollArea*>();
+    auto* bar = area->verticalScrollBar();
+    QTRY_VERIFY(bar->maximum() > 0);
+    QTRY_COMPARE(bar->value(), bar->maximum());
+    const auto labels = view.findChildren<QLabel*>("LogContent");
+    QPointer<QLabel> first = labels.first();
+    auto* last = labels.last();
+    QTest::mousePress(last, Qt::LeftButton, Qt::NoModifier, textPoint(last, 3));
+    const QPoint global = area->viewport()->mapToGlobal(QPoint(400, -5));
+    QMouseEvent move(QEvent::MouseMove, QPointF(last->mapFromGlobal(global)),
+                     QPointF(global), Qt::NoButton, Qt::LeftButton,
+                     Qt::NoModifier);
+    QApplication::sendEvent(last, &move);
+    QTRY_VERIFY(bar->value() < bar->maximum());
+    QTest::mouseRelease(last, Qt::LeftButton, Qt::NoModifier,
+                        last->mapFromGlobal(global));
+    auto* selection = view.findChild<LogTextSelection*>();
+    QVERIFY(!selection->selectedText().isEmpty());
+    QTest::keyClick(area->widget(), Qt::Key_Escape);
+    const int readingPosition = bar->value();
+    for (int i = 0; i < 100; ++i) view.appendApiLog("info", "new while reading");
+    QTRY_COMPARE(view.findChild<QLabel*>("TotalTag")->text(), QString("150 entries"));
+    QCOMPARE(bar->value(), readingPosition);
+    QVERIFY(first);
+    bar->triggerAction(QAbstractSlider::SliderToMaximum);
+    QTRY_VERIFY(first.isNull());
+    view.clear();
+  }
+
   void preservesReadingPosition() {
     LogView view(nullptr);
     view.resize(1600, 700);

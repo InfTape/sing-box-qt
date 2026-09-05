@@ -13,6 +13,7 @@ class QPushButton;
 class QScrollArea;
 class QVBoxLayout;
 class ThemeService;
+class LogTextSelection;
 
 class LogView : public QWidget {
   Q_OBJECT
@@ -54,6 +55,7 @@ class LogView : public QWidget {
   QScrollArea*  m_scrollArea    = nullptr;
   QWidget*      m_listContainer = nullptr;
   QVBoxLayout*  m_listLayout    = nullptr;
+  LogTextSelection* m_textSelection = nullptr;
   QFrame*       m_emptyState    = nullptr;
   QLabel*       m_emptyTitle    = nullptr;
   LogStore* m_store = nullptr;

@@ -117,6 +117,7 @@ set(SOURCES
     src/widgets/common/ElideLineEdit.cpp
     src/widgets/common/FlowLayout.cpp
     src/widgets/logs/LogRowWidget.cpp
+    src/widgets/logs/LogTextSelection.cpp
     src/widgets/rules/RuleCard.cpp
     src/widgets/common/ToggleSwitch.cpp
     src/widgets/common/SegmentedControl.cpp
@@ -233,6 +234,7 @@ set(HEADERS
     src/widgets/common/ElideLineEdit.h
     src/widgets/common/FlowLayout.h
     src/widgets/logs/LogRowWidget.h
+    src/widgets/logs/LogTextSelection.h
     src/widgets/rules/RuleCard.h
     src/widgets/common/ToggleSwitch.h
     src/widgets/common/SegmentedControl.h

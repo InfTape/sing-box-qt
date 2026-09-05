@@ -112,6 +112,7 @@ add_executable(sing-box-qt-logs-tests
     ../resources/resources.qrc
     ../src/views/logs/LogView.cpp
     ../src/widgets/logs/LogRowWidget.cpp
+    ../src/widgets/logs/LogTextSelection.cpp
     ../src/widgets/common/MenuComboBox.cpp
     ../src/widgets/common/RoundedMenu.cpp
     ../src/widgets/common/StyledLineEdit.cpp

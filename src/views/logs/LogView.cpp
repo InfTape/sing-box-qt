@@ -24,6 +24,7 @@
 #include "utils/LogRetention.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/logs/LogRowWidget.h"
+#include "widgets/logs/LogTextSelection.h"
 
 LogView::LogView(ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_themeService(themeService) {
@@ -33,7 +34,7 @@ LogView::LogView(ThemeService* themeService, QWidget* parent)
   m_tailScrollTimer->setInterval(0);
   connect(m_tailScrollTimer, &QTimer::timeout, this, [this]() {
     auto* bar = m_scrollArea->verticalScrollBar();
-    if (m_followTail && !bar->isSliderDown()) {
+    if (m_followTail && !bar->isSliderDown() && !m_textSelection->isActive()) {
       bar->setValue(bar->maximum());
     }
   });
@@ -75,6 +76,7 @@ void LogView::scheduleRefresh() {
 
 void LogView::scheduleTailScroll() {
   if (m_followTail && !m_scrollArea->verticalScrollBar()->isSliderDown() &&
+      !m_textSelection->isActive() &&
       !m_tailScrollTimer->isActive()) {
     m_tailScrollTimer->start();
   }
@@ -126,7 +128,7 @@ void LogView::setupUI() {
   m_clearBtn->setFixedHeight(32);
   m_copyBtn = new QPushButton(tr("Copy"));
   m_copyBtn->setObjectName("CopyBtn");
-  m_copyBtn->setToolTip(tr("Copy the displayed logs (up to %1 entries)")
+  m_copyBtn->setToolTip(tr("Copy selected text, or displayed logs (up to %1 entries)")
                             .arg(LogStore::kVisibleLimit));
   m_copyBtn->setCursor(Qt::PointingHandCursor);
   m_copyBtn->setFixedHeight(32);
@@ -185,6 +187,15 @@ void LogView::setupUI() {
   m_listLayout->setSpacing(6);
   m_listLayout->addStretch();
   m_scrollArea->setWidget(m_listContainer);
+  m_textSelection = new LogTextSelection(m_scrollArea);
+  connect(m_textSelection, &LogTextSelection::changed, this, [this]() {
+    if (m_textSelection->isActive()) {
+      m_tailScrollTimer->stop();
+    } else {
+      scheduleRefresh();
+      scheduleTailScroll();
+    }
+  });
   m_emptyState = new QFrame;
   m_emptyState->setObjectName("EmptyState");
   m_emptyState->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -292,12 +303,14 @@ void LogView::clear() {
   if (!m_store->clear()) {
     return;
   }
+  m_textSelection->clear();
   m_forceRefresh = true;
   m_followTail = true;
   rebuildList();
 }
 
 void LogView::onFilterChanged() {
+  m_textSelection->clear();
   m_forceRefresh = true;
   m_followTail = true;
   // Debounce typing and avoid rescanning the day for every keystroke.
@@ -309,12 +322,14 @@ void LogView::onClearClicked() {
 }
 
 void LogView::onCopyClicked() {
+  if (!m_textSelection->selectedText().isEmpty()) {
+    m_textSelection->copy();
+    return;
+  }
   QStringList lines;
   for (const auto& row : std::as_const(m_rows)) {
     const auto& log = row.entry;
-    lines << QString("[%1] [%2] %3")
-                 .arg(log.timestamp.toString("HH:mm:ss"),
-                      log.type.toUpper(), log.payload);
+    lines << LogParser::stripSessionTracker(log.payload);
   }
   QApplication::clipboard()->setText(lines.join("\n"));
 }
@@ -348,6 +363,7 @@ void LogView::rebuildList() {
   m_counts = m_store->counts(search, type);
   updateStats();
   auto* bar = m_scrollArea->verticalScrollBar();
+  if (m_textSelection->isActive()) return;
   // Keep both row contents and their geometry unchanged while reading history.
   // New arrivals still go to disk; returning to the bottom loads the latest entries.
   if (!m_forceRefresh && !m_rows.isEmpty() &&
@@ -355,6 +371,7 @@ void LogView::rebuildList() {
     return;
   }
   m_forceRefresh = false;
+  m_textSelection->clear();
   auto next = m_store->latest(search, type);
   // Reuse overlapping rows on live updates instead of rebuilding every widget.
   m_listContainer->setUpdatesEnabled(false);
@@ -396,8 +413,10 @@ void LogView::updateStats() {
 }
 
 void LogView::appendLogRow(const LogParser::LogEntry& entry) {
+  auto* row = new LogRowWidget(entry);
+  m_textSelection->watchRow(row);
   m_listLayout->insertWidget(m_listLayout->count() - 1,
-                             new LogRowWidget(entry));
+                             row);
 }
 
 void LogView::removeFirstLogRow() {
