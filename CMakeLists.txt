@@ -122,6 +122,7 @@ set(SOURCES
     src/widgets/common/ChevronToggle.cpp
     src/widgets/common/RoundedMenu.cpp
     src/widgets/common/StyledLineEdit.cpp
+    src/widgets/common/HorizontalScrollBar.cpp
     src/widgets/common/StyledSpinBox.cpp
     src/widgets/common/StyledPlainTextEdit.cpp
     src/widgets/common/StyledTextEdit.cpp
@@ -235,6 +236,7 @@ set(HEADERS
     src/widgets/common/ChevronToggle.h
     src/widgets/common/RoundedMenu.h
     src/widgets/common/StyledLineEdit.h
+    src/widgets/common/HorizontalScrollBar.h
     src/widgets/common/StyledSpinBox.h
     src/widgets/common/StyledPlainTextEdit.h
     src/widgets/common/StyledTextEdit.h

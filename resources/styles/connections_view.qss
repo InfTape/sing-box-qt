@@ -15,6 +15,10 @@
     color: @text-primary@;
     gridline-color: @border-solid@;
 }
+#ConnectionsTable::corner {
+    background: transparent;
+    border: none;
+}
 #ConnectionsTable::item {
     padding: 8px;
 }

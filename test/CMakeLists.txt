@@ -86,6 +86,7 @@ add_test(
 add_executable(sing-box-qt-connections-tests
     views/connections_view_test.cpp
     ../src/views/connections/ConnectionsView.cpp
+    ../src/widgets/common/HorizontalScrollBar.cpp
     ../src/app/interfaces/ThemeService.h
     ../src/core/ProxyService.cpp
     ../src/network/HttpClient.cpp

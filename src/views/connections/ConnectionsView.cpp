@@ -12,6 +12,7 @@
 #include <QVBoxLayout>
 #include "app/interfaces/ThemeService.h"
 #include "core/ProxyService.h"
+#include "widgets/common/HorizontalScrollBar.h"
 
 namespace {
 constexpr int SortValueRole    = Qt::UserRole + 1;
@@ -227,6 +228,9 @@ void ConnectionsView::setupUI() {
   // Connections table.
   m_tableWidget = new QTableWidget;
   m_tableWidget->setObjectName("ConnectionsTable");
+  m_tableWidget->setHorizontalScrollBar(
+      new HorizontalScrollBar(m_tableWidget));
+  m_tableWidget->setHorizontalScrollMode(QAbstractItemView::ScrollPerPixel);
   m_tableWidget->setColumnCount(6);
   m_tableWidget->setHorizontalHeaderLabels({tr("Source"),
                                             tr("Destination"),
