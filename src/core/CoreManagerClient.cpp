@@ -122,5 +122,8 @@ void CoreManagerClient::handleMessage(const QJsonObject& obj) {
   if (obj.value("result").isObject()) {
     result = obj.value("result").toObject();
   }
+  if (result.contains("globalTotals")) {
+    emit dataUsageEvent(result);
+  }
   emit responseReceived(id, ok, result, error);
 }

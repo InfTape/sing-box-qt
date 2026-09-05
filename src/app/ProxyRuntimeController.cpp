@@ -60,7 +60,7 @@ bool ProxyRuntimeController::isKernelRunning() const {
 }
 
 void ProxyRuntimeController::broadcastStates() {
-  onKernelStatusChanged(isKernelRunning());
+  emit kernelRunningChanged(isKernelRunning());
   if (m_kernelService) {
     m_kernelService->requestDataUsage();
   }
@@ -71,7 +71,13 @@ void ProxyRuntimeController::setLogsStreamingActive(bool active) {
 }
 
 void ProxyRuntimeController::onKernelStatusChanged(bool running) {
+  const bool firstRun = (m_lastKernelRunning == -1);
+  const bool changed  = (m_lastKernelRunning != (running ? 1 : 0));
+  m_lastKernelRunning = running ? 1 : 0;
   emit kernelRunningChanged(running);
+  if (!firstRun && !changed) {
+    return;
+  }
   if (m_proxyService) {
     if (running) {
       m_proxyService->startTrafficMonitor();

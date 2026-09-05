@@ -20,6 +20,15 @@ bool SystemProxy::setProxy(const QString& host, int port) {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
+  const bool    alreadyEnabled  = settings.value("ProxyEnable", 0).toInt() == 1;
+  const QString currentServer   = settings.value("ProxyServer").toString();
+  const QString currentOverride = settings.value("ProxyOverride").toString();
+  if (alreadyEnabled && currentServer == proxyServer &&
+      currentOverride == bypass) {
+    Logger::info(
+        QString("System proxy already set to %1, skip refresh").arg(proxyServer));
+    return true;
+  }
   settings.setValue("ProxyEnable", 1);
   settings.setValue("ProxyServer", proxyServer);
   settings.setValue("ProxyOverride", bypass);
@@ -37,6 +46,10 @@ bool SystemProxy::setProxy(const QString& host, int port) {
 
 bool SystemProxy::clearProxy() {
 #ifdef Q_OS_WIN
+  if (!isProxyEnabled()) {
+    Logger::info("System proxy already disabled, skip refresh");
+    return true;
+  }
   QSettings settings(
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
@@ -103,6 +116,10 @@ bool SystemProxy::setPacProxy(const QString& pacUrl) {
       "HKEY_CURRENT_"
       "USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
       QSettings::NativeFormat);
+  if (settings.value("AutoConfigURL").toString() == pacUrl) {
+    Logger::info(QString("PAC proxy already set to %1, skip refresh").arg(pacUrl));
+    return true;
+  }
   settings.setValue("AutoConfigURL", pacUrl);
   settings.sync();
   refreshSettings();

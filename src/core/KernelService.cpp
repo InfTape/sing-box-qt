@@ -187,19 +187,15 @@ void KernelService::restartWithConfig(const QString& configPath) {
 }
 
 void KernelService::requestDataUsage() {
-  QJsonObject result;
-  QString     error;
-  if (sendRequestAndWait("getDataUsage", QJsonObject(), &result, &error)) {
-    if (result.contains("globalTotals")) {
-      emit dataUsageUpdated(result);
-    }
+  if (m_client && m_client->isConnected()) {
+    m_client->sendRequest(m_nextRequestId++, "getDataUsage", QJsonObject());
   }
 }
 
 void KernelService::resetDataUsage() {
-  QJsonObject result;
-  QString     error;
-  sendRequestAndWait("resetDataUsage", QJsonObject(), &result, &error);
+  if (m_client && m_client->isConnected()) {
+    m_client->sendRequest(m_nextRequestId++, "resetDataUsage", QJsonObject());
+  }
 }
 
 void KernelService::setConfigPath(const QString& configPath) {

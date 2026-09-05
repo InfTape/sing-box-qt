@@ -41,7 +41,8 @@ class ProxyRuntimeController : public QObject {
   KernelService*   m_kernelService    = nullptr;
   ProxyService*    m_proxyService     = nullptr;
   ProxyController* m_proxyController  = nullptr;
-  QTimer*          m_connectionsTimer = nullptr;
-  bool             m_logsPageActive   = false;
+  QTimer*          m_connectionsTimer  = nullptr;
+  bool             m_logsPageActive    = false;
+  int              m_lastKernelRunning = -1;
 };
 #endif  // PROXYRUNTIMECONTROLLER_H
