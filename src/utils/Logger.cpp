@@ -1,7 +1,11 @@
 #include "Logger.h"
+#include <QCoreApplication>
 #include <QDebug>
-#include <QTextStream>
+#include <QFile>
+#include <QLockFile>
+#include <QTimer>
 #include "utils/AppPaths.h"
+#include "utils/LogRetention.h"
 
 Logger& Logger::instance() {
   static Logger instance;
@@ -15,47 +19,66 @@ Logger::~Logger() {
 }
 
 void Logger::init() {
-  if (m_initialized) {
-    return;
-  }
-  QString logPath = getLogFilePath();
-  // Ensure log directory exists.
-  QDir dir(QFileInfo(logPath).absolutePath());
-  if (!dir.exists()) {
-    dir.mkpath(".");
-  }
-  m_logFile.setFileName(logPath);
-  if (m_logFile.open(QIODevice::Append | QIODevice::Text)) {
+  {
+    QMutexLocker locker(&m_mutex);
+    if (m_initialized) {
+      return;
+    }
+    m_logDirectory = QDir(appDataDir()).filePath("logs");
+    if (!QDir().mkpath(m_logDirectory)) {
+      return;
+    }
     m_initialized = true;
-    info("Logger initialized.");
+    if (!m_maintenanceTimer && QCoreApplication::instance()) {
+      m_maintenanceTimer = new QTimer(QCoreApplication::instance());
+      m_maintenanceTimer->setObjectName("LogRetentionTimer");
+      QObject::connect(m_maintenanceTimer, &QTimer::timeout,
+                       m_maintenanceTimer, [this]() { maintainLogs(); });
+    }
+    if (m_maintenanceTimer) {
+      m_maintenanceTimer->start(60 * 1000);
+    }
   }
+  maintainLogs();
+  info("Logger initialized; keeping the last 24 hours.");
 }
 
 void Logger::close() {
-  if (m_logFile.isOpen()) {
-    m_logFile.close();
+  QMutexLocker locker(&m_mutex);
+  if (m_maintenanceTimer) {
+    m_maintenanceTimer->stop();
   }
   m_initialized = false;
 }
 
-QString Logger::getLogFilePath() const {
-  QString dataDir = appDataDir();
-  QString date    = QDate::currentDate().toString("yyyy-MM-dd");
-  return dataDir + "/logs/" + date + ".log";
+void Logger::maintainLogs() {
+  QMutexLocker locker(&m_mutex);
+  if (m_initialized && !LogRetention::prune(m_logDirectory)) {
+    qWarning("Could not finish log retention cleanup; will retry.");
+  }
 }
 
 void Logger::log(const QString& level, const QString& message) {
-  QString timestamp =
-      QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
-  QString logLine = QString("[%1] [%2] %3").arg(timestamp, level, message);
-  // Output to console.
+  const auto now = QDateTime::currentDateTime();
+  const QString logLine = QString("[%1] [%2] %3")
+                              .arg(now.toString("yyyy-MM-dd hh:mm:ss.zzz"),
+                                   level, message);
   qDebug().noquote() << logLine;
-  // Output to file.
-  if (m_initialized) {
-    QMutexLocker locker(&m_mutex);
-    QTextStream  stream(&m_logFile);
-    stream << logLine << "\n";
-    stream.flush();
+  QMutexLocker locker(&m_mutex);
+  if (!m_initialized) {
+    return;
+  }
+  QLockFile fileLock(LogRetention::lockFilePath(m_logDirectory));
+  if (!fileLock.tryLock(1000)) {
+    qWarning("Could not acquire log file lock.");
+    return;
+  }
+  // Minute-sized segments can expire without rewriting a whole day's logs.
+  QFile file(QDir(m_logDirectory).filePath(
+      now.toString("yyyy-MM-dd-HH-mm") + ".log"));
+  const QByteArray bytes = logLine.toUtf8() + '\n';
+  if (!file.open(QIODevice::Append) || file.write(bytes) != bytes.size()) {
+    qWarning("Could not write log file.");
   }
 }
 

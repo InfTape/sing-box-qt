@@ -38,9 +38,6 @@
 #TagInfo { color: @text-primary@; background: @panel-bg@; }
 #TagError { color: #ef4444; background: @error-12@; }
 #TagWarning { color: #f59e0b; background: rgba(245,158,11,0.12); }
-#AutoScroll {
-    color: @text-primary@;
-}
 #ActionBtn {
     background-color: @panel-bg@;
     color: @text-primary@;
@@ -162,4 +159,4 @@
 #EmptyState {
     background: transparent;
 }
-
+#StorageError { color: @error@; }

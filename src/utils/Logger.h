@@ -2,7 +2,9 @@
 #define LOGGER_H
 #include <QFile>
 #include <QMutex>
+#include <QPointer>
 #include <QString>
+class QTimer;
 
 class Logger {
  public:
@@ -18,8 +20,9 @@ class Logger {
   Logger();
   ~Logger();
   void    log(const QString& level, const QString& message);
-  QString getLogFilePath() const;
-  QFile   m_logFile;
+  void    maintainLogs();
+  QString m_logDirectory;
+  QPointer<QTimer> m_maintenanceTimer;
   QMutex  m_mutex;
   bool    m_initialized;
 };

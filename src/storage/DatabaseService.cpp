@@ -64,6 +64,42 @@ bool DatabaseService::createTables() {
         QString("Failed to create table: %1").arg(query.lastError().text()));
     return false;
   }
+  // Fresh relational statistics; previous JSON statistics are not imported.
+  const QStringList usageSchema = {
+      "PRAGMA cache_size = -2048",
+      "PRAGMA temp_store = FILE",
+      "CREATE TABLE IF NOT EXISTS usage_entries ("
+      "type INTEGER NOT NULL, label TEXT NOT NULL, upload INTEGER NOT NULL, "
+      "download INTEGER NOT NULL, total INTEGER NOT NULL, "
+      "first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL, "
+      "PRIMARY KEY(type, label)) WITHOUT ROWID",
+      "CREATE INDEX IF NOT EXISTS usage_ranking "
+      "ON usage_entries(type, total DESC, label)",
+      "CREATE TABLE IF NOT EXISTS usage_summary (type INTEGER PRIMARY KEY, "
+      "count INTEGER NOT NULL, upload INTEGER NOT NULL, "
+      "download INTEGER NOT NULL, total INTEGER NOT NULL, "
+      "first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL)",
+      "CREATE TABLE IF NOT EXISTS usage_connections (id TEXT PRIMARY KEY, "
+      "upload INTEGER NOT NULL, download INTEGER NOT NULL) WITHOUT ROWID",
+      "CREATE TRIGGER IF NOT EXISTS usage_insert AFTER INSERT ON usage_entries "
+      "BEGIN INSERT INTO usage_summary VALUES (NEW.type, 1, NEW.upload, "
+      "NEW.download, NEW.total, NEW.first_seen, NEW.last_seen) "
+      "ON CONFLICT(type) DO UPDATE SET count=count+1, "
+      "upload=upload+NEW.upload, download=download+NEW.download, "
+      "total=total+NEW.total, first_seen=MIN(first_seen, NEW.first_seen), "
+      "last_seen=MAX(last_seen, NEW.last_seen); END",
+      "CREATE TRIGGER IF NOT EXISTS usage_update AFTER UPDATE ON usage_entries "
+      "BEGIN UPDATE usage_summary SET upload=upload+NEW.upload-OLD.upload, "
+      "download=download+NEW.download-OLD.download, "
+      "total=total+NEW.total-OLD.total, "
+      "last_seen=MAX(last_seen, NEW.last_seen) WHERE type=NEW.type; END"};
+  for (const auto& statement : usageSchema) {
+    if (!query.exec(statement)) {
+      Logger::error("Failed to initialize statistics: " +
+                    query.lastError().text());
+      return false;
+    }
+  }
   return true;
 }
 
@@ -181,19 +217,4 @@ bool DatabaseService::saveSubscriptionNodes(const QString&    id,
   QString json =
       QString::fromUtf8(QJsonDocument(nodes).toJson(QJsonDocument::Compact));
   return setValue(key, json);
-}
-
-QJsonObject DatabaseService::getDataUsage() {
-  QString json = getValue("data_usage_v1", "{}");
-  return QJsonDocument::fromJson(json.toUtf8()).object();
-}
-
-bool DatabaseService::saveDataUsage(const QJsonObject& payload) {
-  QString json =
-      QString::fromUtf8(QJsonDocument(payload).toJson(QJsonDocument::Compact));
-  return setValue("data_usage_v1", json);
-}
-
-bool DatabaseService::clearDataUsage() {
-  return setValue("data_usage_v1", "{}");
 }

@@ -1,13 +1,16 @@
 ﻿#include "core/DataUsageTracker.h"
 #include <QDateTime>
+#include <QCoreApplication>
 #include <QJsonValue>
-#include <QSet>
+#include <QSqlQuery>
+#include <QSqlError>
+#include "utils/Logger.h"
+#include <QTimer>
 #include <algorithm>
 #include "storage/DatabaseService.h"
 
 namespace {
-constexpr int    kMaxEntriesPerType    = 5000;
-constexpr qint64 kPersistMinIntervalMs = 30 * 1000;
+constexpr qint64 kRetryIntervalMs = 30 * 1000;
 
 QString normalizeProcessLabel(const QString& process) {
   if (process.isEmpty()) {
@@ -25,23 +28,42 @@ QString normalizeProcessLabel(const QString& process) {
 
 DataUsageTracker::DataUsageTracker(QObject* parent) : QObject(parent) {
   loadFromStorage();
+  auto* timer = new QTimer(this);
+  timer->setInterval(kRetryIntervalMs);
+  connect(timer, &QTimer::timeout, this, [this]() { flush(); });
+  timer->start();
+  if (auto* app = QCoreApplication::instance()) {
+    connect(app, &QCoreApplication::aboutToQuit, this, [this]() { flush(); });
+  }
+}
+
+DataUsageTracker::~DataUsageTracker() {
+  flush();
 }
 
 void DataUsageTracker::reset() {
-  for (Type type : allTypes()) {
-    m_entries[static_cast<int>(type)].clear();
+  if (!flush()) {
+    return;
   }
-  m_lastById.clear();
-  m_initialized       = false;
-  m_loadedFromStorage = false;
-  m_dirty             = true;
-  persistToStorage();
+  auto db = QSqlDatabase::database();
+  QSqlQuery query(db);
+  if (!db.transaction()) {
+    return;
+  }
+  // Preserve active baselines so pre-reset traffic cannot return.
+  if (!query.exec("DELETE FROM usage_entries") ||
+      !query.exec("DELETE FROM usage_summary") || !db.commit()) {
+    db.rollback();
+    Logger::error("Failed to reset traffic statistics");
+    return;
+  }
+  m_globalTotals = {};
   emit dataUsageUpdated(snapshot());
 }
 
 void DataUsageTracker::resetSession() {
-  m_lastById.clear();
-  m_initialized = false;
+  // Reconnecting to the same kernel must not count its counters twice.
+  flush();
 }
 
 QString DataUsageTracker::typeKey(Type type) {
@@ -62,68 +84,80 @@ QList<DataUsageTracker::Type> DataUsageTracker::allTypes() {
   return {Type::SourceIP, Type::Host, Type::Process, Type::Outbound};
 }
 
-void DataUsageTracker::addDelta(Type           type,
-                                const QString& label,
-                                qint64         upload,
-                                qint64         download,
-                                qint64         nowMs) {
-  if (label.isEmpty()) {
+void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
+  if (!connections.value("connections").isArray()) {
     return;
   }
-  auto& map  = m_entries[static_cast<int>(type)];
-  auto  iter = map.find(label);
-  if (iter == map.end()) {
-    Entry entry;
-    entry.label       = label;
-    entry.upload      = upload;
-    entry.download    = download;
-    entry.total       = upload + download;
-    entry.firstSeenMs = nowMs;
-    entry.lastSeenMs  = nowMs;
-    map.insert(label, entry);
+  // Commit the failed batch before replacing it, even if its connections have
+  // since closed. Retain only this one batch while storage is unavailable.
+  if (!m_pendingConnections.isEmpty() && !flush()) {
     return;
   }
-  Entry& entry = iter.value();
-  entry.upload += upload;
-  entry.download += download;
-  entry.total = entry.upload + entry.download;
-  if (entry.firstSeenMs <= 0) {
-    entry.firstSeenMs = nowMs;
-  }
-  entry.lastSeenMs = nowMs;
+  m_pendingConnections = connections;
+  flush();
 }
 
-void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
-  const QJsonArray conns = connections.value("connections").toArray();
-  QSet<QString>    activeIds;
-  const qint64     nowMs        = QDateTime::currentMSecsSinceEpoch();
-  const bool       skipBaseline = (!m_initialized && m_loadedFromStorage);
-  bool             changed      = false;
-  for (const QJsonValue& item : conns) {
-    const QJsonObject conn = item.toObject();
-    const QString     id   = conn.value("id").toString();
-    if (id.isEmpty()) {
+bool DataUsageTracker::flush() {
+  if (m_pendingConnections.isEmpty()) {
+    return true;
+  }
+  auto db = QSqlDatabase::database();
+  if (!db.transaction()) {
+    return false;
+  }
+  QSqlQuery entryQuery(db), counterQuery(db), deleteQuery(db);
+  auto fail = [&]() {
+    Logger::error("Failed to persist traffic statistics; retrying next poll: " +
+                  db.lastError().text() + entryQuery.lastError().text() +
+                  counterQuery.lastError().text() + deleteQuery.lastError().text());
+    db.rollback();
+    return false;
+  };
+  if (!entryQuery.prepare(
+          "INSERT INTO usage_entries VALUES (?, ?, ?, ?, ?, ?, ?) "
+          "ON CONFLICT(type, label) DO UPDATE SET "
+          "upload=upload+excluded.upload, download=download+excluded.download, "
+          "total=total+excluded.total, last_seen=excluded.last_seen") ||
+      !counterQuery.prepare("INSERT INTO usage_connections VALUES (?, ?, ?) "
+                            "ON CONFLICT(id) DO UPDATE SET "
+                            "upload=excluded.upload, download=excluded.download") ||
+      !deleteQuery.prepare("DELETE FROM usage_connections WHERE id=?")) {
+    return fail();
+  }
+  const auto conns = m_pendingConnections.value("connections").toArray();
+  QHash<QString, QPair<qint64, qint64>> nextCounters;
+  auto totals = m_globalTotals;
+  const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
+  bool changed = false;
+  for (const auto& item : conns) {
+    const auto conn = item.toObject();
+    const auto id = conn.value("id").toString();
+    if (id.isEmpty() || nextCounters.contains(id)) {
       continue;
     }
-    activeIds.insert(id);
-    const qint64 upload    = conn.value("upload").toVariant().toLongLong();
-    const qint64 download  = conn.value("download").toVariant().toLongLong();
-    const bool   hasLast   = m_lastById.contains(id);
-    const auto   last      = m_lastById.value(id, {0, 0});
-    qint64       deltaUp   = 0;
-    qint64       deltaDown = 0;
-    if (hasLast) {
-      deltaUp   = std::max<qint64>(0, upload - last.first);
-      deltaDown = std::max<qint64>(0, download - last.second);
-    } else if (!skipBaseline) {
-      deltaUp   = upload;
-      deltaDown = download;
+    const qint64 upload =
+        std::max<qint64>(0, conn.value("upload").toVariant().toLongLong());
+    const qint64 download =
+        std::max<qint64>(0, conn.value("download").toVariant().toLongLong());
+    const auto last = m_lastById.value(id, {0, 0});
+    const qint64 deltaUp = upload >= last.first ? upload - last.first : upload;
+    const qint64 deltaDown =
+        download >= last.second ? download - last.second : download;
+    nextCounters.insert(id, {upload, download});
+    if (!m_lastById.contains(id) || last != qMakePair(upload, download)) {
+      counterQuery.bindValue(0, id);
+      counterQuery.bindValue(1, upload);
+      counterQuery.bindValue(2, download);
+      if (!counterQuery.exec()) {
+        return fail();
+      }
     }
-    m_lastById[id] = {upload, download};
     if (deltaUp == 0 && deltaDown == 0) {
       continue;
     }
-    changed                  = true;
+    changed = true;
+    totals.upload += deltaUp;
+    totals.download += deltaDown;
     const QJsonObject meta   = conn.value("metadata").toObject();
     QString           source = meta.value("sourceIP").toString();
     if (source.isEmpty()) {
@@ -164,160 +198,69 @@ void DataUsageTracker::updateFromConnections(const QJsonObject& connections) {
     if (outbound.isEmpty()) {
       outbound = QStringLiteral("DIRECT");
     }
-    addDelta(Type::SourceIP, source, deltaUp, deltaDown, nowMs);
-    addDelta(Type::Host, host, deltaUp, deltaDown, nowMs);
-    addDelta(Type::Process, process, deltaUp, deltaDown, nowMs);
-    addDelta(Type::Outbound, outbound, deltaUp, deltaDown, nowMs);
-  }
-  if (activeIds.isEmpty()) {
-    m_lastById.clear();
-  } else {
-    for (auto it = m_lastById.begin(); it != m_lastById.end();) {
-      if (!activeIds.contains(it.key())) {
-        it = m_lastById.erase(it);
-      } else {
-        ++it;
+    const QStringList labels{source, host, process, outbound};
+    for (int type = 0; type < labels.size(); ++type) {
+      entryQuery.bindValue(0, type);
+      entryQuery.bindValue(1, labels[type]);
+      entryQuery.bindValue(2, deltaUp);
+      entryQuery.bindValue(3, deltaDown);
+      entryQuery.bindValue(4, deltaUp + deltaDown);
+      entryQuery.bindValue(5, nowMs);
+      entryQuery.bindValue(6, nowMs);
+      if (!entryQuery.exec()) {
+        return fail();
       }
     }
   }
-  if (pruneEntries(kMaxEntriesPerType)) {
-    changed = true;
+  for (auto it = m_lastById.cbegin(); it != m_lastById.cend(); ++it) {
+    if (!nextCounters.contains(it.key())) {
+      deleteQuery.bindValue(0, it.key());
+      if (!deleteQuery.exec()) {
+        return fail();
+      }
+    }
   }
-  m_initialized       = true;
-  m_loadedFromStorage = false;
+  if (!db.commit()) {
+    return fail();
+  }
+  m_lastById = std::move(nextCounters);
+  m_globalTotals = totals;
+  m_pendingConnections = {};
   if (changed) {
-    m_dirty = true;
+    emit dataUsageUpdated(snapshot());
   }
-  if (m_dirty && (activeIds.isEmpty() ||
-                  nowMs - m_lastPersistMs >= kPersistMinIntervalMs)) {
-    persistToStorage();
-  }
-  emit dataUsageUpdated(snapshot());
-}
-
-bool DataUsageTracker::pruneEntries(int maxEntriesPerType) {
-  if (maxEntriesPerType <= 0) {
-    return false;
-  }
-  bool removed = false;
-  for (Type type : allTypes()) {
-    auto&     map     = m_entries[static_cast<int>(type)];
-    const int toPrune = map.size() - maxEntriesPerType;
-    if (toPrune <= 0) {
-      continue;
-    }
-
-    struct Candidate {
-      QString label;
-      qint64  lastSeenMs = 0;
-      qint64  total      = 0;
-    };
-
-    QVector<Candidate> candidates;
-    candidates.reserve(map.size());
-    for (auto it = map.cbegin(); it != map.cend(); ++it) {
-      candidates.push_back({it.key(), it.value().lastSeenMs, it.value().total});
-    }
-    auto olderFirst = [](const Candidate& a, const Candidate& b) {
-      if (a.lastSeenMs != b.lastSeenMs) {
-        return a.lastSeenMs < b.lastSeenMs;
-      }
-      if (a.total != b.total) {
-        return a.total < b.total;
-      }
-      return a.label < b.label;
-    };
-    std::nth_element(candidates.begin(),
-                     candidates.begin() + toPrune,
-                     candidates.end(),
-                     olderFirst);
-    for (int i = 0; i < toPrune; ++i) {
-      map.remove(candidates[i].label);
-    }
-    removed = true;
-  }
-  return removed;
-}
-
-QVector<const DataUsageTracker::Entry*> DataUsageTracker::topEntries(
-    const QHash<QString, Entry>& map, int limit) const {
-  QVector<const Entry*> entries;
-  if (map.isEmpty()) {
-    return entries;
-  }
-  entries.reserve(map.size());
-  for (auto it = map.cbegin(); it != map.cend(); ++it) {
-    entries.push_back(&it.value());
-  }
-  auto better = [](const Entry* a, const Entry* b) {
-    if (a->total == b->total) {
-      return a->label < b->label;
-    }
-    return a->total > b->total;
-  };
-  if (limit > 0 && entries.size() > limit) {
-    std::nth_element(
-        entries.begin(), entries.begin() + limit, entries.end(), better);
-    entries.resize(limit);
-  }
-  std::sort(entries.begin(), entries.end(), better);
-  return entries;
-}
-
-DataUsageTracker::Totals DataUsageTracker::buildTotals(
-    const QHash<QString, Entry>& map) const {
-  Totals totals;
-  totals.count = map.size();
-  if (map.isEmpty()) {
-    return totals;
-  }
-  bool hasTime = false;
-  for (const auto& entry : map) {
-    totals.upload += entry.upload;
-    totals.download += entry.download;
-    totals.total += entry.total;
-    if (entry.firstSeenMs > 0) {
-      if (!hasTime || entry.firstSeenMs < totals.firstSeenMs) {
-        totals.firstSeenMs = entry.firstSeenMs;
-      }
-      hasTime = true;
-    }
-    if (entry.lastSeenMs > totals.lastSeenMs) {
-      totals.lastSeenMs = entry.lastSeenMs;
-    }
-  }
-  return totals;
+  return true;
 }
 
 QJsonObject DataUsageTracker::buildTypeSnapshot(Type type, int limit) const {
-  const auto& map    = m_entries[static_cast<int>(type)];
-  const auto  list   = topEntries(map, limit);
-  const auto  totals = buildTotals(map);
-  QJsonArray  entries;
-  for (const Entry* entry : list) {
-    if (!entry) {
-      continue;
+  QSqlQuery query;
+  query.setForwardOnly(true);
+  query.prepare("SELECT label, upload, download, total, first_seen, last_seen "
+                "FROM usage_entries WHERE type=? ORDER BY total DESC, label "
+                "LIMIT ?");
+  query.addBindValue(static_cast<int>(type));
+  query.addBindValue(std::clamp(limit, 1, 200));
+  QJsonArray entries;
+  const QStringList fields{"upload", "download", "total", "firstSeen", "lastSeen"};
+  if (query.exec()) {
+    while (query.next()) {
+      QJsonObject entry{{"label", query.value(0).toString()}};
+      for (int i = 0; i < fields.size(); ++i) {
+        entry.insert(fields[i], query.value(i + 1).toString());
+      }
+      entries.append(entry);
     }
-    QJsonObject obj;
-    obj.insert("label", entry->label);
-    obj.insert("upload", QString::number(entry->upload));
-    obj.insert("download", QString::number(entry->download));
-    obj.insert("total", QString::number(entry->total));
-    obj.insert("firstSeen", QString::number(entry->firstSeenMs));
-    obj.insert("lastSeen", QString::number(entry->lastSeenMs));
-    entries.append(obj);
   }
-  QJsonObject summary;
-  summary.insert("count", totals.count);
-  summary.insert("upload", QString::number(totals.upload));
-  summary.insert("download", QString::number(totals.download));
-  summary.insert("total", QString::number(totals.total));
-  summary.insert("firstSeen", QString::number(totals.firstSeenMs));
-  summary.insert("lastSeen", QString::number(totals.lastSeenMs));
-  QJsonObject payload;
-  payload.insert("entries", entries);
-  payload.insert("summary", summary);
-  return payload;
+  query.finish();
+  query.prepare("SELECT count, upload, download, total, first_seen, last_seen "
+                "FROM usage_summary WHERE type=?");
+  query.addBindValue(static_cast<int>(type));
+  const bool found = query.exec() && query.next();
+  QJsonObject summary{{"count", found ? query.value(0).toInt() : 0}};
+  for (int i = 0; i < fields.size(); ++i) {
+    summary.insert(fields[i], found ? query.value(i + 1).toString() : "0");
+  }
+  return {{"entries", entries}, {"summary", summary}};
 }
 
 QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
@@ -325,88 +268,32 @@ QJsonObject DataUsageTracker::snapshot(int limitPerType) const {
   for (Type type : allTypes()) {
     payload.insert(typeKey(type), buildTypeSnapshot(type, limitPerType));
   }
-  const auto  gt = globalTotals();
-  QJsonObject gtObj;
-  gtObj.insert("upload", QString::number(gt.upload));
-  gtObj.insert("download", QString::number(gt.download));
-  payload.insert("globalTotals", gtObj);
-  payload.insert("updatedAt",
-                 QString::number(QDateTime::currentMSecsSinceEpoch()));
+  payload.insert("globalTotals",
+                 QJsonObject{{"upload", QString::number(m_globalTotals.upload)},
+                             {"download", QString::number(m_globalTotals.download)}});
+  payload.insert("updatedAt", QString::number(QDateTime::currentMSecsSinceEpoch()));
   return payload;
 }
 
 DataUsageTracker::GlobalTotals DataUsageTracker::globalTotals() const {
-  const auto totals = buildTotals(m_entries[static_cast<int>(Type::Outbound)]);
-  return {totals.upload, totals.download};
+  return m_globalTotals;
 }
 
 void DataUsageTracker::loadFromStorage() {
-  QJsonObject payload = DatabaseService::instance().getDataUsage();
-  restoreFromPayload(payload);
-  if (pruneEntries(kMaxEntriesPerType)) {
-    persistToStorage();
-  } else {
-    m_lastPersistMs = QDateTime::currentMSecsSinceEpoch();
+  if (!DatabaseService::instance().init()) {
+    return;
   }
-}
-
-void DataUsageTracker::persistToStorage() {
-  DatabaseService::instance().saveDataUsage(buildPersistPayload());
-  m_lastPersistMs = QDateTime::currentMSecsSinceEpoch();
-  m_dirty         = false;
-}
-
-QJsonObject DataUsageTracker::buildPersistPayload() const {
-  QJsonObject root;
-  for (Type type : allTypes()) {
-    QJsonObject typeObj;
-    const auto& map = m_entries[static_cast<int>(type)];
-    for (auto it = map.begin(); it != map.end(); ++it) {
-      const Entry& entry = it.value();
-      QJsonObject  obj;
-      obj.insert("upload", QString::number(entry.upload));
-      obj.insert("download", QString::number(entry.download));
-      obj.insert("total", QString::number(entry.total));
-      obj.insert("firstSeen", QString::number(entry.firstSeenMs));
-      obj.insert("lastSeen", QString::number(entry.lastSeenMs));
-      typeObj.insert(it.key(), obj);
-    }
-    root.insert(typeKey(type), typeObj);
+  QSqlQuery query;
+  query.setForwardOnly(true);
+  if (query.exec("SELECT upload, download FROM usage_summary WHERE type=0") &&
+      query.next()) {
+    m_globalTotals = {query.value(0).toLongLong(), query.value(1).toLongLong()};
   }
-  root.insert("updatedAt",
-              QString::number(QDateTime::currentMSecsSinceEpoch()));
-  return root;
-}
-
-void DataUsageTracker::restoreFromPayload(const QJsonObject& payload) {
-  auto readLongLong = [](const QJsonValue& value) -> qint64 {
-    if (value.isString()) {
-      return value.toString().toLongLong();
-    }
-    return value.toVariant().toLongLong();
-  };
-  bool hasData = false;
-  for (Type type : allTypes()) {
-    QHash<QString, Entry>& map = m_entries[static_cast<int>(type)];
-    map.clear();
-    const QJsonObject typeObj = payload.value(typeKey(type)).toObject();
-    for (auto it = typeObj.begin(); it != typeObj.end(); ++it) {
-      const QString     label = it.key();
-      const QJsonObject obj   = it.value().toObject();
-      Entry             entry;
-      entry.label       = label;
-      entry.upload      = readLongLong(obj.value("upload"));
-      entry.download    = readLongLong(obj.value("download"));
-      entry.total       = readLongLong(obj.value("total"));
-      entry.firstSeenMs = readLongLong(obj.value("firstSeen"));
-      entry.lastSeenMs  = readLongLong(obj.value("lastSeen"));
-      if (!label.isEmpty()) {
-        map.insert(label, entry);
-        hasData = true;
-      }
+  query.finish();
+  if (query.exec("SELECT id, upload, download FROM usage_connections")) {
+    while (query.next()) {
+      m_lastById.insert(query.value(0).toString(),
+                       {query.value(1).toLongLong(), query.value(2).toLongLong()});
     }
   }
-  m_loadedFromStorage = hasData;
-  m_initialized       = false;
-  m_dirty             = false;
 }

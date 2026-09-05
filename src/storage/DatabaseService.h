@@ -34,10 +34,6 @@ class DatabaseService : public QObject {
   // Generic key/value store.
   QString getValue(const QString& key, const QString& defaultValue = QString());
   bool    setValue(const QString& key, const QString& value);
-  // Data usage persistence (JSON payload).
-  QJsonObject getDataUsage();
-  bool        saveDataUsage(const QJsonObject& payload);
-  bool        clearDataUsage();
 
  private:
   explicit DatabaseService(QObject* parent = nullptr);

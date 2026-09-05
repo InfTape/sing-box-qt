@@ -6,7 +6,6 @@
 #include <QObject>
 #include <QPair>
 #include <QString>
-#include <QVector>
 
 class DataUsageTracker : public QObject {
   Q_OBJECT
@@ -19,8 +18,10 @@ class DataUsageTracker : public QObject {
   };
 
   explicit DataUsageTracker(QObject* parent = nullptr);
+  ~DataUsageTracker() override;
   void         reset();
   void         resetSession();
+  bool         flush();
   void         updateFromConnections(const QJsonObject& connections);
   QJsonObject  snapshot(int limitPerType = 50) const;
   GlobalTotals globalTotals() const;
@@ -28,45 +29,13 @@ class DataUsageTracker : public QObject {
   void dataUsageUpdated(const QJsonObject& snapshot);
 
  private:
-  struct Entry {
-    QString label;
-    qint64  upload      = 0;
-    qint64  download    = 0;
-    qint64  total       = 0;
-    qint64  firstSeenMs = 0;
-    qint64  lastSeenMs  = 0;
-  };
-
-  struct Totals {
-    int    count       = 0;
-    qint64 upload      = 0;
-    qint64 download    = 0;
-    qint64 total       = 0;
-    qint64 firstSeenMs = 0;
-    qint64 lastSeenMs  = 0;
-  };
-
-  static QString        typeKey(Type type);
-  static QList<Type>    allTypes();
-  void                  addDelta(Type           type,
-                                 const QString& label,
-                                 qint64         upload,
-                                 qint64         download,
-                                 qint64         nowMs);
-  void                  loadFromStorage();
-  void                  persistToStorage();
-  void                  restoreFromPayload(const QJsonObject& payload);
-  QJsonObject           buildPersistPayload() const;
-  bool                  pruneEntries(int maxEntriesPerType);
-  QVector<const Entry*> topEntries(const QHash<QString, Entry>& map,
-                                   int                          limit) const;
-  Totals                buildTotals(const QHash<QString, Entry>& map) const;
-  QJsonObject           buildTypeSnapshot(Type type, int limit) const;
-  QHash<QString, Entry> m_entries[4];
+  static QString typeKey(Type type);
+  static QList<Type> allTypes();
+  void loadFromStorage();
+  QJsonObject buildTypeSnapshot(Type type, int limit) const;
   QHash<QString, QPair<qint64, qint64>> m_lastById;
-  bool                                  m_initialized       = false;
-  bool                                  m_loadedFromStorage = false;
-  qint64                                m_lastPersistMs     = 0;
-  bool                                  m_dirty             = false;
+  GlobalTotals m_globalTotals;
+  // At most one active-connections response is retained for a failed write.
+  QJsonObject m_pendingConnections;
 };
 #endif  // DATAUSAGETRACKER_H

@@ -5,7 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Test Widgets Network Sql WebSockets)
+find_package(Qt6 REQUIRED COMPONENTS Core Test Widgets Network Sql WebSockets Concurrent)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -28,6 +28,7 @@ add_executable(sing-box-qt-unit-tests
     utils/format_and_proxy_test.cpp
     utils/log_and_subscription_meta_test.cpp
     utils/misc_services_test.cpp
+    storage/retention_and_usage_test.cpp
     ../src/coremanager/RuntimeConfigResolver.cpp
     ../src/network/SubscriptionService.cpp
     ../src/services/config/ConfigBuilder.cpp
@@ -38,12 +39,14 @@ add_executable(sing-box-qt-unit-tests
     ../src/services/kernel/KernelPlatform.cpp
     ../src/storage/AppSettings.cpp
     ../src/storage/ConfigIO.cpp
+    ../src/storage/LogStore.cpp
     ../src/storage/DatabaseService.cpp
     ../src/storage/SubscriptionConfigStore.cpp
     ../src/utils/Crypto.cpp
     ../src/utils/PortableMode.cpp
     ../src/utils/home/HomeFormat.cpp
     ../src/utils/Logger.cpp
+    ../src/utils/LogRetention.cpp
     ../src/utils/settings/SettingsHelpers.cpp
     ../src/utils/proxy/ProxyNodeHelper.cpp
     ../src/utils/rule/RuleUtils.cpp
@@ -62,6 +65,7 @@ target_link_libraries(sing-box-qt-unit-tests PRIVATE
     Qt6::Core
     Qt6::Network
     Qt6::Sql
+    Qt6::Concurrent
     Qt6::Test
     Qt6::Widgets
     yaml-cpp::yaml-cpp
@@ -92,11 +96,47 @@ add_executable(sing-box-qt-connections-tests
     ../src/network/HttpClient.cpp
     ../src/network/WebSocketClient.cpp
     ../src/utils/Logger.cpp
+    ../src/utils/LogRetention.cpp
     ../src/utils/PortableMode.cpp
 )
 target_include_directories(sing-box-qt-connections-tests PRIVATE ../src)
 target_link_libraries(sing-box-qt-connections-tests PRIVATE
     Qt6::Core Qt6::Widgets Qt6::Test Qt6::Network Qt6::WebSockets
+)
+
+add_executable(sing-box-qt-logs-tests
+    views/log_view_test.cpp
+    ../resources/resources.qrc
+    ../src/views/logs/LogView.cpp
+    ../src/widgets/logs/LogRowWidget.cpp
+    ../src/widgets/common/MenuComboBox.cpp
+    ../src/widgets/common/RoundedMenu.cpp
+    ../src/widgets/common/StyledLineEdit.cpp
+    ../src/utils/ThemeManager.cpp
+    ../src/utils/LogParser.cpp
+    ../src/utils/LogRetention.cpp
+    ../src/utils/Logger.cpp
+    ../src/utils/PortableMode.cpp
+    ../src/storage/LogStore.cpp
+    ../src/storage/DatabaseService.cpp
+    ../src/app/interfaces/ThemeService.h
+)
+set_target_properties(sing-box-qt-logs-tests PROPERTIES AUTORCC ON)
+if (WIN32)
+    target_link_libraries(sing-box-qt-logs-tests PRIVATE psapi)
+endif()
+target_include_directories(sing-box-qt-logs-tests PRIVATE ../src)
+target_link_libraries(sing-box-qt-logs-tests PRIVATE
+    Qt6::Core Qt6::Widgets Qt6::Test Qt6::Sql Qt6::Concurrent
+)
+add_test(
+    NAME sing-box-qt-logs-tests
+    COMMAND ${CMAKE_COMMAND} -E env
+        "QT_QPA_PLATFORM=offscreen"
+        "SING_BOX_QT_PORTABLE=1"
+        "SING_BOX_QT_DATA_DIR=${SING_BOX_QT_TEST_DATA_DIR}"
+        "PATH=$<TARGET_FILE_DIR:Qt6::Core>;$ENV{PATH}"
+        $<TARGET_FILE:sing-box-qt-logs-tests>
 )
 add_test(
     NAME sing-box-qt-connections-tests

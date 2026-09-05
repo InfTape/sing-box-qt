@@ -17,6 +17,7 @@ int runRuleAndRuleConfigTests(int argc, char* argv[]);
 int runFormatAndProxyTests(int argc, char* argv[]);
 int runLogAndSubscriptionMetaTests(int argc, char* argv[]);
 int runMiscServicesTests(int argc, char* argv[]);
+int runRetentionAndUsageTests(int argc, char* argv[]);
 
 int main(int argc, char* argv[]) {
   qputenv("SING_BOX_QT_PORTABLE", "1");
@@ -32,6 +33,7 @@ int main(int argc, char* argv[]) {
       {"format-and-proxy", runFormatAndProxyTests},
       {"log-and-subscription-meta", runLogAndSubscriptionMetaTests},
       {"misc-services", runMiscServicesTests},
+      {"retention-and-usage", runRetentionAndUsageTests},
   };
 
   const QStringList args = app.arguments();

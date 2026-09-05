@@ -73,6 +73,7 @@ set(SOURCES
     src/services/config/ConfigMutator.cpp
     src/services/rules/SharedRulesStore.cpp
     src/services/rules/RuleConfigService.cpp
+    src/storage/LogStore.cpp
     src/storage/DatabaseService.cpp
     src/storage/ConfigIO.cpp
     src/storage/SubscriptionConfigStore.cpp
@@ -133,6 +134,7 @@ set(SOURCES
     src/widgets/config/JsonSyntaxHighlighter.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
+    src/utils/LogRetention.cpp
     src/utils/Crypto.cpp
     src/utils/LogParser.cpp
     src/utils/subscription/SubscriptionUserinfo.cpp
@@ -188,6 +190,7 @@ set(HEADERS
     src/services/config/ConfigMutator.h
     src/services/rules/SharedRulesStore.h
     src/services/rules/RuleConfigService.h
+    src/storage/LogStore.h
     src/storage/DatabaseService.h
     src/dialogs/subscription/NodeEditDialog.h
     src/dialogs/editors/NodeEditor.h
@@ -247,6 +250,7 @@ set(HEADERS
     src/widgets/config/JsonSyntaxHighlighter.h
     src/utils/PortableMode.h
     src/utils/Logger.h
+    src/utils/LogRetention.h
     src/utils/Crypto.h
     src/utils/LogParser.h
     src/utils/subscription/SubscriptionUserinfo.h
@@ -289,6 +293,7 @@ set(CORE_MANAGER_SOURCES
     src/storage/DatabaseService.cpp
     src/utils/PortableMode.cpp
     src/utils/Logger.cpp
+    src/utils/LogRetention.cpp
 )
 
 set(CORE_MANAGER_HEADERS
@@ -300,6 +305,7 @@ set(CORE_MANAGER_HEADERS
     src/storage/DatabaseService.h
     src/utils/PortableMode.h
     src/utils/Logger.h
+    src/utils/LogRetention.h
     src/utils/AppPaths.h
 )
 

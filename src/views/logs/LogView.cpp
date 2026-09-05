@@ -1,10 +1,12 @@
 #include "LogView.h"
 #include <QApplication>
-#include <QCheckBox>
 #include <QClipboard>
 #include <QFile>
 #include <QFileDialog>
 #include <QFrame>
+#include <QShowEvent>
+#include <QMessageBox>
+#include <QFutureWatcher>
 #include <QLabel>
 #include "widgets/common/StyledLineEdit.h"
 #include <QPushButton>
@@ -13,26 +15,81 @@
 #include <QScrollBar>
 #include <QStringList>
 #include <QTextStream>
+#include <QTimer>
 #include <QVBoxLayout>
+#include <algorithm>
 #include <utility>
 #include "app/interfaces/ThemeService.h"
 #include "utils/LogParser.h"
+#include "utils/LogRetention.h"
 #include "widgets/common/MenuComboBox.h"
 #include "widgets/logs/LogRowWidget.h"
 
-namespace {
-constexpr int kMaxLogEntries = 20;
-}  // namespace
-
 LogView::LogView(ThemeService* themeService, QWidget* parent)
     : QWidget(parent), m_themeService(themeService) {
+  m_store = new LogStore(this);
+  m_tailScrollTimer = new QTimer(this);
+  m_tailScrollTimer->setSingleShot(true);
+  m_tailScrollTimer->setInterval(0);
+  connect(m_tailScrollTimer, &QTimer::timeout, this, [this]() {
+    auto* bar = m_scrollArea->verticalScrollBar();
+    if (m_followTail && !bar->isSliderDown()) {
+      bar->setValue(bar->maximum());
+    }
+  });
   setupUI();
+  m_refreshTimer = new QTimer(this);
+  m_refreshTimer->setInterval(500);
+  m_refreshTimer->setSingleShot(true);
+  connect(m_refreshTimer, &QTimer::timeout, this, [this]() {
+    if (isVisible()) {
+      rebuildList();
+    }
+  });
+  connect(m_store, &LogStore::changed, this, &LogView::scheduleRefresh);
+  connect(m_store, &LogStore::storageError, this, [this](const QString& message) {
+    m_storageError->setText(tr("Log storage error: %1").arg(message));
+    m_storageError->show();
+  });
+  if (!m_store->error().isEmpty()) {
+    m_storageError->setText(tr("Log storage error: %1").arg(m_store->error()));
+    m_storageError->show();
+  }
   updateStyle();
   if (m_themeService) {
-    connect(m_themeService,
-            &ThemeService::themeChanged,
-            this,
-            &LogView::updateStyle);
+    connect(m_themeService, &ThemeService::themeChanged,
+            this, &LogView::updateStyle);
+  }
+}
+
+void LogView::showEvent(QShowEvent* event) {
+  QWidget::showEvent(event);
+  rebuildList();
+}
+
+void LogView::scheduleRefresh() {
+  if (isVisible() && !m_refreshTimer->isActive()) {
+    m_refreshTimer->start();
+  }
+}
+
+void LogView::scheduleTailScroll() {
+  if (m_followTail && !m_scrollArea->verticalScrollBar()->isSliderDown() &&
+      !m_tailScrollTimer->isActive()) {
+    m_tailScrollTimer->start();
+  }
+}
+
+void LogView::updateScrollIntent() {
+  auto* bar = m_scrollArea->verticalScrollBar();
+  // actionTriggered fires before value is committed, so use sliderPosition.
+  // Only user scrolling changes follow mode; layout changes must not pause it.
+  m_followTail = bar->sliderPosition() == bar->maximum();
+  if (m_followTail) {
+    scheduleRefresh();
+    scheduleTailScroll();
+  } else {
+    m_tailScrollTimer->stop();
   }
 }
 
@@ -46,7 +103,7 @@ void LogView::setupUI() {
   titleLayout->setSpacing(4);
   m_titleLabel = new QLabel(tr("Logs"));
   m_titleLabel->setObjectName("PageTitle");
-  m_subtitleLabel = new QLabel(tr("View kernel logs and errors"));
+  m_subtitleLabel = new QLabel(tr("Kernel logs from the last 24 hours"));
   m_subtitleLabel->setObjectName("PageSubtitle");
   titleLayout->addWidget(m_titleLabel);
   titleLayout->addWidget(m_subtitleLabel);
@@ -63,23 +120,21 @@ void LogView::setupUI() {
   m_warningTag = new QLabel(tr("Warnings: 0"));
   m_warningTag->setObjectName("WarningTag");
   m_warningTag->setFixedHeight(32);
-  m_autoScroll = new QCheckBox(tr("Auto scroll"));
-  m_autoScroll->setObjectName("AutoScroll");
-  m_autoScroll->setChecked(false);
   m_clearBtn = new QPushButton(tr("Clear"));
   m_clearBtn->setObjectName("ClearBtn");
   m_clearBtn->setCursor(Qt::PointingHandCursor);
   m_clearBtn->setFixedHeight(32);
   m_copyBtn = new QPushButton(tr("Copy"));
   m_copyBtn->setObjectName("CopyBtn");
+  m_copyBtn->setToolTip(tr("Copy the displayed logs (up to %1 entries)")
+                            .arg(LogStore::kVisibleLimit));
   m_copyBtn->setCursor(Qt::PointingHandCursor);
   m_copyBtn->setFixedHeight(32);
   m_exportBtn = new QPushButton(tr("Export"));
   m_exportBtn->setObjectName("ExportBtn");
+  m_exportBtn->setToolTip(tr("Export all matching logs from the last 24 hours"));
   m_exportBtn->setCursor(Qt::PointingHandCursor);
   m_exportBtn->setFixedHeight(32);
-  controlsLayout->addWidget(m_autoScroll);
-  controlsLayout->addSpacing(10);
   controlsLayout->addWidget(m_totalTag);
   controlsLayout->addWidget(m_errorTag);
   controlsLayout->addWidget(m_warningTag);
@@ -148,6 +203,24 @@ void LogView::setupUI() {
   logCardLayout->addWidget(m_scrollArea, 1);
   logCardLayout->addWidget(m_emptyState, 1);
   mainLayout->addWidget(logCard, 1);
+  m_storageError = new QLabel;
+  m_storageError->setObjectName("StorageError");
+  m_storageError->setWordWrap(true);
+  m_storageError->hide();
+  mainLayout->addWidget(m_storageError);
+  auto* scrollBar = m_scrollArea->verticalScrollBar();
+  connect(scrollBar, &QScrollBar::actionTriggered,
+          this, &LogView::updateScrollIntent);
+  connect(scrollBar, &QScrollBar::sliderMoved,
+          this, &LogView::updateScrollIntent);
+  connect(scrollBar, &QScrollBar::sliderPressed, this, [this]() {
+    m_followTail = false;
+    m_tailScrollTimer->stop();
+  });
+  connect(scrollBar, &QScrollBar::sliderReleased,
+          this, &LogView::updateScrollIntent);
+  connect(scrollBar, &QScrollBar::rangeChanged,
+          this, &LogView::scheduleTailScroll);
   connect(
       m_searchEdit, &QLineEdit::textChanged, this, &LogView::onFilterChanged);
   connect(m_typeFilter,
@@ -203,38 +276,23 @@ void LogView::appendApiLog(const QString& type, const QString& payload) {
     entry.direction.clear();
   }
   entry.timestamp = QDateTime::currentDateTime();
-  m_logs.push_back(entry);
-  if (m_logs.size() > kMaxLogEntries) {
-    const LogParser::LogEntry removed        = m_logs.first();
-    const bool                removedMatches = logMatchesFilter(removed);
-    m_logs.removeFirst();
-    if (removedMatches && !m_filtered.isEmpty()) {
-      m_filtered.removeFirst();
-      removeFirstLogRow();
-    }
-  }
-  if (logMatchesFilter(entry)) {
-    m_filtered.push_back(entry);
-    appendLogRow(entry);
-  }
-  updateStats();
-  updateEmptyState();
-  if (m_autoScroll->isChecked()) {
-    m_scrollArea->verticalScrollBar()->setValue(
-        m_scrollArea->verticalScrollBar()->maximum());
-  }
+  m_store->append(entry);
 }
 
 void LogView::clear() {
-  m_logs.clear();
-  m_filtered.clear();
-  clearListWidgets();
-  updateStats();
-  updateEmptyState();
+  if (!m_store->clear()) {
+    return;
+  }
+  m_forceRefresh = true;
+  m_followTail = true;
+  rebuildList();
 }
 
 void LogView::onFilterChanged() {
-  rebuildList();
+  m_forceRefresh = true;
+  m_followTail = true;
+  // Debounce typing and avoid rescanning the day for every keystroke.
+  m_refreshTimer->start();
 }
 
 void LogView::onClearClicked() {
@@ -243,11 +301,11 @@ void LogView::onClearClicked() {
 
 void LogView::onCopyClicked() {
   QStringList lines;
-  for (const auto& log : std::as_const(m_filtered)) {
+  for (const auto& row : std::as_const(m_rows)) {
+    const auto& log = row.entry;
     lines << QString("[%1] [%2] %3")
-                 .arg(log.timestamp.toString("HH:mm:ss"))
-                 .arg(log.type.toUpper())
-                 .arg(log.payload);
+                 .arg(log.timestamp.toString("HH:mm:ss"),
+                      log.type.toUpper(), log.payload);
   }
   QApplication::clipboard()->setText(lines.join("\n"));
 }
@@ -258,64 +316,74 @@ void LogView::onExportClicked() {
   if (path.isEmpty()) {
     return;
   }
-  QFile file(path);
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    return;
-  }
-  QTextStream out(&file);
-  for (const auto& log : std::as_const(m_filtered)) {
-    out << QString("[%1] [%2] %3\n")
-               .arg(log.timestamp.toString(Qt::ISODate))
-               .arg(log.type.toUpper())
-               .arg(log.payload);
-  }
+  m_exportBtn->setEnabled(false);
+  m_exportBtn->setText(tr("Exporting..."));
+  auto* watcher = new QFutureWatcher<QString>(this);
+  connect(watcher, &QFutureWatcher<QString>::finished, this, [this, watcher]() {
+    m_exportBtn->setEnabled(true);
+    m_exportBtn->setText(tr("Export"));
+    const QString error = watcher->result();
+    watcher->deleteLater();
+    if (!error.isEmpty()) {
+      QMessageBox::warning(this, tr("Export Logs"), error);
+    }
+  });
+  watcher->setFuture(m_store->exportAsync(
+      path, m_searchEdit->text().trimmed(), m_typeFilter->currentData().toString()));
 }
 
 void LogView::rebuildList() {
-  const QString query     = m_searchEdit->text().trimmed();
-  const QString typeValue = m_typeFilter->currentData().toString();
-  m_filtered.clear();
-  for (const auto& log : std::as_const(m_logs)) {
-    const bool matchSearch =
-        query.isEmpty() || log.payload.contains(query, Qt::CaseInsensitive);
-    const bool matchType = typeValue.isEmpty() || log.type == typeValue;
-    if (matchSearch && matchType) {
-      m_filtered.push_back(log);
+  m_store->flush();
+  const QString search = m_searchEdit->text().trimmed();
+  const QString type = m_typeFilter->currentData().toString();
+  m_counts = m_store->counts(search, type);
+  updateStats();
+  auto* bar = m_scrollArea->verticalScrollBar();
+  // Keep both row contents and their geometry unchanged while reading history.
+  // New arrivals still go to disk; returning to the bottom loads the latest entries.
+  if (!m_forceRefresh && !m_rows.isEmpty() &&
+      (!m_followTail || bar->isSliderDown())) {
+    return;
+  }
+  m_forceRefresh = false;
+  auto next = m_store->latest(search, type);
+  // Reuse overlapping rows on live updates instead of rebuilding every widget.
+  m_listContainer->setUpdatesEnabled(false);
+  qsizetype overlap = 0;
+  if (!next.isEmpty()) {
+    while (!m_rows.isEmpty() &&
+           m_rows.first().id < next.first().id) {
+      m_rows.removeFirst();
+      removeFirstLogRow();
     }
+    while (overlap < m_rows.size() && overlap < next.size() &&
+           m_rows[overlap].id == next[overlap].id) ++overlap;
   }
-  clearListWidgets();
-  for (const auto& log : std::as_const(m_filtered)) {
-    appendLogRow(log);
+  if (overlap != m_rows.size()) {
+    clearListWidgets();
+    overlap = 0;
   }
+  for (qsizetype i = overlap; i < next.size(); ++i) {
+    appendLogRow(next[i].entry);
+  }
+  m_rows = std::move(next);
+  m_listContainer->setUpdatesEnabled(true);
   updateStats();
   updateEmptyState();
+  if (m_store->error().isEmpty()) {
+    m_storageError->hide();
+  }
+  // Word wrapping and window resizing can change the range in later layout
+  // passes. rangeChanged will pin the bottom again after each such pass.
+  scheduleTailScroll();
 }
 
 void LogView::updateStats() {
-  int errorCount   = 0;
-  int warningCount = 0;
-  for (const auto& log : std::as_const(m_filtered)) {
-    if (log.type == "error" || log.type == "fatal" || log.type == "panic") {
-      errorCount++;
-    }
-    if (log.type == "warning") {
-      warningCount++;
-    }
-  }
-  m_totalTag->setText(tr("%1 entries").arg(m_filtered.size()));
-  m_errorTag->setText(tr("Errors: %1").arg(errorCount));
-  m_warningTag->setText(tr("Warnings: %1").arg(warningCount));
-  m_errorTag->setVisible(true);
-  m_warningTag->setVisible(true);
-}
+  m_totalTag->setText(tr("%1 entries").arg(m_counts.total));
+  m_subtitleLabel->setText(tr("Kernel logs from the last 24 hours"));
+  m_errorTag->setText(tr("Errors: %1").arg(m_counts.errors));
+  m_warningTag->setText(tr("Warnings: %1").arg(m_counts.warnings));
 
-bool LogView::logMatchesFilter(const LogParser::LogEntry& entry) const {
-  const QString query     = m_searchEdit->text().trimmed();
-  const QString typeValue = m_typeFilter->currentData().toString();
-  const bool    matchSearch =
-      query.isEmpty() || entry.payload.contains(query, Qt::CaseInsensitive);
-  const bool matchType = typeValue.isEmpty() || entry.type == typeValue;
-  return matchSearch && matchType;
 }
 
 void LogView::appendLogRow(const LogParser::LogEntry& entry) {
@@ -350,7 +418,7 @@ void LogView::updateEmptyState() {
   const QString query = m_searchEdit->text().trimmed();
   const bool    hasFilters =
       !query.isEmpty() || !m_typeFilter->currentData().toString().isEmpty();
-  if (m_filtered.isEmpty()) {
+  if (m_rows.isEmpty()) {
     m_emptyState->show();
     m_scrollArea->hide();
     m_emptyTitle->setText(hasFilters ? tr("No matching logs")

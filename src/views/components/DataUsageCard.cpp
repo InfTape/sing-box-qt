@@ -86,7 +86,7 @@ void DataUsageCard::setupUi(ThemeService* themeService) {
   m_clearButton->setObjectName("DataUsageClearBtn");
   m_clearButton->setFixedSize(20, 20);
   m_clearButton->setCursor(Qt::PointingHandCursor);
-  m_clearButton->setToolTip(tr("Clear statistics"));
+  m_clearButton->setToolTip(tr("Reset accumulated traffic statistics"));
   rankingHeader->addWidget(rankingIcon);
   rankingHeader->addWidget(rankingTitle);
   rankingHeader->addWidget(m_clearButton);

@@ -1,3 +1,4 @@
+#include "../storage/usage_test_helpers.h"
 #include "../unit_test_shared.h"
 
 class MiscServicesTests : public QObject {
@@ -182,6 +183,7 @@ void MiscServicesTests::
 
 
 void MiscServicesTests::dataUsageTracker_shouldTrackGlobalTotals() {
+  UsageDatabaseScope database;
   DataUsageTracker tracker;
   tracker.reset();
   // Build a fake connections JSON with two connections
