@@ -26,11 +26,18 @@ jobs:
           sudo apt-get install -y \
             cmake \
             ninja-build \
-            qt6-base-dev \
-            qt6-base-dev-tools \
-            qt6-websockets-dev \
             python3-pip
           python3 -m pip install --upgrade gcovr
+
+      - name: Install Qt 6.10.1
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.10.1
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qtwebsockets
+          cache: true
 
       - name: Configure
         run: >
@@ -39,6 +46,7 @@ jobs:
           -DCMAKE_CXX_FLAGS="--coverage -O0 -g"
           -DCMAKE_EXE_LINKER_FLAGS="--coverage"
           -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+          -DQt6_DIR="$Qt6_DIR"
 
       - name: Build
         run: cmake --build build/test --config Debug
