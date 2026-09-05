@@ -9,6 +9,7 @@ class QLabel;
 class QScrollArea;
 class QTimer;
 class QWidget;
+class LogRowWidget;
 
 // A bounded selection across the separate log body labels, excluding badges.
 class LogTextSelection : public QObject {
@@ -16,6 +17,7 @@ class LogTextSelection : public QObject {
  public:
   explicit LogTextSelection(QScrollArea* area);
   void watchRow(QWidget* row);
+  void setRows(const QVector<LogRowWidget*>& rows);
   void clear();
   bool isActive() const;
   QString selectedText() const;

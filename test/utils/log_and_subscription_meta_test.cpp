@@ -7,6 +7,7 @@ class LogAndSubscriptionMetaTests : public QObject {
   void initTestCase();
   void logParser_shouldParseAndDetectTypes();
   void logParser_shouldParsePacketConnections();
+  void logParser_shouldParseDnsTraffic();
   void logParser_shouldHandleFallbackPaths();
   void logParser_shouldMapLabels();
   void logParser_shouldStripSessionTracker();
@@ -82,6 +83,27 @@ void LogAndSubscriptionMetaTests::logParser_shouldParsePacketConnections() {
   QCOMPARE(outbound.protocol, QString("vless"));
   QCOMPARE(outbound.network, QString("udp"));
   QCOMPARE(outbound.nodeName, QString("JP"));
+}
+
+void LogAndSubscriptionMetaTests::logParser_shouldParseDnsTraffic() {
+  const QStringList formats = {
+      "inbound DNS packet from 172.19.0.1:49664",
+      "inbound DNS packet connection from [::1]:49664",
+      "inbound DNS connection from 172.19.0.1:49664",
+      "inbound redirect DNS connection from 172.19.0.1:49664"};
+  for (const auto& format : formats) {
+    const auto kind = LogParser::parseLogKind(
+        "[123 1ms] inbound/tun[tun-in]: " + format);
+    QVERIFY(kind.isDns);
+    QVERIFY(!kind.isConnection);
+    QCOMPARE(kind.direction, QString("dns"));
+    QCOMPARE(kind.network, format.contains("packet") ? QString("udp")
+                                                     : QString("tcp"));
+  }
+  const auto unrelated = LogParser::parseLogKind(
+      "inbound/tun[tun-in]: failed to handle DNS packet");
+  QVERIFY(!unrelated.isDns);
+  QVERIFY(unrelated.network.isEmpty());
 }
 
 void LogAndSubscriptionMetaTests::logParser_shouldHandleFallbackPaths() {

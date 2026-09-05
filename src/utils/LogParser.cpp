@@ -5,6 +5,8 @@ namespace LogParser {
 LogKind parseLogKind(const QString& message) {
   LogKind                         info;
   static const QRegularExpression kDnsPattern("\\bdns\\s*:");
+  static const QRegularExpression kDnsTrafficPattern(
+      R"(\b(?:inbound|outbound)(?: redirect)? DNS (packet(?: connection)?|connection) (?:from|to)\s+\S+)");
   static const QRegularExpression kOutboundNode(
       R"(outbound/([^\[]+)\[([^\]]+)\])");
   static const QRegularExpression kInboundNode(
@@ -12,6 +14,13 @@ LogKind parseLogKind(const QString& message) {
   if (message.contains(kDnsPattern)) {
     info.direction = "dns";
     info.isDns     = true;
+    return info;
+  }
+  const auto dnsTraffic = kDnsTrafficPattern.match(message);
+  if (dnsTraffic.hasMatch()) {
+    info.direction = "dns";
+    info.isDns = true;
+    info.network = dnsTraffic.captured(1).startsWith("packet") ? "udp" : "tcp";
     return info;
   }
   if (message.contains("inbound connection") ||

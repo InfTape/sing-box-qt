@@ -200,6 +200,7 @@ void CoreDataService::appendKernelOutput(const QString& stream,
     } else if (kind.isDns) {
       entry.payload   = stripped;
       entry.direction = kind.direction;
+      entry.network = kind.network;
     } else {
       entry.payload = stripped;
     }

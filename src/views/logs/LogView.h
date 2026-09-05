@@ -14,6 +14,7 @@ class QScrollArea;
 class QVBoxLayout;
 class ThemeService;
 class LogTextSelection;
+class LogRowWidget;
 
 class LogView : public QWidget {
   Q_OBJECT
@@ -37,9 +38,8 @@ class LogView : public QWidget {
   void          rebuildList();
   void          updateStats();
   void          updateEmptyState();
-  void          appendLogRow(const LogParser::LogEntry& entry);
-  void          removeFirstLogRow();
-  void          clearListWidgets();
+  void          renderRows(QVector<LogStore::Row> rows);
+  void          loadOlderLogs();
   void scheduleTailScroll();
   void updateScrollIntent();
   QLabel*       m_titleLabel    = nullptr;
@@ -60,12 +60,18 @@ class LogView : public QWidget {
   QLabel*       m_emptyTitle    = nullptr;
   LogStore* m_store = nullptr;
   QVector<LogStore::Row> m_rows;
+  QVector<LogRowWidget*> m_visibleRows;
+  QVector<LogRowWidget*> m_idleRows;
+  quint64 m_renderRevision = 0;
   LogStore::Counts m_counts;
   QTimer* m_refreshTimer = nullptr;
   QTimer* m_tailScrollTimer = nullptr;
   QLabel* m_storageError = nullptr;
   bool m_forceRefresh = true;
   bool m_followTail = true;
+  bool m_hasMoreOlder = true;
+  bool m_isLoadingOlder = false;
+  bool m_rebuilding = false;
   ThemeService*                m_themeService = nullptr;
 };
 #endif  // LOGVIEW_H

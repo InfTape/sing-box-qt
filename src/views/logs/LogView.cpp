@@ -8,6 +8,9 @@
 #include <QMessageBox>
 #include <QFutureWatcher>
 #include <QLabel>
+#include <QHash>
+#include <QSet>
+#include <QScopedValueRollback>
 #include "widgets/common/StyledLineEdit.h"
 #include <QPushButton>
 #include <QRegularExpression>
@@ -232,6 +235,13 @@ void LogView::setupUI() {
           this, &LogView::updateScrollIntent);
   connect(scrollBar, &QScrollBar::rangeChanged,
           this, &LogView::scheduleTailScroll);
+  connect(scrollBar, &QScrollBar::valueChanged, this, [this](int value) {
+    auto* bar = m_scrollArea ? m_scrollArea->verticalScrollBar() : nullptr;
+    if (!m_rebuilding && bar && bar->maximum() > 0 && value <= 5 &&
+        !m_isLoadingOlder && m_hasMoreOlder && !m_rows.isEmpty()) {
+      loadOlderLogs();
+    }
+  });
   connect(
       m_searchEdit, &QLineEdit::textChanged, this, &LogView::onFilterChanged);
   connect(m_typeFilter,
@@ -291,6 +301,7 @@ void LogView::appendApiLog(const QString& type, const QString& payload) {
   } else if (kind.isDns) {
     entry.payload   = payload;
     entry.direction = kind.direction;
+    entry.network = kind.network;
   } else {
     entry.payload = payload;
     entry.direction.clear();
@@ -306,6 +317,8 @@ void LogView::clear() {
   m_textSelection->clear();
   m_forceRefresh = true;
   m_followTail = true;
+  m_hasMoreOlder = false;
+  m_isLoadingOlder = false;
   rebuildList();
 }
 
@@ -313,6 +326,8 @@ void LogView::onFilterChanged() {
   m_textSelection->clear();
   m_forceRefresh = true;
   m_followTail = true;
+  m_hasMoreOlder = true;
+  m_isLoadingOlder = false;
   // Debounce typing and avoid rescanning the day for every keystroke.
   m_refreshTimer->start();
 }
@@ -357,11 +372,18 @@ void LogView::onExportClicked() {
 }
 
 void LogView::rebuildList() {
+  if (m_rebuilding) return;
+  QScopedValueRollback<bool> guard(m_rebuilding, true);
   m_store->flush();
   const QString search = m_searchEdit->text().trimmed();
   const QString type = m_typeFilter->currentData().toString();
-  m_counts = m_store->counts(search, type);
-  updateStats();
+  if (search.isEmpty()) {
+    m_counts = m_store->counts(search, type);
+    updateStats();
+  } else {
+    m_counts.total = m_rows.size();
+    updateStats();
+  }
   auto* bar = m_scrollArea->verticalScrollBar();
   if (m_textSelection->isActive()) return;
   // Keep both row contents and their geometry unchanged while reading history.
@@ -373,27 +395,24 @@ void LogView::rebuildList() {
   m_forceRefresh = false;
   m_textSelection->clear();
   auto next = m_store->latest(search, type);
-  // Reuse overlapping rows on live updates instead of rebuilding every widget.
-  m_listContainer->setUpdatesEnabled(false);
-  qsizetype overlap = 0;
-  if (!next.isEmpty()) {
-    while (!m_rows.isEmpty() &&
-           m_rows.first().id < next.first().id) {
-      m_rows.removeFirst();
-      removeFirstLogRow();
+  m_hasMoreOlder = (next.size() == LogStore::kVisibleLimit);
+  m_isLoadingOlder = false;
+  if (search.isEmpty()) {
+    m_counts = m_store->counts(search, type);
+  } else {
+    m_counts.total = next.size();
+    m_counts.errors = 0;
+    m_counts.warnings = 0;
+    for (const auto& row : next) {
+      const QString& t = row.entry.type;
+      if (t == "error" || t == "fatal" || t == "panic") {
+        m_counts.errors++;
+      } else if (t == "warning" || t == "warn") {
+        m_counts.warnings++;
+      }
     }
-    while (overlap < m_rows.size() && overlap < next.size() &&
-           m_rows[overlap].id == next[overlap].id) ++overlap;
   }
-  if (overlap != m_rows.size()) {
-    clearListWidgets();
-    overlap = 0;
-  }
-  for (qsizetype i = overlap; i < next.size(); ++i) {
-    appendLogRow(next[i].entry);
-  }
-  m_rows = std::move(next);
-  m_listContainer->setUpdatesEnabled(true);
+  renderRows(std::move(next));
   updateStats();
   updateEmptyState();
   if (m_store->error().isEmpty()) {
@@ -412,34 +431,113 @@ void LogView::updateStats() {
 
 }
 
-void LogView::appendLogRow(const LogParser::LogEntry& entry) {
-  auto* row = new LogRowWidget(entry);
-  m_textSelection->watchRow(row);
-  m_listLayout->insertWidget(m_listLayout->count() - 1,
-                             row);
+void LogView::renderRows(QVector<LogStore::Row> rows) {
+  if (rows.size() > LogStore::kVisibleLimit) {
+    rows = rows.last(LogStore::kVisibleLimit);
+  }
+  bool unchanged = rows.size() == m_rows.size();
+  for (int i = 0; unchanged && i < rows.size(); ++i) {
+    unchanged = rows[i].id == m_rows[i].id;
+  }
+  if (unchanged) return;
+
+  ++m_renderRevision;
+  m_textSelection->clear();
+  m_listContainer->setUpdatesEnabled(false);
+  QSet<qint64> nextIds;
+  for (const auto& row : rows) nextIds.insert(row.id);
+  QHash<qint64, LogRowWidget*> retained;
+  for (int i = 0; i < m_visibleRows.size(); ++i) {
+    auto* widget = m_visibleRows[i];
+    if (nextIds.contains(m_rows[i].id)) {
+      retained.insert(m_rows[i].id, widget);
+    } else {
+      widget->reset();
+      m_idleRows.append(widget);
+    }
+  }
+  // Detach layout items only; row widgets and their labels remain allocated.
+  while (m_listLayout->count() > 1) delete m_listLayout->takeAt(0);
+  m_visibleRows.clear();
+  for (const auto& row : rows) {
+    auto* widget = retained.take(row.id);
+    if (!widget) {
+      if (m_idleRows.isEmpty()) {
+        widget = new LogRowWidget(row.entry, m_listContainer);
+        m_textSelection->watchRow(widget);
+      } else {
+        widget = m_idleRows.takeLast();
+        widget->setEntry(row.entry);
+      }
+    }
+    m_listLayout->insertWidget(m_listLayout->count() - 1, widget);
+    widget->show();
+    m_visibleRows.append(widget);
+  }
+  Q_ASSERT(m_visibleRows.size() + m_idleRows.size() <= LogStore::kVisibleLimit);
+  m_rows = std::move(rows);
+  // Reuse changes widget order; selection must follow the visible row order.
+  m_textSelection->setRows(m_visibleRows);
+  m_listContainer->setUpdatesEnabled(true);
 }
 
-void LogView::removeFirstLogRow() {
-  if (m_listLayout->count() <= 1) {
+void LogView::loadOlderLogs() {
+  if (m_rebuilding || m_isLoadingOlder || !m_hasMoreOlder || m_rows.isEmpty() ||
+      m_textSelection->isActive() || m_forceRefresh) {
     return;
   }
-  QLayoutItem* item = m_listLayout->takeAt(0);
-  if (item) {
-    if (item->widget()) {
-      delete item->widget();
-    }
-    delete item;
+  QScopedValueRollback<bool> guard(m_rebuilding, true);
+  m_isLoadingOlder = true;
+  const QString search = m_searchEdit->text().trimmed();
+  const QString type = m_typeFilter->currentData().toString();
+  auto older = m_store->latest(search, type, m_rows.first().id);
+  if (older.isEmpty()) {
+    m_hasMoreOlder = false;
+    m_isLoadingOlder = false;
+    return;
   }
-}
-
-void LogView::clearListWidgets() {
-  while (m_listLayout->count() > 1) {
-    QLayoutItem* item = m_listLayout->takeAt(0);
-    if (item->widget()) {
-      delete item->widget();
-    }
-    delete item;
+  m_followTail = false;
+  m_tailScrollTimer->stop();
+  auto* anchor = m_visibleRows.first();
+  const int anchorY = anchor->mapTo(m_scrollArea->viewport(), QPoint()).y();
+  // Retain a viewport of current rows to keep the reading anchor in place.
+  // Recycle the remaining slots for older results instead of growing the list.
+  int keep = 0;
+  int height = 0;
+  while (keep < m_visibleRows.size() && keep < LogStore::kVisibleLimit - 1 &&
+         height < m_scrollArea->viewport()->height() + 24) {
+    height += m_visibleRows[keep++]->height() + m_listLayout->spacing();
   }
+  keep = qMax(1, keep);
+  const int take = qMin(int(older.size()), LogStore::kVisibleLimit - keep);
+  m_hasMoreOlder = older.size() == LogStore::kVisibleLimit || take < older.size();
+  auto next = older.last(take);
+  next += m_rows.first(keep);
+  renderRows(std::move(next));
+  if (!search.isEmpty()) {
+    m_counts = {};
+    m_counts.total = m_rows.size();
+    for (const auto& row : m_rows) {
+      const auto& level = row.entry.type;
+      if (level == "error" || level == "fatal" || level == "panic") {
+        ++m_counts.errors;
+      } else if (level == "warning" || level == "warn") {
+        ++m_counts.warnings;
+      }
+    }
+    updateStats();
+  }
+  // Let Qt finish layout without a nested event loop that can re-enter queries.
+  const quint64 revision = m_renderRevision;
+  QTimer::singleShot(0, this, [this, anchor, anchorY, revision]() {
+    if (revision != m_renderRevision) return;
+    auto* bar = m_scrollArea->verticalScrollBar();
+    if (!m_followTail && !m_textSelection->isActive()) {
+      const int newY = anchor->mapTo(m_scrollArea->viewport(), QPoint()).y();
+      bar->setValue(bar->value() + newY - anchorY);
+    }
+    m_isLoadingOlder = false;
+  });
 }
 
 void LogView::updateEmptyState() {

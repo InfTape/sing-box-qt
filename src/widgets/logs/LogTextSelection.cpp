@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <algorithm>
 #include "widgets/common/RoundedMenu.h"
+#include "widgets/logs/LogRowWidget.h"
 
 LogTextSelection::LogTextSelection(QScrollArea* area)
     : QObject(area), m_area(area), m_dragScroll(new QTimer(this)) {
@@ -41,10 +42,17 @@ void LogTextSelection::watchRow(QWidget* row) {
     label->setTextFormat(Qt::PlainText);
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     label->setCursor(Qt::IBeamCursor);
-    m_labels.append(label);
     connect(label, &QObject::destroyed, this, [this]() {
       m_labels.removeIf([](const auto& label) { return label.isNull(); });
     });
+  }
+}
+
+void LogTextSelection::setRows(const QVector<LogRowWidget*>& rows) {
+  clear();
+  m_labels.clear();
+  for (auto* row : rows) {
+    m_labels.append(row->findChild<QLabel*>("LogContent"));
   }
 }
 

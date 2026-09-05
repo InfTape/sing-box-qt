@@ -27,7 +27,8 @@ class LogStore : public QObject {
   bool flush();
   bool clear();
   bool prune(const QDateTime& now = QDateTime::currentDateTime());
-  QVector<Row> latest(const QString& search, const QString& type);
+  QVector<Row> latest(const QString& search, const QString& type,
+                      qint64 beforeId = 0);
   Counts counts(const QString& search, const QString& type);
   bool exportTo(const QString& path, const QString& search, const QString& type);
   QFuture<QString> exportAsync(const QString& path, const QString& search,

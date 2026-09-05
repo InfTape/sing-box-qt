@@ -151,6 +151,7 @@ bool LogStore::open(const QString& path) {
       "CREATE INDEX IF NOT EXISTS log_time ON logs(stamp)",
       "CREATE INDEX IF NOT EXISTS log_type_id ON logs(type, id)",
       "CREATE INDEX IF NOT EXISTS log_type_time ON logs(type, stamp)",
+      "CREATE INDEX IF NOT EXISTS log_id_stamp ON logs(id DESC, stamp)",
       "CREATE TABLE IF NOT EXISTS log_counts (type TEXT PRIMARY KEY, "
       "count INTEGER NOT NULL) WITHOUT ROWID",
       "CREATE TRIGGER IF NOT EXISTS log_insert AFTER INSERT ON logs BEGIN "
@@ -257,15 +258,22 @@ bool LogStore::prune(const QDateTime& now) {
 }
 
 QVector<LogStore::Row> LogStore::latest(const QString& search,
-                                      const QString& type) {
+                                      const QString& type,
+                                      qint64 beforeId) {
   QVector<Row> result;
   QSqlQuery query(m_db);
   query.setForwardOnly(true);
-  query.prepare("SELECT id, stamp, type, payload, direction, network "
-                "FROM logs WHERE " +
-                predicate(search, type) + " ORDER BY id DESC LIMIT " +
-                QString::number(kVisibleLimit));
+  QString sql = "SELECT id, stamp, type, payload, direction, network "
+                "FROM logs WHERE " + predicate(search, type);
+  if (beforeId > 0) {
+    sql += " AND id < :before_id";
+  }
+  sql += " ORDER BY id DESC LIMIT " + QString::number(kVisibleLimit);
+  query.prepare(sql);
   bindFilter(query, search, type);
+  if (beforeId > 0) {
+    query.bindValue(":before_id", beforeId);
+  }
   if (!query.exec()) {
     fail(query.lastError().text());
     return result;
@@ -287,24 +295,21 @@ LogStore::Counts LogStore::counts(const QString& search, const QString& type) {
                   "WHERE logs.type=log_counts.type AND stamp < :cutoff) "
                   "FROM log_counts" +
                   (type.isEmpty() ? QString() : " WHERE type=:type"));
-  } else {
-    query.prepare("SELECT type, COUNT(*) FROM logs WHERE " +
-                  predicate(search, type) + " GROUP BY type");
-  }
-  bindFilter(query, search, type);
-  if (!query.exec()) {
-    fail(query.lastError().text());
-    return result;
-  }
-  while (query.next()) {
-    const auto level = query.value(0).toString();
-    const qint64 count = query.value(1).toLongLong();
-    result.total += count;
-    if (level == "error" || level == "fatal" || level == "panic") {
-      result.errors += count;
+    bindFilter(query, search, type);
+    if (!query.exec()) {
+      fail(query.lastError().text());
+      return result;
     }
-    if (level == "warning") {
-      result.warnings += count;
+    while (query.next()) {
+      const auto level = query.value(0).toString();
+      const qint64 count = query.value(1).toLongLong();
+      result.total += count;
+      if (level == "error" || level == "fatal" || level == "panic") {
+        result.errors += count;
+      }
+      if (level == "warning") {
+        result.warnings += count;
+      }
     }
   }
   return result;

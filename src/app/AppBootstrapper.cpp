@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QLocale>
 #include <QStyleFactory>
+#include <QThreadPool>
 #include "app/AppContext.h"
 #include "app/MainWindow.h"
 #include "app/ProxyUiController.h"
@@ -14,6 +15,7 @@ AppBootstrapper::AppBootstrapper(QApplication& app) : m_app(app) {}
 AppBootstrapper::~AppBootstrapper() = default;
 
 bool AppBootstrapper::initialize() {
+  QThreadPool::globalInstance()->setStackSize(256 * 1024);
   setupMeta();
   setupStyle();
   Logger::instance().init();
