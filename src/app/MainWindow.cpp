@@ -70,7 +70,10 @@ QIcon svgIcon(const QString& resourcePath, int size, const QColor& color) {
     p.fillRect(tinted.rect(), color);
   }
   tinted.setDevicePixelRatio(dpr);
-  return QIcon(tinted);
+  QIcon icon(tinted);
+  // Preserve the theme color instead of Qt's generated selection tint.
+  icon.addPixmap(tinted, QIcon::Selected);
+  return icon;
 }
 }  // namespace
 
