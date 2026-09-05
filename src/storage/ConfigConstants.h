@@ -1,4 +1,4 @@
-﻿#ifndef CONFIGCONSTANTS_H
+#ifndef CONFIGCONSTANTS_H
 #define CONFIGCONSTANTS_H
 #include <QString>
 #include <QStringList>
@@ -19,6 +19,8 @@ const QString TAG_OPENAI   = "OpenAI";
 const QString DNS_PROXY    = "dns_proxy";
 const QString DNS_CN       = "dns_cn";
 const QString DNS_RESOLVER = "dns_resolver";
+// ==================== HTTP client tags ====================
+const QString HTTP_CLIENT_DEFAULT = "default-http";
 // ==================== Rule set tags ====================
 const QString RS_GEOSITE_CN                 = "geosite-cn";
 const QString RS_GEOSITE_GEOLOCATION_NOT_CN = "geosite-geolocation-!cn";

@@ -69,10 +69,16 @@ void ConfigBuilderTests::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
       !findObjectByTag(dnsServers, ConfigConstants::DNS_RESOLVER).contains("detour"));
   const QJsonArray dnsRules = dnsObj.value("rules").toArray();
   QVERIFY(findRuleSetIndex(dnsRules, ConfigConstants::RS_GEOSITE_ADS) >= 0);
+  QVERIFY(!dnsObj.contains("independent_cache"));
   for (const auto& ruleValue : dnsRules) {
     const QJsonObject rule = ruleValue.toObject();
     if (rule.contains("server")) {
       QCOMPARE(rule.value("action").toString(), QString("route"));
+    }
+    QVERIFY(!rule.contains("strategy"));
+    if (rule.value("server").toString() == ConfigConstants::DNS_CN &&
+        rule.contains("rule_set")) {
+      QCOMPARE(rule.value("rule_set").toString(), ConfigConstants::RS_GEOSITE_CN);
     }
   }
 
@@ -86,6 +92,8 @@ void ConfigBuilderTests::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
 
   const QJsonObject routeObj = config.value("route").toObject();
   QCOMPARE(routeObj.value("final").toString(), ConfigConstants::TAG_AUTO);
+  QCOMPARE(routeObj.value("default_http_client").toString(),
+           ConfigConstants::HTTP_CLIENT_DEFAULT);
   const QJsonArray routeRules = routeObj.value("rules").toArray();
   QVERIFY(findActionIndex(routeRules, "sniff") >= 0);
   QVERIFY(findProtocolActionIndex(routeRules, "dns", "hijack-dns") >= 0);
@@ -108,11 +116,13 @@ void ConfigBuilderTests::configBuilder_shouldBuildFeatureEnabledBaseConfig() {
   QVERIFY(cnRuleSetUrl.startsWith(
       "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/"));
 
-
-  QCOMPARE(ruleSets[cnIdx].toObject().value("download_detour").toString(),
+  const QJsonArray httpClients = config.value("http_clients").toArray();
+  QCOMPARE(findObjectByTag(httpClients, ConfigConstants::HTTP_CLIENT_DEFAULT)
+               .value("detour")
+               .toString(),
            ConfigConstants::TAG_MANUAL);
-  QCOMPARE(ruleSets[privateIdx].toObject().value("download_detour").toString(),
-           ConfigConstants::TAG_MANUAL);
+  QVERIFY(!ruleSets[cnIdx].toObject().contains("download_detour"));
+  QVERIFY(!ruleSets[privateIdx].toObject().contains("download_detour"));
 
   const QJsonObject experimental = config.value("experimental").toObject();
   const QJsonObject clashApi = experimental.value("clash_api").toObject();

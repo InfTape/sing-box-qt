@@ -374,15 +374,23 @@ void ConfigMutatorTests::configMutator_shouldApplySettingsFeatureInsertions() {
   const QJsonArray ruleSets = routeObj.value("rule_set").toArray();
   const int cnIdx = findTagIndex(ruleSets, ConfigConstants::RS_GEOSITE_CN);
   QVERIFY(cnIdx >= 0);
-  QCOMPARE(ruleSets[cnIdx]
-               .toObject()
-               .value("download_detour")
-               .toString(),
-           ConfigConstants::TAG_MANUAL);
+  QVERIFY(!ruleSets[cnIdx].toObject().contains("download_detour"));
   const QString cnRuleSetUrl =
       ruleSets[cnIdx].toObject().value("url").toString();
   QVERIFY(cnRuleSetUrl.startsWith(
       "https://testingcf.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/"));
+
+  QCOMPARE(routeObj.value("default_http_client").toString(),
+           ConfigConstants::HTTP_CLIENT_DEFAULT);
+  const QJsonArray httpClients = config.value("http_clients").toArray();
+  QCOMPARE(findObjectByTag(httpClients, ConfigConstants::HTTP_CLIENT_DEFAULT)
+               .value("detour")
+               .toString(),
+           ConfigConstants::TAG_MANUAL);
+  QVERIFY(!dnsObj.contains("independent_cache"));
+  for (const auto& rVal : dnsRules) {
+    QVERIFY(!rVal.toObject().contains("strategy"));
+  }
 
 }
 

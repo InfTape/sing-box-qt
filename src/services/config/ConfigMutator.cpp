@@ -346,7 +346,33 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   experimental["clash_api"]               = clashApi;
   normalizeCacheFileConfig(experimental);
   config["experimental"] = experimental;
+  QJsonArray httpClients;
+  if (config.contains("http_clients") && config["http_clients"].isArray()) {
+    httpClients = config.value("http_clients").toArray();
+  }
+  bool foundDefaultHttp = false;
+  for (int i = 0; i < httpClients.size(); ++i) {
+    if (!httpClients[i].isObject()) {
+      continue;
+    }
+    QJsonObject client = httpClients[i].toObject();
+    if (client.value("tag").toString() == ConfigConstants::HTTP_CLIENT_DEFAULT) {
+      client["detour"] = settings.normalizedDownloadDetour();
+      httpClients[i]   = client;
+      foundDefaultHttp = true;
+      break;
+    }
+  }
+  if (!foundDefaultHttp) {
+    QJsonObject defaultClient;
+    defaultClient["tag"]    = ConfigConstants::HTTP_CLIENT_DEFAULT;
+    defaultClient["detour"] = settings.normalizedDownloadDetour();
+    httpClients.append(defaultClient);
+  }
+  config["http_clients"] = httpClients;
+
   QJsonObject dns        = config.value("dns").toObject();
+  dns.remove("independent_cache");
   if (dns.contains("servers") && dns["servers"].isArray()) {
     const QJsonArray inputServers = dns.value("servers").toArray();
     QJsonArray       servers;
@@ -417,26 +443,36 @@ void ConfigMutator::applySettings(QJsonObject& config) {
   }
   if (dns.contains("rules") && dns["rules"].isArray()) {
     QJsonArray rules    = dns.value("rules").toArray();
-    // Inject per-rule strategy based on server tag.
-    const QString proxyStrategy = settings.dnsStrategy();
-    const QString cnStrategy    = settings.dnsStrategyCn();
     for (int i = 0; i < rules.size(); ++i) {
       if (!rules[i].isObject()) {
         continue;
       }
-      QJsonObject rule      = rules[i].toObject();
-      const QString server  = rule.value("server").toString();
+      QJsonObject rule = rules[i].toObject();
+      rule.remove("strategy");
+      if (rule.contains("rule_set")) {
+        if (rule["rule_set"].isArray()) {
+          QJsonArray filteredSets;
+          for (const auto& s : rule["rule_set"].toArray()) {
+            if (s.toString() != ConfigConstants::RS_GEOIP_CN) {
+              filteredSets.append(s);
+            }
+          }
+          if (filteredSets.size() == 1) {
+            rule["rule_set"] = filteredSets[0].toString();
+          } else {
+            rule["rule_set"] = filteredSets;
+          }
+        } else if (rule.value("rule_set").toString() ==
+                   ConfigConstants::RS_GEOIP_CN) {
+          rule.remove("rule_set");
+        }
+      }
+      const QString server = rule.value("server").toString();
       if (!server.isEmpty() &&
           rule.value("action").toString().trimmed().isEmpty()) {
         rule["action"] = "route";
       }
-      if (server == ConfigConstants::DNS_CN) {
-        rule["strategy"] = cnStrategy;
-        rules[i] = rule;
-      } else if (server == ConfigConstants::DNS_PROXY) {
-        rule["strategy"] = proxyStrategy;
-        rules[i] = rule;
-      }
+      rules[i] = rule;
     }
     int        adsIndex = -1;
     for (int i = 0; i < rules.size(); ++i) {
@@ -512,6 +548,7 @@ void ConfigMutator::applySettings(QJsonObject& config) {
     QJsonObject route                = config.value("route").toObject();
     route["final"]                   = settings.normalizedDefaultOutbound();
     route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
+    route["default_http_client"]     = ConfigConstants::HTTP_CLIENT_DEFAULT;
     if (route.contains("rule_set") && route["rule_set"].isArray()) {
       QJsonArray ruleSets = route.value("rule_set").toArray();
       for (int i = 0; i < ruleSets.size(); ++i) {
@@ -526,7 +563,7 @@ void ConfigMutator::applySettings(QJsonObject& config) {
           if (!url.isEmpty()) {
             rs["url"] = url;
           }
-          rs["download_detour"] = settings.normalizedDownloadDetour();
+          rs.remove("download_detour");
         }
         ruleSets[i] = rs;
       }

@@ -8,14 +8,12 @@
 namespace {
 QJsonObject makeRemoteRuleSet(const QString& tag,
                               const QString& url,
-                              const QString& downloadDetour,
                               const QString& updateInterval) {
   QJsonObject rs;
   rs["tag"]             = tag;
   rs["type"]            = "remote";
   rs["format"]          = "binary";
   rs["url"]             = url;
-  rs["download_detour"] = downloadDetour;
   rs["update_interval"] = updateInterval;
   return rs;
 }
@@ -133,6 +131,7 @@ QJsonObject makeAdsBlockDnsRule() {
 }  // namespace
 
 QJsonObject ConfigBuilder::buildBaseConfig() {
+  const AppSettings& settings = AppSettings::instance();
   QJsonObject config;
   QJsonObject log;
   log["disabled"]        = false;
@@ -144,6 +143,14 @@ QJsonObject ConfigBuilder::buildBaseConfig() {
   config["outbounds"]    = buildOutbounds();
   config["route"]        = buildRouteConfig();
   config["experimental"] = buildExperimental();
+
+  QJsonArray httpClients;
+  QJsonObject defaultClient;
+  defaultClient["tag"]    = ConfigConstants::HTTP_CLIENT_DEFAULT;
+  defaultClient["detour"] = settings.normalizedDownloadDetour();
+  httpClients.append(defaultClient);
+  config["http_clients"] = httpClients;
+
   return config;
 }
 
@@ -163,43 +170,34 @@ QJsonObject ConfigBuilder::buildDnsConfig() {
                                       false));
   QJsonArray  rules;
   const QString proxyStrategy = settings.dnsStrategy();
-  const QString cnStrategy    = settings.dnsStrategyCn();
   QJsonObject directRule;
   directRule["clash_mode"] = "direct";
   directRule["action"]     = "route";
   directRule["server"]     = ConfigConstants::DNS_CN;
-  directRule["strategy"]   = cnStrategy;
   rules.append(directRule);
   QJsonObject globalRule;
   globalRule["clash_mode"] = "global";
   globalRule["action"]     = "route";
   globalRule["server"]     = ConfigConstants::DNS_PROXY;
-  globalRule["strategy"]   = proxyStrategy;
   rules.append(globalRule);
   if (settings.blockAds()) {
     rules.append(makeAdsBlockDnsRule());
   }
   QJsonObject cnRule;
-  QJsonArray  cnSets;
-  cnSets.append(ConfigConstants::RS_GEOSITE_CN);
-  cnSets.append(ConfigConstants::RS_GEOIP_CN);
-  cnRule["rule_set"] = cnSets;
+  cnRule["rule_set"] = ConfigConstants::RS_GEOSITE_CN;
   cnRule["action"]   = "route";
   cnRule["server"]   = ConfigConstants::DNS_CN;
-  cnRule["strategy"] = cnStrategy;
   rules.append(cnRule);
   QJsonObject notCnRule;
   notCnRule["rule_set"] = ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN;
   notCnRule["action"]   = "route";
   notCnRule["server"]   = ConfigConstants::DNS_PROXY;
-  notCnRule["strategy"] = proxyStrategy;
   rules.append(notCnRule);
   QJsonObject dns;
-  dns["servers"]           = servers;
-  dns["rules"]             = rules;
-  dns["independent_cache"] = true;
-  dns["final"]             = ConfigConstants::DNS_PROXY;
-  dns["strategy"]          = proxyStrategy;
+  dns["servers"]  = servers;
+  dns["rules"]    = rules;
+  dns["final"]    = ConfigConstants::DNS_PROXY;
+  dns["strategy"] = proxyStrategy;
   return dns;
 }
 
@@ -276,6 +274,7 @@ QJsonObject ConfigBuilder::buildRouteConfig() {
   route["final"]                   = defaultOutbound;
   route["auto_detect_interface"]   = true;
   route["default_domain_resolver"] = ConfigConstants::DNS_RESOLVER;
+  route["default_http_client"]     = ConfigConstants::HTTP_CLIENT_DEFAULT;
   return route;
 }
 
@@ -366,36 +365,31 @@ QJsonArray ConfigBuilder::buildOutbounds() {
 }
 
 QJsonArray ConfigBuilder::buildRuleSets() {
-  const AppSettings& settings       = AppSettings::instance();
-  const QString      downloadDetour = settings.normalizedDownloadDetour();
-  const QString      baseUrl        = settings.rulesetBaseUrl();
+  const AppSettings& settings = AppSettings::instance();
+  const QString      baseUrl  = settings.rulesetBaseUrl();
   QJsonArray         ruleSets;
   if (settings.blockAds()) {
     ruleSets.append(makeRemoteRuleSet(
         ConfigConstants::RS_GEOSITE_ADS,
         ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_ADS, baseUrl),
-        downloadDetour,
         "1d"));
   }
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_CN,
       ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_CN, baseUrl),
-      downloadDetour,
       "1d"));
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN,
       ConfigConstants::ruleSetUrl(
           ConfigConstants::RS_GEOSITE_GEOLOCATION_NOT_CN, baseUrl),
-      downloadDetour,
       "1d"));
   if (settings.enableAppGroups()) {
     // Helper lambda to add app-specific rule sets.
     auto addAppRuleSet =
-        [&ruleSets, &downloadDetour, &baseUrl](const QString& tag) {
+        [&ruleSets, &baseUrl](const QString& tag) {
           ruleSets.append(
               makeRemoteRuleSet(tag,
                                 ConfigConstants::ruleSetUrl(tag, baseUrl),
-                                downloadDetour,
                                 "7d"));
         };
     addAppRuleSet(ConfigConstants::RS_GEOSITE_TELEGRAM);
@@ -406,12 +400,10 @@ QJsonArray ConfigBuilder::buildRuleSets() {
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOSITE_PRIVATE,
       ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOSITE_PRIVATE, baseUrl),
-      downloadDetour,
       "7d"));
   ruleSets.append(makeRemoteRuleSet(
       ConfigConstants::RS_GEOIP_CN,
       ConfigConstants::ruleSetUrl(ConfigConstants::RS_GEOIP_CN, baseUrl),
-      downloadDetour,
       "1d"));
   return ruleSets;
 }
