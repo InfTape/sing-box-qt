@@ -90,7 +90,18 @@ jobs:
           sudo apt-get install -y \
             cmake \
             ninja-build \
-            clang-tidy
+            clang-tidy \
+            python3-pip
+          python3 -m pip install --upgrade cltcache
+
+      - name: Cache Clang-Tidy
+        uses: actions/cache@v4
+        with:
+          path: ~/.cltcache
+          key: cltcache-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}-${{ github.sha }}
+          restore-keys: |
+            cltcache-${{ runner.os }}-${{ hashFiles('CMakeLists.txt') }}-
+            cltcache-${{ runner.os }}-
 
       - name: Install Qt 6.10.1
         uses: jurplel/install-qt-action@v4
@@ -110,10 +121,10 @@ jobs:
           -DBUILD_TESTING=OFF
           -DQt6_DIR="$Qt6_DIR"
 
-      - name: Run clang-tidy (src only)
+      - name: Run clang-tidy (cached & parallel)
         shell: bash
         run: |
           set -euo pipefail
           find src -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' \) -print0 \
             | sort -z \
-            | xargs -0 -r clang-tidy -p build/tidy -header-filter='^.*/src/'
+            | xargs -0 -r -P $(nproc) cltcache clang-tidy -p build/tidy -header-filter='^.*/src/'
