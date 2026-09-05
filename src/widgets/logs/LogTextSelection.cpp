@@ -38,7 +38,9 @@ void LogTextSelection::watchRow(QWidget* row) {
   row->installEventFilter(this);
   for (auto* label : row->findChildren<QLabel*>()) {
     label->installEventFilter(this);
-    if (label->objectName() != "LogContent") continue;
+    if (label->objectName() != "LogContent") {
+      continue;
+    }
     label->setTextFormat(Qt::PlainText);
     label->setTextInteractionFlags(Qt::TextSelectableByMouse);
     label->setCursor(Qt::IBeamCursor);
@@ -62,7 +64,9 @@ bool LogTextSelection::isActive() const {
 }
 
 void LogTextSelection::clear() {
-  if (m_anchor.row < 0 && !m_dragging) return;
+  if (m_anchor.row < 0 && !m_dragging) {
+    return;
+  }
   m_dragging = false;
   m_dragScroll->stop();
   m_anchor = {};
@@ -74,12 +78,18 @@ LogTextSelection::Position LogTextSelection::positionAt(
     const QPoint& global) const {
   for (int i = 0; i < m_labels.size(); ++i) {
     const auto* label = m_labels[i].data();
-    if (!label) continue;
+    if (!label) {
+      continue;
+    }
     const QPoint local = label->mapFromGlobal(global);
     const QRect rect = label->contentsRect().adjusted(
         label->margin(), label->margin(), -label->margin(), -label->margin());
-    if (local.y() < rect.top()) return {i, 0};
-    if (local.y() > rect.bottom()) continue;
+    if (local.y() < rect.top()) {
+      return {i, 0};
+    }
+    if (local.y() > rect.bottom()) {
+      continue;
+    }
     // QLabel's selectable plain text uses a zero-margin QTextDocument too.
     QTextDocument document;
     document.setDocumentMargin(0);
@@ -92,10 +102,13 @@ LogTextSelection::Position LogTextSelection::positionAt(
     document.setTextWidth(rect.width());
     const int offset = document.documentLayout()->hitTest(
         local - rect.topLeft(), Qt::FuzzyHit);
-    return {i, qBound(0, offset, int(label->text().size()))};
+    return {i, qBound(0, offset, static_cast<int>(label->text().size()))};
   }
-  if (m_labels.isEmpty()) return {};
-  return {int(m_labels.size() - 1), int(m_labels.last()->text().size())};
+  if (m_labels.isEmpty()) {
+    return {};
+  }
+  return {static_cast<int>(m_labels.size() - 1),
+          static_cast<int>(m_labels.last()->text().size())};
 }
 
 void LogTextSelection::updateSelection() {
@@ -107,12 +120,14 @@ void LogTextSelection::updateSelection() {
   }
   for (int i = 0; i < m_labels.size(); ++i) {
     auto* label = m_labels[i].data();
-    if (!label) continue;
+    if (!label) {
+      continue;
+    }
     int from = 0;
     int to = 0;
     if (start.row >= 0 && i >= start.row && i <= end.row) {
       from = i == start.row ? start.offset : 0;
-      to = i == end.row ? end.offset : int(label->text().size());
+      to = i == end.row ? end.offset : static_cast<int>(label->text().size());
     }
     label->setSelection(from, to - from);
   }
@@ -122,17 +137,21 @@ void LogTextSelection::updateSelection() {
 QString LogTextSelection::selectedText() const {
   Position start = m_anchor;
   Position end = m_cursor;
-  if (start.row < 0 || end.row < 0) return {};
+  if (start.row < 0 || end.row < 0) {
+    return {};
+  }
   if (start.row > end.row ||
       (start.row == end.row && start.offset > end.offset)) {
     std::swap(start, end);
   }
   QStringList lines;
   for (int i = start.row; i <= end.row && i < m_labels.size(); ++i) {
-    if (!m_labels[i]) continue;
+    if (!m_labels[i]) {
+      continue;
+    }
     const QString text = m_labels[i]->text();
     const int from = i == start.row ? start.offset : 0;
-    const int to = i == end.row ? end.offset : int(text.size());
+    const int to = i == end.row ? end.offset : static_cast<int>(text.size());
     lines.append(text.mid(from, to - from));
   }
   return lines.join('\n');
@@ -140,13 +159,18 @@ QString LogTextSelection::selectedText() const {
 
 void LogTextSelection::copy() const {
   const QString text = selectedText();
-  if (!text.isEmpty()) QApplication::clipboard()->setText(text);
+  if (!text.isEmpty()) {
+    QApplication::clipboard()->setText(text);
+  }
 }
 
 void LogTextSelection::selectAll() {
-  if (m_labels.isEmpty()) return;
+  if (m_labels.isEmpty()) {
+    return;
+  }
   m_anchor = {0, 0};
-  m_cursor = {int(m_labels.size() - 1), int(m_labels.last()->text().size())};
+  m_cursor = {static_cast<int>(m_labels.size() - 1),
+              static_cast<int>(m_labels.last()->text().size())};
   updateSelection();
 }
 
@@ -191,7 +215,9 @@ bool LogTextSelection::eventFilter(QObject* watched, QEvent* event) {
   if (event->type() == QEvent::MouseButtonPress ||
       event->type() == QEvent::MouseButtonDblClick) {
     auto* mouse = static_cast<QMouseEvent*>(event);
-    if (mouse->button() != Qt::LeftButton) return false;
+    if (mouse->button() != Qt::LeftButton) {
+      return false;
+    }
     auto* label = qobject_cast<QLabel*>(watched);
     if (!label || label->objectName() != "LogContent") {
       clear();
@@ -226,7 +252,9 @@ bool LogTextSelection::eventFilter(QObject* watched, QEvent* event) {
   }
   if (event->type() == QEvent::MouseButtonRelease && m_dragging) {
     auto* mouse = static_cast<QMouseEvent*>(event);
-    if (mouse->button() != Qt::LeftButton) return false;
+    if (mouse->button() != Qt::LeftButton) {
+      return false;
+    }
     m_dragging = false;
     m_dragScroll->stop();
     emit changed();

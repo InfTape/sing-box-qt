@@ -37,7 +37,9 @@ QList<LogRowWidget*> visibleRows(LogView* view) {
   auto* layout = area->widget()->layout();
   for (int i = 0; i < layout->count(); ++i) {
     if (auto* row = qobject_cast<LogRowWidget*>(layout->itemAt(i)->widget())) {
-      if (!row->isHidden()) rows.append(row);
+      if (!row->isHidden()) {
+        rows.append(row);
+      }
     }
   }
   return rows;

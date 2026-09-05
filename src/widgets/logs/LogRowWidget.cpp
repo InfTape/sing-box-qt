@@ -63,10 +63,15 @@ void LogRowWidget::setEntry(const LogParser::LogEntry& entry) {
   m_time->setText(entry.timestamp.toString("HH:mm:ss"));
   setBadge(m_level, LogParser::logTypeLabel(entry.type));
   QString direction;
-  if (entry.direction == "inbound") direction = tr("Inbound");
-  else if (entry.direction == "outbound") direction = tr("Outbound");
-  else if (entry.direction == "dns") direction = tr("DNS");
-  else direction = entry.direction.toUpper();
+  if (entry.direction == "inbound") {
+    direction = tr("Inbound");
+  } else if (entry.direction == "outbound") {
+    direction = tr("Outbound");
+  } else if (entry.direction == "dns") {
+    direction = tr("DNS");
+  } else {
+    direction = entry.direction.toUpper();
+  }
   setBadge(m_direction, direction);
   setBadge(m_network, entry.network == "tcp" || entry.network == "udp"
                           ? entry.network.toUpper() : QString());

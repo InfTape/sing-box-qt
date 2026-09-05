@@ -372,7 +372,9 @@ void LogView::onExportClicked() {
 }
 
 void LogView::rebuildList() {
-  if (m_rebuilding) return;
+  if (m_rebuilding) {
+    return;
+  }
   QScopedValueRollback<bool> guard(m_rebuilding, true);
   m_store->flush();
   const QString search = m_searchEdit->text().trimmed();
@@ -385,7 +387,9 @@ void LogView::rebuildList() {
     updateStats();
   }
   auto* bar = m_scrollArea->verticalScrollBar();
-  if (m_textSelection->isActive()) return;
+  if (m_textSelection->isActive()) {
+    return;
+  }
   // Keep both row contents and their geometry unchanged while reading history.
   // New arrivals still go to disk; returning to the bottom loads the latest entries.
   if (!m_forceRefresh && !m_rows.isEmpty() &&
@@ -439,13 +443,17 @@ void LogView::renderRows(QVector<LogStore::Row> rows) {
   for (int i = 0; unchanged && i < rows.size(); ++i) {
     unchanged = rows[i].id == m_rows[i].id;
   }
-  if (unchanged) return;
+  if (unchanged) {
+    return;
+  }
 
   ++m_renderRevision;
   m_textSelection->clear();
   m_listContainer->setUpdatesEnabled(false);
   QSet<qint64> nextIds;
-  for (const auto& row : rows) nextIds.insert(row.id);
+  for (const auto& row : rows) {
+    nextIds.insert(row.id);
+  }
   QHash<qint64, LogRowWidget*> retained;
   for (int i = 0; i < m_visibleRows.size(); ++i) {
     auto* widget = m_visibleRows[i];
@@ -457,7 +465,9 @@ void LogView::renderRows(QVector<LogStore::Row> rows) {
     }
   }
   // Detach layout items only; row widgets and their labels remain allocated.
-  while (m_listLayout->count() > 1) delete m_listLayout->takeAt(0);
+  while (m_listLayout->count() > 1) {
+    delete m_listLayout->takeAt(0);
+  }
   m_visibleRows.clear();
   for (const auto& row : rows) {
     auto* widget = retained.take(row.id);
@@ -509,7 +519,8 @@ void LogView::loadOlderLogs() {
     height += m_visibleRows[keep++]->height() + m_listLayout->spacing();
   }
   keep = qMax(1, keep);
-  const int take = qMin(int(older.size()), LogStore::kVisibleLimit - keep);
+  const int take =
+      qMin(static_cast<int>(older.size()), LogStore::kVisibleLimit - keep);
   m_hasMoreOlder = older.size() == LogStore::kVisibleLimit || take < older.size();
   auto next = older.last(take);
   next += m_rows.first(keep);
@@ -530,7 +541,9 @@ void LogView::loadOlderLogs() {
   // Let Qt finish layout without a nested event loop that can re-enter queries.
   const quint64 revision = m_renderRevision;
   QTimer::singleShot(0, this, [this, anchor, anchorY, revision]() {
-    if (revision != m_renderRevision) return;
+    if (revision != m_renderRevision) {
+      return;
+    }
     auto* bar = m_scrollArea->verticalScrollBar();
     if (!m_followTail && !m_textSelection->isActive()) {
       const int newY = anchor->mapTo(m_scrollArea->viewport(), QPoint()).y();
