@@ -316,13 +316,16 @@ class RetentionAndUsageTests : public QObject {
     DataUsageTracker tracker;
     tracker.updateFromConnections(usageSnapshot({usageConnection("a", 100, 200)}));
     QVERIFY(tracker.flush());
-    const auto savedStats = tracker.snapshot()["globalTotals"];
+    const QJsonObject savedStats =
+        tracker.snapshot().value("globalTotals").toObject();
     QVERIFY(LogRetention::prune(directory.path(), now));
     QCOMPARE(readLog(yesterday), kept);
     QCOMPARE(readLog(legacy), legacyKept);
     QVERIFY(!QFile::exists(expired));
     QCOMPARE(readLog(unrelated), QByteArray("leave alone"));
-    QCOMPARE(DataUsageTracker().snapshot()["globalTotals"], savedStats);
+    DataUsageTracker restoredTracker;
+    QCOMPARE(restoredTracker.snapshot().value("globalTotals").toObject(),
+             savedStats);
     QVERIFY(LogRetention::prune(directory.path(), now.addSecs(24 * 3600)));
     QVERIFY(!QFile::exists(yesterday));
     QVERIFY(!QFile::exists(legacy));
